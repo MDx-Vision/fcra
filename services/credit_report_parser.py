@@ -230,12 +230,25 @@ class CreditReportParser:
                     try:
                         score = int(re.sub(r"\D", "", h1_tag.get_text(strip=True)))
                         if 300 <= score <= 850:
-                            bureau_text = h6_tag.get_text(strip=True).lower() if h6_tag else div_class.lower()
-                            if "transunion" in bureau_text or "border-transunion" in div_class:
+                            bureau_text = (
+                                h6_tag.get_text(strip=True).lower()
+                                if h6_tag
+                                else div_class.lower()
+                            )
+                            if (
+                                "transunion" in bureau_text
+                                or "border-transunion" in div_class
+                            ):
                                 scores["transunion"] = score
-                            elif "experian" in bureau_text or "border-experian" in div_class:
+                            elif (
+                                "experian" in bureau_text
+                                or "border-experian" in div_class
+                            ):
                                 scores["experian"] = score
-                            elif "equifax" in bureau_text or "border-equifax" in div_class:
+                            elif (
+                                "equifax" in bureau_text
+                                or "border-equifax" in div_class
+                            ):
                                 scores["equifax"] = score
                     except (ValueError, AttributeError):
                         pass
@@ -283,7 +296,9 @@ class CreditReportParser:
 
         if personal_headline:
             # Find the attribute-collection that follows
-            attr_collection = personal_headline.find_next("div", class_="attribute-collection")
+            attr_collection = personal_headline.find_next(
+                "div", class_="attribute-collection"
+            )
             if attr_collection:
                 for attr_row in attr_collection.find_all("div", class_="attribute-row"):
                     label_p = attr_row.find("p", class_="text-gray-900")
@@ -311,7 +326,11 @@ class CreditReportParser:
                         info["dob"] = value
                     elif "address" in label:
                         # Address may contain <br> tags
-                        info["address"] = value_p.get_text(separator=", ", strip=True).title() if value_p else None
+                        info["address"] = (
+                            value_p.get_text(separator=", ", strip=True).title()
+                            if value_p
+                            else None
+                        )
 
         # Fallback to legacy format (div id="PersonalInformation")
         if not info["name"]:
@@ -670,11 +689,15 @@ class CreditReportParser:
 
         for container in containers:
             # Check for account type section header before this container
-            prev_sibling = container.find_previous_sibling("div", class_="accounttype-heading")
+            prev_sibling = container.find_previous_sibling(
+                "div", class_="accounttype-heading"
+            )
             if prev_sibling:
                 h3 = prev_sibling.find("h3")
                 if h3:
-                    current_account_type = h3.get_text(strip=True).replace(" Accounts", "")
+                    current_account_type = h3.get_text(strip=True).replace(
+                        " Accounts", ""
+                    )
 
             account: Dict[str, Any] = {
                 "creditor": None,
@@ -732,12 +755,14 @@ class CreditReportParser:
                     # Get all text after the strong tag
                     remaining_text = ""
                     for sibling in strong_tag.next_siblings:
-                        if hasattr(sibling, 'get_text'):
+                        if hasattr(sibling, "get_text"):
                             remaining_text += sibling.get_text(strip=True)
                         else:
                             remaining_text += str(sibling).strip()
                     remaining_text = remaining_text.strip()
-                    if remaining_text and (re.search(r"\d", remaining_text) or "*" in remaining_text):
+                    if remaining_text and (
+                        re.search(r"\d", remaining_text) or "*" in remaining_text
+                    ):
                         account["account_number"] = remaining_text
 
             # Get status from data-test-account-status
@@ -769,7 +794,9 @@ class CreditReportParser:
                 account["utilization"] = util_text
 
             # Get balance from .balance row
-            balance_row = container.find("div", class_=re.compile(r"attribute-row.*balance"))
+            balance_row = container.find(
+                "div", class_=re.compile(r"attribute-row.*balance")
+            )
             if balance_row:
                 display_attr = balance_row.find("div", class_="display-attribute")
                 if display_attr:
@@ -791,7 +818,9 @@ class CreditReportParser:
                             account["high_balance"] = f"${orig_match.group(1)}"
 
             # Get payment amount and date from .payment row
-            payment_row = container.find("div", class_=re.compile(r"attribute-row.*payment"))
+            payment_row = container.find(
+                "div", class_=re.compile(r"attribute-row.*payment")
+            )
             if payment_row:
                 display_attr = payment_row.find("div", class_="display-attribute")
                 if display_attr:
@@ -803,7 +832,9 @@ class CreditReportParser:
                             account["monthly_payment"] = pay_match.group(0)
                             account["last_payment"] = pay_match.group(0)
                         # Get date last posted
-                        date_match = re.search(r"Date Last Posted\s*(\d{1,2}/\d{1,2}/\d{4})", pay_text)
+                        date_match = re.search(
+                            r"Date Last Posted\s*(\d{1,2}/\d{1,2}/\d{4})", pay_text
+                        )
                         if date_match:
                             account["date_reported"] = date_match.group(1)
 
@@ -840,18 +871,30 @@ class CreditReportParser:
                     # Extract 2-year payment history from the modal
                     history_section = modal_body.find("div", class_="payment-history")
                     if history_section:
-                        account["payment_history"] = self._extract_myfreescorenow_payment_history(history_section)
+                        account["payment_history"] = (
+                            self._extract_myfreescorenow_payment_history(
+                                history_section
+                            )
+                        )
                     else:
                         # Try parent modal
                         history_section = modal.find("div", class_="payment-history")
                         if history_section:
-                            account["payment_history"] = self._extract_myfreescorenow_payment_history(history_section)
+                            account["payment_history"] = (
+                                self._extract_myfreescorenow_payment_history(
+                                    history_section
+                                )
+                            )
 
             # Also try to find payment history directly in container if not found in modal
             if not account.get("payment_history"):
-                history_section = container.find("div", class_=re.compile(r"payment-history"))
+                history_section = container.find(
+                    "div", class_=re.compile(r"payment-history")
+                )
                 if history_section:
-                    account["payment_history"] = self._extract_myfreescorenow_payment_history(history_section)
+                    account["payment_history"] = (
+                        self._extract_myfreescorenow_payment_history(history_section)
+                    )
 
             # Only add if we got a creditor name
             if account["creditor"]:
@@ -898,7 +941,9 @@ class CreditReportParser:
 
             # Skip header row
             label_class = label_div.get("class", [])
-            if "bg-transunion" in " ".join(label_class) or not label_div.get_text(strip=True):
+            if "bg-transunion" in " ".join(label_class) or not label_div.get_text(
+                strip=True
+            ):
                 continue
 
             label = label_div.get_text(strip=True).lower()
@@ -907,9 +952,13 @@ class CreditReportParser:
             eq_val = eq_div.get_text(strip=True)
 
             # Get first non-empty, non-dash value
-            value = tu_val if tu_val and tu_val != "--" else (
-                ex_val if ex_val and ex_val != "--" else (
-                    eq_val if eq_val and eq_val != "--" else None
+            value = (
+                tu_val
+                if tu_val and tu_val != "--"
+                else (
+                    ex_val
+                    if ex_val and ex_val != "--"
+                    else (eq_val if eq_val and eq_val != "--" else None)
                 )
             )
 
@@ -921,39 +970,81 @@ class CreditReportParser:
                 if not account.get("account_number"):
                     account["account_number"] = value
                 # Store per-bureau values
-                account["bureaus"]["transunion"]["account_number"] = tu_val if tu_val != "--" else None
-                account["bureaus"]["experian"]["account_number"] = ex_val if ex_val != "--" else None
-                account["bureaus"]["equifax"]["account_number"] = eq_val if eq_val != "--" else None
+                account["bureaus"]["transunion"]["account_number"] = (
+                    tu_val if tu_val != "--" else None
+                )
+                account["bureaus"]["experian"]["account_number"] = (
+                    ex_val if ex_val != "--" else None
+                )
+                account["bureaus"]["equifax"]["account_number"] = (
+                    eq_val if eq_val != "--" else None
+                )
             elif "high balance" in label or "high credit" in label:
                 account["high_balance"] = value
-                account["bureaus"]["transunion"]["high_balance"] = tu_val if tu_val != "--" else None
-                account["bureaus"]["experian"]["high_balance"] = ex_val if ex_val != "--" else None
-                account["bureaus"]["equifax"]["high_balance"] = eq_val if eq_val != "--" else None
+                account["bureaus"]["transunion"]["high_balance"] = (
+                    tu_val if tu_val != "--" else None
+                )
+                account["bureaus"]["experian"]["high_balance"] = (
+                    ex_val if ex_val != "--" else None
+                )
+                account["bureaus"]["equifax"]["high_balance"] = (
+                    eq_val if eq_val != "--" else None
+                )
             elif "last verified" in label:
                 account["last_verified"] = value
-                account["bureaus"]["transunion"]["last_verified"] = tu_val if tu_val != "--" else None
-                account["bureaus"]["experian"]["last_verified"] = ex_val if ex_val != "--" else None
-                account["bureaus"]["equifax"]["last_verified"] = eq_val if eq_val != "--" else None
+                account["bureaus"]["transunion"]["last_verified"] = (
+                    tu_val if tu_val != "--" else None
+                )
+                account["bureaus"]["experian"]["last_verified"] = (
+                    ex_val if ex_val != "--" else None
+                )
+                account["bureaus"]["equifax"]["last_verified"] = (
+                    eq_val if eq_val != "--" else None
+                )
             elif "date of last activity" in label or "last activity" in label:
                 account["date_last_activity"] = value
-                account["bureaus"]["transunion"]["date_last_activity"] = tu_val if tu_val != "--" else None
-                account["bureaus"]["experian"]["date_last_activity"] = ex_val if ex_val != "--" else None
-                account["bureaus"]["equifax"]["date_last_activity"] = eq_val if eq_val != "--" else None
+                account["bureaus"]["transunion"]["date_last_activity"] = (
+                    tu_val if tu_val != "--" else None
+                )
+                account["bureaus"]["experian"]["date_last_activity"] = (
+                    ex_val if ex_val != "--" else None
+                )
+                account["bureaus"]["equifax"]["date_last_activity"] = (
+                    eq_val if eq_val != "--" else None
+                )
             elif "date reported" in label:
                 account["date_reported"] = value
-                account["bureaus"]["transunion"]["date_reported"] = tu_val if tu_val != "--" else None
-                account["bureaus"]["experian"]["date_reported"] = ex_val if ex_val != "--" else None
-                account["bureaus"]["equifax"]["date_reported"] = eq_val if eq_val != "--" else None
+                account["bureaus"]["transunion"]["date_reported"] = (
+                    tu_val if tu_val != "--" else None
+                )
+                account["bureaus"]["experian"]["date_reported"] = (
+                    ex_val if ex_val != "--" else None
+                )
+                account["bureaus"]["equifax"]["date_reported"] = (
+                    eq_val if eq_val != "--" else None
+                )
             elif "date opened" in label:
                 account["date_opened"] = value
-                account["bureaus"]["transunion"]["date_opened"] = tu_val if tu_val != "--" else None
-                account["bureaus"]["experian"]["date_opened"] = ex_val if ex_val != "--" else None
-                account["bureaus"]["equifax"]["date_opened"] = eq_val if eq_val != "--" else None
+                account["bureaus"]["transunion"]["date_opened"] = (
+                    tu_val if tu_val != "--" else None
+                )
+                account["bureaus"]["experian"]["date_opened"] = (
+                    ex_val if ex_val != "--" else None
+                )
+                account["bureaus"]["equifax"]["date_opened"] = (
+                    eq_val if eq_val != "--" else None
+                )
             elif "balance owed" in label:
                 account["balance_owed"] = value
-                account["bureaus"]["transunion"]["balance_owed"] = tu_val if tu_val != "--" else None
-                account["bureaus"]["experian"]["balance_owed"] = ex_val if ex_val != "--" else None
-                account["bureaus"]["equifax"]["balance_owed"] = eq_val if eq_val != "--" else None
+                account["bureaus"]["transunion"]["balance_owed"] = (
+                    tu_val if tu_val != "--" else None
+                )
+                account["bureaus"]["experian"]["balance_owed"] = (
+                    ex_val if ex_val != "--" else None
+                )
+                account["bureaus"]["equifax"]["balance_owed"] = (
+                    eq_val if eq_val != "--" else None
+                )
             elif "closed date" in label:
                 account["closed_date"] = value
             elif "account rating" in label:
@@ -962,21 +1053,39 @@ class CreditReportParser:
                 account["account_description"] = value
             elif "dispute status" in label:
                 account["dispute_status"] = value
-                account["bureaus"]["transunion"]["dispute_status"] = tu_val if tu_val != "--" else None
-                account["bureaus"]["experian"]["dispute_status"] = ex_val if ex_val != "--" else None
-                account["bureaus"]["equifax"]["dispute_status"] = eq_val if eq_val != "--" else None
+                account["bureaus"]["transunion"]["dispute_status"] = (
+                    tu_val if tu_val != "--" else None
+                )
+                account["bureaus"]["experian"]["dispute_status"] = (
+                    ex_val if ex_val != "--" else None
+                )
+                account["bureaus"]["equifax"]["dispute_status"] = (
+                    eq_val if eq_val != "--" else None
+                )
             elif "creditor type" in label:
                 account["creditor_type"] = value
             elif "account status" in label:
                 account["account_status"] = value
-                account["bureaus"]["transunion"]["account_status"] = tu_val if tu_val != "--" else None
-                account["bureaus"]["experian"]["account_status"] = ex_val if ex_val != "--" else None
-                account["bureaus"]["equifax"]["account_status"] = eq_val if eq_val != "--" else None
+                account["bureaus"]["transunion"]["account_status"] = (
+                    tu_val if tu_val != "--" else None
+                )
+                account["bureaus"]["experian"]["account_status"] = (
+                    ex_val if ex_val != "--" else None
+                )
+                account["bureaus"]["equifax"]["account_status"] = (
+                    eq_val if eq_val != "--" else None
+                )
             elif "payment status" in label:
                 account["payment_status"] = value
-                account["bureaus"]["transunion"]["payment_status"] = tu_val if tu_val != "--" else None
-                account["bureaus"]["experian"]["payment_status"] = ex_val if ex_val != "--" else None
-                account["bureaus"]["equifax"]["payment_status"] = eq_val if eq_val != "--" else None
+                account["bureaus"]["transunion"]["payment_status"] = (
+                    tu_val if tu_val != "--" else None
+                )
+                account["bureaus"]["experian"]["payment_status"] = (
+                    ex_val if ex_val != "--" else None
+                )
+                account["bureaus"]["equifax"]["payment_status"] = (
+                    eq_val if eq_val != "--" else None
+                )
             elif "creditor remarks" in label:
                 account["creditor_remarks"] = value
             elif "original creditor" in label:
@@ -992,15 +1101,23 @@ class CreditReportParser:
                 account["past_due_amount"] = value
             elif "account type" in label:
                 account["account_type_detail"] = value
-                account["bureaus"]["transunion"]["account_type"] = tu_val if tu_val != "--" else None
-                account["bureaus"]["experian"]["account_type"] = ex_val if ex_val != "--" else None
-                account["bureaus"]["equifax"]["account_type"] = eq_val if eq_val != "--" else None
+                account["bureaus"]["transunion"]["account_type"] = (
+                    tu_val if tu_val != "--" else None
+                )
+                account["bureaus"]["experian"]["account_type"] = (
+                    ex_val if ex_val != "--" else None
+                )
+                account["bureaus"]["equifax"]["account_type"] = (
+                    eq_val if eq_val != "--" else None
+                )
             elif "payment frequency" in label:
                 account["payment_frequency"] = value
             elif "credit limit" in label:
                 account["credit_limit"] = value
 
-    def _parse_myfreescorenow_account_details(self, details_section, account: Dict) -> None:
+    def _parse_myfreescorenow_account_details(
+        self, details_section, account: Dict
+    ) -> None:
         """Parse expanded account details from MyFreeScoreNow 'View all details' section."""
         # Look for attribute rows with labels and values
         rows = details_section.find_all("div", class_="attribute-row")
@@ -1101,19 +1218,24 @@ class CreditReportParser:
             parent_container = parent.parent
 
         # Find all payment history divs (one per bureau)
-        all_history_divs = parent_container.find_all("div", class_="d-flex", recursive=True)
+        all_history_divs = parent_container.find_all(
+            "div", class_="d-flex", recursive=True
+        )
 
         # Collect data per bureau
-        bureau_data = {
-            "transunion": [],
-            "experian": [],
-            "equifax": []
-        }
+        bureau_data = {"transunion": [], "experian": [], "equifax": []}
 
         # Process each bureau's section
-        for hist_div in parent_container.find_all("div", class_="payment-history", recursive=False):
+        for hist_div in parent_container.find_all(
+            "div", class_="payment-history", recursive=False
+        ):
             # Determine bureau from heading
-            bureau_heading = hist_div.find("p", class_=re.compile(r"text-transunion|text-experian|text-equifax|payment-history-heading"))
+            bureau_heading = hist_div.find(
+                "p",
+                class_=re.compile(
+                    r"text-transunion|text-experian|text-equifax|payment-history-heading"
+                ),
+            )
             bureau_name = None
             if bureau_heading:
                 heading_text = bureau_heading.get_text(strip=True).lower()
@@ -1128,11 +1250,15 @@ class CreditReportParser:
                 continue
 
             # Find status divs within this bureau section
-            flex_container = hist_div.find("div", class_=re.compile(r"d-flex.*gap|d-flex.*flex-wrap"))
+            flex_container = hist_div.find(
+                "div", class_=re.compile(r"d-flex.*gap|d-flex.*flex-wrap")
+            )
             if not flex_container:
                 flex_container = hist_div
 
-            status_divs = flex_container.find_all("div", class_=re.compile(r"status-[A-Z0-9]"))
+            status_divs = flex_container.find_all(
+                "div", class_=re.compile(r"status-[A-Z0-9]")
+            )
 
             for status_div in status_divs:
                 # Extract status code from class name
@@ -1160,40 +1286,61 @@ class CreditReportParser:
                     month = "Jan"  # Year markers are typically January
 
                 # Map status to display value
-                display_status = badge_text if badge_text in ["OK", "30", "60", "90", "120", "CO"] else status_display_map.get(status_code, "-")
+                display_status = (
+                    badge_text
+                    if badge_text in ["OK", "30", "60", "90", "120", "CO"]
+                    else status_display_map.get(status_code, "-")
+                )
 
-                bureau_data[bureau_name].append({
-                    "month": month,
-                    "year": year,
-                    "status": display_status
-                })
+                bureau_data[bureau_name].append(
+                    {"month": month, "year": year, "status": display_status}
+                )
 
         # Combine into unified format (one entry per month with all bureaus)
         # Use the longest bureau list as the base
-        max_len = max(len(bureau_data["transunion"]), len(bureau_data["experian"]), len(bureau_data["equifax"]))
+        max_len = max(
+            len(bureau_data["transunion"]),
+            len(bureau_data["experian"]),
+            len(bureau_data["equifax"]),
+        )
 
         history = []
         current_year = None
 
         for i in range(max_len):
-            tu_entry = bureau_data["transunion"][i] if i < len(bureau_data["transunion"]) else {}
-            ex_entry = bureau_data["experian"][i] if i < len(bureau_data["experian"]) else {}
-            eq_entry = bureau_data["equifax"][i] if i < len(bureau_data["equifax"]) else {}
+            tu_entry = (
+                bureau_data["transunion"][i]
+                if i < len(bureau_data["transunion"])
+                else {}
+            )
+            ex_entry = (
+                bureau_data["experian"][i] if i < len(bureau_data["experian"]) else {}
+            )
+            eq_entry = (
+                bureau_data["equifax"][i] if i < len(bureau_data["equifax"]) else {}
+            )
 
             # Get month and year from any available entry
-            month = tu_entry.get("month") or ex_entry.get("month") or eq_entry.get("month") or ""
+            month = (
+                tu_entry.get("month")
+                or ex_entry.get("month")
+                or eq_entry.get("month")
+                or ""
+            )
             year = tu_entry.get("year") or ex_entry.get("year") or eq_entry.get("year")
 
             if year:
                 current_year = year
 
-            history.append({
-                "month": month[:3] if month else "",  # Truncate to 3 chars
-                "year": current_year or "",
-                "transunion": tu_entry.get("status", "-"),
-                "experian": ex_entry.get("status", "-"),
-                "equifax": eq_entry.get("status", "-"),
-            })
+            history.append(
+                {
+                    "month": month[:3] if month else "",  # Truncate to 3 chars
+                    "year": current_year or "",
+                    "transunion": tu_entry.get("status", "-"),
+                    "experian": ex_entry.get("status", "-"),
+                    "equifax": eq_entry.get("status", "-"),
+                }
+            )
 
         return history
 

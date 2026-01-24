@@ -222,7 +222,9 @@ def analyze_response_patterns(db, client_id: int) -> Dict:
     return patterns
 
 
-def calculate_violation_severity(db, client_id: int, analysis_id: Optional[int] = None) -> Dict:
+def calculate_violation_severity(
+    db, client_id: int, analysis_id: Optional[int] = None
+) -> Dict:
     """Calculate severity of violations for the case"""
     query = db.query(Violation).filter_by(client_id=client_id)
     if analysis_id:
@@ -828,7 +830,9 @@ def get_escalation_stats() -> Dict:
             )
 
         sorted_actions = sorted(
-            action_stats.items(), key=lambda x: float(x[1]["success_rate"]), reverse=True
+            action_stats.items(),
+            key=lambda x: float(x[1]["success_rate"]),
+            reverse=True,
         )
 
         return {

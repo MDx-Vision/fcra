@@ -5,109 +5,167 @@ Manage customizable dispute letter templates with variable substitution,
 versioning, and letter generation capabilities.
 """
 
-from datetime import datetime, date
-from typing import Optional, List, Dict, Any
-import re
 import json
+import re
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional
 
 from database import (
-    get_db, Client, Case, Staff, Violation, DisputeItem,
-    LetterTemplate, LetterTemplateVersion, GeneratedLetter
+    Case,
+    Client,
+    DisputeItem,
+    GeneratedLetter,
+    LetterTemplate,
+    LetterTemplateVersion,
+    Staff,
+    Violation,
+    get_db,
 )
-
 
 # Template categories
 CATEGORIES = {
-    'initial_dispute': {
-        'name': 'Initial Dispute',
-        'description': 'First dispute letters to bureaus',
-        'rounds': [1],
+    "initial_dispute": {
+        "name": "Initial Dispute",
+        "description": "First dispute letters to bureaus",
+        "rounds": [1],
     },
-    'mov_demand': {
-        'name': 'Method of Verification (MOV)',
-        'description': 'Cushman-style MOV demand letters',
-        'rounds': [2],
+    "mov_demand": {
+        "name": "Method of Verification (MOV)",
+        "description": "Cushman-style MOV demand letters",
+        "rounds": [2],
     },
-    'escalation': {
-        'name': 'Regulatory Escalation',
-        'description': 'CFPB, state AG, FTC complaints',
-        'rounds': [3, 4],
+    "escalation": {
+        "name": "Regulatory Escalation",
+        "description": "CFPB, state AG, FTC complaints",
+        "rounds": [3, 4],
     },
-    'follow_up': {
-        'name': 'Follow-Up',
-        'description': 'Follow-up on pending disputes',
-        'rounds': None,  # Any round
+    "follow_up": {
+        "name": "Follow-Up",
+        "description": "Follow-up on pending disputes",
+        "rounds": None,  # Any round
     },
-    'pre_litigation': {
-        'name': 'Pre-Litigation',
-        'description': 'Pre-lawsuit demand letters',
-        'rounds': [4],
+    "pre_litigation": {
+        "name": "Pre-Litigation",
+        "description": "Pre-lawsuit demand letters",
+        "rounds": [4],
     },
-    'furnisher': {
-        'name': 'Furnisher Dispute',
-        'description': 'Direct disputes to furnishers',
-        'rounds': None,
+    "furnisher": {
+        "name": "Furnisher Dispute",
+        "description": "Direct disputes to furnishers",
+        "rounds": None,
     },
-    'collector': {
-        'name': 'Debt Collector',
-        'description': 'FDCPA debt validation letters',
-        'rounds': None,
+    "collector": {
+        "name": "Debt Collector",
+        "description": "FDCPA debt validation letters",
+        "rounds": None,
     },
-    'general': {
-        'name': 'General',
-        'description': 'General purpose templates',
-        'rounds': None,
+    "general": {
+        "name": "General",
+        "description": "General purpose templates",
+        "rounds": None,
     },
 }
 
 # Target types
 TARGET_TYPES = {
-    'bureau': 'Credit Bureau',
-    'furnisher': 'Furnisher/Creditor',
-    'collector': 'Debt Collector',
-    'all': 'All Targets',
+    "bureau": "Credit Bureau",
+    "furnisher": "Furnisher/Creditor",
+    "collector": "Debt Collector",
+    "all": "All Targets",
 }
 
 # Common template variables
 COMMON_VARIABLES = [
-    {'name': 'client_name', 'description': 'Full name of the client', 'example': 'John Smith'},
-    {'name': 'client_first_name', 'description': 'Client first name', 'example': 'John'},
-    {'name': 'client_last_name', 'description': 'Client last name', 'example': 'Smith'},
-    {'name': 'client_address', 'description': 'Full mailing address', 'example': '123 Main St, Anytown, CA 90210'},
-    {'name': 'client_street', 'description': 'Street address', 'example': '123 Main St'},
-    {'name': 'client_city', 'description': 'City', 'example': 'Anytown'},
-    {'name': 'client_state', 'description': 'State', 'example': 'CA'},
-    {'name': 'client_zip', 'description': 'ZIP code', 'example': '90210'},
-    {'name': 'client_dob', 'description': 'Date of birth', 'example': '01/15/1980'},
-    {'name': 'client_ssn_last4', 'description': 'Last 4 of SSN', 'example': '1234'},
-    {'name': 'client_phone', 'description': 'Phone number', 'example': '(555) 123-4567'},
-    {'name': 'client_email', 'description': 'Email address', 'example': 'john@example.com'},
-    {'name': 'current_date', 'description': "Today's date", 'example': '01/03/2026'},
-    {'name': 'bureau_name', 'description': 'Target bureau name', 'example': 'Equifax'},
-    {'name': 'bureau_address', 'description': 'Bureau mailing address', 'example': 'P.O. Box 740241, Atlanta, GA 30374'},
-    {'name': 'dispute_round', 'description': 'Current dispute round', 'example': '2'},
-    {'name': 'account_name', 'description': 'Creditor/account name', 'example': 'Capital One'},
-    {'name': 'account_number', 'description': 'Account number (masked)', 'example': 'XXXX-XXXX-1234'},
-    {'name': 'dispute_items', 'description': 'List of disputed items', 'example': '1. Capital One - $5,000\n2. Chase Bank - $2,500'},
-    {'name': 'violation_summary', 'description': 'Summary of FCRA violations', 'example': 'Re-aging of account, Inaccurate balance'},
-    {'name': 'deadline_date', 'description': 'Response deadline', 'example': '02/02/2026'},
-    {'name': 'company_name', 'description': 'Your company name', 'example': 'Brightpath Ascend Group'},
-    {'name': 'staff_name', 'description': 'Staff member name', 'example': 'Jane Doe'},
+    {
+        "name": "client_name",
+        "description": "Full name of the client",
+        "example": "John Smith",
+    },
+    {
+        "name": "client_first_name",
+        "description": "Client first name",
+        "example": "John",
+    },
+    {"name": "client_last_name", "description": "Client last name", "example": "Smith"},
+    {
+        "name": "client_address",
+        "description": "Full mailing address",
+        "example": "123 Main St, Anytown, CA 90210",
+    },
+    {
+        "name": "client_street",
+        "description": "Street address",
+        "example": "123 Main St",
+    },
+    {"name": "client_city", "description": "City", "example": "Anytown"},
+    {"name": "client_state", "description": "State", "example": "CA"},
+    {"name": "client_zip", "description": "ZIP code", "example": "90210"},
+    {"name": "client_dob", "description": "Date of birth", "example": "01/15/1980"},
+    {"name": "client_ssn_last4", "description": "Last 4 of SSN", "example": "1234"},
+    {
+        "name": "client_phone",
+        "description": "Phone number",
+        "example": "(555) 123-4567",
+    },
+    {
+        "name": "client_email",
+        "description": "Email address",
+        "example": "john@example.com",
+    },
+    {"name": "current_date", "description": "Today's date", "example": "01/03/2026"},
+    {"name": "bureau_name", "description": "Target bureau name", "example": "Equifax"},
+    {
+        "name": "bureau_address",
+        "description": "Bureau mailing address",
+        "example": "P.O. Box 740241, Atlanta, GA 30374",
+    },
+    {"name": "dispute_round", "description": "Current dispute round", "example": "2"},
+    {
+        "name": "account_name",
+        "description": "Creditor/account name",
+        "example": "Capital One",
+    },
+    {
+        "name": "account_number",
+        "description": "Account number (masked)",
+        "example": "XXXX-XXXX-1234",
+    },
+    {
+        "name": "dispute_items",
+        "description": "List of disputed items",
+        "example": "1. Capital One - $5,000\n2. Chase Bank - $2,500",
+    },
+    {
+        "name": "violation_summary",
+        "description": "Summary of FCRA violations",
+        "example": "Re-aging of account, Inaccurate balance",
+    },
+    {
+        "name": "deadline_date",
+        "description": "Response deadline",
+        "example": "02/02/2026",
+    },
+    {
+        "name": "company_name",
+        "description": "Your company name",
+        "example": "Brightpath Ascend Group",
+    },
+    {"name": "staff_name", "description": "Staff member name", "example": "Jane Doe"},
 ]
 
 # Bureau addresses
 BUREAU_ADDRESSES = {
-    'equifax': {
-        'name': 'Equifax Information Services LLC',
-        'address': 'P.O. Box 740241\nAtlanta, GA 30374-0241',
+    "equifax": {
+        "name": "Equifax Information Services LLC",
+        "address": "P.O. Box 740241\nAtlanta, GA 30374-0241",
     },
-    'experian': {
-        'name': 'Experian',
-        'address': 'P.O. Box 4500\nAllen, TX 75013',
+    "experian": {
+        "name": "Experian",
+        "address": "P.O. Box 4500\nAllen, TX 75013",
     },
-    'transunion': {
-        'name': 'TransUnion LLC',
-        'address': 'P.O. Box 2000\nChester, PA 19016',
+    "transunion": {
+        "name": "TransUnion LLC",
+        "address": "P.O. Box 2000\nChester, PA 19016",
     },
 }
 
@@ -139,7 +197,7 @@ class LetterTemplateService:
         category: str,
         content: str,
         dispute_round: Optional[int] = None,
-        target_type: str = 'bureau',
+        target_type: str = "bureau",
         subject: Optional[str] = None,
         footer: Optional[str] = None,
         variables: Optional[List[Dict]] = None,
@@ -155,11 +213,14 @@ class LetterTemplateService:
         db = self._get_db()
         try:
             # Check for duplicate code
-            existing = db.query(LetterTemplate).filter(
-                LetterTemplate.code == code
-            ).first()
+            existing = (
+                db.query(LetterTemplate).filter(LetterTemplate.code == code).first()
+            )
             if existing:
-                return {'success': False, 'error': f'Template code "{code}" already exists'}
+                return {
+                    "success": False,
+                    "error": f'Template code "{code}" already exists',
+                }
 
             template = LetterTemplate(
                 name=name,
@@ -188,16 +249,16 @@ class LetterTemplateService:
             db.refresh(template)
 
             # Create initial version
-            self._create_version(template, 'Initial version', created_by_staff_id)
+            self._create_version(template, "Initial version", created_by_staff_id)
 
             return {
-                'success': True,
-                'template': template.to_dict(),
+                "success": True,
+                "template": template.to_dict(),
             }
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
         finally:
             self._close_db()
 
@@ -211,22 +272,36 @@ class LetterTemplateService:
         """Update an existing template"""
         db = self._get_db()
         try:
-            template = db.query(LetterTemplate).filter(
-                LetterTemplate.id == template_id
-            ).first()
+            template = (
+                db.query(LetterTemplate)
+                .filter(LetterTemplate.id == template_id)
+                .first()
+            )
 
             if not template:
-                return {'success': False, 'error': 'Template not found'}
+                return {"success": False, "error": "Template not found"}
 
             # Check if content changed (requires new version)
-            content_changed = 'content' in updates and updates['content'] != template.content
+            content_changed = (
+                "content" in updates and updates["content"] != template.content
+            )
 
             # Apply updates
             allowed_fields = [
-                'name', 'category', 'content', 'dispute_round', 'target_type',
-                'subject', 'footer', 'variables', 'required_attachments',
-                'recommended_for', 'description', 'instructions', 'legal_basis',
-                'is_active',
+                "name",
+                "category",
+                "content",
+                "dispute_round",
+                "target_type",
+                "subject",
+                "footer",
+                "variables",
+                "required_attachments",
+                "recommended_for",
+                "description",
+                "instructions",
+                "legal_basis",
+                "is_active",
             ]
 
             for field in allowed_fields:
@@ -235,7 +310,7 @@ class LetterTemplateService:
 
             # Auto-extract variables if content changed
             if content_changed:
-                if 'variables' not in updates:
+                if "variables" not in updates:
                     template.variables = self._extract_variables(template.content)
                 template.version += 1
 
@@ -245,20 +320,18 @@ class LetterTemplateService:
             # Create version if content changed
             if content_changed:
                 self._create_version(
-                    template,
-                    change_summary or 'Content updated',
-                    staff_id
+                    template, change_summary or "Content updated", staff_id
                 )
 
             db.refresh(template)
             return {
-                'success': True,
-                'template': template.to_dict(),
+                "success": True,
+                "template": template.to_dict(),
             }
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
         finally:
             self._close_db()
 
@@ -266,27 +339,29 @@ class LetterTemplateService:
         """Delete a template (soft delete by setting is_active=False for system templates)"""
         db = self._get_db()
         try:
-            template = db.query(LetterTemplate).filter(
-                LetterTemplate.id == template_id
-            ).first()
+            template = (
+                db.query(LetterTemplate)
+                .filter(LetterTemplate.id == template_id)
+                .first()
+            )
 
             if not template:
-                return {'success': False, 'error': 'Template not found'}
+                return {"success": False, "error": "Template not found"}
 
             if template.is_system:
                 # Soft delete for system templates
                 template.is_active = False
                 db.commit()
-                return {'success': True, 'message': 'System template deactivated'}
+                return {"success": True, "message": "System template deactivated"}
             else:
                 # Hard delete for custom templates
                 db.delete(template)
                 db.commit()
-                return {'success': True, 'message': 'Template deleted'}
+                return {"success": True, "message": "Template deleted"}
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
         finally:
             self._close_db()
 
@@ -294,9 +369,11 @@ class LetterTemplateService:
         """Get a template by ID"""
         db = self._get_db()
         try:
-            template = db.query(LetterTemplate).filter(
-                LetterTemplate.id == template_id
-            ).first()
+            template = (
+                db.query(LetterTemplate)
+                .filter(LetterTemplate.id == template_id)
+                .first()
+            )
 
             if not template:
                 return None
@@ -309,9 +386,9 @@ class LetterTemplateService:
         """Get a template by code"""
         db = self._get_db()
         try:
-            template = db.query(LetterTemplate).filter(
-                LetterTemplate.code == code
-            ).first()
+            template = (
+                db.query(LetterTemplate).filter(LetterTemplate.code == code).first()
+            )
 
             if not template:
                 return None
@@ -339,22 +416,22 @@ class LetterTemplateService:
                 query = query.filter(LetterTemplate.category == category)
             if dispute_round:
                 query = query.filter(
-                    (LetterTemplate.dispute_round == dispute_round) |
-                    (LetterTemplate.dispute_round.is_(None))
+                    (LetterTemplate.dispute_round == dispute_round)
+                    | (LetterTemplate.dispute_round.is_(None))
                 )
             if target_type:
                 query = query.filter(
-                    (LetterTemplate.target_type == target_type) |
-                    (LetterTemplate.target_type == 'all')
+                    (LetterTemplate.target_type == target_type)
+                    | (LetterTemplate.target_type == "all")
                 )
             if is_active is not None:
                 query = query.filter(LetterTemplate.is_active == is_active)
             if search:
-                search_term = f'%{search}%'
+                search_term = f"%{search}%"
                 query = query.filter(
-                    (LetterTemplate.name.ilike(search_term)) |
-                    (LetterTemplate.code.ilike(search_term)) |
-                    (LetterTemplate.description.ilike(search_term))
+                    (LetterTemplate.name.ilike(search_term))
+                    | (LetterTemplate.code.ilike(search_term))
+                    | (LetterTemplate.description.ilike(search_term))
                 )
 
             query = query.order_by(LetterTemplate.category, LetterTemplate.name)
@@ -374,19 +451,24 @@ class LetterTemplateService:
         """Duplicate an existing template"""
         db = self._get_db()
         try:
-            original = db.query(LetterTemplate).filter(
-                LetterTemplate.id == template_id
-            ).first()
+            original = (
+                db.query(LetterTemplate)
+                .filter(LetterTemplate.id == template_id)
+                .first()
+            )
 
             if not original:
-                return {'success': False, 'error': 'Original template not found'}
+                return {"success": False, "error": "Original template not found"}
 
             # Check for duplicate code
-            existing = db.query(LetterTemplate).filter(
-                LetterTemplate.code == new_code
-            ).first()
+            existing = (
+                db.query(LetterTemplate).filter(LetterTemplate.code == new_code).first()
+            )
             if existing:
-                return {'success': False, 'error': f'Template code "{new_code}" already exists'}
+                return {
+                    "success": False,
+                    "error": f'Template code "{new_code}" already exists',
+                }
 
             # Create new template
             new_template = LetterTemplate(
@@ -401,7 +483,7 @@ class LetterTemplateService:
                 variables=original.variables,
                 required_attachments=original.required_attachments,
                 recommended_for=original.recommended_for,
-                description=f'Duplicated from: {original.name}',
+                description=f"Duplicated from: {original.name}",
                 instructions=original.instructions,
                 legal_basis=original.legal_basis,
                 is_system=False,  # Always custom
@@ -417,16 +499,18 @@ class LetterTemplateService:
             db.refresh(new_template)
 
             # Create initial version
-            self._create_version(new_template, f'Duplicated from {original.name}', staff_id)
+            self._create_version(
+                new_template, f"Duplicated from {original.name}", staff_id
+            )
 
             return {
-                'success': True,
-                'template': new_template.to_dict(),
+                "success": True,
+                "template": new_template.to_dict(),
             }
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
         finally:
             self._close_db()
 
@@ -462,9 +546,12 @@ class LetterTemplateService:
         """Get version history for a template"""
         db = self._get_db()
         try:
-            versions = db.query(LetterTemplateVersion).filter(
-                LetterTemplateVersion.template_id == template_id
-            ).order_by(LetterTemplateVersion.version_number.desc()).all()
+            versions = (
+                db.query(LetterTemplateVersion)
+                .filter(LetterTemplateVersion.template_id == template_id)
+                .order_by(LetterTemplateVersion.version_number.desc())
+                .all()
+            )
 
             return [v.to_dict() for v in versions]
         finally:
@@ -474,9 +561,11 @@ class LetterTemplateService:
         """Get a specific version"""
         db = self._get_db()
         try:
-            version = db.query(LetterTemplateVersion).filter(
-                LetterTemplateVersion.id == version_id
-            ).first()
+            version = (
+                db.query(LetterTemplateVersion)
+                .filter(LetterTemplateVersion.id == version_id)
+                .first()
+            )
 
             return version.to_dict() if version else None
         finally:
@@ -491,20 +580,26 @@ class LetterTemplateService:
         """Restore a template to a previous version"""
         db = self._get_db()
         try:
-            template = db.query(LetterTemplate).filter(
-                LetterTemplate.id == template_id
-            ).first()
+            template = (
+                db.query(LetterTemplate)
+                .filter(LetterTemplate.id == template_id)
+                .first()
+            )
 
             if not template:
-                return {'success': False, 'error': 'Template not found'}
+                return {"success": False, "error": "Template not found"}
 
-            version = db.query(LetterTemplateVersion).filter(
-                LetterTemplateVersion.id == version_id,
-                LetterTemplateVersion.template_id == template_id,
-            ).first()
+            version = (
+                db.query(LetterTemplateVersion)
+                .filter(
+                    LetterTemplateVersion.id == version_id,
+                    LetterTemplateVersion.template_id == template_id,
+                )
+                .first()
+            )
 
             if not version:
-                return {'success': False, 'error': 'Version not found'}
+                return {"success": False, "error": "Version not found"}
 
             # Update template with version content
             template.name = version.name
@@ -518,20 +613,18 @@ class LetterTemplateService:
 
             # Create new version entry for the restore
             self._create_version(
-                template,
-                f'Restored from version {version.version_number}',
-                staff_id
+                template, f"Restored from version {version.version_number}", staff_id
             )
 
             db.refresh(template)
             return {
-                'success': True,
-                'template': template.to_dict(),
+                "success": True,
+                "template": template.to_dict(),
             }
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
         finally:
             self._close_db()
 
@@ -545,7 +638,7 @@ class LetterTemplateService:
             return []
 
         # Find all {variable_name} placeholders
-        pattern = r'\{([a-zA-Z_][a-zA-Z0-9_]*)\}'
+        pattern = r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}"
         matches = re.findall(pattern, content)
 
         # Get unique variables
@@ -553,19 +646,21 @@ class LetterTemplateService:
 
         # Map to common variable definitions or create generic ones
         variables = []
-        common_var_map = {v['name']: v for v in COMMON_VARIABLES}
+        common_var_map = {v["name"]: v for v in COMMON_VARIABLES}
 
         for var_name in unique_vars:
             if var_name in common_var_map:
                 variables.append(common_var_map[var_name])
             else:
-                variables.append({
-                    'name': var_name,
-                    'description': f'Custom variable: {var_name}',
-                    'example': f'[{var_name}]',
-                })
+                variables.append(
+                    {
+                        "name": var_name,
+                        "description": f"Custom variable: {var_name}",
+                        "example": f"[{var_name}]",
+                    }
+                )
 
-        return sorted(variables, key=lambda x: x['name'])
+        return sorted(variables, key=lambda x: x["name"])
 
     def render_template(
         self,
@@ -575,36 +670,46 @@ class LetterTemplateService:
         """Render a template with variable substitution"""
         db = self._get_db()
         try:
-            template = db.query(LetterTemplate).filter(
-                LetterTemplate.id == template_id
-            ).first()
+            template = (
+                db.query(LetterTemplate)
+                .filter(LetterTemplate.id == template_id)
+                .first()
+            )
 
             if not template:
-                return {'success': False, 'error': 'Template not found'}
+                return {"success": False, "error": "Template not found"}
 
             content = template.content
-            subject = template.subject or ''
-            footer = template.footer or ''
+            subject = template.subject or ""
+            footer = template.footer or ""
 
             # Substitute variables
             for var_name, var_value in variables.items():
-                placeholder = '{' + var_name + '}'
-                content = content.replace(placeholder, str(var_value) if var_value else '')
-                subject = subject.replace(placeholder, str(var_value) if var_value else '')
-                footer = footer.replace(placeholder, str(var_value) if var_value else '')
+                placeholder = "{" + var_name + "}"
+                content = content.replace(
+                    placeholder, str(var_value) if var_value else ""
+                )
+                subject = subject.replace(
+                    placeholder, str(var_value) if var_value else ""
+                )
+                footer = footer.replace(
+                    placeholder, str(var_value) if var_value else ""
+                )
 
             return {
-                'success': True,
-                'subject': subject,
-                'content': content,
-                'footer': footer,
-                'full_content': f"{content}\n\n{footer}".strip(),
+                "success": True,
+                "subject": subject,
+                "content": content,
+                "footer": footer,
+                "full_content": f"{content}\n\n{footer}".strip(),
             }
 
         finally:
             self._close_db()
 
-    def get_client_variables(self, client_id: int, bureau: Optional[str] = None) -> Dict:
+    def get_client_variables(
+        self, client_id: int, bureau: Optional[str] = None
+    ) -> Dict:
         """Get variable values for a client"""
         db = self._get_db()
         try:
@@ -624,44 +729,69 @@ class LetterTemplateService:
             if client.address_zip:
                 city_state_zip.append(client.address_zip)
             if city_state_zip:
-                address_parts.append(', '.join(city_state_zip[:2]) + ' ' + (city_state_zip[2] if len(city_state_zip) > 2 else ''))
+                address_parts.append(
+                    ", ".join(city_state_zip[:2])
+                    + " "
+                    + (city_state_zip[2] if len(city_state_zip) > 2 else "")
+                )
 
             # Get dispute items
-            items = db.query(DisputeItem).filter(DisputeItem.client_id == client_id).all()
-            dispute_items_text = '\n'.join([
-                f"{i+1}. {item.creditor_name or item.account_name} - ${item.balance or 'N/A'}"
-                for i, item in enumerate(items)
-            ]) if items else 'No items listed'
+            items = (
+                db.query(DisputeItem).filter(DisputeItem.client_id == client_id).all()
+            )
+            dispute_items_text = (
+                "\n".join(
+                    [
+                        f"{i+1}. {item.creditor_name or item.account_name} - ${item.balance or 'N/A'}"
+                        for i, item in enumerate(items)
+                    ]
+                )
+                if items
+                else "No items listed"
+            )
 
             # Get violations
-            violations = db.query(Violation).filter(Violation.client_id == client_id).all()
-            violation_summary = ', '.join([v.violation_type for v in violations]) if violations else 'None identified'
+            violations = (
+                db.query(Violation).filter(Violation.client_id == client_id).all()
+            )
+            violation_summary = (
+                ", ".join([v.violation_type for v in violations])
+                if violations
+                else "None identified"
+            )
 
             # Bureau info
-            bureau_info = BUREAU_ADDRESSES.get(bureau.lower() if bureau else '', {})
+            bureau_info = BUREAU_ADDRESSES.get(bureau.lower() if bureau else "", {})
 
             variables = {
-                'client_name': client.name or f'{client.first_name} {client.last_name}'.strip(),
-                'client_first_name': client.first_name or '',
-                'client_last_name': client.last_name or '',
-                'client_address': '\n'.join(address_parts),
-                'client_street': client.address_street or '',
-                'client_city': client.address_city or '',
-                'client_state': client.address_state or '',
-                'client_zip': client.address_zip or '',
-                'client_dob': client.date_of_birth.strftime('%m/%d/%Y') if client.date_of_birth else '',
-                'client_ssn_last4': client.ssn_last_four or '',
-                'client_phone': client.phone or '',
-                'client_email': client.email or '',
-                'current_date': date.today().strftime('%m/%d/%Y'),
-                'bureau_name': bureau_info.get('name', bureau or ''),
-                'bureau_address': bureau_info.get('address', ''),
-                'dispute_round': str(client.current_dispute_round or 1),
-                'dispute_items': dispute_items_text,
-                'violation_summary': violation_summary,
-                'deadline_date': (date.today().replace(day=date.today().day + 30)).strftime('%m/%d/%Y'),
-                'company_name': 'Brightpath Ascend Group',
-                'staff_name': '',  # To be filled by caller
+                "client_name": client.name
+                or f"{client.first_name} {client.last_name}".strip(),
+                "client_first_name": client.first_name or "",
+                "client_last_name": client.last_name or "",
+                "client_address": "\n".join(address_parts),
+                "client_street": client.address_street or "",
+                "client_city": client.address_city or "",
+                "client_state": client.address_state or "",
+                "client_zip": client.address_zip or "",
+                "client_dob": (
+                    client.date_of_birth.strftime("%m/%d/%Y")
+                    if client.date_of_birth
+                    else ""
+                ),
+                "client_ssn_last4": client.ssn_last_four or "",
+                "client_phone": client.phone or "",
+                "client_email": client.email or "",
+                "current_date": date.today().strftime("%m/%d/%Y"),
+                "bureau_name": bureau_info.get("name", bureau or ""),
+                "bureau_address": bureau_info.get("address", ""),
+                "dispute_round": str(client.current_dispute_round or 1),
+                "dispute_items": dispute_items_text,
+                "violation_summary": violation_summary,
+                "deadline_date": (
+                    date.today().replace(day=date.today().day + 30)
+                ).strftime("%m/%d/%Y"),
+                "company_name": "Brightpath Ascend Group",
+                "staff_name": "",  # To be filled by caller
             }
 
             return variables
@@ -686,16 +816,18 @@ class LetterTemplateService:
         """Generate a letter from a template for a client"""
         db = self._get_db()
         try:
-            template = db.query(LetterTemplate).filter(
-                LetterTemplate.id == template_id
-            ).first()
+            template = (
+                db.query(LetterTemplate)
+                .filter(LetterTemplate.id == template_id)
+                .first()
+            )
 
             if not template:
-                return {'success': False, 'error': 'Template not found'}
+                return {"success": False, "error": "Template not found"}
 
             client = db.query(Client).filter(Client.id == client_id).first()
             if not client:
-                return {'success': False, 'error': 'Client not found'}
+                return {"success": False, "error": "Client not found"}
 
             # Get base variables
             variables = self.get_client_variables(client_id, target_name)
@@ -704,7 +836,9 @@ class LetterTemplateService:
             if staff_id:
                 staff = db.query(Staff).filter(Staff.id == staff_id).first()
                 if staff:
-                    variables['staff_name'] = f'{staff.first_name} {staff.last_name}'.strip()
+                    variables["staff_name"] = (
+                        f"{staff.first_name} {staff.last_name}".strip()
+                    )
 
             # Override with custom variables
             if custom_variables:
@@ -712,7 +846,7 @@ class LetterTemplateService:
 
             # Render content
             render_result = self.render_template(template_id, variables)
-            if not render_result.get('success'):
+            if not render_result.get("success"):
                 return render_result
 
             # Create generated letter record
@@ -724,10 +858,10 @@ class LetterTemplateService:
                 dispute_round=client.current_dispute_round,
                 target_type=target_type,
                 target_name=target_name,
-                subject=render_result['subject'],
-                content=render_result['full_content'],
+                subject=render_result["subject"],
+                content=render_result["full_content"],
                 variables_used=variables,
-                status='draft',
+                status="draft",
             )
 
             db.add(generated)
@@ -740,13 +874,13 @@ class LetterTemplateService:
             db.refresh(generated)
 
             return {
-                'success': True,
-                'letter': generated.to_dict(),
+                "success": True,
+                "letter": generated.to_dict(),
             }
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
         finally:
             self._close_db()
 
@@ -754,9 +888,11 @@ class LetterTemplateService:
         """Get a generated letter by ID"""
         db = self._get_db()
         try:
-            letter = db.query(GeneratedLetter).filter(
-                GeneratedLetter.id == letter_id
-            ).first()
+            letter = (
+                db.query(GeneratedLetter)
+                .filter(GeneratedLetter.id == letter_id)
+                .first()
+            )
 
             return letter.to_dict() if letter else None
         finally:
@@ -800,19 +936,21 @@ class LetterTemplateService:
         """Update the status of a generated letter"""
         db = self._get_db()
         try:
-            letter = db.query(GeneratedLetter).filter(
-                GeneratedLetter.id == letter_id
-            ).first()
+            letter = (
+                db.query(GeneratedLetter)
+                .filter(GeneratedLetter.id == letter_id)
+                .first()
+            )
 
             if not letter:
-                return {'success': False, 'error': 'Letter not found'}
+                return {"success": False, "error": "Letter not found"}
 
             letter.status = status
             if sent_method:
                 letter.sent_method = sent_method
             if tracking_number:
                 letter.tracking_number = tracking_number
-            if status == 'sent':
+            if status == "sent":
                 letter.sent_date = datetime.utcnow()
                 letter.sent_by_staff_id = staff_id
 
@@ -820,13 +958,13 @@ class LetterTemplateService:
             db.commit()
 
             return {
-                'success': True,
-                'letter': letter.to_dict(),
+                "success": True,
+                "letter": letter.to_dict(),
             }
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
         finally:
             self._close_db()
 
@@ -839,49 +977,65 @@ class LetterTemplateService:
         db = self._get_db()
         try:
             total = db.query(LetterTemplate).count()
-            active = db.query(LetterTemplate).filter(
-                LetterTemplate.is_active == True
-            ).count()
-            system = db.query(LetterTemplate).filter(
-                LetterTemplate.is_system == True
-            ).count()
+            active = (
+                db.query(LetterTemplate)
+                .filter(LetterTemplate.is_active == True)
+                .count()
+            )
+            system = (
+                db.query(LetterTemplate)
+                .filter(LetterTemplate.is_system == True)
+                .count()
+            )
             custom = total - system
 
             # Generated letters stats
             total_generated = db.query(GeneratedLetter).count()
-            letters_today = db.query(GeneratedLetter).filter(
-                GeneratedLetter.created_at >= datetime.utcnow().replace(hour=0, minute=0, second=0)
-            ).count()
-            letters_sent = db.query(GeneratedLetter).filter(
-                GeneratedLetter.status == 'sent'
-            ).count()
+            letters_today = (
+                db.query(GeneratedLetter)
+                .filter(
+                    GeneratedLetter.created_at
+                    >= datetime.utcnow().replace(hour=0, minute=0, second=0)
+                )
+                .count()
+            )
+            letters_sent = (
+                db.query(GeneratedLetter)
+                .filter(GeneratedLetter.status == "sent")
+                .count()
+            )
 
             # Category breakdown
             from sqlalchemy import func
-            category_counts = db.query(
-                LetterTemplate.category,
-                func.count(LetterTemplate.id)
-            ).filter(
-                LetterTemplate.is_active == True
-            ).group_by(LetterTemplate.category).all()
+
+            category_counts = (
+                db.query(LetterTemplate.category, func.count(LetterTemplate.id))
+                .filter(LetterTemplate.is_active == True)
+                .group_by(LetterTemplate.category)
+                .all()
+            )
 
             categories = {cat: count for cat, count in category_counts}
 
             # Most used templates
-            most_used = db.query(LetterTemplate).filter(
-                LetterTemplate.is_active == True
-            ).order_by(LetterTemplate.use_count.desc()).limit(5).all()
+            most_used = (
+                db.query(LetterTemplate)
+                .filter(LetterTemplate.is_active == True)
+                .order_by(LetterTemplate.use_count.desc())
+                .limit(5)
+                .all()
+            )
 
             return {
-                'total_templates': total,
-                'active_templates': active,
-                'system_templates': system,
-                'custom_templates': custom,
-                'total_generated': total_generated,
-                'letters_today': letters_today,
-                'letters_sent': letters_sent,
-                'categories': categories,
-                'most_used': [t.to_dict() for t in most_used],
+                "total_templates": total,
+                "active_templates": active,
+                "system_templates": system,
+                "custom_templates": custom,
+                "total_generated": total_generated,
+                "letters_today": letters_today,
+                "letters_sent": letters_sent,
+                "categories": categories,
+                "most_used": [t.to_dict() for t in most_used],
             }
 
         finally:
@@ -899,13 +1053,13 @@ class LetterTemplateService:
 
             default_templates = [
                 {
-                    'name': 'Initial Dispute - FCRA Section 611',
-                    'code': 'initial_dispute_611',
-                    'category': 'initial_dispute',
-                    'dispute_round': 1,
-                    'target_type': 'bureau',
-                    'description': 'Standard initial dispute letter citing FCRA Section 611',
-                    'content': """Re: Dispute of Inaccurate Information - FCRA Section 611
+                    "name": "Initial Dispute - FCRA Section 611",
+                    "code": "initial_dispute_611",
+                    "category": "initial_dispute",
+                    "dispute_round": 1,
+                    "target_type": "bureau",
+                    "description": "Standard initial dispute letter citing FCRA Section 611",
+                    "content": """Re: Dispute of Inaccurate Information - FCRA Section 611
 
 Dear {bureau_name},
 
@@ -937,16 +1091,16 @@ Sincerely,
 {client_name}
 {client_address}
 {current_date}""",
-                    'legal_basis': 'FCRA Section 611 (15 U.S.C. § 1681i)',
+                    "legal_basis": "FCRA Section 611 (15 U.S.C. § 1681i)",
                 },
                 {
-                    'name': 'Method of Verification Demand',
-                    'code': 'mov_demand',
-                    'category': 'mov_demand',
-                    'dispute_round': 2,
-                    'target_type': 'bureau',
-                    'description': 'Cushman-style MOV demand letter for Round 2',
-                    'content': """Re: Demand for Method of Verification - FCRA Section 611(a)(7)
+                    "name": "Method of Verification Demand",
+                    "code": "mov_demand",
+                    "category": "mov_demand",
+                    "dispute_round": 2,
+                    "target_type": "bureau",
+                    "description": "Cushman-style MOV demand letter for Round 2",
+                    "content": """Re: Demand for Method of Verification - FCRA Section 611(a)(7)
 
 Dear {bureau_name},
 
@@ -973,16 +1127,16 @@ Sincerely,
 {client_name}
 {client_address}
 {current_date}""",
-                    'legal_basis': 'FCRA Section 611(a)(7) (15 U.S.C. § 1681i(a)(7))',
+                    "legal_basis": "FCRA Section 611(a)(7) (15 U.S.C. § 1681i(a)(7))",
                 },
                 {
-                    'name': 'CFPB Complaint Draft',
-                    'code': 'cfpb_complaint',
-                    'category': 'escalation',
-                    'dispute_round': 3,
-                    'target_type': 'bureau',
-                    'description': 'CFPB complaint draft for regulatory escalation',
-                    'content': """Consumer Financial Protection Bureau Complaint
+                    "name": "CFPB Complaint Draft",
+                    "code": "cfpb_complaint",
+                    "category": "escalation",
+                    "dispute_round": 3,
+                    "target_type": "bureau",
+                    "description": "CFPB complaint draft for regulatory escalation",
+                    "content": """Consumer Financial Protection Bureau Complaint
 
 Consumer Information:
 Name: {client_name}
@@ -1021,16 +1175,16 @@ Supporting Documents:
 
 {current_date}
 {client_name}""",
-                    'legal_basis': 'FCRA Section 611, Consumer Financial Protection Act',
+                    "legal_basis": "FCRA Section 611, Consumer Financial Protection Act",
                 },
                 {
-                    'name': 'Pre-Litigation Demand',
-                    'code': 'pre_litigation_demand',
-                    'category': 'pre_litigation',
-                    'dispute_round': 4,
-                    'target_type': 'bureau',
-                    'description': 'Final demand letter before filing lawsuit',
-                    'content': """FINAL DEMAND BEFORE LEGAL ACTION
+                    "name": "Pre-Litigation Demand",
+                    "code": "pre_litigation_demand",
+                    "category": "pre_litigation",
+                    "dispute_round": 4,
+                    "target_type": "bureau",
+                    "description": "Final demand letter before filing lawsuit",
+                    "content": """FINAL DEMAND BEFORE LEGAL ACTION
 
 SENT VIA CERTIFIED MAIL - RETURN RECEIPT REQUESTED
 
@@ -1078,15 +1232,15 @@ Sincerely,
 {client_address}
 
 CC: Attorney of Record""",
-                    'legal_basis': 'FCRA Sections 616-617 (15 U.S.C. §§ 1681n-1681o)',
+                    "legal_basis": "FCRA Sections 616-617 (15 U.S.C. §§ 1681n-1681o)",
                 },
                 {
-                    'name': 'Debt Validation Letter',
-                    'code': 'debt_validation',
-                    'category': 'collector',
-                    'target_type': 'collector',
-                    'description': 'FDCPA debt validation request',
-                    'content': """DEBT VALIDATION REQUEST
+                    "name": "Debt Validation Letter",
+                    "code": "debt_validation",
+                    "category": "collector",
+                    "target_type": "collector",
+                    "description": "FDCPA debt validation request",
+                    "content": """DEBT VALIDATION REQUEST
 SENT VIA CERTIFIED MAIL - RETURN RECEIPT REQUESTED
 
 {current_date}
@@ -1122,15 +1276,15 @@ Sincerely,
 
 {client_name}
 {client_address}""",
-                    'legal_basis': 'FDCPA Section 809 (15 U.S.C. § 1692g)',
+                    "legal_basis": "FDCPA Section 809 (15 U.S.C. § 1692g)",
                 },
                 {
-                    'name': 'Furnisher Direct Dispute',
-                    'code': 'furnisher_dispute',
-                    'category': 'furnisher',
-                    'target_type': 'furnisher',
-                    'description': 'Direct dispute letter to furnisher/creditor',
-                    'content': """Re: Dispute of Inaccurate Information - Direct Dispute to Furnisher
+                    "name": "Furnisher Direct Dispute",
+                    "code": "furnisher_dispute",
+                    "category": "furnisher",
+                    "target_type": "furnisher",
+                    "description": "Direct dispute letter to furnisher/creditor",
+                    "content": """Re: Dispute of Inaccurate Information - Direct Dispute to Furnisher
 
 {current_date}
 
@@ -1167,30 +1321,32 @@ Sincerely,
 
 {client_name}
 {client_address}""",
-                    'legal_basis': 'FCRA Section 623 (15 U.S.C. § 1681s-2)',
+                    "legal_basis": "FCRA Section 623 (15 U.S.C. § 1681s-2)",
                 },
             ]
 
             for template_data in default_templates:
                 # Check if already exists
-                existing = db.query(LetterTemplate).filter(
-                    LetterTemplate.code == template_data['code']
-                ).first()
+                existing = (
+                    db.query(LetterTemplate)
+                    .filter(LetterTemplate.code == template_data["code"])
+                    .first()
+                )
 
                 if not existing:
                     template = LetterTemplate(
-                        name=template_data['name'],
-                        code=template_data['code'],
-                        category=template_data['category'],
-                        dispute_round=template_data.get('dispute_round'),
-                        target_type=template_data.get('target_type', 'bureau'),
-                        content=template_data['content'],
-                        description=template_data.get('description'),
-                        legal_basis=template_data.get('legal_basis'),
+                        name=template_data["name"],
+                        code=template_data["code"],
+                        category=template_data["category"],
+                        dispute_round=template_data.get("dispute_round"),
+                        target_type=template_data.get("target_type", "bureau"),
+                        content=template_data["content"],
+                        description=template_data.get("description"),
+                        legal_basis=template_data.get("legal_basis"),
                         is_system=True,
                         is_active=True,
                         version=1,
-                        variables=self._extract_variables(template_data['content']),
+                        variables=self._extract_variables(template_data["content"]),
                     )
                     db.add(template)
                     templates_created += 1
@@ -1198,14 +1354,14 @@ Sincerely,
             db.commit()
 
             return {
-                'success': True,
-                'templates_created': templates_created,
-                'message': f'Created {templates_created} default templates',
+                "success": True,
+                "templates_created": templates_created,
+                "message": f"Created {templates_created} default templates",
             }
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
         finally:
             self._close_db()
 

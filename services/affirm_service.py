@@ -72,11 +72,7 @@ class AffirmService:
         return (self.public_key, self.private_key)
 
     def _make_request(
-        self,
-        method: str,
-        endpoint: str,
-        data: dict = None,
-        params: dict = None
+        self, method: str, endpoint: str, data: dict = None, params: dict = None
     ) -> dict:
         """
         Make an authenticated request to Affirm API.
@@ -94,7 +90,9 @@ class AffirmService:
             AffirmError: If the request fails
         """
         if not self.is_configured():
-            raise AffirmError("Affirm is not configured. Set AFFIRM_PUBLIC_KEY and AFFIRM_PRIVATE_KEY.")
+            raise AffirmError(
+                "Affirm is not configured. Set AFFIRM_PUBLIC_KEY and AFFIRM_PRIVATE_KEY."
+            )
 
         url = f"{self.base_url}{endpoint}"
         headers = {
@@ -110,7 +108,7 @@ class AffirmService:
                 headers=headers,
                 json=data,
                 params=params,
-                timeout=30
+                timeout=30,
             )
 
             # Log the request for debugging
@@ -119,14 +117,14 @@ class AffirmService:
             # Handle error responses
             if not response.ok:
                 error_data = response.json() if response.content else {}
-                error_message = error_data.get("message", f"HTTP {response.status_code}")
+                error_message = error_data.get(
+                    "message", f"HTTP {response.status_code}"
+                )
                 error_code = error_data.get("code", str(response.status_code))
 
                 logger.error(f"Affirm API error: {error_message} (code: {error_code})")
                 raise AffirmError(
-                    message=error_message,
-                    error_code=error_code,
-                    details=error_data
+                    message=error_message, error_code=error_code, details=error_data
                 )
 
             return response.json() if response.content else {}
@@ -145,7 +143,7 @@ class AffirmService:
         client_email: str = None,
         client_name: str = None,
         client_phone: str = None,
-        metadata: dict = None
+        metadata: dict = None,
     ) -> dict:
         """
         Create an Affirm checkout session.
@@ -207,7 +205,9 @@ class AffirmService:
 
         result = self._make_request("POST", "/checkout", data=checkout_data)
 
-        logger.info(f"Created Affirm checkout for client {client_id}: {result.get('checkout_id')}")
+        logger.info(
+            f"Created Affirm checkout for client {client_id}: {result.get('checkout_id')}"
+        )
 
         return {
             "checkout_id": result.get("checkout_id"),
@@ -269,7 +269,9 @@ class AffirmService:
 
         result = self._make_request("POST", endpoint, data=data if data else None)
 
-        logger.info(f"Captured Affirm charge {charge_id}: status={result.get('status')}")
+        logger.info(
+            f"Captured Affirm charge {charge_id}: status={result.get('status')}"
+        )
 
         return {
             "charge_id": charge_id,
@@ -321,7 +323,9 @@ class AffirmService:
 
         result = self._make_request("POST", endpoint, data=data if data else None)
 
-        logger.info(f"Refunded Affirm charge {charge_id}: amount={amount_cents or 'full'}")
+        logger.info(
+            f"Refunded Affirm charge {charge_id}: amount={amount_cents or 'full'}"
+        )
 
         return {
             "charge_id": charge_id,
@@ -356,10 +360,7 @@ class AffirmService:
         }
 
     def verify_webhook_signature(
-        self,
-        payload: bytes,
-        signature: str,
-        webhook_secret: str = None
+        self, payload: bytes, signature: str, webhook_secret: str = None
     ) -> bool:
         """
         Verify an Affirm webhook signature.
@@ -377,11 +378,7 @@ class AffirmService:
 
         # Compute expected signature
         secret = webhook_secret or self.private_key
-        expected_sig = hmac.new(
-            secret.encode(),
-            payload,
-            hashlib.sha256
-        ).hexdigest()
+        expected_sig = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
 
         # Compare signatures
         return hmac.compare_digest(expected_sig, signature)
@@ -485,9 +482,9 @@ class AffirmService:
         # Calculate monthly payment with interest
         if estimated_apr > 0:
             monthly_payment = (
-                amount_dollars *
-                (monthly_rate * (1 + monthly_rate) ** months) /
-                ((1 + monthly_rate) ** months - 1)
+                amount_dollars
+                * (monthly_rate * (1 + monthly_rate) ** months)
+                / ((1 + monthly_rate) ** months - 1)
             )
         else:
             monthly_payment = amount_dollars / months

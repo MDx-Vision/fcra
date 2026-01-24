@@ -15,30 +15,30 @@ The teaser shows:
 - NO detailed breakdown (that's the paid $199 analysis)
 """
 
+import logging
 import secrets
 from datetime import datetime
-from typing import Optional, Dict, Any
-import logging
+from typing import Any, Dict, Optional
 
-from database import SessionLocal, Client, CreditReport, Analysis
+from database import Analysis, Client, CreditReport, SessionLocal
 
 logger = logging.getLogger(__name__)
 
 # Pricing constants (in cents)
 ANALYSIS_PRICE = 19900  # $199
-ROUND_1_PRICE = 49700   # $497
+ROUND_1_PRICE = 49700  # $497
 ROUND_2_PLUS_PRICE = 29700  # $297
 SETTLEMENT_FEE_PERCENT = 30
 
 # Value estimates per violation type
 VIOLATION_VALUES = {
-    'fcra_violation': (500, 1500),      # Per violation
-    'fdcpa_violation': (500, 1000),     # Per violation
-    'late_reporting': (200, 500),       # Per item
-    'inaccurate_info': (300, 800),      # Per item
-    'failure_to_investigate': (500, 1000),
-    'reinsertion': (1000, 2500),        # Serious violation
-    'obsolete_data': (200, 500),        # Per item
+    "fcra_violation": (500, 1500),  # Per violation
+    "fdcpa_violation": (500, 1000),  # Per violation
+    "late_reporting": (200, 500),  # Per item
+    "inaccurate_info": (300, 800),  # Per item
+    "failure_to_investigate": (500, 1000),
+    "reinsertion": (1000, 2500),  # Serious violation
+    "obsolete_data": (200, 500),  # Per item
 }
 
 
@@ -74,37 +74,37 @@ class FreeAnalysisService:
         """
         try:
             # Check if email already exists
-            existing = self.db.query(Client).filter(
-                Client.email.ilike(email.strip())
-            ).first()
+            existing = (
+                self.db.query(Client).filter(Client.email.ilike(email.strip())).first()
+            )
 
             if existing:
                 # Return existing token if they already have one
                 if existing.free_analysis_token:
                     return {
-                        'success': True,
-                        'client_id': existing.id,
-                        'token': existing.free_analysis_token,
-                        'message': 'Welcome back! Here is your analysis.',
-                        'is_existing': True
+                        "success": True,
+                        "client_id": existing.id,
+                        "token": existing.free_analysis_token,
+                        "message": "Welcome back! Here is your analysis.",
+                        "is_existing": True,
                     }
                 else:
                     # Generate token for existing client
                     existing.free_analysis_token = secrets.token_urlsafe(32)
-                    existing.client_stage = 'lead'
+                    existing.client_stage = "lead"
                     self.db.commit()
                     return {
-                        'success': True,
-                        'client_id': existing.id,
-                        'token': existing.free_analysis_token,
-                        'message': 'Welcome back! Here is your analysis.',
-                        'is_existing': True
+                        "success": True,
+                        "client_id": existing.id,
+                        "token": existing.free_analysis_token,
+                        "message": "Welcome back! Here is your analysis.",
+                        "is_existing": True,
                     }
 
             # Parse name into first/last
-            name_parts = name.strip().split(' ', 1)
+            name_parts = name.strip().split(" ", 1)
             first_name = name_parts[0]
-            last_name = name_parts[1] if len(name_parts) > 1 else ''
+            last_name = name_parts[1] if len(name_parts) > 1 else ""
 
             # Generate unique token
             token = secrets.token_urlsafe(32)
@@ -116,9 +116,9 @@ class FreeAnalysisService:
                 last_name=last_name,
                 email=email.strip().lower(),
                 phone=phone.strip() if phone else None,
-                dispute_status='lead',
-                client_stage='lead',
-                client_type='L',  # Lead
+                dispute_status="lead",
+                client_stage="lead",
+                client_type="L",  # Lead
                 free_analysis_token=token,
                 credit_monitoring_service=credit_monitoring_service,
                 credit_monitoring_username=credit_monitoring_username,
@@ -134,33 +134,30 @@ class FreeAnalysisService:
                 self._save_and_analyze_pdf(client.id, pdf_content, pdf_filename)
 
             return {
-                'success': True,
-                'client_id': client.id,
-                'token': token,
-                'message': 'Your free analysis is ready!',
-                'is_existing': False
+                "success": True,
+                "client_id": client.id,
+                "token": token,
+                "message": "Your free analysis is ready!",
+                "is_existing": False,
             }
 
         except Exception as e:
             logger.error(f"Error creating lead: {str(e)}")
             self.db.rollback()
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _save_and_analyze_pdf(self, client_id: int, pdf_content: bytes, filename: str):
         """Save uploaded PDF and trigger analysis."""
         import os
 
         # Save PDF to uploads folder
-        upload_dir = 'static/uploads/credit_reports'
+        upload_dir = "static/uploads/credit_reports"
         os.makedirs(upload_dir, exist_ok=True)
 
         safe_filename = f"lead_{client_id}_{secrets.token_hex(8)}_{filename}"
         filepath = os.path.join(upload_dir, safe_filename)
 
-        with open(filepath, 'wb') as f:
+        with open(filepath, "wb") as f:
             f.write(pdf_content)
 
         # Create credit report record
@@ -168,8 +165,8 @@ class FreeAnalysisService:
             client_id=client_id,
             file_path=filepath,
             file_name=filename,
-            source='upload',
-            status='pending_analysis'
+            source="upload",
+            status="pending_analysis",
         )
         self.db.add(report)
         self.db.commit()
@@ -185,20 +182,22 @@ class FreeAnalysisService:
         This is the FREE version - shows summary only, not details.
         """
         try:
-            client = self.db.query(Client).filter(
-                Client.free_analysis_token == token
-            ).first()
+            client = (
+                self.db.query(Client)
+                .filter(Client.free_analysis_token == token)
+                .first()
+            )
 
             if not client:
-                return {
-                    'success': False,
-                    'error': 'Analysis not found'
-                }
+                return {"success": False, "error": "Analysis not found"}
 
             # Check if we have a full analysis already
-            analysis = self.db.query(Analysis).filter(
-                Analysis.client_id == client.id
-            ).order_by(Analysis.created_at.desc()).first()
+            analysis = (
+                self.db.query(Analysis)
+                .filter(Analysis.client_id == client.id)
+                .order_by(Analysis.created_at.desc())
+                .first()
+            )
 
             if analysis and analysis.result:
                 # We have real analysis data
@@ -208,20 +207,18 @@ class FreeAnalysisService:
                 teaser = self._generate_placeholder_teaser()
 
             return {
-                'success': True,
-                'client_id': client.id,
-                'client_name': client.first_name or client.name.split()[0],
-                'client_stage': client.client_stage,
-                'analysis_paid': client.client_stage in ['analysis_paid', 'onboarding', 'pending_payment', 'active'],
-                'teaser': teaser
+                "success": True,
+                "client_id": client.id,
+                "client_name": client.first_name or client.name.split()[0],
+                "client_stage": client.client_stage,
+                "analysis_paid": client.client_stage
+                in ["analysis_paid", "onboarding", "pending_payment", "active"],
+                "teaser": teaser,
             }
 
         except Exception as e:
             logger.error(f"Error getting teaser: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _generate_teaser_from_analysis(self, analysis: Analysis) -> Dict[str, Any]:
         """Generate teaser from real analysis data."""
@@ -235,24 +232,31 @@ class FreeAnalysisService:
         # Parse the analysis result
         if isinstance(result, dict):
             # Count negative items
-            accounts = result.get('accounts', [])
+            accounts = result.get("accounts", [])
             for account in accounts:
-                if account.get('payment_status') in ['Late', 'Collection', 'Charge-off', 'Derogatory']:
+                if account.get("payment_status") in [
+                    "Late",
+                    "Collection",
+                    "Charge-off",
+                    "Derogatory",
+                ]:
                     negative_items += 1
 
             # Count violations
-            violations = result.get('violations', [])
+            violations = result.get("violations", [])
             potential_violations = len(violations)
-            violation_types = list(set(v.get('type', 'fcra_violation') for v in violations))
+            violation_types = list(
+                set(v.get("type", "fcra_violation") for v in violations)
+            )
 
             # Check for specific violation patterns
-            if result.get('has_obsolete_data'):
+            if result.get("has_obsolete_data"):
                 potential_violations += 1
-                violation_types.append('obsolete_data')
+                violation_types.append("obsolete_data")
 
-            if result.get('has_duplicate_accounts'):
+            if result.get("has_duplicate_accounts"):
                 potential_violations += 1
-                violation_types.append('duplicate_reporting')
+                violation_types.append("duplicate_reporting")
 
         # Ensure minimum values for demo
         negative_items = max(negative_items, 8)
@@ -264,34 +268,35 @@ class FreeAnalysisService:
         )
 
         return {
-            'negative_items': negative_items,
-            'potential_violations': potential_violations,
-            'violation_types': violation_types[:3],  # Show top 3 types
-            'bureaus_analyzed': 1,  # Free = 1 bureau
-            'min_value': min_value,
-            'max_value': max_value,
-            'has_real_data': True
+            "negative_items": negative_items,
+            "potential_violations": potential_violations,
+            "violation_types": violation_types[:3],  # Show top 3 types
+            "bureaus_analyzed": 1,  # Free = 1 bureau
+            "min_value": min_value,
+            "max_value": max_value,
+            "has_real_data": True,
         }
 
     def _generate_placeholder_teaser(self) -> Dict[str, Any]:
         """Generate placeholder teaser when no analysis exists yet."""
         # These are reasonable estimates for most credit reports
         return {
-            'negative_items': 12,
-            'potential_violations': 5,
-            'violation_types': ['Inaccurate Information', 'Failure to Investigate', 'Obsolete Data'],
-            'bureaus_analyzed': 1,
-            'min_value': 5000,
-            'max_value': 18000,
-            'has_real_data': False,
-            'message': 'Based on typical credit reports with similar characteristics'
+            "negative_items": 12,
+            "potential_violations": 5,
+            "violation_types": [
+                "Inaccurate Information",
+                "Failure to Investigate",
+                "Obsolete Data",
+            ],
+            "bureaus_analyzed": 1,
+            "min_value": 5000,
+            "max_value": 18000,
+            "has_real_data": False,
+            "message": "Based on typical credit reports with similar characteristics",
         }
 
     def _calculate_value_range(
-        self,
-        negative_items: int,
-        violations: int,
-        violation_types: list
+        self, negative_items: int, violations: int, violation_types: list
     ) -> tuple:
         """Calculate estimated case value range."""
         min_total = 0
@@ -322,35 +327,39 @@ class FreeAnalysisService:
 
         return min_total, max_total
 
-    def mark_analysis_paid(self, client_id: int, payment_intent_id: str) -> Dict[str, Any]:
+    def mark_analysis_paid(
+        self, client_id: int, payment_intent_id: str
+    ) -> Dict[str, Any]:
         """Mark that client has paid for full analysis."""
         try:
             client = self.db.query(Client).filter(Client.id == client_id).first()
 
             if not client:
-                return {'success': False, 'error': 'Client not found'}
+                return {"success": False, "error": "Client not found"}
 
-            client.client_stage = 'analysis_paid'
+            client.client_stage = "analysis_paid"
             client.analysis_payment_id = payment_intent_id
             client.analysis_paid_at = datetime.utcnow()
             client.total_paid = (client.total_paid or 0) + ANALYSIS_PRICE
 
             # Calculate Round 1 amount due (with credit)
-            client.round_1_amount_due = ROUND_1_PRICE - ANALYSIS_PRICE  # $497 - $199 = $298
+            client.round_1_amount_due = (
+                ROUND_1_PRICE - ANALYSIS_PRICE
+            )  # $497 - $199 = $298
 
             self.db.commit()
 
             return {
-                'success': True,
-                'client_stage': 'analysis_paid',
-                'analysis_credit': ANALYSIS_PRICE,
-                'round_1_due': client.round_1_amount_due
+                "success": True,
+                "client_stage": "analysis_paid",
+                "analysis_credit": ANALYSIS_PRICE,
+                "round_1_due": client.round_1_amount_due,
             }
 
         except Exception as e:
             logger.error(f"Error marking analysis paid: {str(e)}")
             self.db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_full_analysis(self, client_id: int) -> Dict[str, Any]:
         """
@@ -362,39 +371,44 @@ class FreeAnalysisService:
             client = self.db.query(Client).filter(Client.id == client_id).first()
 
             if not client:
-                return {'success': False, 'error': 'Client not found'}
+                return {"success": False, "error": "Client not found"}
 
             # Check if they've paid
-            if client.client_stage == 'lead':
+            if client.client_stage == "lead":
                 return {
-                    'success': False,
-                    'error': 'Payment required',
-                    'requires_payment': True,
-                    'amount': ANALYSIS_PRICE
+                    "success": False,
+                    "error": "Payment required",
+                    "requires_payment": True,
+                    "amount": ANALYSIS_PRICE,
                 }
 
             # Get the full analysis
-            analysis = self.db.query(Analysis).filter(
-                Analysis.client_id == client_id
-            ).order_by(Analysis.created_at.desc()).first()
+            analysis = (
+                self.db.query(Analysis)
+                .filter(Analysis.client_id == client_id)
+                .order_by(Analysis.created_at.desc())
+                .first()
+            )
 
             if not analysis:
                 return {
-                    'success': True,
-                    'analysis': None,
-                    'message': 'Analysis is being processed. Check back soon.'
+                    "success": True,
+                    "analysis": None,
+                    "message": "Analysis is being processed. Check back soon.",
                 }
 
             return {
-                'success': True,
-                'analysis': analysis.result,
-                'created_at': analysis.created_at.isoformat() if analysis.created_at else None,
-                'client_stage': client.client_stage
+                "success": True,
+                "analysis": analysis.result,
+                "created_at": (
+                    analysis.created_at.isoformat() if analysis.created_at else None
+                ),
+                "client_stage": client.client_stage,
             }
 
         except Exception as e:
             logger.error(f"Error getting full analysis: {str(e)}")
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def proceed_to_onboarding(self, client_id: int) -> Dict[str, Any]:
         """Move client from analysis_paid to onboarding stage."""
@@ -402,16 +416,16 @@ class FreeAnalysisService:
             client = self.db.query(Client).filter(Client.id == client_id).first()
 
             if not client:
-                return {'success': False, 'error': 'Client not found'}
+                return {"success": False, "error": "Client not found"}
 
-            if client.client_stage not in ['analysis_paid']:
+            if client.client_stage not in ["analysis_paid"]:
                 return {
-                    'success': False,
-                    'error': f'Invalid stage transition from {client.client_stage}'
+                    "success": False,
+                    "error": f"Invalid stage transition from {client.client_stage}",
                 }
 
-            client.client_stage = 'onboarding'
-            client.dispute_status = 'onboarding'
+            client.client_stage = "onboarding"
+            client.dispute_status = "onboarding"
 
             # Generate portal token if not exists
             if not client.portal_token:
@@ -420,13 +434,13 @@ class FreeAnalysisService:
             self.db.commit()
 
             return {
-                'success': True,
-                'client_stage': 'onboarding',
-                'portal_token': client.portal_token,
-                'message': 'Welcome! Please complete your onboarding.'
+                "success": True,
+                "client_stage": "onboarding",
+                "portal_token": client.portal_token,
+                "message": "Welcome! Please complete your onboarding.",
             }
 
         except Exception as e:
             logger.error(f"Error moving to onboarding: {str(e)}")
             self.db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}

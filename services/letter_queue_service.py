@@ -200,7 +200,9 @@ def check_cra_response_triggers(db: Session, cra_response_id: int) -> List[Dict]
             if result.get("success"):
                 results.append(result)
 
-    structured_items_list = response.structured_items if response.structured_items else []
+    structured_items_list = (
+        response.structured_items if response.structured_items else []
+    )
     if response.response_type == "reinserted" or (
         structured_items_list
         and any(
@@ -652,12 +654,18 @@ def run_all_triggers(db: Session) -> Dict:
     """
     Run all trigger checks - typically called by scheduler
     """
-    results: Dict[str, Any] = {"no_response_checks": [], "total_queued": 0, "errors": []}
+    results: Dict[str, Any] = {
+        "no_response_checks": [],
+        "total_queued": 0,
+        "errors": [],
+    }
 
     try:
         no_response_results = check_no_response_triggers(db)
         results["no_response_checks"] = no_response_results
-        results["total_queued"] = int(results["total_queued"]) + len(no_response_results)
+        results["total_queued"] = int(results["total_queued"]) + len(
+            no_response_results
+        )
     except Exception as e:
         cast(List[str], results["errors"]).append(f"No response check error: {str(e)}")
 

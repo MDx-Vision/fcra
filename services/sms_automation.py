@@ -116,7 +116,7 @@ def check_sms_opt_in(client):
     Check if client has opted in for SMS notifications.
     Returns True if opted in, False otherwise.
     """
-    return getattr(client, 'sms_opt_in', False)
+    return getattr(client, "sms_opt_in", False)
 
 
 def trigger_welcome_sms(db, client_id):

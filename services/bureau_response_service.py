@@ -5,34 +5,41 @@ Tracks disputes sent to credit bureaus and monitors response status.
 FCRA requires CRAs to respond within 30 days (45 for complex disputes).
 """
 
-from datetime import datetime, date, timedelta
-from typing import Optional, List, Dict, Any
-from database import get_db, BureauDisputeTracking, Client, DisputeItem, CRAResponse, Case
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional
 
+from database import (
+    BureauDisputeTracking,
+    Case,
+    Client,
+    CRAResponse,
+    DisputeItem,
+    get_db,
+)
 
 # Bureau constants
-BUREAUS = ['Equifax', 'Experian', 'TransUnion']
+BUREAUS = ["Equifax", "Experian", "TransUnion"]
 
 # Response deadline days
 STANDARD_DEADLINE_DAYS = 30
 COMPLEX_DEADLINE_DAYS = 45
 
 # Status values
-STATUS_SENT = 'sent'
-STATUS_DELIVERED = 'delivered'
-STATUS_AWAITING = 'awaiting_response'
-STATUS_RECEIVED = 'response_received'
-STATUS_OVERDUE = 'overdue'
-STATUS_CLOSED = 'closed'
+STATUS_SENT = "sent"
+STATUS_DELIVERED = "delivered"
+STATUS_AWAITING = "awaiting_response"
+STATUS_RECEIVED = "response_received"
+STATUS_OVERDUE = "overdue"
+STATUS_CLOSED = "closed"
 
 # Response types
-RESPONSE_VERIFIED = 'verified'
-RESPONSE_DELETED = 'deleted'
-RESPONSE_UPDATED = 'updated'
-RESPONSE_MIXED = 'mixed'
-RESPONSE_FRIVOLOUS = 'frivolous'
-RESPONSE_NO_RESPONSE = 'no_response'
-RESPONSE_INVESTIGATING = 'investigating'
+RESPONSE_VERIFIED = "verified"
+RESPONSE_DELETED = "deleted"
+RESPONSE_UPDATED = "updated"
+RESPONSE_MIXED = "mixed"
+RESPONSE_FRIVOLOUS = "frivolous"
+RESPONSE_NO_RESPONSE = "no_response"
+RESPONSE_INVESTIGATING = "investigating"
 
 
 class BureauResponseService:
@@ -62,14 +69,14 @@ class BureauResponseService:
         sent_date: date,
         dispute_round: int = 1,
         item_ids: List[int] = None,
-        sent_method: str = 'certified_mail',
+        sent_method: str = "certified_mail",
         tracking_number: str = None,
         letter_id: int = None,
         certified_mail_id: int = None,
         case_id: int = None,
         is_complex: bool = False,
         sent_by_staff_id: int = None,
-        notes: str = None
+        notes: str = None,
     ) -> Dict[str, Any]:
         """
         Track a dispute sent to a bureau.
@@ -79,7 +86,9 @@ class BureauResponseService:
 
         try:
             # Calculate expected response date
-            deadline_days = COMPLEX_DEADLINE_DAYS if is_complex else STANDARD_DEADLINE_DAYS
+            deadline_days = (
+                COMPLEX_DEADLINE_DAYS if is_complex else STANDARD_DEADLINE_DAYS
+            )
             expected_date = sent_date + timedelta(days=deadline_days)
 
             # Generate batch ID
@@ -104,7 +113,7 @@ class BureauResponseService:
                 response_deadline_days=deadline_days,
                 is_complex_dispute=is_complex,
                 status=STATUS_SENT,
-                notes=notes
+                notes=notes,
             )
 
             db.add(tracking)
@@ -112,20 +121,20 @@ class BureauResponseService:
             db.refresh(tracking)
 
             return {
-                'success': True,
-                'tracking': tracking.to_dict(),
-                'message': f'Dispute to {bureau} tracked. Response expected by {expected_date}'
+                "success": True,
+                "tracking": tracking.to_dict(),
+                "message": f"Dispute to {bureau} tracked. Response expected by {expected_date}",
             }
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def confirm_delivery(
         self,
         tracking_id: int,
         delivery_date: date = None,
-        recalculate_deadline: bool = True
+        recalculate_deadline: bool = True,
     ) -> Dict[str, Any]:
         """
         Confirm delivery of dispute letter.
@@ -134,12 +143,14 @@ class BureauResponseService:
         db = self._get_db()
 
         try:
-            tracking = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.id == tracking_id
-            ).first()
+            tracking = (
+                db.query(BureauDisputeTracking)
+                .filter(BureauDisputeTracking.id == tracking_id)
+                .first()
+            )
 
             if not tracking:
-                return {'success': False, 'error': 'Tracking record not found'}
+                return {"success": False, "error": "Tracking record not found"}
 
             tracking.delivery_confirmed = True
             tracking.delivery_date = delivery_date or date.today()
@@ -154,14 +165,14 @@ class BureauResponseService:
             db.commit()
 
             return {
-                'success': True,
-                'tracking': tracking.to_dict(),
-                'message': f'Delivery confirmed. Response expected by {tracking.expected_response_date}'
+                "success": True,
+                "tracking": tracking.to_dict(),
+                "message": f"Delivery confirmed. Response expected by {tracking.expected_response_date}",
             }
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     # =========================================================================
     # RECORD RESPONSES
@@ -179,18 +190,20 @@ class BureauResponseService:
         response_document_id: int = None,
         follow_up_required: bool = False,
         follow_up_type: str = None,
-        notes: str = None
+        notes: str = None,
     ) -> Dict[str, Any]:
         """Record a response received from a bureau."""
         db = self._get_db()
 
         try:
-            tracking = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.id == tracking_id
-            ).first()
+            tracking = (
+                db.query(BureauDisputeTracking)
+                .filter(BureauDisputeTracking.id == tracking_id)
+                .first()
+            )
 
             if not tracking:
-                return {'success': False, 'error': 'Tracking record not found'}
+                return {"success": False, "error": "Tracking record not found"}
 
             tracking.response_received = True
             tracking.response_date = response_date
@@ -210,42 +223,42 @@ class BureauResponseService:
                 tracking.follow_up_date = response_date + timedelta(days=30)
 
             if notes:
-                tracking.notes = (tracking.notes or '') + f'\n{response_date}: {notes}'
+                tracking.notes = (tracking.notes or "") + f"\n{response_date}: {notes}"
 
             db.commit()
 
             return {
-                'success': True,
-                'tracking': tracking.to_dict(),
-                'message': f'Response recorded: {response_type}'
+                "success": True,
+                "tracking": tracking.to_dict(),
+                "message": f"Response recorded: {response_type}",
             }
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def link_cra_response(
-        self,
-        tracking_id: int,
-        cra_response_id: int
+        self, tracking_id: int, cra_response_id: int
     ) -> Dict[str, Any]:
         """Link a CRA response document to a tracking record."""
         db = self._get_db()
 
         try:
-            tracking = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.id == tracking_id
-            ).first()
+            tracking = (
+                db.query(BureauDisputeTracking)
+                .filter(BureauDisputeTracking.id == tracking_id)
+                .first()
+            )
 
             if not tracking:
-                return {'success': False, 'error': 'Tracking record not found'}
+                return {"success": False, "error": "Tracking record not found"}
 
-            cra_response = db.query(CRAResponse).filter(
-                CRAResponse.id == cra_response_id
-            ).first()
+            cra_response = (
+                db.query(CRAResponse).filter(CRAResponse.id == cra_response_id).first()
+            )
 
             if not cra_response:
-                return {'success': False, 'error': 'CRA response not found'}
+                return {"success": False, "error": "CRA response not found"}
 
             tracking.response_document_id = cra_response_id
             tracking.response_received = True
@@ -258,11 +271,11 @@ class BureauResponseService:
 
             db.commit()
 
-            return {'success': True, 'tracking': tracking.to_dict()}
+            return {"success": True, "tracking": tracking.to_dict()}
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     # =========================================================================
     # CHECK OVERDUE / UPDATE STATUS
@@ -280,13 +293,22 @@ class BureauResponseService:
 
         try:
             # Get all pending disputes
-            pending = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.response_received == False,
-                BureauDisputeTracking.status.in_([STATUS_SENT, STATUS_DELIVERED, STATUS_AWAITING])
-            ).all()
+            pending = (
+                db.query(BureauDisputeTracking)
+                .filter(
+                    BureauDisputeTracking.response_received == False,
+                    BureauDisputeTracking.status.in_(
+                        [STATUS_SENT, STATUS_DELIVERED, STATUS_AWAITING]
+                    ),
+                )
+                .all()
+            )
 
             for tracking in pending:
-                if tracking.expected_response_date and tracking.expected_response_date < today:
+                if (
+                    tracking.expected_response_date
+                    and tracking.expected_response_date < today
+                ):
                     days_over = (today - tracking.expected_response_date).days
 
                     if not tracking.is_overdue:
@@ -296,20 +318,20 @@ class BureauResponseService:
                     tracking.days_overdue = days_over
                     tracking.status = STATUS_OVERDUE
                     tracking.follow_up_required = True
-                    tracking.follow_up_type = tracking.follow_up_type or 'escalate'
+                    tracking.follow_up_type = tracking.follow_up_type or "escalate"
 
             db.commit()
 
             return {
-                'success': True,
-                'checked': len(pending),
-                'newly_overdue': len(newly_overdue),
-                'overdue_disputes': newly_overdue
+                "success": True,
+                "checked": len(pending),
+                "newly_overdue": len(newly_overdue),
+                "overdue_disputes": newly_overdue,
             }
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def get_due_soon(self, days: int = 7) -> List[Dict]:
         """Get disputes with responses due within N days."""
@@ -318,11 +340,16 @@ class BureauResponseService:
         cutoff = today + timedelta(days=days)
 
         try:
-            disputes = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.response_received == False,
-                BureauDisputeTracking.expected_response_date >= today,
-                BureauDisputeTracking.expected_response_date <= cutoff
-            ).order_by(BureauDisputeTracking.expected_response_date).all()
+            disputes = (
+                db.query(BureauDisputeTracking)
+                .filter(
+                    BureauDisputeTracking.response_received == False,
+                    BureauDisputeTracking.expected_response_date >= today,
+                    BureauDisputeTracking.expected_response_date <= cutoff,
+                )
+                .order_by(BureauDisputeTracking.expected_response_date)
+                .all()
+            )
 
             result = []
             for d in disputes:
@@ -330,7 +357,7 @@ class BureauResponseService:
                 # Add client name
                 client = db.query(Client).filter(Client.id == d.client_id).first()
                 if client:
-                    data['client_name'] = f"{client.first_name} {client.last_name}"
+                    data["client_name"] = f"{client.first_name} {client.last_name}"
                 result.append(data)
 
             return result
@@ -343,17 +370,22 @@ class BureauResponseService:
         db = self._get_db()
 
         try:
-            disputes = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.is_overdue == True,
-                BureauDisputeTracking.response_received == False
-            ).order_by(BureauDisputeTracking.days_overdue.desc()).all()
+            disputes = (
+                db.query(BureauDisputeTracking)
+                .filter(
+                    BureauDisputeTracking.is_overdue == True,
+                    BureauDisputeTracking.response_received == False,
+                )
+                .order_by(BureauDisputeTracking.days_overdue.desc())
+                .all()
+            )
 
             result = []
             for d in disputes:
                 data = d.to_dict()
                 client = db.query(Client).filter(Client.id == d.client_id).first()
                 if client:
-                    data['client_name'] = f"{client.first_name} {client.last_name}"
+                    data["client_name"] = f"{client.first_name} {client.last_name}"
                 result.append(data)
 
             return result
@@ -370,9 +402,11 @@ class BureauResponseService:
         db = self._get_db()
 
         try:
-            tracking = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.id == tracking_id
-            ).first()
+            tracking = (
+                db.query(BureauDisputeTracking)
+                .filter(BureauDisputeTracking.id == tracking_id)
+                .first()
+            )
 
             if not tracking:
                 return None
@@ -380,7 +414,7 @@ class BureauResponseService:
             data = tracking.to_dict()
             client = db.query(Client).filter(Client.id == tracking.client_id).first()
             if client:
-                data['client_name'] = f"{client.first_name} {client.last_name}"
+                data["client_name"] = f"{client.first_name} {client.last_name}"
 
             return data
 
@@ -392,7 +426,7 @@ class BureauResponseService:
         client_id: int,
         bureau: str = None,
         dispute_round: int = None,
-        status: str = None
+        status: str = None,
     ) -> List[Dict]:
         """Get all dispute tracking records for a client."""
         db = self._get_db()
@@ -405,13 +439,15 @@ class BureauResponseService:
             if bureau:
                 query = query.filter(BureauDisputeTracking.bureau == bureau)
             if dispute_round:
-                query = query.filter(BureauDisputeTracking.dispute_round == dispute_round)
+                query = query.filter(
+                    BureauDisputeTracking.dispute_round == dispute_round
+                )
             if status:
                 query = query.filter(BureauDisputeTracking.status == status)
 
             disputes = query.order_by(
                 BureauDisputeTracking.dispute_round.desc(),
-                BureauDisputeTracking.sent_date.desc()
+                BureauDisputeTracking.sent_date.desc(),
             ).all()
 
             return [d.to_dict() for d in disputes]
@@ -420,9 +456,7 @@ class BureauResponseService:
             return []
 
     def get_all_pending(
-        self,
-        bureau: str = None,
-        days_until_due: int = None
+        self, bureau: str = None, days_until_due: int = None
     ) -> List[Dict]:
         """Get all pending disputes awaiting response."""
         db = self._get_db()
@@ -438,16 +472,20 @@ class BureauResponseService:
 
             if days_until_due is not None:
                 cutoff = today + timedelta(days=days_until_due)
-                query = query.filter(BureauDisputeTracking.expected_response_date <= cutoff)
+                query = query.filter(
+                    BureauDisputeTracking.expected_response_date <= cutoff
+                )
 
-            disputes = query.order_by(BureauDisputeTracking.expected_response_date).all()
+            disputes = query.order_by(
+                BureauDisputeTracking.expected_response_date
+            ).all()
 
             result = []
             for d in disputes:
                 data = d.to_dict()
                 client = db.query(Client).filter(Client.id == d.client_id).first()
                 if client:
-                    data['client_name'] = f"{client.first_name} {client.last_name}"
+                    data["client_name"] = f"{client.first_name} {client.last_name}"
                 result.append(data)
 
             return result
@@ -466,99 +504,142 @@ class BureauResponseService:
 
         try:
             # Total counts by status
-            total_pending = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.response_received == False
-            ).count()
+            total_pending = (
+                db.query(BureauDisputeTracking)
+                .filter(BureauDisputeTracking.response_received == False)
+                .count()
+            )
 
-            total_overdue = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.is_overdue == True,
-                BureauDisputeTracking.response_received == False
-            ).count()
+            total_overdue = (
+                db.query(BureauDisputeTracking)
+                .filter(
+                    BureauDisputeTracking.is_overdue == True,
+                    BureauDisputeTracking.response_received == False,
+                )
+                .count()
+            )
 
             # Due this week
             week_end = today + timedelta(days=7)
-            due_this_week = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.response_received == False,
-                BureauDisputeTracking.expected_response_date >= today,
-                BureauDisputeTracking.expected_response_date <= week_end
-            ).count()
+            due_this_week = (
+                db.query(BureauDisputeTracking)
+                .filter(
+                    BureauDisputeTracking.response_received == False,
+                    BureauDisputeTracking.expected_response_date >= today,
+                    BureauDisputeTracking.expected_response_date <= week_end,
+                )
+                .count()
+            )
 
             # Responses received this month
             month_start = today.replace(day=1)
-            responses_this_month = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.response_received == True,
-                BureauDisputeTracking.response_date >= month_start
-            ).count()
+            responses_this_month = (
+                db.query(BureauDisputeTracking)
+                .filter(
+                    BureauDisputeTracking.response_received == True,
+                    BureauDisputeTracking.response_date >= month_start,
+                )
+                .count()
+            )
 
             # By bureau
             bureau_stats = {}
             for bureau in BUREAUS:
-                pending = db.query(BureauDisputeTracking).filter(
-                    BureauDisputeTracking.bureau == bureau,
-                    BureauDisputeTracking.response_received == False
-                ).count()
-                overdue = db.query(BureauDisputeTracking).filter(
-                    BureauDisputeTracking.bureau == bureau,
-                    BureauDisputeTracking.is_overdue == True,
-                    BureauDisputeTracking.response_received == False
-                ).count()
-                bureau_stats[bureau] = {'pending': pending, 'overdue': overdue}
+                pending = (
+                    db.query(BureauDisputeTracking)
+                    .filter(
+                        BureauDisputeTracking.bureau == bureau,
+                        BureauDisputeTracking.response_received == False,
+                    )
+                    .count()
+                )
+                overdue = (
+                    db.query(BureauDisputeTracking)
+                    .filter(
+                        BureauDisputeTracking.bureau == bureau,
+                        BureauDisputeTracking.is_overdue == True,
+                        BureauDisputeTracking.response_received == False,
+                    )
+                    .count()
+                )
+                bureau_stats[bureau] = {"pending": pending, "overdue": overdue}
 
             # Response type breakdown (last 30 days)
             thirty_days_ago = today - timedelta(days=30)
             response_types = {}
-            for rtype in [RESPONSE_DELETED, RESPONSE_UPDATED, RESPONSE_VERIFIED, RESPONSE_MIXED, RESPONSE_FRIVOLOUS]:
-                count = db.query(BureauDisputeTracking).filter(
-                    BureauDisputeTracking.response_type == rtype,
-                    BureauDisputeTracking.response_date >= thirty_days_ago
-                ).count()
+            for rtype in [
+                RESPONSE_DELETED,
+                RESPONSE_UPDATED,
+                RESPONSE_VERIFIED,
+                RESPONSE_MIXED,
+                RESPONSE_FRIVOLOUS,
+            ]:
+                count = (
+                    db.query(BureauDisputeTracking)
+                    .filter(
+                        BureauDisputeTracking.response_type == rtype,
+                        BureauDisputeTracking.response_date >= thirty_days_ago,
+                    )
+                    .count()
+                )
                 response_types[rtype] = count
 
             # Calculate success rate (deleted + updated / total responses)
             total_responses = sum(response_types.values())
-            success_count = response_types.get(RESPONSE_DELETED, 0) + response_types.get(RESPONSE_UPDATED, 0)
-            success_rate = (success_count / total_responses * 100) if total_responses > 0 else 0
+            success_count = response_types.get(
+                RESPONSE_DELETED, 0
+            ) + response_types.get(RESPONSE_UPDATED, 0)
+            success_rate = (
+                (success_count / total_responses * 100) if total_responses > 0 else 0
+            )
 
             # Average response time
             avg_response_time = self._calculate_avg_response_time(db)
 
             return {
-                'total_pending': total_pending,
-                'total_overdue': total_overdue,
-                'due_this_week': due_this_week,
-                'responses_this_month': responses_this_month,
-                'bureau_stats': bureau_stats,
-                'response_types': response_types,
-                'success_rate': round(success_rate, 1),
-                'avg_response_days': avg_response_time,
-                'follow_up_required': db.query(BureauDisputeTracking).filter(
+                "total_pending": total_pending,
+                "total_overdue": total_overdue,
+                "due_this_week": due_this_week,
+                "responses_this_month": responses_this_month,
+                "bureau_stats": bureau_stats,
+                "response_types": response_types,
+                "success_rate": round(success_rate, 1),
+                "avg_response_days": avg_response_time,
+                "follow_up_required": db.query(BureauDisputeTracking)
+                .filter(
                     BureauDisputeTracking.follow_up_required == True,
-                    BureauDisputeTracking.follow_up_completed == False
-                ).count()
+                    BureauDisputeTracking.follow_up_completed == False,
+                )
+                .count(),
             }
 
         except Exception as e:
             return {
-                'total_pending': 0,
-                'total_overdue': 0,
-                'due_this_week': 0,
-                'responses_this_month': 0,
-                'bureau_stats': {},
-                'response_types': {},
-                'success_rate': 0,
-                'avg_response_days': 0,
-                'follow_up_required': 0,
-                'error': str(e)
+                "total_pending": 0,
+                "total_overdue": 0,
+                "due_this_week": 0,
+                "responses_this_month": 0,
+                "bureau_stats": {},
+                "response_types": {},
+                "success_rate": 0,
+                "avg_response_days": 0,
+                "follow_up_required": 0,
+                "error": str(e),
             }
 
     def _calculate_avg_response_time(self, db) -> float:
         """Calculate average days between sent and response."""
         try:
-            disputes = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.response_received == True,
-                BureauDisputeTracking.sent_date.isnot(None),
-                BureauDisputeTracking.response_date.isnot(None)
-            ).limit(100).all()
+            disputes = (
+                db.query(BureauDisputeTracking)
+                .filter(
+                    BureauDisputeTracking.response_received == True,
+                    BureauDisputeTracking.sent_date.isnot(None),
+                    BureauDisputeTracking.response_date.isnot(None),
+                )
+                .limit(100)
+                .all()
+            )
 
             if not disputes:
                 return 0
@@ -584,38 +665,58 @@ class BureauResponseService:
         try:
             result = {}
             for bureau in BUREAUS:
-                total = db.query(BureauDisputeTracking).filter(
-                    BureauDisputeTracking.bureau == bureau
-                ).count()
+                total = (
+                    db.query(BureauDisputeTracking)
+                    .filter(BureauDisputeTracking.bureau == bureau)
+                    .count()
+                )
 
-                pending = db.query(BureauDisputeTracking).filter(
-                    BureauDisputeTracking.bureau == bureau,
-                    BureauDisputeTracking.response_received == False
-                ).count()
+                pending = (
+                    db.query(BureauDisputeTracking)
+                    .filter(
+                        BureauDisputeTracking.bureau == bureau,
+                        BureauDisputeTracking.response_received == False,
+                    )
+                    .count()
+                )
 
-                responded = db.query(BureauDisputeTracking).filter(
-                    BureauDisputeTracking.bureau == bureau,
-                    BureauDisputeTracking.response_received == True
-                ).count()
+                responded = (
+                    db.query(BureauDisputeTracking)
+                    .filter(
+                        BureauDisputeTracking.bureau == bureau,
+                        BureauDisputeTracking.response_received == True,
+                    )
+                    .count()
+                )
 
-                deleted = db.query(BureauDisputeTracking).filter(
-                    BureauDisputeTracking.bureau == bureau,
-                    BureauDisputeTracking.response_type == RESPONSE_DELETED
-                ).count()
+                deleted = (
+                    db.query(BureauDisputeTracking)
+                    .filter(
+                        BureauDisputeTracking.bureau == bureau,
+                        BureauDisputeTracking.response_type == RESPONSE_DELETED,
+                    )
+                    .count()
+                )
 
-                overdue = db.query(BureauDisputeTracking).filter(
-                    BureauDisputeTracking.bureau == bureau,
-                    BureauDisputeTracking.is_overdue == True,
-                    BureauDisputeTracking.response_received == False
-                ).count()
+                overdue = (
+                    db.query(BureauDisputeTracking)
+                    .filter(
+                        BureauDisputeTracking.bureau == bureau,
+                        BureauDisputeTracking.is_overdue == True,
+                        BureauDisputeTracking.response_received == False,
+                    )
+                    .count()
+                )
 
                 result[bureau] = {
-                    'total': total,
-                    'pending': pending,
-                    'responded': responded,
-                    'deleted': deleted,
-                    'overdue': overdue,
-                    'success_rate': round(deleted / responded * 100, 1) if responded > 0 else 0
+                    "total": total,
+                    "pending": pending,
+                    "responded": responded,
+                    "deleted": deleted,
+                    "overdue": overdue,
+                    "success_rate": (
+                        round(deleted / responded * 100, 1) if responded > 0 else 0
+                    ),
                 }
 
             return result
@@ -632,9 +733,11 @@ class BureauResponseService:
         db = self._get_db()
 
         try:
-            tracking = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.id == tracking_id
-            ).first()
+            tracking = (
+                db.query(BureauDisputeTracking)
+                .filter(BureauDisputeTracking.id == tracking_id)
+                .first()
+            )
 
             if tracking:
                 tracking.reminder_sent = True
@@ -653,9 +756,11 @@ class BureauResponseService:
         db = self._get_db()
 
         try:
-            tracking = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.id == tracking_id
-            ).first()
+            tracking = (
+                db.query(BureauDisputeTracking)
+                .filter(BureauDisputeTracking.id == tracking_id)
+                .first()
+            )
 
             if tracking:
                 tracking.overdue_alert_sent = True
@@ -676,20 +781,24 @@ class BureauResponseService:
         reminder_date = today + timedelta(days=days_before)
 
         try:
-            disputes = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.response_received == False,
-                BureauDisputeTracking.reminder_sent == False,
-                BureauDisputeTracking.expected_response_date <= reminder_date,
-                BureauDisputeTracking.expected_response_date >= today
-            ).all()
+            disputes = (
+                db.query(BureauDisputeTracking)
+                .filter(
+                    BureauDisputeTracking.response_received == False,
+                    BureauDisputeTracking.reminder_sent == False,
+                    BureauDisputeTracking.expected_response_date <= reminder_date,
+                    BureauDisputeTracking.expected_response_date >= today,
+                )
+                .all()
+            )
 
             result = []
             for d in disputes:
                 data = d.to_dict()
                 client = db.query(Client).filter(Client.id == d.client_id).first()
                 if client:
-                    data['client_name'] = f"{client.first_name} {client.last_name}"
-                    data['client_email'] = client.email
+                    data["client_name"] = f"{client.first_name} {client.last_name}"
+                    data["client_email"] = client.email
                 result.append(data)
 
             return result
@@ -702,19 +811,23 @@ class BureauResponseService:
         db = self._get_db()
 
         try:
-            disputes = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.is_overdue == True,
-                BureauDisputeTracking.response_received == False,
-                BureauDisputeTracking.overdue_alert_sent == False
-            ).all()
+            disputes = (
+                db.query(BureauDisputeTracking)
+                .filter(
+                    BureauDisputeTracking.is_overdue == True,
+                    BureauDisputeTracking.response_received == False,
+                    BureauDisputeTracking.overdue_alert_sent == False,
+                )
+                .all()
+            )
 
             result = []
             for d in disputes:
                 data = d.to_dict()
                 client = db.query(Client).filter(Client.id == d.client_id).first()
                 if client:
-                    data['client_name'] = f"{client.first_name} {client.last_name}"
-                    data['client_email'] = client.email
+                    data["client_name"] = f"{client.first_name} {client.last_name}"
+                    data["client_email"] = client.email
                 result.append(data)
 
             return result
@@ -726,61 +839,59 @@ class BureauResponseService:
     # FOLLOW-UP MANAGEMENT
     # =========================================================================
 
-    def complete_follow_up(
-        self,
-        tracking_id: int,
-        notes: str = None
-    ) -> Dict[str, Any]:
+    def complete_follow_up(self, tracking_id: int, notes: str = None) -> Dict[str, Any]:
         """Mark follow-up as completed."""
         db = self._get_db()
 
         try:
-            tracking = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.id == tracking_id
-            ).first()
+            tracking = (
+                db.query(BureauDisputeTracking)
+                .filter(BureauDisputeTracking.id == tracking_id)
+                .first()
+            )
 
             if not tracking:
-                return {'success': False, 'error': 'Tracking record not found'}
+                return {"success": False, "error": "Tracking record not found"}
 
             tracking.follow_up_completed = True
             if notes:
-                tracking.follow_up_notes = (tracking.follow_up_notes or '') + f'\nCompleted: {notes}'
+                tracking.follow_up_notes = (
+                    tracking.follow_up_notes or ""
+                ) + f"\nCompleted: {notes}"
 
             db.commit()
 
-            return {'success': True, 'tracking': tracking.to_dict()}
+            return {"success": True, "tracking": tracking.to_dict()}
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
-    def close_dispute(
-        self,
-        tracking_id: int,
-        notes: str = None
-    ) -> Dict[str, Any]:
+    def close_dispute(self, tracking_id: int, notes: str = None) -> Dict[str, Any]:
         """Close a dispute tracking record."""
         db = self._get_db()
 
         try:
-            tracking = db.query(BureauDisputeTracking).filter(
-                BureauDisputeTracking.id == tracking_id
-            ).first()
+            tracking = (
+                db.query(BureauDisputeTracking)
+                .filter(BureauDisputeTracking.id == tracking_id)
+                .first()
+            )
 
             if not tracking:
-                return {'success': False, 'error': 'Tracking record not found'}
+                return {"success": False, "error": "Tracking record not found"}
 
             tracking.status = STATUS_CLOSED
             if notes:
-                tracking.notes = (tracking.notes or '') + f'\nClosed: {notes}'
+                tracking.notes = (tracking.notes or "") + f"\nClosed: {notes}"
 
             db.commit()
 
-            return {'success': True, 'tracking': tracking.to_dict()}
+            return {"success": True, "tracking": tracking.to_dict()}
 
         except Exception as e:
             db.rollback()
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     # =========================================================================
     # EXPORT
@@ -792,7 +903,7 @@ class BureauResponseService:
         status: str = None,
         bureau: str = None,
         start_date: date = None,
-        end_date: date = None
+        end_date: date = None,
     ) -> List[Dict]:
         """Export tracking data for CSV/reporting."""
         db = self._get_db()
@@ -818,8 +929,8 @@ class BureauResponseService:
                 data = d.to_dict()
                 client = db.query(Client).filter(Client.id == d.client_id).first()
                 if client:
-                    data['client_name'] = f"{client.first_name} {client.last_name}"
-                    data['client_email'] = client.email
+                    data["client_name"] = f"{client.first_name} {client.last_name}"
+                    data["client_email"] = client.email
                 result.append(data)
 
             return result
@@ -837,20 +948,25 @@ class BureauResponseService:
         try:
             from sqlalchemy import func
 
-            results = db.query(
-                BureauDisputeTracking.response_type,
-                func.count(BureauDisputeTracking.id)
-            ).filter(
-                BureauDisputeTracking.response_received == True,
-                BureauDisputeTracking.response_type.isnot(None)
-            ).group_by(BureauDisputeTracking.response_type).all()
+            results = (
+                db.query(
+                    BureauDisputeTracking.response_type,
+                    func.count(BureauDisputeTracking.id),
+                )
+                .filter(
+                    BureauDisputeTracking.response_received == True,
+                    BureauDisputeTracking.response_type.isnot(None),
+                )
+                .group_by(BureauDisputeTracking.response_type)
+                .all()
+            )
 
             breakdown = {
-                'deleted': 0,
-                'updated': 0,
-                'verified': 0,
-                'mixed': 0,
-                'frivolous': 0
+                "deleted": 0,
+                "updated": 0,
+                "verified": 0,
+                "mixed": 0,
+                "frivolous": 0,
             }
 
             for response_type, count in results:
@@ -860,4 +976,10 @@ class BureauResponseService:
             return breakdown
 
         except:
-            return {'deleted': 0, 'updated': 0, 'verified': 0, 'mixed': 0, 'frivolous': 0}
+            return {
+                "deleted": 0,
+                "updated": 0,
+                "verified": 0,
+                "mixed": 0,
+                "frivolous": 0,
+            }

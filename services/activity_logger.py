@@ -26,8 +26,14 @@ MAX_ACTIVITIES = 500
 ACTIVITY_LOG_FILE = "logs/activity.log"
 
 
-def log_activity(action: str, details: str = None, user: str = None,
-                 client_id: int = None, status: str = "success", error: str = None):
+def log_activity(
+    action: str,
+    details: str = None,
+    user: str = None,
+    client_id: int = None,
+    status: str = "success",
+    error: str = None,
+):
     """
     Log an activity in human-readable format.
 
@@ -45,7 +51,7 @@ def log_activity(action: str, details: str = None, user: str = None,
         "user": user,
         "client_id": client_id,
         "status": status,  # success, error, warning, info
-        "error": error
+        "error": error,
     }
 
     # Add to in-memory list (most recent first)
@@ -60,7 +66,9 @@ def log_activity(action: str, details: str = None, user: str = None,
         os.makedirs("logs", exist_ok=True)
 
         # Human-readable format for the log file
-        status_icon = {"success": "✓", "error": "✗", "warning": "⚠", "info": "ℹ"}.get(status, "•")
+        status_icon = {"success": "✓", "error": "✗", "warning": "⚠", "info": "ℹ"}.get(
+            status, "•"
+        )
 
         log_line = f"[{activity['time']}] {status_icon} {action}"
         if details:
@@ -82,8 +90,9 @@ def log_activity(action: str, details: str = None, user: str = None,
     return activity
 
 
-def get_recent_activities(limit: int = 100, status_filter: str = None,
-                          action_filter: str = None) -> list:
+def get_recent_activities(
+    limit: int = 100, status_filter: str = None, action_filter: str = None
+) -> list:
     """Get recent activities from memory."""
     activities = RECENT_ACTIVITIES[:limit]
 
@@ -91,7 +100,9 @@ def get_recent_activities(limit: int = 100, status_filter: str = None,
         activities = [a for a in activities if a["status"] == status_filter]
 
     if action_filter:
-        activities = [a for a in activities if action_filter.lower() in a["action"].lower()]
+        activities = [
+            a for a in activities if action_filter.lower() in a["action"].lower()
+        ]
 
     return activities
 
@@ -167,6 +178,7 @@ def logged(action_name: str = None):
         def generate_letter(client_id, round_num):
             ...
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -184,11 +196,13 @@ def logged(action_name: str = None):
 
             except Exception as e:
                 duration = (time.time() - start) * 1000
-                log_activity(name, f"failed after {duration:.0f}ms",
-                           status="error", error=str(e))
+                log_activity(
+                    name, f"failed after {duration:.0f}ms", status="error", error=str(e)
+                )
                 raise
 
         return wrapper
+
     return decorator
 
 
@@ -220,8 +234,13 @@ def log_payment_success(client_id: int, amount: float, method: str):
 
 def log_payment_failed(client_id: int, amount: float, error: str):
     """Log failed payment."""
-    log_activity("Payment Failed", f"${amount:.2f}", client_id=client_id,
-                status="error", error=error)
+    log_activity(
+        "Payment Failed",
+        f"${amount:.2f}",
+        client_id=client_id,
+        status="error",
+        error=error,
+    )
 
 
 def log_login(user: str, portal: str = "staff"):
@@ -239,11 +258,16 @@ def log_client_created(client_id: int, name: str, user: str = None):
     log_activity("Client Created", name, user=user, client_id=client_id)
 
 
-def log_dispute_generated(client_id: int, round_num: int, letter_count: int, user: str = None):
+def log_dispute_generated(
+    client_id: int, round_num: int, letter_count: int, user: str = None
+):
     """Log dispute letters generated."""
-    log_activity("Disputes Generated",
-                f"Round {round_num} | {letter_count} letters",
-                user=user, client_id=client_id)
+    log_activity(
+        "Disputes Generated",
+        f"Round {round_num} | {letter_count} letters",
+        user=user,
+        client_id=client_id,
+    )
 
 
 def log_credit_import(client_id: int, service: str, scores: dict = None):
@@ -256,8 +280,13 @@ def log_credit_import(client_id: int, service: str, scores: dict = None):
 
 def log_credit_import_failed(client_id: int, service: str, error: str):
     """Log credit import failure."""
-    log_activity("Credit Import Failed", service, client_id=client_id,
-                status="error", error=error)
+    log_activity(
+        "Credit Import Failed",
+        service,
+        client_id=client_id,
+        status="error",
+        error=error,
+    )
 
 
 def log_document_uploaded(client_id: int, doc_type: str, filename: str):
@@ -268,6 +297,8 @@ def log_document_uploaded(client_id: int, doc_type: str, filename: str):
 def log_api_call(service: str, endpoint: str, status_code: int, duration_ms: float):
     """Log external API call."""
     status = "success" if status_code < 400 else "error"
-    log_activity(f"API Call: {service}",
-                f"{endpoint} | {status_code} | {duration_ms:.0f}ms",
-                status=status)
+    log_activity(
+        f"API Call: {service}",
+        f"{endpoint} | {status_code} | {duration_ms:.0f}ms",
+        status=status,
+    )

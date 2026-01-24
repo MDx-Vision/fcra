@@ -27,6 +27,14 @@ from services.logging_config import (
 setup_logging()
 app_logger.info("Starting FCRA Litigation Platform...")
 
+# Human-readable activity logging
+from services.activity_logger import (
+    log_activity,
+    log_client_created,
+    log_login,
+    log_login_failed,
+)
+
 # API authentication and authorization (require_api_key defined below in this file)
 from services.api_auth import AVAILABLE_SCOPES, create_jwt_token, require_auth
 
@@ -47,14 +55,6 @@ from services.input_validator import (
 
 # Rate limiting
 from services.rate_limiter import RATE_LIMITS, init_rate_limiter
-
-# Human-readable activity logging
-from services.activity_logger import (
-    log_login,
-    log_login_failed,
-    log_client_created,
-    log_activity,
-)
 
 # API Configuration (using centralized config)
 ANTHROPIC_API_KEY = config.ANTHROPIC_API_KEY
@@ -204,19 +204,6 @@ from database import (
     get_db,
     init_db,
 )
-from services.document_generators import (
-    generate_client_email_html,
-    generate_client_report_html,
-    generate_internal_analysis_html,
-    html_to_pdf,
-)
-from services.jwt_utils import create_token, require_jwt
-from services.litigation_tools import assess_willfulness, calculate_case_score, calculate_damages
-from services.pdf_generator import (
-    CreditAnalysisPDFGenerator,
-    LetterPDFGenerator,
-    SectionPDFGenerator,
-)
 from services import (
     affiliate_service,
     case_law_service,
@@ -228,6 +215,12 @@ from services import (
 from services.api_access_service import APIAccessService, get_api_access_service
 from services.attorney_analytics_service import attorney_analytics_service
 from services.audit_service import AuditService, get_audit_service
+from services.document_generators import (
+    generate_client_email_html,
+    generate_client_report_html,
+    generate_internal_analysis_html,
+    html_to_pdf,
+)
 from services.encryption import (
     decrypt_value,
     encrypt_value,
@@ -238,6 +231,17 @@ from services.franchise_service import (
     FranchiseService,
     get_clients_for_org,
     get_org_filter,
+)
+from services.jwt_utils import create_token, require_jwt
+from services.litigation_tools import (
+    assess_willfulness,
+    calculate_case_score,
+    calculate_damages,
+)
+from services.pdf_generator import (
+    CreditAnalysisPDFGenerator,
+    LetterPDFGenerator,
+    SectionPDFGenerator,
 )
 from services.performance_service import (
     PerformanceService,
@@ -302,10 +306,11 @@ app_logger.info("Security headers initialized")
 # Secret key for session management (using centralized config)
 app.secret_key = config.SECRET_KEY
 
-# Register blueprints
-from routes.portal import portal
 from routes.affiliate_portal import affiliate_portal
 from routes.partner import partner_bp
+
+# Register blueprints
+from routes.portal import portal
 
 app.register_blueprint(portal)
 print("✅ Portal blueprint registered")
@@ -435,7 +440,9 @@ app.register_blueprint(staff_portal_blueprint)
 print("✅ Staff portal blueprint registered")
 
 # Simple in-memory rate limiting for login attempts
-login_attempts: dict[str, dict[str, int | datetime]] = {}  # {email: {'count': int, 'last_attempt': datetime}}
+login_attempts: dict[str, dict[str, int | datetime]] = (
+    {}
+)  # {email: {'count': int, 'last_attempt': datetime}}
 
 # Store received credit reports
 credit_reports = []
@@ -912,9 +919,12 @@ def inject_tenant_branding():
 def inject_affirm_config():
     """Inject Affirm BNPL config into all templates"""
     from services.config import config
+
     return {
-        "affirm_configured": config.is_configured('affirm'),
-        "affirm_public_key": config.AFFIRM_PUBLIC_KEY if config.is_configured('affirm') else None,
+        "affirm_configured": config.is_configured("affirm"),
+        "affirm_public_key": (
+            config.AFFIRM_PUBLIC_KEY if config.is_configured("affirm") else None
+        ),
     }
 
 
@@ -1154,27 +1164,38 @@ def api_staff_login():
 
             # Import 2FA service
             from services.two_factor_service import get_two_factor_service
+
             two_fa_service = get_two_factor_service(db)
 
             # If no code provided, indicate 2FA is required
             if not two_fa_code:
                 # Check if device is trusted
-                if device_token and two_fa_service.is_device_trusted(device_token, staff.trusted_devices or []):
+                if device_token and two_fa_service.is_device_trusted(
+                    device_token, staff.trusted_devices or []
+                ):
                     pass  # Device is trusted, proceed without code
                 else:
-                    return jsonify({
-                        "success": False,
-                        "requires_2fa": True,
-                        "error": "Two-factor authentication required",
-                        "staff_id": staff.id  # For 2FA challenge endpoint
-                    }), 200  # Return 200 so frontend can handle gracefully
+                    return (
+                        jsonify(
+                            {
+                                "success": False,
+                                "requires_2fa": True,
+                                "error": "Two-factor authentication required",
+                                "staff_id": staff.id,  # For 2FA challenge endpoint
+                            }
+                        ),
+                        200,
+                    )  # Return 200 so frontend can handle gracefully
 
             # Verify 2FA code
             if two_fa_code:
                 success, message, new_token = two_fa_service.verify_2fa_login(
-                    staff, two_fa_code, device_token,
+                    staff,
+                    two_fa_code,
+                    device_token,
                     request.headers.get("User-Agent"),
-                    user_ip, trust_device
+                    user_ip,
+                    trust_device,
                 )
                 if not success:
                     audit_service.log_login(
@@ -1225,6 +1246,7 @@ def api_staff_login():
         # Set trusted device cookie if 2FA was used with trust option
         if staff.two_factor_enabled and data.get("trust_device"):
             from services.two_factor_service import get_two_factor_service
+
             two_fa_service = get_two_factor_service(db)
             trusted_devices = staff.trusted_devices or []
             if trusted_devices:
@@ -1236,7 +1258,7 @@ def api_staff_login():
                         max_age=30 * 24 * 60 * 60,  # 30 days
                         httponly=True,
                         secure=True,
-                        samesite="Lax"
+                        samesite="Lax",
                     )
 
         return response
@@ -1250,6 +1272,7 @@ def api_staff_login():
 # Two-Factor Authentication (2FA) API Endpoints
 # =============================================================================
 
+
 @app.route("/api/2fa/status", methods=["GET"])
 @require_staff()
 def api_2fa_status():
@@ -1261,6 +1284,7 @@ def api_2fa_status():
             return jsonify({"success": False, "error": "Not authenticated"}), 401
 
         from services.two_factor_service import get_two_factor_service
+
         service = get_two_factor_service(db)
         status = service.get_2fa_status(staff)
 
@@ -1286,16 +1310,19 @@ def api_2fa_setup():
         method = data.get("method", "totp")
 
         from services.two_factor_service import get_two_factor_service
+
         service = get_two_factor_service(db)
         setup_data = service.setup_2fa_for_staff(staff, method)
 
-        return jsonify({
-            "success": True,
-            "secret": setup_data["secret"],
-            "qr_code": setup_data["qr_code"],
-            "backup_codes": setup_data["backup_codes"],
-            "method": setup_data["method"]
-        })
+        return jsonify(
+            {
+                "success": True,
+                "secret": setup_data["secret"],
+                "qr_code": setup_data["qr_code"],
+                "backup_codes": setup_data["backup_codes"],
+                "method": setup_data["method"],
+            }
+        )
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
@@ -1316,9 +1343,13 @@ def api_2fa_verify():
         code = data.get("code", "")
 
         if not code:
-            return jsonify({"success": False, "error": "Verification code required"}), 400
+            return (
+                jsonify({"success": False, "error": "Verification code required"}),
+                400,
+            )
 
         from services.two_factor_service import get_two_factor_service
+
         service = get_two_factor_service(db)
         success, message = service.verify_and_enable_2fa(staff, code)
 
@@ -1347,9 +1378,13 @@ def api_2fa_disable():
         use_backup = data.get("use_backup", False)
 
         if not code:
-            return jsonify({"success": False, "error": "Verification code required"}), 400
+            return (
+                jsonify({"success": False, "error": "Verification code required"}),
+                400,
+            )
 
         from services.two_factor_service import get_two_factor_service
+
         service = get_two_factor_service(db)
         success, message = service.disable_2fa(staff, code, use_backup)
 
@@ -1380,18 +1415,20 @@ def api_2fa_regenerate_backup_codes():
         code = data.get("code", "")
 
         if not code:
-            return jsonify({"success": False, "error": "Verification code required"}), 400
+            return (
+                jsonify({"success": False, "error": "Verification code required"}),
+                400,
+            )
 
         from services.two_factor_service import get_two_factor_service
+
         service = get_two_factor_service(db)
         success, new_codes, message = service.regenerate_backup_codes(staff, code)
 
         if success:
-            return jsonify({
-                "success": True,
-                "backup_codes": new_codes,
-                "message": message
-            })
+            return jsonify(
+                {"success": True, "backup_codes": new_codes, "message": message}
+            )
         else:
             return jsonify({"success": False, "error": message}), 400
     except Exception as e:
@@ -1411,6 +1448,7 @@ def api_2fa_list_devices():
             return jsonify({"success": False, "error": "Not authenticated"}), 401
 
         from services.two_factor_service import get_two_factor_service
+
         service = get_two_factor_service(db)
 
         # Remove expired devices and return
@@ -1419,14 +1457,16 @@ def api_2fa_list_devices():
         # Sanitize output (don't expose full token)
         sanitized = []
         for d in devices:
-            sanitized.append({
-                "token_prefix": d.get("token", "")[:8] + "...",
-                "user_agent": d.get("user_agent", "")[:100],
-                "ip_address": d.get("ip_address"),
-                "created_at": d.get("created_at"),
-                "expires_at": d.get("expires_at"),
-                "last_used": d.get("last_used")
-            })
+            sanitized.append(
+                {
+                    "token_prefix": d.get("token", "")[:8] + "...",
+                    "user_agent": d.get("user_agent", "")[:100],
+                    "ip_address": d.get("ip_address"),
+                    "created_at": d.get("created_at"),
+                    "expires_at": d.get("expires_at"),
+                    "last_used": d.get("last_used"),
+                }
+            )
 
         return jsonify({"success": True, "devices": sanitized})
     finally:
@@ -1475,7 +1515,7 @@ def dashboard_staff():
             "staff_management.html",
             staff_members=staff_members,
             stats=stats,
-            active_page="staff"
+            active_page="staff",
         )
     finally:
         db.close()
@@ -2087,7 +2127,9 @@ def clean_credit_report_html(html):
 
     # If cleaning destroys everything (>99% reduction), return original HTML instead
     if len(text) < len(html) * 0.01:
-        print(f"⚠️  Aggressive cleaning destroyed content! Using original HTML instead.")
+        print(
+            f"⚠️  Aggressive cleaning destroyed content! Using original HTML instead."
+        )
         text = html
 
     print(f"✂️ Cleaned size: {len(text):,} characters")
@@ -2189,15 +2231,9 @@ def merge_standing(standings: list[Any]) -> dict[str, Any]:
     for s in standings:
         if not s:
             continue
-        has_concrete_harm = has_concrete_harm or s.get(
-            "has_concrete_harm", False
-        )
-        has_dissemination = has_dissemination or s.get(
-            "has_dissemination", False
-        )
-        has_causation = has_causation or s.get(
-            "has_causation", False
-        )
+        has_concrete_harm = has_concrete_harm or s.get("has_concrete_harm", False)
+        has_dissemination = has_dissemination or s.get("has_dissemination", False)
+        has_causation = has_causation or s.get("has_causation", False)
         if s.get("concrete_harm_type"):
             concrete_harm_type.append(str(s.get("concrete_harm_type")))
         if s.get("harm_details"):
@@ -2236,12 +2272,8 @@ def merge_actual_damages(damages_list: list[Any]) -> dict[str, Any]:
         if not d:
             continue
         credit_denials_amount += float(d.get("credit_denials_amount", 0) or 0)
-        higher_interest_amount += float(
-            d.get("higher_interest_amount", 0) or 0
-        )
-        credit_monitoring_amount += float(
-            d.get("credit_monitoring_amount", 0) or 0
-        )
+        higher_interest_amount += float(d.get("higher_interest_amount", 0) or 0)
+        credit_monitoring_amount += float(d.get("credit_monitoring_amount", 0) or 0)
         time_stress_amount += float(d.get("time_stress_amount", 0) or 0)
         other_actual_amount += float(d.get("other_actual_amount", 0) or 0)
         if d.get("notes"):
@@ -6239,7 +6271,9 @@ def dashboard_predictive():
     try:
         # Get predictive analytics data
         revenue_forecast = predictive_analytics_service.forecast_revenue(months_ahead=3)
-        caseload_forecast = predictive_analytics_service.forecast_caseload(months_ahead=3)
+        caseload_forecast = predictive_analytics_service.forecast_caseload(
+            months_ahead=3
+        )
 
         # Get growth opportunities for top clients
         db = get_db()
@@ -6271,6 +6305,7 @@ def dashboard_predictive():
         )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         # Return template with empty/default data on error
         return render_template("predictive_analytics.html", **default_data)
@@ -6433,6 +6468,7 @@ def api_revenue_trends():
 # Revenue Dashboard (Priority 13)
 # =============================================================================
 
+
 @app.route("/dashboard/revenue")
 @require_staff(roles=["admin", "attorney"])
 def dashboard_revenue():
@@ -6440,11 +6476,12 @@ def dashboard_revenue():
     db = get_db()
     try:
         from services.revenue_metrics_service import get_revenue_metrics_service
+
         service = get_revenue_metrics_service(db)
 
         # Get dashboard summary
         summary = service.get_dashboard_summary()
-        chart_data = service.get_revenue_chart_data('month', 12)
+        chart_data = service.get_revenue_chart_data("month", 12)
         top_affiliates = service.get_top_affiliates(5)
         payment_methods = service.get_revenue_by_payment_method()
         plans = service.get_revenue_by_plan()
@@ -6456,20 +6493,21 @@ def dashboard_revenue():
             top_affiliates=top_affiliates,
             payment_methods=payment_methods,
             plans=plans,
-            active_page="revenue"
+            active_page="revenue",
         )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return render_template(
             "revenue_dashboard.html",
             summary={},
-            chart_data={'labels': [], 'datasets': {'revenue': [], 'clients': []}},
+            chart_data={"labels": [], "datasets": {"revenue": [], "clients": []}},
             top_affiliates=[],
             payment_methods={},
             plans={},
             active_page="revenue",
-            error=str(e)
+            error=str(e),
         )
     finally:
         db.close()
@@ -6482,6 +6520,7 @@ def api_revenue_summary():
     db = get_db()
     try:
         from services.revenue_metrics_service import get_revenue_metrics_service
+
         service = get_revenue_metrics_service(db)
         summary = service.get_dashboard_summary()
         return jsonify({"success": True, **summary})
@@ -6498,6 +6537,7 @@ def api_revenue_by_period():
     db = get_db()
     try:
         from services.revenue_metrics_service import get_revenue_metrics_service
+
         period = request.args.get("period", "month")
         limit = request.args.get("limit", 12, type=int)
 
@@ -6517,6 +6557,7 @@ def api_revenue_mrr():
     db = get_db()
     try:
         from services.revenue_metrics_service import get_revenue_metrics_service
+
         service = get_revenue_metrics_service(db)
         mrr = service.get_mrr()
         mrr_growth = service.get_mrr_growth(6)
@@ -6534,6 +6575,7 @@ def api_revenue_churn():
     db = get_db()
     try:
         from services.revenue_metrics_service import get_revenue_metrics_service
+
         service = get_revenue_metrics_service(db)
         churn = service.get_churn_rate(30)
         cohorts = service.get_client_retention_cohorts(6)
@@ -6550,9 +6592,10 @@ def api_revenue_export():
     """API: Export revenue data as CSV"""
     db = get_db()
     try:
-        from services.revenue_metrics_service import get_revenue_metrics_service
         import csv
         from io import StringIO
+
+        from services.revenue_metrics_service import get_revenue_metrics_service
 
         # Parse date filters with validation
         start_date = None
@@ -6563,38 +6606,54 @@ def api_revenue_export():
             if request.args.get("end"):
                 end_date = datetime.fromisoformat(request.args.get("end"))
         except ValueError:
-            return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)"}), 400
+            return (
+                jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)"}),
+                400,
+            )
 
         service = get_revenue_metrics_service(db)
         data = service.export_revenue_data(start_date, end_date)
 
         # Create CSV
         output = StringIO()
-        writer = csv.DictWriter(output, fieldnames=[
-            'client_id', 'name', 'email', 'plan', 'amount_dollars',
-            'status', 'method', 'payment_date', 'signup_date'
-        ])
+        writer = csv.DictWriter(
+            output,
+            fieldnames=[
+                "client_id",
+                "name",
+                "email",
+                "plan",
+                "amount_dollars",
+                "status",
+                "method",
+                "payment_date",
+                "signup_date",
+            ],
+        )
         writer.writeheader()
         for row in data:
-            writer.writerow({
-                'client_id': row['client_id'],
-                'name': row['name'],
-                'email': row['email'],
-                'plan': row['plan'],
-                'amount_dollars': row['amount_dollars'],
-                'status': row['status'],
-                'method': row['method'],
-                'payment_date': row['payment_date'],
-                'signup_date': row['signup_date']
-            })
+            writer.writerow(
+                {
+                    "client_id": row["client_id"],
+                    "name": row["name"],
+                    "email": row["email"],
+                    "plan": row["plan"],
+                    "amount_dollars": row["amount_dollars"],
+                    "status": row["status"],
+                    "method": row["method"],
+                    "payment_date": row["payment_date"],
+                    "signup_date": row["signup_date"],
+                }
+            )
 
         # Return as downloadable CSV
         from flask import Response
+
         output.seek(0)
         return Response(
             output.getvalue(),
-            mimetype='text/csv',
-            headers={'Content-Disposition': 'attachment; filename=revenue_export.csv'}
+            mimetype="text/csv",
+            headers={"Content-Disposition": "attachment; filename=revenue_export.csv"},
         )
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -6606,12 +6665,14 @@ def api_revenue_export():
 # SUBSCRIPTION MANAGEMENT ENDPOINTS
 # =============================================================================
 
+
 @app.route("/api/subscriptions/plans")
 def api_subscription_plans():
     """API: Get available subscription plans"""
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
+
         service = get_subscription_service(db)
         plans = service.get_plans(active_only=True)
         return jsonify({"success": True, "plans": plans})
@@ -6628,11 +6689,13 @@ def api_sync_subscription_plans():
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
+
         service = get_subscription_service(db)
         results = service.sync_plans_to_stripe()
         return jsonify({"success": True, "results": results})
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
@@ -6646,6 +6709,7 @@ def api_get_client_subscription(client_id):
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
+
         service = get_subscription_service(db)
         subscription = service.get_subscription(client_id)
         return jsonify({"success": True, "subscription": subscription})
@@ -6662,26 +6726,34 @@ def api_create_subscription_checkout(client_id):
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
+
         data = request.json or {}
         plan_name = data.get("plan_name", "basic")
 
         # Build URLs
-        base_url = request.host_url.rstrip('/')
-        success_url = data.get("success_url") or f"{base_url}/dashboard/clients/{client_id}?subscription=success"
-        cancel_url = data.get("cancel_url") or f"{base_url}/dashboard/clients/{client_id}?subscription=cancelled"
+        base_url = request.host_url.rstrip("/")
+        success_url = (
+            data.get("success_url")
+            or f"{base_url}/dashboard/clients/{client_id}?subscription=success"
+        )
+        cancel_url = (
+            data.get("cancel_url")
+            or f"{base_url}/dashboard/clients/{client_id}?subscription=cancelled"
+        )
 
         service = get_subscription_service(db)
         result = service.create_checkout_session(
             client_id=client_id,
             plan_name=plan_name,
             success_url=success_url,
-            cancel_url=cancel_url
+            cancel_url=cancel_url,
         )
         return jsonify({"success": True, **result})
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
@@ -6695,6 +6767,7 @@ def api_create_subscription(client_id):
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
+
         data = request.json or {}
         plan_name = data.get("plan_name", "basic")
         payment_method_id = data.get("payment_method_id")
@@ -6703,13 +6776,14 @@ def api_create_subscription(client_id):
         result = service.create_subscription(
             client_id=client_id,
             plan_name=plan_name,
-            payment_method_id=payment_method_id
+            payment_method_id=payment_method_id,
         )
         return jsonify({"success": True, **result})
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
@@ -6723,15 +6797,14 @@ def api_cancel_subscription(client_id):
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
+
         data = request.json or {}
         at_period_end = data.get("at_period_end", True)
         reason = data.get("reason")
 
         service = get_subscription_service(db)
         result = service.cancel_subscription(
-            client_id=client_id,
-            at_period_end=at_period_end,
-            reason=reason
+            client_id=client_id, at_period_end=at_period_end, reason=reason
         )
         return jsonify({"success": True, **result})
     except ValueError as e:
@@ -6749,6 +6822,7 @@ def api_reactivate_subscription(client_id):
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
+
         service = get_subscription_service(db)
         result = service.reactivate_subscription(client_id)
         return jsonify({"success": True, **result})
@@ -6767,6 +6841,7 @@ def api_change_subscription_plan(client_id):
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
+
         data = request.json or {}
         new_plan_name = data.get("plan_name")
 
@@ -6791,9 +6866,12 @@ def api_create_billing_portal(client_id):
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
+
         data = request.json or {}
-        base_url = request.host_url.rstrip('/')
-        return_url = data.get("return_url") or f"{base_url}/dashboard/clients/{client_id}"
+        base_url = request.host_url.rstrip("/")
+        return_url = (
+            data.get("return_url") or f"{base_url}/dashboard/clients/{client_id}"
+        )
 
         service = get_subscription_service(db)
         result = service.create_billing_portal_session(client_id, return_url)
@@ -6812,8 +6890,9 @@ def api_stripe_subscription_webhook():
     db = get_db()
     try:
         import stripe
-        from services.subscription_service import get_subscription_service
+
         from services.stripe_client import get_webhook_secret
+        from services.subscription_service import get_subscription_service
 
         payload = request.get_data()
         sig_header = request.headers.get("Stripe-Signature")
@@ -6829,6 +6908,7 @@ def api_stripe_subscription_webhook():
                 return jsonify({"error": "Invalid signature"}), 400
         else:
             import json
+
             event_data = json.loads(payload)
             event = stripe.Event.construct_from(event_data, stripe.api_key)
 
@@ -6839,6 +6919,7 @@ def api_stripe_subscription_webhook():
         return jsonify({"success": True, **result})
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     finally:
@@ -6856,6 +6937,7 @@ def portal_api_get_subscription():
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
+
         service = get_subscription_service(db)
         subscription = service.get_subscription(client.id)
         return jsonify({"success": True, "subscription": subscription})
@@ -6875,10 +6957,11 @@ def portal_api_subscription_checkout():
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
+
         data = request.json or {}
         plan_name = data.get("plan_name", "basic")
 
-        base_url = request.host_url.rstrip('/')
+        base_url = request.host_url.rstrip("/")
         success_url = f"{base_url}/portal/subscription?status=success"
         cancel_url = f"{base_url}/portal/subscription?status=cancelled"
 
@@ -6887,7 +6970,7 @@ def portal_api_subscription_checkout():
             client_id=client.id,
             plan_name=plan_name,
             success_url=success_url,
-            cancel_url=cancel_url
+            cancel_url=cancel_url,
         )
         return jsonify({"success": True, **result})
     except ValueError as e:
@@ -6908,7 +6991,8 @@ def portal_api_billing_portal():
     db = get_db()
     try:
         from services.subscription_service import get_subscription_service
-        base_url = request.host_url.rstrip('/')
+
+        base_url = request.host_url.rstrip("/")
         return_url = f"{base_url}/portal/subscription"
 
         service = get_subscription_service(db)
@@ -7052,10 +7136,16 @@ def dashboard_clients():
             if analysis:
                 damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
                 score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
-                violations_count = db.query(Violation).filter_by(analysis_id=analysis.id).count()
+                violations_count = (
+                    db.query(Violation).filter_by(analysis_id=analysis.id).count()
+                )
 
             # Build client name
-            client_name = client.name or f"{client.first_name or ''} {client.last_name or ''}".strip() or "Unknown"
+            client_name = (
+                client.name
+                or f"{client.first_name or ''} {client.last_name or ''}".strip()
+                or "Unknown"
+            )
 
             cases.append(
                 {
@@ -7071,7 +7161,11 @@ def dashboard_clients():
                     "score": score.total_score if score else None,
                     "exposure": damages.total_exposure if damages else None,
                     "violations": violations_count,
-                    "created_at": client.created_at.strftime("%Y-%m-%d %H:%M") if client.created_at else "N/A",
+                    "created_at": (
+                        client.created_at.strftime("%Y-%m-%d %H:%M")
+                        if client.created_at
+                        else "N/A"
+                    ),
                     # Phase 8 BAG CRM fields
                     "client_type": client.client_type or "L",
                     "follow_up_date": (
@@ -8322,7 +8416,7 @@ def portal_redirect():
 @app.route("/portal/guide")
 def client_portal_guide():
     """Client Portal SOP/Guide - public page with all screenshots"""
-    return render_template('portal/client_guide.html')
+    return render_template("portal/client_guide.html")
 
 
 @app.route("/portal/<token>")
@@ -12890,7 +12984,15 @@ def api_generate_pii_correction():
             return jsonify({"success": False, "error": "Client ID is required"}), 400
 
         if not incorrect_pii:
-            return jsonify({"success": False, "error": "incorrect_pii is required - specify what PII to correct"}), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "incorrect_pii is required - specify what PII to correct",
+                    }
+                ),
+                400,
+            )
 
         # Validate at least one incorrect item
         has_items = any(
@@ -12898,10 +13000,15 @@ def api_generate_pii_correction():
             for key in ["names", "addresses", "phones", "employers", "ssn_variations"]
         )
         if not has_items:
-            return jsonify({
-                "success": False,
-                "error": "incorrect_pii must contain at least one item (names, addresses, phones, employers, or ssn_variations)"
-            }), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "incorrect_pii must contain at least one item (names, addresses, phones, employers, or ssn_variations)",
+                    }
+                ),
+                400,
+            )
 
         client = db.query(Client).filter_by(id=client_id).first()
         if not client:
@@ -12918,19 +13025,27 @@ def api_generate_pii_correction():
         )
 
         if result.get("success"):
-            return jsonify({
-                "success": True,
-                "batch_id": result.get("batch_id"),
-                "pdf_path": result.get("pdf_path"),
-                "docx_path": result.get("docx_path"),
-                "bureaus_included": result.get("bureaus_included"),
-                "total_letters": result.get("total_letters"),
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "batch_id": result.get("batch_id"),
+                    "pdf_path": result.get("pdf_path"),
+                    "docx_path": result.get("docx_path"),
+                    "bureaus_included": result.get("bureaus_included"),
+                    "total_letters": result.get("total_letters"),
+                }
+            )
         else:
-            return jsonify({"success": False, "error": result.get("error", "Unknown error")}), 400
+            return (
+                jsonify(
+                    {"success": False, "error": result.get("error", "Unknown error")}
+                ),
+                400,
+            )
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
@@ -12972,7 +13087,10 @@ def api_client_pii_correction(client_id):
         case_number = data.get("case_number")
 
         if not incorrect_pii:
-            return jsonify({"success": False, "error": "incorrect_pii is required"}), 400
+            return (
+                jsonify({"success": False, "error": "incorrect_pii is required"}),
+                400,
+            )
 
         from services.pii_correction_service import generate_pii_correction_letters
 
@@ -12985,19 +13103,27 @@ def api_client_pii_correction(client_id):
         )
 
         if result.get("success"):
-            return jsonify({
-                "success": True,
-                "batch_id": result.get("batch_id"),
-                "pdf_path": result.get("pdf_path"),
-                "docx_path": result.get("docx_path"),
-                "bureaus_included": result.get("bureaus_included"),
-                "total_letters": result.get("total_letters"),
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "batch_id": result.get("batch_id"),
+                    "pdf_path": result.get("pdf_path"),
+                    "docx_path": result.get("docx_path"),
+                    "bureaus_included": result.get("bureaus_included"),
+                    "total_letters": result.get("total_letters"),
+                }
+            )
         else:
-            return jsonify({"success": False, "error": result.get("error", "Unknown error")}), 400
+            return (
+                jsonify(
+                    {"success": False, "error": result.get("error", "Unknown error")}
+                ),
+                400,
+            )
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
@@ -13795,7 +13921,9 @@ def api_create_client():
         if data.get("date_of_birth"):
             try:
                 if isinstance(data["date_of_birth"], str):
-                    client.date_of_birth = datetime.strptime(data["date_of_birth"], "%Y-%m-%d").date()
+                    client.date_of_birth = datetime.strptime(
+                        data["date_of_birth"], "%Y-%m-%d"
+                    ).date()
                 else:
                     client.date_of_birth = data["date_of_birth"]
             except:
@@ -13866,59 +13994,151 @@ def api_delete_client(client_id):
 
         # Import all models needed for comprehensive deletion
         from database import (
-            ClientDocumentSignature, SettlementEstimate, OnboardingProgress, CaseEvent,
-            SecondaryBureauFreeze, Commission, TimelineEvent, WhatsAppMessage,
-            NotarizationOrder, FreezeLetterBatch, CertifiedMailOrder, AttorneyReferral,
-            LimitedPOA, Metro2DisputeLog, ESignatureRequest, CROAProgress, ScoreScenario,
-            CFPBComplaint, EscalationRecommendation, IntegrationEvent, CertifiedMailingRecord,
-            NotarizeTransaction, CreditPullRequest, CreditPullLog, ClientSubscription,
-            BackgroundTask, ClientLifetimeValue, WorkflowExecution, InterOrgTransfer,
-            ChexSystemsDispute, SpecialtyBureauDispute, FrivolousDefense, MortgagePaymentLedger,
-            SuspenseAccountFinding, PatternInstance, AutomationMetrics, TradelineStatus,
-            Booking, ClientMessage, ChatConversation, ChatMessage, SignatureSession, SignedDocument,
-            SignatureAuditLog, CROAComplianceTracker, Invoice, InvoiceItem, InvoicePayment,
-            BatchJobItem, StaffActivity, ClientSuccessMetric, PushSubscription, ROICalculation,
-            PaymentPlan, PaymentPlanInstallment, PaymentPlanPayment, BureauDisputeTracking,
-            GeneratedLetter, VoicemailDrop, BulkCampaignRecipient, ClientTestimonial,
-            ClientBadge, CRAResponse, CRAResponseOCR, DisputeItem, CaseTriage, CaseOutcome,
-            OutcomePrediction, Document, AnalysisQueue, DripEnrollment, Violation, Damages, Standing, CaseScore
+            AnalysisQueue,
+            AttorneyReferral,
+            AutomationMetrics,
+            BackgroundTask,
+            BatchJobItem,
+            Booking,
+            BulkCampaignRecipient,
+            BureauDisputeTracking,
+            CaseEvent,
+            CaseOutcome,
+            CaseScore,
+            CaseTriage,
+            CertifiedMailingRecord,
+            CertifiedMailOrder,
+            CFPBComplaint,
+            ChatConversation,
+            ChatMessage,
+            ChexSystemsDispute,
+            ClientBadge,
+            ClientDocumentSignature,
+            ClientLifetimeValue,
+            ClientMessage,
+            ClientSubscription,
+            ClientSuccessMetric,
+            ClientTestimonial,
+            Commission,
+            CRAResponse,
+            CRAResponseOCR,
+            CreditPullLog,
+            CreditPullRequest,
+            CROAComplianceTracker,
+            CROAProgress,
+            Damages,
+            DisputeItem,
+            Document,
+            DripEnrollment,
+            EscalationRecommendation,
+            ESignatureRequest,
+            FreezeLetterBatch,
+            FrivolousDefense,
+            GeneratedLetter,
+            IntegrationEvent,
+            InterOrgTransfer,
+            Invoice,
+            InvoiceItem,
+            InvoicePayment,
+            LimitedPOA,
+            Metro2DisputeLog,
+            MortgagePaymentLedger,
+            NotarizationOrder,
+            NotarizeTransaction,
+            OnboardingProgress,
+            OutcomePrediction,
+            PatternInstance,
+            PaymentPlan,
+            PaymentPlanInstallment,
+            PaymentPlanPayment,
+            PushSubscription,
+            ROICalculation,
+            ScoreScenario,
+            SecondaryBureauFreeze,
+            SettlementEstimate,
+            SignatureAuditLog,
+            SignatureSession,
+            SignedDocument,
+            SpecialtyBureauDispute,
+            StaffActivity,
+            Standing,
+            SuspenseAccountFinding,
+            TimelineEvent,
+            TradelineStatus,
+            Violation,
+            VoicemailDrop,
+            WhatsAppMessage,
+            WorkflowExecution,
         )
 
         # === PHASE 1: Delete tables that reference other tables (deepest children first) ===
-
         # Payment plan sub-tables (reference PaymentPlan)
-        plan_ids = [p.id for p in db.query(PaymentPlan).filter_by(client_id=client_id).all()]
+        plan_ids = [
+            p.id for p in db.query(PaymentPlan).filter_by(client_id=client_id).all()
+        ]
         if plan_ids:
-            db.query(PaymentPlanInstallment).filter(PaymentPlanInstallment.plan_id.in_(plan_ids)).delete(synchronize_session=False)
-            db.query(PaymentPlanPayment).filter(PaymentPlanPayment.plan_id.in_(plan_ids)).delete(synchronize_session=False)
+            db.query(PaymentPlanInstallment).filter(
+                PaymentPlanInstallment.plan_id.in_(plan_ids)
+            ).delete(synchronize_session=False)
+            db.query(PaymentPlanPayment).filter(
+                PaymentPlanPayment.plan_id.in_(plan_ids)
+            ).delete(synchronize_session=False)
 
         # Invoice sub-tables (reference Invoice)
-        invoice_ids = [i.id for i in db.query(Invoice).filter_by(client_id=client_id).all()]
+        invoice_ids = [
+            i.id for i in db.query(Invoice).filter_by(client_id=client_id).all()
+        ]
         if invoice_ids:
-            db.query(InvoiceItem).filter(InvoiceItem.invoice_id.in_(invoice_ids)).delete(synchronize_session=False)
-            db.query(InvoicePayment).filter(InvoicePayment.invoice_id.in_(invoice_ids)).delete(synchronize_session=False)
+            db.query(InvoiceItem).filter(
+                InvoiceItem.invoice_id.in_(invoice_ids)
+            ).delete(synchronize_session=False)
+            db.query(InvoicePayment).filter(
+                InvoicePayment.invoice_id.in_(invoice_ids)
+            ).delete(synchronize_session=False)
 
         # Get case IDs for cascade deletion
         case_ids = [c.id for c in db.query(Case).filter_by(client_id=client_id).all()]
 
         # Get analysis IDs for cascade deletion
-        analysis_ids = [a.id for a in db.query(Analysis).filter_by(client_id=client_id).all()]
+        analysis_ids = [
+            a.id for a in db.query(Analysis).filter_by(client_id=client_id).all()
+        ]
 
         # === PHASE 2: Delete case-related tables ===
         if case_ids:
-            db.query(CaseEvent).filter(CaseEvent.case_id.in_(case_ids)).delete(synchronize_session=False)
-            db.query(Settlement).filter(Settlement.case_id.in_(case_ids)).delete(synchronize_session=False)
-            db.query(Document).filter(Document.case_id.in_(case_ids)).delete(synchronize_session=False)
-            db.query(AnalysisQueue).filter(AnalysisQueue.case_id.in_(case_ids)).delete(synchronize_session=False)
+            db.query(CaseEvent).filter(CaseEvent.case_id.in_(case_ids)).delete(
+                synchronize_session=False
+            )
+            db.query(Settlement).filter(Settlement.case_id.in_(case_ids)).delete(
+                synchronize_session=False
+            )
+            db.query(Document).filter(Document.case_id.in_(case_ids)).delete(
+                synchronize_session=False
+            )
+            db.query(AnalysisQueue).filter(AnalysisQueue.case_id.in_(case_ids)).delete(
+                synchronize_session=False
+            )
 
         # === PHASE 3: Delete analysis-related tables ===
         if analysis_ids:
-            db.query(Violation).filter(Violation.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
-            db.query(Damages).filter(Damages.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
-            db.query(Standing).filter(Standing.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
-            db.query(CaseScore).filter(CaseScore.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
-            db.query(DisputeItem).filter(DisputeItem.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
-            db.query(CRAResponse).filter(CRAResponse.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
+            db.query(Violation).filter(Violation.analysis_id.in_(analysis_ids)).delete(
+                synchronize_session=False
+            )
+            db.query(Damages).filter(Damages.analysis_id.in_(analysis_ids)).delete(
+                synchronize_session=False
+            )
+            db.query(Standing).filter(Standing.analysis_id.in_(analysis_ids)).delete(
+                synchronize_session=False
+            )
+            db.query(CaseScore).filter(CaseScore.analysis_id.in_(analysis_ids)).delete(
+                synchronize_session=False
+            )
+            db.query(DisputeItem).filter(
+                DisputeItem.analysis_id.in_(analysis_ids)
+            ).delete(synchronize_session=False)
+            db.query(CRAResponse).filter(
+                CRAResponse.analysis_id.in_(analysis_ids)
+            ).delete(synchronize_session=False)
 
         # CRAResponseOCR uses client_id not analysis_id
         db.query(CRAResponseOCR).filter_by(client_id=client_id).delete()
@@ -13959,9 +14179,14 @@ def api_delete_client(client_id):
         db.query(Notification).filter_by(client_id=client_id).delete()
         db.query(ClientMessage).filter_by(client_id=client_id).delete()
         # Delete chat messages before conversations (FK constraint)
-        conversation_ids = [c.id for c in db.query(ChatConversation).filter_by(client_id=client_id).all()]
+        conversation_ids = [
+            c.id
+            for c in db.query(ChatConversation).filter_by(client_id=client_id).all()
+        ]
         if conversation_ids:
-            db.query(ChatMessage).filter(ChatMessage.conversation_id.in_(conversation_ids)).delete(synchronize_session=False)
+            db.query(ChatMessage).filter(
+                ChatMessage.conversation_id.in_(conversation_ids)
+            ).delete(synchronize_session=False)
         db.query(ChatConversation).filter_by(client_id=client_id).delete()
         db.query(VoicemailDrop).filter_by(client_id=client_id).delete()
         db.query(BulkCampaignRecipient).filter_by(client_id=client_id).delete()
@@ -14105,23 +14330,18 @@ def api_validate_address():
     zip_code = data.get("zip_code", "")
 
     if not street or not city or not state:
-        return jsonify({
-            "success": False,
-            "error": "Street, city, and state are required"
-        }), 400
+        return (
+            jsonify(
+                {"success": False, "error": "Street, city, and state are required"}
+            ),
+            400,
+        )
 
     is_valid, result = validate_client_address(
-        street=street,
-        city=city,
-        state=state,
-        zip_code=zip_code,
-        street2=street2
+        street=street, city=city, state=state, zip_code=zip_code, street2=street2
     )
 
-    return jsonify({
-        "success": True,
-        **result
-    })
+    return jsonify({"success": True, **result})
 
 
 @app.route("/api/clients/<int:client_id>/validate-address", methods=["POST"])
@@ -14147,7 +14367,7 @@ def api_validate_client_address(client_id):
             city=client.address_city or "",
             state=client.address_state or "",
             zip_code=client.address_zip or "",
-            street2=""
+            street2="",
         )
 
         # Update client address if requested and valid
@@ -14163,12 +14383,14 @@ def api_validate_client_address(client_id):
         else:
             result["address_updated"] = False
 
-        return jsonify({
-            "success": True,
-            "client_id": client_id,
-            "client_name": client.name,
-            **result
-        })
+        return jsonify(
+            {
+                "success": True,
+                "client_id": client_id,
+                "client_name": client.name,
+                **result,
+            }
+        )
 
     except Exception as e:
         db.rollback()
@@ -14194,26 +14416,21 @@ def api_bulk_validate_addresses():
 
         # If no IDs specified, check all clients with addresses
         if not client_ids:
-            clients = db.query(Client).filter(
-                Client.address_street.isnot(None),
-                Client.address_street != ""
-            ).all()
+            clients = (
+                db.query(Client)
+                .filter(Client.address_street.isnot(None), Client.address_street != "")
+                .all()
+            )
         else:
             clients = db.query(Client).filter(Client.id.in_(client_ids)).all()
 
-        results = {
-            "valid": [],
-            "invalid": [],
-            "correctable": [],
-            "no_address": []
-        }
+        results = {"valid": [], "invalid": [], "correctable": [], "no_address": []}
 
         for client in clients:
             if not client.address_street:
-                results["no_address"].append({
-                    "client_id": client.id,
-                    "name": client.name
-                })
+                results["no_address"].append(
+                    {"client_id": client.id, "name": client.name}
+                )
                 continue
 
             is_valid, result = validate_client_address(
@@ -14221,7 +14438,7 @@ def api_bulk_validate_addresses():
                 city=client.address_city or "",
                 state=client.address_state or "",
                 zip_code=client.address_zip or "",
-                street2=""
+                street2="",
             )
 
             client_info = {
@@ -14230,7 +14447,7 @@ def api_bulk_validate_addresses():
                 "original_address": result["original_address"],
                 "validated_address": result["validated_address"],
                 "corrections": result["corrections"],
-                "error_message": result["error_message"]
+                "error_message": result["error_message"],
             }
 
             if not is_valid:
@@ -14240,17 +14457,19 @@ def api_bulk_validate_addresses():
             else:
                 results["valid"].append(client_info)
 
-        return jsonify({
-            "success": True,
-            "total_checked": len(clients),
-            "summary": {
-                "valid": len(results["valid"]),
-                "invalid": len(results["invalid"]),
-                "correctable": len(results["correctable"]),
-                "no_address": len(results["no_address"])
-            },
-            "results": results
-        })
+        return jsonify(
+            {
+                "success": True,
+                "total_checked": len(clients),
+                "summary": {
+                    "valid": len(results["valid"]),
+                    "invalid": len(results["invalid"]),
+                    "correctable": len(results["correctable"]),
+                    "no_address": len(results["no_address"]),
+                },
+                "results": results,
+            }
+        )
 
     except Exception as e:
         log_error(e, {"action": "bulk_validate_addresses"})
@@ -14281,13 +14500,25 @@ def api_bulk_apply_address_corrections():
 
             if not client_id or not validated:
                 failed += 1
-                results.append({"client_id": client_id, "status": "skipped", "reason": "Missing data"})
+                results.append(
+                    {
+                        "client_id": client_id,
+                        "status": "skipped",
+                        "reason": "Missing data",
+                    }
+                )
                 continue
 
             client = db.query(Client).filter_by(id=client_id).first()
             if not client:
                 failed += 1
-                results.append({"client_id": client_id, "status": "skipped", "reason": "Client not found"})
+                results.append(
+                    {
+                        "client_id": client_id,
+                        "status": "skipped",
+                        "reason": "Client not found",
+                    }
+                )
                 continue
 
             # Store original for logging
@@ -14295,7 +14526,7 @@ def api_bulk_apply_address_corrections():
                 "street": client.address_street,
                 "city": client.address_city,
                 "state": client.address_state,
-                "zip": client.address_zip
+                "zip": client.address_zip,
             }
 
             # Apply corrections
@@ -14319,28 +14550,32 @@ def api_bulk_apply_address_corrections():
             client.updated_at = datetime.now()
             applied += 1
 
-            results.append({
-                "client_id": client_id,
-                "name": f"{client.first_name} {client.last_name}",
-                "status": "applied",
-                "original": original,
-                "corrected": {
-                    "street": client.address_street,
-                    "city": client.address_city,
-                    "state": client.address_state,
-                    "zip": client.address_zip
+            results.append(
+                {
+                    "client_id": client_id,
+                    "name": f"{client.first_name} {client.last_name}",
+                    "status": "applied",
+                    "original": original,
+                    "corrected": {
+                        "street": client.address_street,
+                        "city": client.address_city,
+                        "state": client.address_state,
+                        "zip": client.address_zip,
+                    },
                 }
-            })
+            )
 
         db.commit()
 
-        return jsonify({
-            "success": True,
-            "applied": applied,
-            "failed": failed,
-            "total": len(corrections),
-            "results": results
-        })
+        return jsonify(
+            {
+                "success": True,
+                "applied": applied,
+                "failed": failed,
+                "total": len(corrections),
+                "results": results,
+            }
+        )
 
     except Exception as e:
         db.rollback()
@@ -14362,24 +14597,46 @@ def api_standardize_addresses_offline():
     try:
         # Common street abbreviations (USPS standard)
         ABBREVIATIONS = {
-            'street': 'ST', 'str': 'ST', 'st.': 'ST',
-            'avenue': 'AVE', 'ave.': 'AVE', 'av': 'AVE',
-            'boulevard': 'BLVD', 'blvd.': 'BLVD',
-            'drive': 'DR', 'dr.': 'DR',
-            'lane': 'LN', 'ln.': 'LN',
-            'road': 'RD', 'rd.': 'RD',
-            'court': 'CT', 'ct.': 'CT',
-            'circle': 'CIR', 'cir.': 'CIR',
-            'place': 'PL', 'pl.': 'PL',
-            'terrace': 'TER', 'ter.': 'TER',
-            'highway': 'HWY', 'hwy.': 'HWY',
-            'parkway': 'PKWY', 'pkwy.': 'PKWY',
-            'north': 'N', 'south': 'S', 'east': 'E', 'west': 'W',
-            'northeast': 'NE', 'northwest': 'NW',
-            'southeast': 'SE', 'southwest': 'SW',
-            'apartment': 'APT', 'apt.': 'APT',
-            'suite': 'STE', 'ste.': 'STE',
-            'unit': 'UNIT', 'floor': 'FL'
+            "street": "ST",
+            "str": "ST",
+            "st.": "ST",
+            "avenue": "AVE",
+            "ave.": "AVE",
+            "av": "AVE",
+            "boulevard": "BLVD",
+            "blvd.": "BLVD",
+            "drive": "DR",
+            "dr.": "DR",
+            "lane": "LN",
+            "ln.": "LN",
+            "road": "RD",
+            "rd.": "RD",
+            "court": "CT",
+            "ct.": "CT",
+            "circle": "CIR",
+            "cir.": "CIR",
+            "place": "PL",
+            "pl.": "PL",
+            "terrace": "TER",
+            "ter.": "TER",
+            "highway": "HWY",
+            "hwy.": "HWY",
+            "parkway": "PKWY",
+            "pkwy.": "PKWY",
+            "north": "N",
+            "south": "S",
+            "east": "E",
+            "west": "W",
+            "northeast": "NE",
+            "northwest": "NW",
+            "southeast": "SE",
+            "southwest": "SW",
+            "apartment": "APT",
+            "apt.": "APT",
+            "suite": "STE",
+            "ste.": "STE",
+            "unit": "UNIT",
+            "floor": "FL",
         }
 
         def standardize_street(street):
@@ -14389,21 +14646,26 @@ def api_standardize_addresses_offline():
             words = street.split()
             result = []
             for i, word in enumerate(words):
-                word_lower = word.lower().rstrip('.,')
+                word_lower = word.lower().rstrip(".,")
                 if word_lower in ABBREVIATIONS:
                     result.append(ABBREVIATIONS[word_lower])
-                elif word.isdigit() or (len(word) > 1 and word[:-2].isdigit() and word[-2:].lower() in ['st', 'nd', 'rd', 'th']):
+                elif word.isdigit() or (
+                    len(word) > 1
+                    and word[:-2].isdigit()
+                    and word[-2:].lower() in ["st", "nd", "rd", "th"]
+                ):
                     # Keep numbers and ordinals as-is
                     result.append(word.upper() if word[-2:].isalpha() else word)
                 else:
                     result.append(word.title())
-            return ' '.join(result)
+            return " ".join(result)
 
         # Get all clients with addresses
-        clients = db.query(Client).filter(
-            Client.address_street.isnot(None),
-            Client.address_street != ""
-        ).all()
+        clients = (
+            db.query(Client)
+            .filter(Client.address_street.isnot(None), Client.address_street != "")
+            .all()
+        )
 
         standardized = 0
         results = []
@@ -14413,7 +14675,7 @@ def api_standardize_addresses_offline():
                 "street": client.address_street,
                 "city": client.address_city,
                 "state": client.address_state,
-                "zip": client.address_zip
+                "zip": client.address_zip,
             }
 
             changes = []
@@ -14441,21 +14703,25 @@ def api_standardize_addresses_offline():
             if changes:
                 client.updated_at = datetime.now()
                 standardized += 1
-                results.append({
-                    "client_id": client.id,
-                    "name": f"{client.first_name} {client.last_name}",
-                    "changes": changes
-                })
+                results.append(
+                    {
+                        "client_id": client.id,
+                        "name": f"{client.first_name} {client.last_name}",
+                        "changes": changes,
+                    }
+                )
 
         db.commit()
 
-        return jsonify({
-            "success": True,
-            "message": f"Standardized {standardized} addresses",
-            "standardized": standardized,
-            "total_checked": len(clients),
-            "results": results
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Standardized {standardized} addresses",
+                "standardized": standardized,
+                "total_checked": len(clients),
+                "results": results,
+            }
+        )
 
     except Exception as e:
         db.rollback()
@@ -14682,7 +14948,9 @@ def api_send_portal_invite(client_id):
     """
     import secrets
     import string
+
     from werkzeug.security import generate_password_hash
+
     from services.email_service import send_email
 
     db = get_db()
@@ -14692,17 +14960,20 @@ def api_send_portal_invite(client_id):
             return jsonify({"success": False, "error": "Client not found"}), 404
 
         if not client.email:
-            return jsonify({"success": False, "error": "Client has no email address"}), 400
+            return (
+                jsonify({"success": False, "error": "Client has no email address"}),
+                400,
+            )
 
         # Generate secure temp password (12 chars: letters + digits + special)
         alphabet = string.ascii_letters + string.digits + "!@#$%"
-        temp_password = ''.join(secrets.choice(alphabet) for _ in range(12))
+        temp_password = "".join(secrets.choice(alphabet) for _ in range(12))
 
         # Set password hash
         client.portal_password_hash = generate_password_hash(temp_password)
 
         # Update stage to onboarding (so they see CROA documents)
-        client.client_stage = 'onboarding'
+        client.client_stage = "onboarding"
 
         # Generate portal token as backup access method
         if not client.portal_token:
@@ -14711,7 +14982,7 @@ def api_send_portal_invite(client_id):
         db.commit()
 
         # Build login URL
-        base_url = request.host_url.rstrip('/')
+        base_url = request.host_url.rstrip("/")
         login_url = f"{base_url}/portal/login"
         magic_link = f"{base_url}/portal/{client.portal_token}"
 
@@ -14750,17 +15021,19 @@ def api_send_portal_invite(client_id):
         email_result = send_email(
             to_email=client.email,
             subject="Your Client Portal is Ready - Login Instructions",
-            html_content=html_content
+            html_content=html_content,
         )
 
-        return jsonify({
-            "success": True,
-            "message": f"Portal invite sent to {client.email}",
-            "client_stage": client.client_stage,
-            "temp_password": temp_password,  # Return to staff so they can share if needed
-            "login_url": login_url,
-            "magic_link": magic_link
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Portal invite sent to {client.email}",
+                "client_stage": client.client_stage,
+                "temp_password": temp_password,  # Return to staff so they can share if needed
+                "login_url": login_url,
+                "magic_link": magic_link,
+            }
+        )
 
     except Exception as e:
         db.rollback()
@@ -15600,10 +15873,10 @@ def api_delete_quick_link(slot_number):
 # ============================================================
 
 from services.email_template_service import (
+    COMMON_VARIABLES,
+    TEMPLATE_CATEGORIES,
     EmailTemplateService,
     seed_default_templates,
-    TEMPLATE_CATEGORIES,
-    COMMON_VARIABLES,
 )
 
 
@@ -15629,11 +15902,13 @@ def api_list_email_templates_library():
         search=search,
     )
 
-    return jsonify({
-        "success": True,
-        "templates": templates,
-        "categories": TEMPLATE_CATEGORIES,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "templates": templates,
+            "categories": TEMPLATE_CATEGORIES,
+        }
+    )
 
 
 @app.route("/api/email-templates/stats", methods=["GET"])
@@ -15648,20 +15923,24 @@ def api_email_template_stats():
 @require_staff()
 def api_email_template_categories():
     """Get available template categories"""
-    return jsonify({
-        "success": True,
-        "categories": TEMPLATE_CATEGORIES,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "categories": TEMPLATE_CATEGORIES,
+        }
+    )
 
 
 @app.route("/api/email-templates/variables", methods=["GET"])
 @require_staff()
 def api_email_template_variables():
     """Get common template variables"""
-    return jsonify({
-        "success": True,
-        "variables": COMMON_VARIABLES,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "variables": COMMON_VARIABLES,
+        }
+    )
 
 
 @app.route("/api/email-templates/library/<int:template_id>", methods=["GET"])
@@ -15685,7 +15964,12 @@ def api_create_email_template_library():
     required = ["template_type", "name", "subject", "html_content"]
     for field in required:
         if not data.get(field):
-            return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+            return (
+                jsonify(
+                    {"success": False, "error": f"Missing required field: {field}"}
+                ),
+                400,
+            )
 
     result = EmailTemplateService.create_template(
         template_type=data["template_type"],
@@ -15801,20 +16085,18 @@ from services.drip_campaign_service import DripCampaignService
 @require_staff()
 def api_get_drip_trigger_types():
     """Get all available trigger types"""
-    return jsonify({
-        "success": True,
-        "trigger_types": DripCampaignService.get_trigger_types()
-    })
+    return jsonify(
+        {"success": True, "trigger_types": DripCampaignService.get_trigger_types()}
+    )
 
 
 @app.route("/api/drip-campaigns/enrollment-statuses", methods=["GET"])
 @require_staff()
 def api_get_enrollment_statuses():
     """Get all enrollment status options"""
-    return jsonify({
-        "success": True,
-        "statuses": DripCampaignService.get_enrollment_statuses()
-    })
+    return jsonify(
+        {"success": True, "statuses": DripCampaignService.get_enrollment_statuses()}
+    )
 
 
 @app.route("/api/drip-campaigns", methods=["GET"])
@@ -15829,8 +16111,7 @@ def api_list_drip_campaigns():
         is_active = is_active.lower() == "true"
 
     campaigns = DripCampaignService.list_campaigns(
-        is_active=is_active,
-        trigger_type=trigger_type
+        is_active=is_active, trigger_type=trigger_type
     )
     return jsonify({"success": True, "campaigns": campaigns})
 
@@ -15847,7 +16128,10 @@ def api_create_drip_campaign():
     trigger_type = data.get("trigger_type")
 
     if not name or not trigger_type:
-        return jsonify({"success": False, "error": "Name and trigger_type are required"}), 400
+        return (
+            jsonify({"success": False, "error": "Name and trigger_type are required"}),
+            400,
+        )
 
     # Get current staff ID
     staff_id = session.get("staff_id")
@@ -15861,7 +16145,7 @@ def api_create_drip_campaign():
         send_window_end=data.get("send_window_end", 17),
         send_on_weekends=data.get("send_on_weekends", False),
         created_by_id=staff_id,
-        steps=data.get("steps")
+        steps=data.get("steps"),
     )
 
     if result["success"]:
@@ -15874,7 +16158,9 @@ def api_create_drip_campaign():
 def api_get_drip_campaign(campaign_id):
     """Get a drip campaign by ID"""
     include_steps = request.args.get("include_steps", "true").lower() == "true"
-    campaign = DripCampaignService.get_campaign(campaign_id, include_steps=include_steps)
+    campaign = DripCampaignService.get_campaign(
+        campaign_id, include_steps=include_steps
+    )
 
     if campaign:
         return jsonify({"success": True, "campaign": campaign})
@@ -15904,7 +16190,9 @@ def api_delete_drip_campaign(campaign_id):
 
     if result["success"]:
         return jsonify(result)
-    return jsonify(result), 404 if "not found" in result.get("error", "").lower() else 400
+    return jsonify(result), (
+        404 if "not found" in result.get("error", "").lower() else 400
+    )
 
 
 @app.route("/api/drip-campaigns/<int:campaign_id>/stats", methods=["GET"])
@@ -15920,6 +16208,7 @@ def api_get_drip_campaign_stats(campaign_id):
 
 # ============== DRIP CAMPAIGN STEPS ==============
 
+
 @app.route("/api/drip-campaigns/<int:campaign_id>/steps", methods=["POST"])
 @require_staff()
 def api_add_drip_step(campaign_id):
@@ -15932,7 +16221,12 @@ def api_add_drip_step(campaign_id):
     delay_days = data.get("delay_days")
 
     if template_id is None or delay_days is None:
-        return jsonify({"success": False, "error": "template_id and delay_days are required"}), 400
+        return (
+            jsonify(
+                {"success": False, "error": "template_id and delay_days are required"}
+            ),
+            400,
+        )
 
     result = DripCampaignService.add_step(
         campaign_id=campaign_id,
@@ -15940,7 +16234,7 @@ def api_add_drip_step(campaign_id):
         delay_days=delay_days,
         delay_hours=data.get("delay_hours", 0),
         subject_override=data.get("subject_override"),
-        step_order=data.get("step_order")
+        step_order=data.get("step_order"),
     )
 
     if result["success"]:
@@ -15971,7 +16265,9 @@ def api_delete_drip_step(step_id):
 
     if result["success"]:
         return jsonify(result)
-    return jsonify(result), 404 if "not found" in result.get("error", "").lower() else 400
+    return jsonify(result), (
+        404 if "not found" in result.get("error", "").lower() else 400
+    )
 
 
 @app.route("/api/drip-campaigns/<int:campaign_id>/steps/reorder", methods=["POST"])
@@ -15991,6 +16287,7 @@ def api_reorder_drip_steps(campaign_id):
 
 # ============== DRIP ENROLLMENTS ==============
 
+
 @app.route("/api/drip-campaigns/enrollments", methods=["GET"])
 @require_staff()
 def api_list_drip_enrollments():
@@ -16000,14 +16297,14 @@ def api_list_drip_enrollments():
     status = request.args.get("status")
 
     result = DripCampaignService.list_enrollments(
-        campaign_id=campaign_id,
-        client_id=client_id,
-        status=status
+        campaign_id=campaign_id, client_id=client_id, status=status
     )
     return jsonify(result)
 
 
-@app.route("/api/drip-campaigns/<int:campaign_id>/enroll/<int:client_id>", methods=["POST"])
+@app.route(
+    "/api/drip-campaigns/<int:campaign_id>/enroll/<int:client_id>", methods=["POST"]
+)
 @require_staff()
 def api_enroll_client_in_campaign(campaign_id, client_id):
     """Enroll a client in a drip campaign"""
@@ -16017,7 +16314,7 @@ def api_enroll_client_in_campaign(campaign_id, client_id):
         campaign_id=campaign_id,
         client_id=client_id,
         trigger_source=data.get("trigger_source", "manual"),
-        skip_if_enrolled=data.get("skip_if_enrolled", True)
+        skip_if_enrolled=data.get("skip_if_enrolled", True),
     )
 
     if result["success"]:
@@ -16036,19 +16333,25 @@ def api_get_drip_enrollment(enrollment_id):
     return jsonify({"success": False, "error": "Enrollment not found"}), 404
 
 
-@app.route("/api/drip-campaigns/enrollments/<int:enrollment_id>/pause", methods=["POST"])
+@app.route(
+    "/api/drip-campaigns/enrollments/<int:enrollment_id>/pause", methods=["POST"]
+)
 @require_staff()
 def api_pause_drip_enrollment(enrollment_id):
     """Pause an enrollment"""
     data = request.get_json() or {}
-    result = DripCampaignService.pause_enrollment(enrollment_id, reason=data.get("reason"))
+    result = DripCampaignService.pause_enrollment(
+        enrollment_id, reason=data.get("reason")
+    )
 
     if result["success"]:
         return jsonify(result)
     return jsonify(result), 400
 
 
-@app.route("/api/drip-campaigns/enrollments/<int:enrollment_id>/resume", methods=["POST"])
+@app.route(
+    "/api/drip-campaigns/enrollments/<int:enrollment_id>/resume", methods=["POST"]
+)
 @require_staff()
 def api_resume_drip_enrollment(enrollment_id):
     """Resume a paused enrollment"""
@@ -16059,12 +16362,16 @@ def api_resume_drip_enrollment(enrollment_id):
     return jsonify(result), 400
 
 
-@app.route("/api/drip-campaigns/enrollments/<int:enrollment_id>/cancel", methods=["POST"])
+@app.route(
+    "/api/drip-campaigns/enrollments/<int:enrollment_id>/cancel", methods=["POST"]
+)
 @require_staff()
 def api_cancel_drip_enrollment(enrollment_id):
     """Cancel an enrollment"""
     data = request.get_json() or {}
-    result = DripCampaignService.cancel_enrollment(enrollment_id, reason=data.get("reason"))
+    result = DripCampaignService.cancel_enrollment(
+        enrollment_id, reason=data.get("reason")
+    )
 
     if result["success"]:
         return jsonify(result)
@@ -16072,6 +16379,7 @@ def api_cancel_drip_enrollment(enrollment_id):
 
 
 # ============== DRIP PROCESSING ==============
+
 
 @app.route("/api/drip-campaigns/process", methods=["POST"])
 @require_staff()
@@ -16093,9 +16401,9 @@ def drip_campaigns_page():
 # ============================================================
 
 from services.sms_template_service import (
-    SMSTemplateService,
     SMS_CATEGORIES,
     SMS_VARIABLES,
+    SMSTemplateService,
     seed_default_sms_templates,
 )
 
@@ -16122,11 +16430,13 @@ def api_list_sms_templates():
         search=search,
     )
 
-    return jsonify({
-        "success": True,
-        "templates": templates,
-        "categories": SMS_CATEGORIES,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "templates": templates,
+            "categories": SMS_CATEGORIES,
+        }
+    )
 
 
 @app.route("/api/sms-templates/stats", methods=["GET"])
@@ -16141,20 +16451,24 @@ def api_sms_template_stats():
 @require_staff()
 def api_sms_template_categories():
     """Get available SMS template categories"""
-    return jsonify({
-        "success": True,
-        "categories": SMS_CATEGORIES,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "categories": SMS_CATEGORIES,
+        }
+    )
 
 
 @app.route("/api/sms-templates/variables", methods=["GET"])
 @require_staff()
 def api_sms_template_variables():
     """Get common SMS template variables"""
-    return jsonify({
-        "success": True,
-        "variables": SMS_VARIABLES,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "variables": SMS_VARIABLES,
+        }
+    )
 
 
 @app.route("/api/sms-templates/<int:template_id>", methods=["GET"])
@@ -16178,7 +16492,12 @@ def api_create_sms_template():
     required = ["template_type", "name", "message"]
     for field in required:
         if not data.get(field):
-            return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+            return (
+                jsonify(
+                    {"success": False, "error": f"Missing required field: {field}"}
+                ),
+                400,
+            )
 
     result = SMSTemplateService.create_template(
         template_type=data["template_type"],
@@ -16279,9 +16598,19 @@ def api_send_sms_from_template():
     data = request.json
 
     if not data.get("template_id") and not data.get("template_type"):
-        return jsonify({"success": False, "error": "Must provide template_id or template_type"}), 400
+        return (
+            jsonify(
+                {"success": False, "error": "Must provide template_id or template_type"}
+            ),
+            400,
+        )
     if not data.get("client_id") and not data.get("phone"):
-        return jsonify({"success": False, "error": "Must provide client_id or phone number"}), 400
+        return (
+            jsonify(
+                {"success": False, "error": "Must provide client_id or phone number"}
+            ),
+            400,
+        )
 
     # Get client info if client_id provided
     phone = data.get("phone")
@@ -16291,11 +16620,15 @@ def api_send_sms_from_template():
     if data.get("client_id"):
         session = SessionLocal()
         try:
-            client = session.query(Client).filter(Client.id == data["client_id"]).first()
+            client = (
+                session.query(Client).filter(Client.id == data["client_id"]).first()
+            )
             if client:
                 phone = phone or client.phone
                 client_name = client_name or client.name
-                first_name = first_name or (client.name.split()[0] if client.name else "")
+                first_name = first_name or (
+                    client.name.split()[0] if client.name else ""
+                )
         finally:
             session.close()
 
@@ -16320,27 +16653,40 @@ def api_send_sms_from_template():
     # Send the SMS
     try:
         from services.sms_service import send_sms
+
         sms_result = send_sms(phone, result["message"])
 
         if sms_result.get("success"):
-            return jsonify({
-                "success": True,
-                "message": "SMS sent successfully",
-                "sms_sid": sms_result.get("sid"),
-                "char_count": result["char_count"],
-                "segments": result["segments"],
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "SMS sent successfully",
+                    "sms_sid": sms_result.get("sid"),
+                    "char_count": result["char_count"],
+                    "segments": result["segments"],
+                }
+            )
         else:
-            return jsonify({
-                "success": False,
-                "error": sms_result.get("error", "Failed to send SMS"),
-            }), 500
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": sms_result.get("error", "Failed to send SMS"),
+                    }
+                ),
+                500,
+            )
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"SMS service error: {str(e)}",
-        }), 500
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"SMS service error: {str(e)}",
+                }
+            ),
+            500,
+        )
 
 
 @app.route("/dashboard/sms-templates")
@@ -17983,7 +18329,15 @@ def api_send_certified_mail():
         )
 
         if not result.get("success"):
-            return jsonify({"success": False, "error": result.get("error", "Failed to send letter")}), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": result.get("error", "Failed to send letter"),
+                    }
+                ),
+                400,
+            )
 
         # Fire dispute_sent trigger for automation
         if bureau and dispute_round:
@@ -18634,7 +18988,10 @@ def api_esign_initiate_session():
     """Initiate a new e-signature session with documents (staff only)"""
     # Staff authentication check
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.esignature_service import initiate_signing_session
@@ -18651,7 +19008,12 @@ def api_esign_initiate_session():
         if not documents:
             return jsonify({"success": False, "error": "documents required"}), 400
         if not signer_email or not signer_name:
-            return jsonify({"success": False, "error": "signer_email and signer_name required"}), 400
+            return (
+                jsonify(
+                    {"success": False, "error": "signer_email and signer_name required"}
+                ),
+                400,
+            )
 
         result = initiate_signing_session(
             client_id=client_id,
@@ -18681,7 +19043,9 @@ def api_esign_get_session(session_uuid):
 
         if result.get("success"):
             return jsonify(result)
-        return jsonify(result), 404 if "not found" in result.get("error", "").lower() else 400
+        return jsonify(result), (
+            404 if "not found" in result.get("error", "").lower() else 400
+        )
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -18697,9 +19061,15 @@ def api_esign_submit_consent(session_uuid):
 
         result = submit_esign_consent(
             session_uuid=session_uuid,
-            hardware_software_acknowledged=data.get("hardware_software_acknowledged", False),
-            paper_copy_right_acknowledged=data.get("paper_copy_right_acknowledged", False),
-            consent_withdrawal_acknowledged=data.get("consent_withdrawal_acknowledged", False),
+            hardware_software_acknowledged=data.get(
+                "hardware_software_acknowledged", False
+            ),
+            paper_copy_right_acknowledged=data.get(
+                "paper_copy_right_acknowledged", False
+            ),
+            consent_withdrawal_acknowledged=data.get(
+                "consent_withdrawal_acknowledged", False
+            ),
             ip_address=request.remote_addr,
             user_agent=request.user_agent.string if request.user_agent else None,
             device_fingerprint=data.get("device_fingerprint"),
@@ -18713,7 +19083,9 @@ def api_esign_submit_consent(session_uuid):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/api/esign/session/<session_uuid>/document/<document_uuid>", methods=["GET"])
+@app.route(
+    "/api/esign/session/<session_uuid>/document/<document_uuid>", methods=["GET"]
+)
 def api_esign_get_document(session_uuid, document_uuid):
     """Get a document for review"""
     try:
@@ -18729,7 +19101,10 @@ def api_esign_get_document(session_uuid, document_uuid):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/api/esign/session/<session_uuid>/document/<document_uuid>/progress", methods=["POST"])
+@app.route(
+    "/api/esign/session/<session_uuid>/document/<document_uuid>/progress",
+    methods=["POST"],
+)
 def api_esign_record_progress(session_uuid, document_uuid):
     """Record document review progress (scroll, duration)"""
     try:
@@ -18753,7 +19128,9 @@ def api_esign_record_progress(session_uuid, document_uuid):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/api/esign/session/<session_uuid>/document/<document_uuid>/sign", methods=["POST"])
+@app.route(
+    "/api/esign/session/<session_uuid>/document/<document_uuid>/sign", methods=["POST"]
+)
 def api_esign_sign_document(session_uuid, document_uuid):
     """Sign a document with full legal compliance"""
     try:
@@ -18762,7 +19139,10 @@ def api_esign_sign_document(session_uuid, document_uuid):
         data = request.json or {}
 
         if not data.get("intent_confirmed"):
-            return jsonify({"success": False, "error": "Intent confirmation required"}), 400
+            return (
+                jsonify({"success": False, "error": "Intent confirmation required"}),
+                400,
+            )
         if not data.get("typed_name"):
             return jsonify({"success": False, "error": "Typed name required"}), 400
 
@@ -18848,7 +19228,10 @@ def api_esign_get_audit_trail(session_uuid):
     """Get complete audit trail for a signing session (staff only)"""
     # Staff authentication check
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.esignature_service import get_session_audit_trail
@@ -18884,7 +19267,10 @@ def api_esign_client_history(client_id):
     """Get all signing sessions and documents for a client (staff only)"""
     # Staff authentication check
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.esignature_service import get_client_signing_history
@@ -18904,7 +19290,10 @@ def api_esign_croa_status(client_id):
     """Get CROA compliance status for a client (staff only)"""
     # Staff authentication check
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.esignature_service import get_croa_compliance_status
@@ -18950,7 +19339,10 @@ def api_esign_croa_waive(client_id):
         data = request.json or {}
 
         if not data.get("waiver_signature"):
-            return jsonify({"success": False, "error": "waiver_signature required"}), 400
+            return (
+                jsonify({"success": False, "error": "waiver_signature required"}),
+                400,
+            )
 
         result = waive_cancellation_period(
             client_id=client_id,
@@ -18989,12 +19381,20 @@ def esign_signing_page(session_uuid):
         result = get_session_by_uuid(session_uuid)
 
         if not result.get("success"):
-            return render_template("error.html",
-                error_title="Session Not Found",
-                error_message=result.get("error", "The signing session could not be found or has expired.")
-            ), 404
+            return (
+                render_template(
+                    "error.html",
+                    error_title="Session Not Found",
+                    error_message=result.get(
+                        "error",
+                        "The signing session could not be found or has expired.",
+                    ),
+                ),
+                404,
+            )
 
-        return render_template("esign/signing_page.html",
+        return render_template(
+            "esign/signing_page.html",
             session=result.get("session"),
             documents=result.get("documents"),
             consent_disclosure=result.get("consent_disclosure"),
@@ -19002,10 +19402,10 @@ def esign_signing_page(session_uuid):
         )
 
     except Exception as e:
-        return render_template("error.html",
-            error_title="Error",
-            error_message=str(e)
-        ), 500
+        return (
+            render_template("error.html", error_title="Error", error_message=str(e)),
+            500,
+        )
 
 
 # ==============================================================================
@@ -19017,11 +19417,15 @@ def esign_signing_page(session_uuid):
 def api_list_invoices():
     """List invoices with optional filters"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
-        from services.invoice_service import list_invoices
         from datetime import datetime
+
+        from services.invoice_service import list_invoices
 
         client_id = request.args.get("client_id", type=int)
         status = request.args.get("status")
@@ -19031,8 +19435,14 @@ def api_list_invoices():
         limit = request.args.get("limit", 100, type=int)
         offset = request.args.get("offset", 0, type=int)
 
-        from_date = datetime.strptime(from_date_str, "%Y-%m-%d").date() if from_date_str else None
-        to_date = datetime.strptime(to_date_str, "%Y-%m-%d").date() if to_date_str else None
+        from_date = (
+            datetime.strptime(from_date_str, "%Y-%m-%d").date()
+            if from_date_str
+            else None
+        )
+        to_date = (
+            datetime.strptime(to_date_str, "%Y-%m-%d").date() if to_date_str else None
+        )
 
         result = list_invoices(
             client_id=client_id,
@@ -19054,11 +19464,15 @@ def api_list_invoices():
 def api_create_invoice():
     """Create a new invoice"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
-        from services.invoice_service import create_invoice
         from datetime import datetime
+
+        from services.invoice_service import create_invoice
 
         data = request.json or {}
         client_id = data.get("client_id")
@@ -19109,12 +19523,17 @@ def api_create_invoice():
 def api_get_invoice(invoice_id):
     """Get invoice by ID"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import get_invoice
 
-        include_payments = request.args.get("include_payments", "false").lower() == "true"
+        include_payments = (
+            request.args.get("include_payments", "false").lower() == "true"
+        )
         result = get_invoice(invoice_id, include_payments=include_payments)
 
         if result.get("success"):
@@ -19129,11 +19548,15 @@ def api_get_invoice(invoice_id):
 def api_update_invoice(invoice_id):
     """Update invoice"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
-        from services.invoice_service import update_invoice
         from datetime import datetime
+
+        from services.invoice_service import update_invoice
 
         data = request.json or {}
 
@@ -19163,7 +19586,10 @@ def api_update_invoice(invoice_id):
 def api_delete_invoice(invoice_id):
     """Delete a draft invoice"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import delete_invoice
@@ -19182,7 +19608,10 @@ def api_delete_invoice(invoice_id):
 def api_add_invoice_item(invoice_id):
     """Add a line item to an invoice"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import add_item
@@ -19216,7 +19645,10 @@ def api_add_invoice_item(invoice_id):
 def api_remove_invoice_item(invoice_id, item_id):
     """Remove a line item from an invoice"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import remove_item
@@ -19235,11 +19667,15 @@ def api_remove_invoice_item(invoice_id, item_id):
 def api_record_invoice_payment(invoice_id):
     """Record a payment against an invoice"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
-        from services.invoice_service import record_payment
         from datetime import datetime
+
+        from services.invoice_service import record_payment
 
         data = request.json or {}
 
@@ -19274,7 +19710,10 @@ def api_record_invoice_payment(invoice_id):
 def api_void_invoice(invoice_id):
     """Void/cancel an invoice"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import void_invoice
@@ -19294,7 +19733,10 @@ def api_void_invoice(invoice_id):
 def api_send_invoice(invoice_id):
     """Send invoice to client via email"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import send_invoice_email
@@ -19313,7 +19755,10 @@ def api_send_invoice(invoice_id):
 def api_generate_invoice_pdf(invoice_id):
     """Generate PDF for an invoice"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import generate_invoice_pdf
@@ -19332,11 +19777,15 @@ def api_generate_invoice_pdf(invoice_id):
 def api_download_invoice_pdf(invoice_id):
     """Download invoice PDF"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
-        from services.invoice_service import get_invoice, INVOICE_PDF_DIR
         import os
+
+        from services.invoice_service import INVOICE_PDF_DIR, get_invoice
 
         result = get_invoice(invoice_id)
         if not result.get("success"):
@@ -19350,7 +19799,9 @@ def api_download_invoice_pdf(invoice_id):
         if not os.path.exists(pdf_path):
             return jsonify({"success": False, "error": "PDF file not found"}), 404
 
-        return send_file(pdf_path, as_attachment=True, download_name=invoice["pdf_filename"])
+        return send_file(
+            pdf_path, as_attachment=True, download_name=invoice["pdf_filename"]
+        )
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -19360,7 +19811,10 @@ def api_download_invoice_pdf(invoice_id):
 def api_invoice_stats():
     """Get invoice statistics"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import get_invoice_stats
@@ -19379,7 +19833,10 @@ def api_invoice_stats():
 def api_check_overdue_invoices():
     """Check and update overdue invoices"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import check_overdue_invoices
@@ -19395,7 +19852,10 @@ def api_check_overdue_invoices():
 def api_client_invoices(client_id):
     """Get all invoices for a client"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import get_client_invoices
@@ -19411,7 +19871,10 @@ def api_client_invoices(client_id):
 def api_create_invoice_for_round(client_id):
     """Create an invoice for a dispute round"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import create_invoice_for_round
@@ -19438,11 +19901,16 @@ def api_create_invoice_for_round(client_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/api/clients/<int:client_id>/invoices/create-for-analysis", methods=["POST"])
+@app.route(
+    "/api/clients/<int:client_id>/invoices/create-for-analysis", methods=["POST"]
+)
 def api_create_invoice_for_analysis(client_id):
     """Create an invoice for credit analysis"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     try:
         from services.invoice_service import create_invoice_for_analysis
@@ -19485,13 +19953,18 @@ def api_push_vapid_public_key():
     from services.push_notification_service import get_vapid_keys, is_push_configured
 
     if not is_push_configured():
-        return jsonify({"success": False, "error": "Push notifications not configured"}), 503
+        return (
+            jsonify({"success": False, "error": "Push notifications not configured"}),
+            503,
+        )
 
     keys = get_vapid_keys()
-    return jsonify({
-        "success": True,
-        "publicKey": keys["public_key"],
-    })
+    return jsonify(
+        {
+            "success": True,
+            "publicKey": keys["public_key"],
+        }
+    )
 
 
 @app.route("/api/push/subscribe", methods=["POST"])
@@ -19563,10 +20036,12 @@ def api_push_subscriptions():
 
     subscriptions = get_subscriptions(client_id=client_id, staff_id=staff_id)
 
-    return jsonify({
-        "success": True,
-        "subscriptions": subscriptions,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "subscriptions": subscriptions,
+        }
+    )
 
 
 @app.route("/api/push/subscriptions/<int:subscription_id>/preferences", methods=["PUT"])
@@ -19584,7 +20059,10 @@ def api_push_update_preferences(subscription_id):
 def api_push_test():
     """Send a test push notification (staff only)"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     from services.push_notification_service import send_to_staff
 
@@ -19603,7 +20081,10 @@ def api_push_test():
 def api_push_send_to_client(client_id):
     """Send a push notification to a client (staff only)"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     from services.push_notification_service import send_to_client
 
@@ -19632,7 +20113,10 @@ def api_push_send_to_client(client_id):
 def api_push_logs():
     """Get push notification logs (staff only)"""
     if not session.get("staff_id"):
-        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+        return (
+            jsonify({"success": False, "error": "Staff authentication required"}),
+            401,
+        )
 
     from services.push_notification_service import get_notification_logs
 
@@ -19646,10 +20130,12 @@ def api_push_logs():
         limit=limit,
     )
 
-    return jsonify({
-        "success": True,
-        "logs": logs,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "logs": logs,
+        }
+    )
 
 
 # ==============================================================================
@@ -27257,7 +27743,9 @@ def instant_preview_page():
     return render_template("instant_preview.html")
 
 
-PREVIEW_RATE_LIMIT: dict[str, tuple[int, float]] = {}  # Simple IP-based rate limit: {ip: (count, first_request_time)}
+PREVIEW_RATE_LIMIT: dict[str, tuple[int, float]] = (
+    {}
+)  # Simple IP-based rate limit: {ip: (count, first_request_time)}
 PREVIEW_RATE_MAX = 10  # Max 10 requests per 10 minutes per IP
 PREVIEW_RATE_WINDOW = 600  # 10 minutes
 
@@ -33344,11 +33832,11 @@ def dashboard_logs():
 def api_get_logs():
     """Get activity logs for the dashboard viewer"""
     from services.activity_logger import (
-        get_recent_activities,
+        RECENT_ACTIVITIES,
         get_activities_from_file,
-        read_error_log,
+        get_recent_activities,
         read_app_log,
-        RECENT_ACTIVITIES
+        read_error_log,
     )
 
     status_filter = request.args.get("status")
@@ -33378,13 +33866,21 @@ def api_get_logs():
 
         elif log_type == "errors":
             error_lines = read_error_log(limit=limit)
-            logs = [{"raw": line} for line in error_lines if not search or search.lower() in line.lower()]
+            logs = [
+                {"raw": line}
+                for line in error_lines
+                if not search or search.lower() in line.lower()
+            ]
             stats["error"] = len(logs)
             stats["total"] = len(logs)
 
         elif log_type == "app":
             app_lines = read_app_log(limit=limit)
-            logs = [{"raw": line} for line in app_lines if not search or search.lower() in line.lower()]
+            logs = [
+                {"raw": line}
+                for line in app_lines
+                if not search or search.lower() in line.lower()
+            ]
             stats["total"] = len(logs)
 
         return jsonify({"logs": logs, "stats": stats})
@@ -33397,14 +33893,15 @@ def api_get_logs():
 # AI USAGE TRACKING
 # =============================================================================
 
+
 @app.route("/dashboard/ai-usage")
 @require_staff(roles=["admin"])
 def dashboard_ai_usage():
     """AI usage and cost tracking dashboard"""
     from services.ai_usage_service import (
-        get_usage_summary,
+        get_recent_logs,
         get_usage_by_client,
-        get_recent_logs
+        get_usage_summary,
     )
 
     days = request.args.get("days", 30, type=int)
@@ -33417,7 +33914,7 @@ def dashboard_ai_usage():
         "ai_usage_dashboard.html",
         summary=summary,
         top_clients=top_clients,
-        recent_logs=recent_logs
+        recent_logs=recent_logs,
     )
 
 
@@ -33476,42 +33973,55 @@ def api_ai_usage_monthly():
 @require_staff(roles=["admin"])
 def api_ai_usage_export():
     """Export AI usage data as CSV"""
-    from services.ai_usage_service import get_recent_logs
     import csv
     from io import StringIO
+
+    from services.ai_usage_service import get_recent_logs
 
     limit = request.args.get("limit", 1000, type=int)
     logs = get_recent_logs(limit=limit)
 
     output = StringIO()
     writer = csv.writer(output)
-    writer.writerow([
-        "Date", "Service", "Operation", "Model",
-        "Input Tokens", "Output Tokens", "Total Tokens",
-        "Cost ($)", "Duration (ms)", "Client ID", "Success"
-    ])
+    writer.writerow(
+        [
+            "Date",
+            "Service",
+            "Operation",
+            "Model",
+            "Input Tokens",
+            "Output Tokens",
+            "Total Tokens",
+            "Cost ($)",
+            "Duration (ms)",
+            "Client ID",
+            "Success",
+        ]
+    )
 
     for log in logs:
-        writer.writerow([
-            log.get("created_at", ""),
-            log.get("service", ""),
-            log.get("operation", ""),
-            log.get("model", ""),
-            log.get("input_tokens", 0),
-            log.get("output_tokens", 0),
-            log.get("total_tokens", 0),
-            log.get("cost_dollars", 0),
-            log.get("duration_ms", 0),
-            log.get("client_id", ""),
-            log.get("success", True)
-        ])
+        writer.writerow(
+            [
+                log.get("created_at", ""),
+                log.get("service", ""),
+                log.get("operation", ""),
+                log.get("model", ""),
+                log.get("input_tokens", 0),
+                log.get("output_tokens", 0),
+                log.get("total_tokens", 0),
+                log.get("cost_dollars", 0),
+                log.get("duration_ms", 0),
+                log.get("client_id", ""),
+                log.get("success", True),
+            ]
+        )
 
     output.seek(0)
     return send_file(
         io.BytesIO(output.getvalue().encode()),
         mimetype="text/csv",
         as_attachment=True,
-        download_name=f"ai_usage_export_{datetime.utcnow().strftime('%Y%m%d')}.csv"
+        download_name=f"ai_usage_export_{datetime.utcnow().strftime('%Y%m%d')}.csv",
     )
 
 
@@ -34717,11 +35227,7 @@ def api_auto_pull_services():
     services = AutoPullService.get_supported_services()
     frequencies = AutoPullService.get_frequencies()
 
-    return jsonify({
-        "success": True,
-        "services": services,
-        "frequencies": frequencies
-    })
+    return jsonify({"success": True, "services": services, "frequencies": frequencies})
 
 
 @app.route("/api/auto-pull/credentials", methods=["GET"])
@@ -34735,8 +35241,7 @@ def api_auto_pull_credentials():
 
     service = AutoPullService()
     credentials = service.get_credentials(
-        client_id=client_id,
-        service_name=service_name
+        client_id=client_id, service_name=service_name
     )
 
     return jsonify({"success": True, "credentials": credentials})
@@ -34755,7 +35260,12 @@ def api_auto_pull_add_credential():
     required = ["client_id", "service_name", "username", "password"]
     for field in required:
         if not data.get(field):
-            return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+            return (
+                jsonify(
+                    {"success": False, "error": f"Missing required field: {field}"}
+                ),
+                400,
+            )
 
     service = AutoPullService()
     result = service.add_credential(
@@ -34764,7 +35274,7 @@ def api_auto_pull_add_credential():
         username=data["username"],
         password=data["password"],
         ssn_last4=data.get("ssn_last4"),
-        import_frequency=data.get("import_frequency", "manual")
+        import_frequency=data.get("import_frequency", "manual"),
     )
 
     if result.get("success"):
@@ -34787,7 +35297,7 @@ def api_auto_pull_update_credential(credential_id):
         username=data.get("username"),
         password=data.get("password"),
         import_frequency=data.get("import_frequency"),
-        is_active=data.get("is_active")
+        is_active=data.get("is_active"),
     )
 
     if result.get("success"):
@@ -34823,7 +35333,7 @@ def api_auto_pull_initiate(credential_id):
     result = service.initiate_pull(
         credential_id=credential_id,
         pull_type="manual",
-        triggered_by=f"staff_{staff_id}"
+        triggered_by=f"staff_{staff_id}",
     )
 
     if result.get("success"):
@@ -34843,18 +35353,13 @@ def api_auto_pull_client(client_id):
     service = AutoPullService()
     credentials = service.get_credentials(client_id=client_id)
 
-    results = {
-        "total": len(credentials),
-        "success": 0,
-        "failed": 0,
-        "pulls": []
-    }
+    results = {"total": len(credentials), "success": 0, "failed": 0, "pulls": []}
 
     for cred in credentials:
         result = service.initiate_pull(
             credential_id=cred["id"],
             pull_type="manual",
-            triggered_by=f"staff_{staff_id}"
+            triggered_by=f"staff_{staff_id}",
         )
 
         if result.get("success"):
@@ -34862,12 +35367,14 @@ def api_auto_pull_client(client_id):
         else:
             results["failed"] += 1
 
-        results["pulls"].append({
-            "credential_id": cred["id"],
-            "service": cred["service_name"],
-            "success": result.get("success", False),
-            "error": result.get("error")
-        })
+        results["pulls"].append(
+            {
+                "credential_id": cred["id"],
+                "service": cred["service_name"],
+                "success": result.get("success", False),
+                "error": result.get("error"),
+            }
+        )
 
     return jsonify({"success": True, **results})
 
@@ -34911,10 +35418,7 @@ def api_auto_pull_logs():
 
     service = AutoPullService()
     logs = service.get_pull_logs(
-        client_id=client_id,
-        credential_id=credential_id,
-        status=status,
-        limit=limit
+        client_id=client_id, credential_id=credential_id, status=status, limit=limit
     )
 
     return jsonify({"success": True, "logs": logs})
@@ -34936,7 +35440,7 @@ def api_auto_pull_validate(credential_id):
 @require_staff()
 def dashboard_auto_pull():
     """Auto-pull credit reports dashboard"""
-    from services.auto_pull_service import AutoPullService, SUPPORTED_SERVICES
+    from services.auto_pull_service import SUPPORTED_SERVICES, AutoPullService
 
     service = AutoPullService()
     stats = service.get_pull_stats()
@@ -34947,20 +35451,27 @@ def dashboard_auto_pull():
     # Calculate service stats for dashboard breakdown
     service_stats = {}
     for key in SUPPORTED_SERVICES:
-        service_creds = [c for c in credentials if c.get('service_name') == key]
-        service_logs = [l for l in logs if l.get('service_name') == key]
-        success_logs = [l for l in service_logs if l.get('status') == 'success']
+        service_creds = [c for c in credentials if c.get("service_name") == key]
+        service_logs = [l for l in logs if l.get("service_name") == key]
+        success_logs = [l for l in service_logs if l.get("status") == "success"]
         service_stats[key] = {
-            'credentials': len(service_creds),
-            'pulls': len(service_logs),
-            'success': int((len(success_logs) / len(service_logs) * 100)) if service_logs else 0
+            "credentials": len(service_creds),
+            "pulls": len(service_logs),
+            "success": (
+                int((len(success_logs) / len(service_logs) * 100))
+                if service_logs
+                else 0
+            ),
         }
 
     db = get_db()
     try:
-        clients = db.query(Client).filter(
-            Client.dispute_status.notin_(["lead", "cancelled"])
-        ).order_by(Client.name).all()
+        clients = (
+            db.query(Client)
+            .filter(Client.dispute_status.notin_(["lead", "cancelled"]))
+            .order_by(Client.name)
+            .all()
+        )
 
         return render_template(
             "auto_pull.html",
@@ -34971,7 +35482,7 @@ def dashboard_auto_pull():
             credentials=credentials,
             logs=logs,
             due_for_pull=due_for_pull,
-            clients=clients
+            clients=clients,
         )
     finally:
         db.close()
@@ -35592,12 +36103,14 @@ def api_client_manager_bulk_set_round():
                     )
                     # Track for trigger firing after commit
                     if old_status != client.dispute_status:
-                        status_changes.append({
-                            "client_id": client.id,
-                            "client_name": client.name,
-                            "old_status": old_status,
-                            "new_status": client.dispute_status,
-                        })
+                        status_changes.append(
+                            {
+                                "client_id": client.id,
+                                "client_name": client.name,
+                                "old_status": old_status,
+                                "new_status": client.dispute_status,
+                            }
+                        )
                 else:
                     errors.append({"id": client_id, "error": "Client not found"})
             except Exception as e:
@@ -35720,9 +36233,12 @@ def api_client_manager_run_analysis():
             # Update lead score after analysis
             try:
                 from services.lead_scoring_service import score_client
+
                 score_result = score_client(client_id)
                 if score_result.get("success"):
-                    print(f"✅ Lead score updated: {client.name} = {score_result.get('score')} ({score_result.get('priority')})")
+                    print(
+                        f"✅ Lead score updated: {client.name} = {score_result.get('score')} ({score_result.get('priority')})"
+                    )
             except Exception as score_error:
                 print(f"⚠️ Lead scoring failed: {score_error}")
 
@@ -36236,6 +36752,7 @@ def get_started():
         db = get_db()
         if request.host:
             from services.whitelabel import get_white_label_service
+
             wl_service = get_white_label_service(db)
             tenant = wl_service.get_tenant_by_domain(request.host)
             if tenant:
@@ -36245,12 +36762,12 @@ def get_started():
         pass
 
     # Get calendly URL from config if set
-    calendly_url = getattr(config, 'CALENDLY_URL', '')
+    calendly_url = getattr(config, "CALENDLY_URL", "")
 
     return render_template(
         "get_started.html",
         whitelabel_branding=whitelabel_branding,
-        calendly_url=calendly_url
+        calendly_url=calendly_url,
     )
 
 
@@ -36259,13 +36776,13 @@ def affiliate_signup():
     """Affiliate signup redirect - sends to credit monitoring affiliate link"""
     # Default affiliate links (can be configured per tenant)
     affiliate_links = {
-        'identityiq': 'https://www.identityiq.com/sc-enrollment.aspx?offercode=431291KD',
-        'myscoreiq': 'https://www.myscoreiq.com/',
-        'smartcredit': 'https://www.smartcredit.com/'
+        "identityiq": "https://www.identityiq.com/sc-enrollment.aspx?offercode=431291KD",
+        "myscoreiq": "https://www.myscoreiq.com/",
+        "smartcredit": "https://www.smartcredit.com/",
     }
 
     # Default to IdentityIQ (highest commission usually)
-    default_link = affiliate_links.get('identityiq', 'https://www.identityiq.com/')
+    default_link = affiliate_links.get("identityiq", "https://www.identityiq.com/")
 
     return redirect(default_link)
 
@@ -36278,21 +36795,23 @@ def api_leads_capture():
         data = request.get_json() or {}
 
         # Validate required fields
-        first_name = data.get('first_name', '').strip()
-        last_name = data.get('last_name', '').strip()
-        email = data.get('email', '').strip()
+        first_name = data.get("first_name", "").strip()
+        last_name = data.get("last_name", "").strip()
+        email = data.get("email", "").strip()
 
         if not first_name or not last_name:
-            return jsonify({
-                "success": False,
-                "error": "First and last name are required"
-            }), 400
+            return (
+                jsonify(
+                    {"success": False, "error": "First and last name are required"}
+                ),
+                400,
+            )
 
         if not email:
-            return jsonify({
-                "success": False,
-                "error": "Email address is required"
-            }), 400
+            return (
+                jsonify({"success": False, "error": "Email address is required"}),
+                400,
+            )
 
         # Check if client already exists
         existing = db.query(Client).filter_by(email=email).first()
@@ -36310,26 +36829,26 @@ def api_leads_capture():
                 first_name=first_name,
                 last_name=last_name,
                 email=email,
-                phone=data.get('phone', '').strip() or None,
-                address_street=data.get('address', '').strip() or None,
-                address_city=data.get('city', '').strip() or None,
-                address_state=data.get('state', '').strip() or None,
-                address_zip=data.get('zip', '').strip() or None,
-                dispute_status='lead',  # Mark as lead, not active client
+                phone=data.get("phone", "").strip() or None,
+                address_street=data.get("address", "").strip() or None,
+                address_city=data.get("city", "").strip() or None,
+                address_state=data.get("state", "").strip() or None,
+                address_zip=data.get("zip", "").strip() or None,
+                dispute_status="lead",  # Mark as lead, not active client
                 current_dispute_round=0,
-                sms_opt_in=data.get('sms_opt_in', False),
-                email_opt_in=data.get('email_opt_in', True)
+                sms_opt_in=data.get("sms_opt_in", False),
+                email_opt_in=data.get("email_opt_in", True),
             )
             db.add(client)
 
         # Store credit monitoring info if provided
-        monitoring_service = data.get('monitoring_service', '').strip()
-        if monitoring_service and monitoring_service not in ['none', '']:
+        monitoring_service = data.get("monitoring_service", "").strip()
+        if monitoring_service and monitoring_service not in ["none", ""]:
             client.credit_monitoring_service = monitoring_service
 
-            monitoring_username = data.get('monitoring_username', '').strip()
-            monitoring_password = data.get('monitoring_password', '').strip()
-            ssn_last_four = data.get('ssn_last_four', '').strip()
+            monitoring_username = data.get("monitoring_username", "").strip()
+            monitoring_password = data.get("monitoring_password", "").strip()
+            ssn_last_four = data.get("ssn_last_four", "").strip()
 
             if monitoring_username:
                 client.credit_monitoring_username = monitoring_username
@@ -36338,6 +36857,7 @@ def api_leads_capture():
                 # Encrypt password before storing
                 try:
                     from services.encryption import encryption_service
+
                     encrypted = encryption_service.encrypt(monitoring_password)
                     client.credit_monitoring_password_encrypted = encrypted
                 except Exception:
@@ -36353,8 +36873,8 @@ def api_leads_capture():
             client.free_analysis_token = secrets.token_urlsafe(32)
 
         # Set client stage
-        if not client.client_stage or client.client_stage == 'lead':
-            client.client_stage = 'lead'
+        if not client.client_stage or client.client_stage == "lead":
+            client.client_stage = "lead"
 
         db.commit()
         db.refresh(client)
@@ -36365,24 +36885,33 @@ def api_leads_capture():
 
         # Try to pull credit report if credentials provided
         preview_data = None
-        monitoring_username = data.get('monitoring_username', '').strip()
-        monitoring_password = data.get('monitoring_password', '').strip()
-        ssn_last_four = data.get('ssn_last_four', '').strip()
+        monitoring_username = data.get("monitoring_username", "").strip()
+        monitoring_password = data.get("monitoring_password", "").strip()
+        ssn_last_four = data.get("ssn_last_four", "").strip()
 
-        if monitoring_service and monitoring_service not in ['none', ''] and monitoring_username and monitoring_password:
+        if (
+            monitoring_service
+            and monitoring_service not in ["none", ""]
+            and monitoring_username
+            and monitoring_password
+        ):
             try:
                 import asyncio
+
                 from services.credit_import_automation import CreditImportAutomation
 
                 # Map service names to the format expected by automation
                 service_map = {
-                    'identityiq': 'IdentityIQ.com',
-                    'myscoreiq': 'MyScoreIQ.com',
-                    'smartcredit': 'SmartCredit.com',
-                    'myfreescorenow': 'MyFreeScoreNow.com',
-                    'privacyguard': 'PrivacyGuard.com',
+                    "identityiq": "IdentityIQ.com",
+                    "myscoreiq": "MyScoreIQ.com",
+                    "smartcredit": "SmartCredit.com",
+                    "myfreescorenow": "MyFreeScoreNow.com",
+                    "privacyguard": "PrivacyGuard.com",
                 }
-                service_key = service_map.get(monitoring_service.lower().replace('.com', '').replace(' ', ''), monitoring_service)
+                service_key = service_map.get(
+                    monitoring_service.lower().replace(".com", "").replace(" ", ""),
+                    monitoring_service,
+                )
 
                 # Run the async import
                 async def do_import():
@@ -36392,9 +36921,9 @@ def api_leads_capture():
                             service_name=service_key,
                             username=monitoring_username,
                             password=monitoring_password,
-                            ssn_last4=ssn_last_four or '',
+                            ssn_last4=ssn_last_four or "",
                             client_id=client.id,
-                            client_name=client.name
+                            client_name=client.name,
                         )
                         return result
                     finally:
@@ -36408,62 +36937,69 @@ def api_leads_capture():
                 finally:
                     loop.close()
 
-                if import_result and import_result.get('success'):
-                    scores = import_result.get('scores', {})
+                if import_result and import_result.get("success"):
+                    scores = import_result.get("scores", {})
                     preview_data = {
-                        'bureau': 'TransUnion',
-                        'score': scores.get('transunion', scores.get('tu', '---')),
-                        'negative_items': import_result.get('negative_count', '--'),
-                        'total_accounts': import_result.get('account_count', '--'),
-                        'equifax_score': scores.get('equifax', scores.get('eq', '---')),
-                        'experian_score': scores.get('experian', scores.get('ex', '---')),
-                        'report_path': import_result.get('report_path')
+                        "bureau": "TransUnion",
+                        "score": scores.get("transunion", scores.get("tu", "---")),
+                        "negative_items": import_result.get("negative_count", "--"),
+                        "total_accounts": import_result.get("account_count", "--"),
+                        "equifax_score": scores.get("equifax", scores.get("eq", "---")),
+                        "experian_score": scores.get(
+                            "experian", scores.get("ex", "---")
+                        ),
+                        "report_path": import_result.get("report_path"),
                     }
 
                     # Update client with report info
-                    if import_result.get('report_path'):
-                        client.last_report_path = import_result.get('report_path')
+                    if import_result.get("report_path"):
+                        client.last_report_path = import_result.get("report_path")
                         client.last_report_date = datetime.utcnow()
                         db.commit()
                 else:
                     # Import failed - return placeholder with error note
                     preview_data = {
-                        'bureau': 'TransUnion',
-                        'score': '---',
-                        'negative_items': '--',
-                        'total_accounts': '--',
-                        'error': import_result.get('error', 'Could not pull report')
+                        "bureau": "TransUnion",
+                        "score": "---",
+                        "negative_items": "--",
+                        "total_accounts": "--",
+                        "error": import_result.get("error", "Could not pull report"),
                     }
 
             except Exception as e:
                 print(f"Credit import error: {e}")
                 import traceback
+
                 traceback.print_exc()
                 # Return placeholder on error
                 preview_data = {
-                    'bureau': 'TransUnion',
-                    'score': '---',
-                    'negative_items': '--',
-                    'total_accounts': '--',
-                    'error': str(e)
+                    "bureau": "TransUnion",
+                    "score": "---",
+                    "negative_items": "--",
+                    "total_accounts": "--",
+                    "error": str(e),
                 }
 
-        return jsonify({
-            "success": True,
-            "message": "Thank you! We've received your information.",
-            "client_id": client.id,
-            "analysis_token": client.free_analysis_token,
-            "analysis_url": f"/analysis/{client.free_analysis_token}",
-            "preview": preview_data
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": "Thank you! We've received your information.",
+                "client_id": client.id,
+                "analysis_token": client.free_analysis_token,
+                "analysis_url": f"/analysis/{client.free_analysis_token}",
+                "preview": preview_data,
+            }
+        )
 
     except Exception as e:
         db.rollback()
         print(f"Lead capture error: {e}")
-        return jsonify({
-            "success": False,
-            "error": "An error occurred. Please try again."
-        }), 500
+        return (
+            jsonify(
+                {"success": False, "error": "An error occurred. Please try again."}
+            ),
+            500,
+        )
     finally:
         db.close()
 
@@ -36480,11 +37016,12 @@ def api_leads_upload_report():
     db = get_db()
     try:
         from werkzeug.utils import secure_filename
+
         from services.workflow_triggers_service import trigger_event
 
-        name = request.form.get('name', '').strip()
-        email = request.form.get('email', '').strip().lower()
-        file = request.files.get('report')
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        file = request.files.get("report")
 
         # Validate required fields
         if not name:
@@ -36492,18 +37029,24 @@ def api_leads_upload_report():
         if not email:
             return jsonify({"success": False, "error": "Email is required"}), 400
         if not file or not file.filename:
-            return jsonify({"success": False, "error": "Please upload a credit report"}), 400
+            return (
+                jsonify({"success": False, "error": "Please upload a credit report"}),
+                400,
+            )
 
         # Validate file type
-        allowed_extensions = {'pdf', 'jpg', 'jpeg', 'png'}
-        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        allowed_extensions = {"pdf", "jpg", "jpeg", "png"}
+        ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
         if ext not in allowed_extensions:
-            return jsonify({"success": False, "error": "File must be PDF, JPG, or PNG"}), 400
+            return (
+                jsonify({"success": False, "error": "File must be PDF, JPG, or PNG"}),
+                400,
+            )
 
         # Split name into first/last
-        name_parts = name.split(' ', 1)
+        name_parts = name.split(" ", 1)
         first_name = name_parts[0]
-        last_name = name_parts[1] if len(name_parts) > 1 else ''
+        last_name = name_parts[1] if len(name_parts) > 1 else ""
 
         # Check if client already exists
         existing = db.query(Client).filter_by(email=email).first()
@@ -36524,19 +37067,19 @@ def api_leads_upload_report():
                 first_name=first_name,
                 last_name=last_name,
                 email=email,
-                dispute_status='report_uploaded',
+                dispute_status="report_uploaded",
                 current_dispute_round=0,
-                email_opt_in=True
+                email_opt_in=True,
             )
             db.add(client)
             db.flush()  # Get client ID
 
         # Save the uploaded file
         filename = secure_filename(file.filename)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         final_filename = f"report_{timestamp}_{filename}"
 
-        upload_dir = os.path.join('static', 'client_uploads', str(client.id), 'reports')
+        upload_dir = os.path.join("static", "client_uploads", str(client.id), "reports")
         os.makedirs(upload_dir, exist_ok=True)
         file_path = os.path.join(upload_dir, final_filename)
         file.save(file_path)
@@ -36545,12 +37088,12 @@ def api_leads_upload_report():
         try:
             upload = ClientUpload(
                 client_id=client.id,
-                document_type='credit_report',
+                document_type="credit_report",
                 file_name=filename,
                 file_path=file_path,
                 file_size=os.path.getsize(file_path),
-                category='credit_report',
-                notes='Uploaded via simple upload form'
+                category="credit_report",
+                notes="Uploaded via simple upload form",
             )
             db.add(upload)
         except Exception as e:
@@ -36561,6 +37104,7 @@ def api_leads_upload_report():
         # Send confirmation email
         try:
             from services.email_service import send_email
+
             send_email(
                 to_email=email,
                 subject="We've Received Your Credit Report - Brightpath Ascend",
@@ -36574,35 +37118,42 @@ def api_leads_upload_report():
                     <li>Reply to this email with any questions</li>
                 </ul>
                 <p>Best regards,<br>The Brightpath Ascend Team</p>
-                """
+                """,
             )
         except Exception as e:
             print(f"Confirmation email error: {e}")
 
         # Trigger workflow event for staff notification
         try:
-            trigger_event('document_uploaded', {
-                'client_id': client.id,
-                'document_type': 'credit_report',
-                'file_name': filename,
-                'source': 'simple_upload_form'
-            })
+            trigger_event(
+                "document_uploaded",
+                {
+                    "client_id": client.id,
+                    "document_type": "credit_report",
+                    "file_name": filename,
+                    "source": "simple_upload_form",
+                },
+            )
         except Exception as e:
             print(f"Trigger error: {e}")
 
-        return jsonify({
-            "success": True,
-            "message": "Report uploaded successfully",
-            "client_id": client.id
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": "Report uploaded successfully",
+                "client_id": client.id,
+            }
+        )
 
     except Exception as e:
         db.rollback()
         print(f"Report upload error: {e}")
-        return jsonify({
-            "success": False,
-            "error": "An error occurred. Please try again."
-        }), 500
+        return (
+            jsonify(
+                {"success": False, "error": "An error occurred. Please try again."}
+            ),
+            500,
+        )
     finally:
         db.close()
 
@@ -36610,6 +37161,7 @@ def api_leads_upload_report():
 # =============================================================================
 # FREE ANALYSIS FLOW - Teaser → Purchase → Full Analysis
 # =============================================================================
+
 
 @app.route("/analysis/<token>")
 def view_free_analysis(token):
@@ -36621,20 +37173,23 @@ def view_free_analysis(token):
         service = get_free_analysis_service(db)
         result = service.get_teaser_analysis(token)
 
-        if not result.get('success'):
-            return render_template(
-                "error.html",
-                error="Analysis not found",
-                message="This analysis link is invalid or has expired."
-            ), 404
+        if not result.get("success"):
+            return (
+                render_template(
+                    "error.html",
+                    error="Analysis not found",
+                    message="This analysis link is invalid or has expired.",
+                ),
+                404,
+            )
 
         return render_template(
             "free_analysis.html",
             token=token,
-            client_name=result.get('client_name', 'there'),
-            client_stage=result.get('client_stage', 'lead'),
-            analysis_paid=result.get('analysis_paid', False),
-            teaser=result.get('teaser', {})
+            client_name=result.get("client_name", "there"),
+            client_stage=result.get("client_stage", "lead"),
+            analysis_paid=result.get("analysis_paid", False),
+            teaser=result.get("teaser", {}),
         )
     finally:
         db.close()
@@ -36646,19 +37201,25 @@ def purchase_full_analysis(token):
     db = get_db()
     try:
         # Find client by token
-        client = db.query(Client).filter(
-            Client.free_analysis_token == token
-        ).first()
+        client = db.query(Client).filter(Client.free_analysis_token == token).first()
 
         if not client:
-            return render_template(
-                "error.html",
-                error="Analysis not found",
-                message="This analysis link is invalid or has expired."
-            ), 404
+            return (
+                render_template(
+                    "error.html",
+                    error="Analysis not found",
+                    message="This analysis link is invalid or has expired.",
+                ),
+                404,
+            )
 
         # Check if already paid
-        if client.client_stage in ['analysis_paid', 'onboarding', 'pending_payment', 'active']:
+        if client.client_stage in [
+            "analysis_paid",
+            "onboarding",
+            "pending_payment",
+            "active",
+        ]:
             return redirect(f"/analysis/{token}")
 
         if request.method == "GET":
@@ -36668,7 +37229,7 @@ def purchase_full_analysis(token):
                 token=token,
                 client_name=client.first_name or client.name.split()[0],
                 price=199,
-                stripe_publishable_key=getattr(config, 'STRIPE_PUBLISHABLE_KEY', '')
+                stripe_publishable_key=getattr(config, "STRIPE_PUBLISHABLE_KEY", ""),
             )
 
         # POST - Process payment
@@ -36680,23 +37241,27 @@ def purchase_full_analysis(token):
                 amount=19900,  # $199 in cents
                 customer_email=client.email,
                 metadata={
-                    'client_id': client.id,
-                    'type': 'full_analysis',
-                    'token': token
-                }
+                    "client_id": client.id,
+                    "type": "full_analysis",
+                    "token": token,
+                },
             )
 
-            return jsonify({
-                "success": True,
-                "client_secret": payment_intent.client_secret
-            })
+            return jsonify(
+                {"success": True, "client_secret": payment_intent.client_secret}
+            )
 
         except Exception as e:
             print(f"Stripe error: {e}")
-            return jsonify({
-                "success": False,
-                "error": "Payment processing failed. Please try again."
-            }), 500
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Payment processing failed. Please try again.",
+                    }
+                ),
+                500,
+            )
 
     finally:
         db.close()
@@ -36710,48 +37275,52 @@ def confirm_analysis_payment():
     db = get_db()
     try:
         data = request.get_json() or {}
-        token = data.get('token')
-        payment_intent_id = data.get('payment_intent_id')
+        token = data.get("token")
+        payment_intent_id = data.get("payment_intent_id")
 
         if not token or not payment_intent_id:
-            return jsonify({
-                "success": False,
-                "error": "Missing payment information"
-            }), 400
+            return (
+                jsonify({"success": False, "error": "Missing payment information"}),
+                400,
+            )
 
         # Find client
-        client = db.query(Client).filter(
-            Client.free_analysis_token == token
-        ).first()
+        client = db.query(Client).filter(Client.free_analysis_token == token).first()
 
         if not client:
-            return jsonify({
-                "success": False,
-                "error": "Client not found"
-            }), 404
+            return jsonify({"success": False, "error": "Client not found"}), 404
 
         # Mark analysis as paid
         service = get_free_analysis_service(db)
         result = service.mark_analysis_paid(client.id, payment_intent_id)
 
-        if result.get('success'):
-            return jsonify({
-                "success": True,
-                "message": "Payment confirmed! Your full analysis is now available.",
-                "redirect_url": f"/analysis/{token}"
-            })
+        if result.get("success"):
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Payment confirmed! Your full analysis is now available.",
+                    "redirect_url": f"/analysis/{token}",
+                }
+            )
         else:
-            return jsonify({
-                "success": False,
-                "error": result.get('error', 'Failed to confirm payment')
-            }), 500
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": result.get("error", "Failed to confirm payment"),
+                    }
+                ),
+                500,
+            )
 
     except Exception as e:
         print(f"Payment confirmation error: {e}")
-        return jsonify({
-            "success": False,
-            "error": "An error occurred confirming payment"
-        }), 500
+        return (
+            jsonify(
+                {"success": False, "error": "An error occurred confirming payment"}
+            ),
+            500,
+        )
     finally:
         db.close()
 
@@ -36763,48 +37332,57 @@ def proceed_to_program(token):
 
     db = get_db()
     try:
-        client = db.query(Client).filter(
-            Client.free_analysis_token == token
-        ).first()
+        client = db.query(Client).filter(Client.free_analysis_token == token).first()
 
         if not client:
-            return jsonify({
-                "success": False,
-                "error": "Client not found"
-            }), 404
+            return jsonify({"success": False, "error": "Client not found"}), 404
 
-        if client.client_stage != 'analysis_paid':
-            return jsonify({
-                "success": False,
-                "error": "Please purchase the full analysis first"
-            }), 400
+        if client.client_stage != "analysis_paid":
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Please purchase the full analysis first",
+                    }
+                ),
+                400,
+            )
 
         service = get_free_analysis_service(db)
         result = service.proceed_to_onboarding(client.id)
 
-        if result.get('success'):
+        if result.get("success"):
             # Generate portal password reset link if no password set
             if not client.portal_password_hash:
                 client.password_reset_token = secrets.token_urlsafe(32)
                 client.password_reset_expires = datetime.utcnow() + timedelta(days=7)
                 db.commit()
 
-                return jsonify({
+                return jsonify(
+                    {
+                        "success": True,
+                        "message": "Welcome to the program!",
+                        "redirect_url": f"/portal/login?token={client.password_reset_token}",
+                    }
+                )
+
+            return jsonify(
+                {
                     "success": True,
                     "message": "Welcome to the program!",
-                    "redirect_url": f"/portal/login?token={client.password_reset_token}"
-                })
-
-            return jsonify({
-                "success": True,
-                "message": "Welcome to the program!",
-                "redirect_url": "/portal/onboarding"
-            })
+                    "redirect_url": "/portal/onboarding",
+                }
+            )
         else:
-            return jsonify({
-                "success": False,
-                "error": result.get('error', 'Failed to proceed')
-            }), 500
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": result.get("error", "Failed to proceed"),
+                    }
+                ),
+                500,
+            )
 
     finally:
         db.close()
@@ -36813,6 +37391,7 @@ def proceed_to_program(token):
 # =============================================================================
 # ROUND PAYMENT SYSTEM - Charge per round when letters are sent
 # =============================================================================
+
 
 @app.route("/api/clients/<int:client_id>/payment/round", methods=["POST"])
 @require_staff()
@@ -36826,12 +37405,12 @@ def api_create_round_payment(client_id):
     db = get_db()
     try:
         data = request.get_json() or {}
-        round_number = data.get('round_number')
+        round_number = data.get("round_number")
 
         service = get_client_payment_service(db)
         result = service.create_round_payment_intent(client_id, round_number)
 
-        if result.get('success'):
+        if result.get("success"):
             return jsonify(result)
         else:
             return jsonify(result), 400
@@ -36851,19 +37430,26 @@ def api_confirm_round_payment(client_id):
     db = get_db()
     try:
         data = request.get_json() or {}
-        payment_intent_id = data.get('payment_intent_id')
-        round_number = data.get('round_number')
+        payment_intent_id = data.get("payment_intent_id")
+        round_number = data.get("round_number")
 
         if not payment_intent_id or not round_number:
-            return jsonify({
-                "success": False,
-                "error": "Missing payment_intent_id or round_number"
-            }), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Missing payment_intent_id or round_number",
+                    }
+                ),
+                400,
+            )
 
         service = get_client_payment_service(db)
-        result = service.confirm_round_payment(client_id, payment_intent_id, round_number)
+        result = service.confirm_round_payment(
+            client_id, payment_intent_id, round_number
+        )
 
-        if result.get('success'):
+        if result.get("success"):
             return jsonify(result)
         else:
             return jsonify(result), 400
@@ -36883,22 +37469,19 @@ def api_charge_for_round(client_id):
     db = get_db()
     try:
         data = request.get_json() or {}
-        round_number = data.get('round_number')
-        payment_method_id = data.get('payment_method_id')
+        round_number = data.get("round_number")
+        payment_method_id = data.get("payment_method_id")
 
         if not round_number:
-            return jsonify({
-                "success": False,
-                "error": "Round number required"
-            }), 400
+            return jsonify({"success": False, "error": "Round number required"}), 400
 
         service = get_client_payment_service(db)
         result = service.charge_for_round(client_id, round_number, payment_method_id)
 
-        if result.get('success'):
+        if result.get("success"):
             return jsonify(result)
         else:
-            status_code = 400 if result.get('requires_payment') else 500
+            status_code = 400 if result.get("requires_payment") else 500
             return jsonify(result), status_code
     finally:
         db.close()
@@ -36915,7 +37498,7 @@ def api_get_payment_summary(client_id):
         service = get_client_payment_service(db)
         result = service.get_payment_summary(client_id)
 
-        if result.get('success'):
+        if result.get("success"):
             return jsonify(result)
         else:
             return jsonify(result), 400
@@ -36934,23 +37517,20 @@ def api_create_prepay_checkout(client_id):
     db = get_db()
     try:
         data = request.get_json() or {}
-        package_key = data.get('package')
-        financed = data.get('financed', False)
-        success_url = data.get('success_url')
-        cancel_url = data.get('cancel_url')
+        package_key = data.get("package")
+        financed = data.get("financed", False)
+        success_url = data.get("success_url")
+        cancel_url = data.get("cancel_url")
 
         if not package_key:
-            return jsonify({
-                "success": False,
-                "error": "Package required"
-            }), 400
+            return jsonify({"success": False, "error": "Package required"}), 400
 
         service = get_client_payment_service(db)
         result = service.create_prepay_checkout(
             client_id, package_key, financed, success_url, cancel_url
         )
 
-        if result.get('success'):
+        if result.get("success"):
             return jsonify(result)
         else:
             return jsonify(result), 400
@@ -36967,13 +37547,13 @@ def api_calculate_settlement_fee():
     db = get_db()
     try:
         data = request.get_json() or {}
-        settlement_amount = data.get('settlement_amount')
+        settlement_amount = data.get("settlement_amount")
 
         if not settlement_amount:
-            return jsonify({
-                "success": False,
-                "error": "Settlement amount required"
-            }), 400
+            return (
+                jsonify({"success": False, "error": "Settlement amount required"}),
+                400,
+            )
 
         # Convert to cents if provided in dollars
         if isinstance(settlement_amount, float) or settlement_amount < 1000:
@@ -36981,7 +37561,7 @@ def api_calculate_settlement_fee():
 
         service = get_client_payment_service(db)
         result = service.calculate_settlement_fee(settlement_amount)
-        result['success'] = True
+        result["success"] = True
 
         return jsonify(result)
     finally:
@@ -36991,6 +37571,7 @@ def api_calculate_settlement_fee():
 # =============================================================================
 # SCHEDULED JOBS - Auto-capture, reminders, etc.
 # =============================================================================
+
 
 @app.route("/api/jobs/capture-due-payments", methods=["POST"])
 @require_staff()
@@ -37022,7 +37603,7 @@ def api_run_expire_stale_holds():
     db = get_db()
     try:
         data = request.get_json() or {}
-        days_old = data.get('days_old', 7)
+        days_old = data.get("days_old", 7)
 
         service = get_scheduled_jobs_service(db)
         result = service.expire_stale_holds(days_old)
@@ -37088,6 +37669,7 @@ def api_run_all_jobs():
 # STRIPE WEBHOOKS - Payment event handlers
 # =============================================================================
 
+
 @app.route("/api/webhooks/stripe", methods=["POST"])
 def stripe_webhook_handler():
     """
@@ -37102,24 +37684,30 @@ def stripe_webhook_handler():
     from services.stripe_webhooks_service import get_stripe_webhooks_service
 
     payload = request.get_data()
-    sig_header = request.headers.get('Stripe-Signature')
+    sig_header = request.headers.get("Stripe-Signature")
 
     db = get_db()
     try:
         # Verify webhook signature (if configured)
         try:
-            from services.stripe_client import verify_webhook_signature, get_webhook_secret
+            from services.stripe_client import (
+                get_webhook_secret,
+                verify_webhook_signature,
+            )
+
             webhook_secret = get_webhook_secret()
             if webhook_secret:
                 event = verify_webhook_signature(payload, sig_header, webhook_secret)
             else:
                 # No webhook secret - parse without verification (dev mode)
                 import json
+
                 event = json.loads(payload)
         except Exception as e:
             print(f"Webhook signature verification failed: {e}")
             # In development, still process the event
             import json
+
             event = json.loads(payload)
 
         # Process the event
@@ -37130,7 +37718,7 @@ def stripe_webhook_handler():
 
     except Exception as e:
         print(f"Webhook error: {e}")
-        return jsonify({'error': str(e)}), 400
+        return jsonify({"error": str(e)}), 400
     finally:
         db.close()
 
@@ -37138,6 +37726,7 @@ def stripe_webhook_handler():
 # =============================================================================
 # AFFIRM BNPL - Buy Now Pay Later Integration
 # =============================================================================
+
 
 @app.route("/api/payment/affirm/create", methods=["POST"])
 @require_staff()
@@ -37154,54 +37743,60 @@ def affirm_create_checkout():
         "cancel_url": "https://example.com/payment/cancel"
     }
     """
-    from services.affirm_service import get_affirm_service, AffirmError
+    from services.affirm_service import AffirmError, get_affirm_service
 
     data = request.get_json() or {}
 
-    required_fields = ['client_id', 'amount_cents', 'description', 'success_url', 'cancel_url']
+    required_fields = [
+        "client_id",
+        "amount_cents",
+        "description",
+        "success_url",
+        "cancel_url",
+    ]
     for field in required_fields:
         if field not in data:
-            return jsonify({'error': f'Missing required field: {field}'}), 400
+            return jsonify({"error": f"Missing required field: {field}"}), 400
 
     db = get_db()
     try:
         # Get client for prefill data
-        client = db.query(Client).filter(Client.id == data['client_id']).first()
+        client = db.query(Client).filter(Client.id == data["client_id"]).first()
         if not client:
-            return jsonify({'error': 'Client not found'}), 404
+            return jsonify({"error": "Client not found"}), 404
 
         service = get_affirm_service()
 
         if not service.is_configured():
-            return jsonify({'error': 'Affirm is not configured'}), 503
+            return jsonify({"error": "Affirm is not configured"}), 503
 
         result = service.create_checkout(
-            client_id=data['client_id'],
-            amount_cents=data['amount_cents'],
-            description=data['description'],
-            success_url=data['success_url'],
-            cancel_url=data['cancel_url'],
+            client_id=data["client_id"],
+            amount_cents=data["amount_cents"],
+            description=data["description"],
+            success_url=data["success_url"],
+            cancel_url=data["cancel_url"],
             client_email=client.email,
             client_name=client.name,
             client_phone=client.phone,
             metadata={
-                'service': 'fcra_credit_restoration',
-                'round': data.get('round', 1),
-            }
+                "service": "fcra_credit_restoration",
+                "round": data.get("round", 1),
+            },
         )
 
         # Store checkout token on client
-        client.affirm_checkout_token = result.get('checkout_token')
-        client.affirm_status = 'pending'
+        client.affirm_checkout_token = result.get("checkout_token")
+        client.affirm_status = "pending"
         db.commit()
 
         return jsonify(result)
 
     except AffirmError as e:
-        return jsonify({'error': str(e), 'code': e.error_code}), 400
+        return jsonify({"error": str(e), "code": e.error_code}), 400
     except Exception as e:
         print(f"Affirm checkout error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
     finally:
         db.close()
 
@@ -37220,63 +37815,64 @@ def affirm_confirm_payment():
         "checkout_token": "token_from_affirm_redirect"
     }
     """
-    from services.affirm_service import get_affirm_service, AffirmError
+    from services.affirm_service import AffirmError, get_affirm_service
 
     data = request.get_json() or {}
 
-    if 'checkout_token' not in data:
-        return jsonify({'error': 'Missing checkout_token'}), 400
-    if 'client_id' not in data:
-        return jsonify({'error': 'Missing client_id'}), 400
+    if "checkout_token" not in data:
+        return jsonify({"error": "Missing checkout_token"}), 400
+    if "client_id" not in data:
+        return jsonify({"error": "Missing client_id"}), 400
 
     db = get_db()
     try:
-        client = db.query(Client).filter(Client.id == data['client_id']).first()
+        client = db.query(Client).filter(Client.id == data["client_id"]).first()
         if not client:
-            return jsonify({'error': 'Client not found'}), 404
+            return jsonify({"error": "Client not found"}), 404
 
         service = get_affirm_service()
 
         # Authorize the charge
         auth_result = service.authorize_charge(
-            checkout_token=data['checkout_token'],
-            order_id=f"client_{client.id}"
+            checkout_token=data["checkout_token"], order_id=f"client_{client.id}"
         )
 
         # Immediately capture (or delay for manual review)
-        capture_result = service.capture_charge(auth_result['charge_id'])
+        capture_result = service.capture_charge(auth_result["charge_id"])
 
         # Update client record
-        client.affirm_charge_id = capture_result['charge_id']
-        client.affirm_status = 'captured'
-        client.payment_status = 'paid'
-        client.payment_method = 'affirm'
+        client.affirm_charge_id = capture_result["charge_id"]
+        client.affirm_status = "captured"
+        client.payment_status = "paid"
+        client.payment_method = "affirm"
         client.payment_received_at = datetime.utcnow()
 
         # Update total paid
-        amount_cents = auth_result.get('amount', 0)
+        amount_cents = auth_result.get("amount", 0)
         client.total_paid = (client.total_paid or 0) + amount_cents
 
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'charge_id': capture_result['charge_id'],
-            'status': capture_result['status'],
-            'amount_cents': amount_cents,
-        })
+        return jsonify(
+            {
+                "success": True,
+                "charge_id": capture_result["charge_id"],
+                "status": capture_result["status"],
+                "amount_cents": amount_cents,
+            }
+        )
 
     except AffirmError as e:
         # Update client status on failure
-        if 'client_id' in data:
-            client = db.query(Client).filter(Client.id == data['client_id']).first()
+        if "client_id" in data:
+            client = db.query(Client).filter(Client.id == data["client_id"]).first()
             if client:
-                client.affirm_status = 'failed'
+                client.affirm_status = "failed"
                 db.commit()
-        return jsonify({'error': str(e), 'code': e.error_code}), 400
+        return jsonify({"error": str(e), "code": e.error_code}), 400
     except Exception as e:
         print(f"Affirm confirm error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
     finally:
         db.close()
 
@@ -37285,18 +37881,18 @@ def affirm_confirm_payment():
 @require_staff()
 def affirm_get_status(client_id):
     """Get Affirm payment status for a client."""
-    from services.affirm_service import get_affirm_service, AffirmError
+    from services.affirm_service import AffirmError, get_affirm_service
 
     db = get_db()
     try:
         client = db.query(Client).filter(Client.id == client_id).first()
         if not client:
-            return jsonify({'error': 'Client not found'}), 404
+            return jsonify({"error": "Client not found"}), 404
 
         result = {
-            'client_id': client_id,
-            'affirm_status': client.affirm_status,
-            'affirm_charge_id': client.affirm_charge_id,
+            "client_id": client_id,
+            "affirm_status": client.affirm_status,
+            "affirm_charge_id": client.affirm_charge_id,
         }
 
         # If we have a charge ID, get current status from Affirm
@@ -37305,14 +37901,14 @@ def affirm_get_status(client_id):
             if service.is_configured():
                 try:
                     charge = service.get_charge(client.affirm_charge_id)
-                    result['affirm_details'] = charge
+                    result["affirm_details"] = charge
                 except AffirmError:
                     pass  # Ignore errors fetching details
 
         return jsonify(result)
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
     finally:
         db.close()
 
@@ -37329,40 +37925,39 @@ def affirm_refund():
         "amount_cents": null  // null for full refund, or specific amount
     }
     """
-    from services.affirm_service import get_affirm_service, AffirmError
+    from services.affirm_service import AffirmError, get_affirm_service
 
     data = request.get_json() or {}
 
-    if 'client_id' not in data:
-        return jsonify({'error': 'Missing client_id'}), 400
+    if "client_id" not in data:
+        return jsonify({"error": "Missing client_id"}), 400
 
     db = get_db()
     try:
-        client = db.query(Client).filter(Client.id == data['client_id']).first()
+        client = db.query(Client).filter(Client.id == data["client_id"]).first()
         if not client:
-            return jsonify({'error': 'Client not found'}), 404
+            return jsonify({"error": "Client not found"}), 404
 
         if not client.affirm_charge_id:
-            return jsonify({'error': 'No Affirm charge found for this client'}), 400
+            return jsonify({"error": "No Affirm charge found for this client"}), 400
 
         service = get_affirm_service()
         result = service.refund_charge(
-            charge_id=client.affirm_charge_id,
-            amount_cents=data.get('amount_cents')
+            charge_id=client.affirm_charge_id, amount_cents=data.get("amount_cents")
         )
 
         # Update client status
-        client.affirm_status = 'refunded'
-        client.payment_status = 'refunded'
+        client.affirm_status = "refunded"
+        client.payment_status = "refunded"
         db.commit()
 
         return jsonify(result)
 
     except AffirmError as e:
-        return jsonify({'error': str(e), 'code': e.error_code}), 400
+        return jsonify({"error": str(e), "code": e.error_code}), 400
     except Exception as e:
         print(f"Affirm refund error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
     finally:
         db.close()
 
@@ -37378,14 +37973,14 @@ def affirm_estimate():
     """
     from services.affirm_service import get_affirm_service
 
-    amount_cents = request.args.get('amount_cents', type=int)
-    months = request.args.get('months', 12, type=int)
+    amount_cents = request.args.get("amount_cents", type=int)
+    months = request.args.get("months", 12, type=int)
 
     if not amount_cents:
-        return jsonify({'error': 'Missing amount_cents parameter'}), 400
+        return jsonify({"error": "Missing amount_cents parameter"}), 400
 
     if months not in [3, 6, 12]:
-        return jsonify({'error': 'months must be 3, 6, or 12'}), 400
+        return jsonify({"error": "months must be 3, 6, or 12"}), 400
 
     service = get_affirm_service()
     result = service.get_monthly_payment(amount_cents, months)
@@ -37405,50 +38000,54 @@ def affirm_webhook_handler():
     - charge.refunded
     - charge.failed
     """
-    from services.affirm_service import get_affirm_service, AffirmError
+    from services.affirm_service import AffirmError, get_affirm_service
 
     payload = request.get_data()
-    signature = request.headers.get('X-Affirm-Signature')
+    signature = request.headers.get("X-Affirm-Signature")
 
     try:
         service = get_affirm_service()
 
         # Verify signature (optional in sandbox)
-        if service.environment == 'production':
+        if service.environment == "production":
             if not service.verify_webhook_signature(payload, signature):
-                return jsonify({'error': 'Invalid signature'}), 401
+                return jsonify({"error": "Invalid signature"}), 401
 
         # Parse event
         event_data = request.get_json()
-        event_type = event_data.get('type', '')
+        event_type = event_data.get("type", "")
 
         # Process webhook
         result = service.handle_webhook(event_type, event_data)
 
         # Update client record if charge ID is present
-        charge_id = event_data.get('id') or event_data.get('charge_id')
+        charge_id = event_data.get("id") or event_data.get("charge_id")
         if charge_id:
             db = get_db()
             try:
-                client = db.query(Client).filter(Client.affirm_charge_id == charge_id).first()
+                client = (
+                    db.query(Client)
+                    .filter(Client.affirm_charge_id == charge_id)
+                    .first()
+                )
                 if client:
                     # Map event type to status
                     status_map = {
-                        'charge.created': 'authorized',
-                        'charge.captured': 'captured',
-                        'charge.voided': 'voided',
-                        'charge.refunded': 'refunded',
-                        'charge.failed': 'failed',
+                        "charge.created": "authorized",
+                        "charge.captured": "captured",
+                        "charge.voided": "voided",
+                        "charge.refunded": "refunded",
+                        "charge.failed": "failed",
                     }
                     new_status = status_map.get(event_type)
                     if new_status:
                         client.affirm_status = new_status
-                        if new_status == 'captured':
-                            client.payment_status = 'paid'
-                        elif new_status in ['voided', 'refunded']:
+                        if new_status == "captured":
+                            client.payment_status = "paid"
+                        elif new_status in ["voided", "refunded"]:
                             client.payment_status = new_status
-                        elif new_status == 'failed':
-                            client.payment_status = 'failed'
+                        elif new_status == "failed":
+                            client.payment_status = "failed"
                         db.commit()
             finally:
                 db.close()
@@ -37457,12 +38056,13 @@ def affirm_webhook_handler():
 
     except Exception as e:
         print(f"Affirm webhook error: {e}")
-        return jsonify({'error': str(e)}), 400
+        return jsonify({"error": str(e)}), 400
 
 
 # =============================================================================
 # CRON ENDPOINT - For external schedulers (Replit, Railway, etc.)
 # =============================================================================
+
 
 @app.route("/api/cron/hourly", methods=["POST", "GET"])
 def cron_hourly():
@@ -37475,11 +38075,11 @@ def cron_hourly():
     from services.scheduled_jobs_service import get_scheduled_jobs_service
 
     # Verify cron secret
-    cron_secret = os.environ.get('CRON_SECRET')
-    provided_secret = request.headers.get('X-Cron-Secret') or request.args.get('secret')
+    cron_secret = os.environ.get("CRON_SECRET")
+    provided_secret = request.headers.get("X-Cron-Secret") or request.args.get("secret")
 
     if cron_secret and provided_secret != cron_secret:
-        return jsonify({'error': 'Unauthorized'}), 401
+        return jsonify({"error": "Unauthorized"}), 401
 
     db = get_db()
     try:
@@ -37501,24 +38101,22 @@ def cron_daily():
     from services.scheduled_jobs_service import get_scheduled_jobs_service
 
     # Verify cron secret
-    cron_secret = os.environ.get('CRON_SECRET')
-    provided_secret = request.headers.get('X-Cron-Secret') or request.args.get('secret')
+    cron_secret = os.environ.get("CRON_SECRET")
+    provided_secret = request.headers.get("X-Cron-Secret") or request.args.get("secret")
 
     if cron_secret and provided_secret != cron_secret:
-        return jsonify({'error': 'Unauthorized'}), 401
+        return jsonify({"error": "Unauthorized"}), 401
 
     db = get_db()
     try:
         service = get_scheduled_jobs_service(db)
         results = {
-            'expire_stale_holds': service.expire_stale_holds(),
-            'send_payment_reminders': service.send_payment_reminders()
+            "expire_stale_holds": service.expire_stale_holds(),
+            "send_payment_reminders": service.send_payment_reminders(),
         }
-        return jsonify({
-            'success': True,
-            'run_at': datetime.utcnow().isoformat(),
-            'jobs': results
-        })
+        return jsonify(
+            {"success": True, "run_at": datetime.utcnow().isoformat(), "jobs": results}
+        )
     finally:
         db.close()
 
@@ -37527,19 +38125,21 @@ def cron_daily():
 # BOOKING SYSTEM - Q&A Call Scheduling
 # =============================================================================
 
-@app.route('/api/booking-slots', methods=['GET'])
+
+@app.route("/api/booking-slots", methods=["GET"])
 @require_staff()
 def api_get_booking_slots():
     """Get all booking slots (staff view)"""
     db = get_db()
     try:
-        from database import BookingSlot, Booking, Client
         from datetime import date, timedelta
 
+        from database import Booking, BookingSlot, Client
+
         # Parse filters
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-        show_booked = request.args.get('show_booked', 'true').lower() == 'true'
+        start_date = request.args.get("start_date")
+        end_date = request.args.get("end_date")
+        show_booked = request.args.get("show_booked", "true").lower() == "true"
 
         query = db.query(BookingSlot)
 
@@ -37547,16 +38147,15 @@ def api_get_booking_slots():
         if not start_date:
             start_date = date.today()
         else:
-            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
 
         if not end_date:
             end_date = start_date + timedelta(days=30)
         else:
-            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
 
         query = query.filter(
-            BookingSlot.slot_date >= start_date,
-            BookingSlot.slot_date <= end_date
+            BookingSlot.slot_date >= start_date, BookingSlot.slot_date <= end_date
         )
 
         if not show_booked:
@@ -37567,58 +38166,63 @@ def api_get_booking_slots():
         result = []
         for slot in slots:
             slot_data = {
-                'id': slot.id,
-                'date': slot.slot_date.isoformat(),
-                'time': slot.slot_time.strftime('%H:%M'),
-                'duration': slot.duration_minutes,
-                'is_available': slot.is_available,
-                'is_booked': slot.is_booked,
-                'booking': None
+                "id": slot.id,
+                "date": slot.slot_date.isoformat(),
+                "time": slot.slot_time.strftime("%H:%M"),
+                "duration": slot.duration_minutes,
+                "is_available": slot.is_available,
+                "is_booked": slot.is_booked,
+                "booking": None,
             }
 
             if slot.is_booked and slot.booking:
-                client = db.query(Client).filter(Client.id == slot.booking.client_id).first()
-                slot_data['booking'] = {
-                    'id': slot.booking.id,
-                    'client_id': slot.booking.client_id,
-                    'client_name': client.name if client else 'Unknown',
-                    'client_email': client.email if client else '',
-                    'notes': slot.booking.notes,
-                    'status': slot.booking.status
+                client = (
+                    db.query(Client).filter(Client.id == slot.booking.client_id).first()
+                )
+                slot_data["booking"] = {
+                    "id": slot.booking.id,
+                    "client_id": slot.booking.client_id,
+                    "client_name": client.name if client else "Unknown",
+                    "client_email": client.email if client else "",
+                    "notes": slot.booking.notes,
+                    "status": slot.booking.status,
                 }
 
             result.append(slot_data)
 
-        return jsonify({'success': True, 'slots': result})
+        return jsonify({"success": True, "slots": result})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/booking-slots', methods=['POST'])
+@app.route("/api/booking-slots", methods=["POST"])
 @require_staff()
 def api_create_booking_slots():
     """Create booking slots (bulk create by staff)"""
     db = get_db()
     try:
-        from database import BookingSlot
         from datetime import time, timedelta
+
+        from database import BookingSlot
 
         data = request.get_json()
 
         # Support single slot or bulk creation
-        if 'slots' in data:
+        if "slots" in data:
             # Bulk create: list of {date, time} objects
-            slots_data = data['slots']
-        elif 'start_date' in data and 'end_date' in data:
+            slots_data = data["slots"]
+        elif "start_date" in data and "end_date" in data:
             # Generate slots for date range
-            start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
-            end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
-            start_time = datetime.strptime(data.get('start_time', '09:00'), '%H:%M').time()
-            end_time = datetime.strptime(data.get('end_time', '17:00'), '%H:%M').time()
-            days_of_week = data.get('days_of_week', [0, 1, 2, 3, 4])  # Mon-Fri default
+            start_date = datetime.strptime(data["start_date"], "%Y-%m-%d").date()
+            end_date = datetime.strptime(data["end_date"], "%Y-%m-%d").date()
+            start_time = datetime.strptime(
+                data.get("start_time", "09:00"), "%H:%M"
+            ).time()
+            end_time = datetime.strptime(data.get("end_time", "17:00"), "%H:%M").time()
+            days_of_week = data.get("days_of_week", [0, 1, 2, 3, 4])  # Mon-Fri default
 
             slots_data = []
             current_date = start_date
@@ -37628,32 +38232,35 @@ def api_create_booking_slots():
                     end_datetime = datetime.combine(current_date, end_time)
 
                     while current_time < end_datetime:
-                        slots_data.append({
-                            'date': current_date.isoformat(),
-                            'time': current_time.strftime('%H:%M')
-                        })
+                        slots_data.append(
+                            {
+                                "date": current_date.isoformat(),
+                                "time": current_time.strftime("%H:%M"),
+                            }
+                        )
                         current_time += timedelta(minutes=15)
 
                 current_date += timedelta(days=1)
         else:
             # Single slot
-            slots_data = [{
-                'date': data['date'],
-                'time': data['time']
-            }]
+            slots_data = [{"date": data["date"], "time": data["time"]}]
 
         created_count = 0
-        staff_id = session.get('staff_id')
+        staff_id = session.get("staff_id")
 
         for slot_data in slots_data:
-            slot_date = datetime.strptime(slot_data['date'], '%Y-%m-%d').date()
-            slot_time = datetime.strptime(slot_data['time'], '%H:%M').time()
+            slot_date = datetime.strptime(slot_data["date"], "%Y-%m-%d").date()
+            slot_time = datetime.strptime(slot_data["time"], "%H:%M").time()
 
             # Check for existing slot at same date/time
-            existing = db.query(BookingSlot).filter(
-                BookingSlot.slot_date == slot_date,
-                BookingSlot.slot_time == slot_time
-            ).first()
+            existing = (
+                db.query(BookingSlot)
+                .filter(
+                    BookingSlot.slot_date == slot_date,
+                    BookingSlot.slot_time == slot_time,
+                )
+                .first()
+            )
 
             if not existing:
                 slot = BookingSlot(
@@ -37662,27 +38269,29 @@ def api_create_booking_slots():
                     duration_minutes=15,
                     is_available=True,
                     is_booked=False,
-                    staff_id=staff_id
+                    staff_id=staff_id,
                 )
                 db.add(slot)
                 created_count += 1
 
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'message': f'Created {created_count} booking slots',
-            'created_count': created_count
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Created {created_count} booking slots",
+                "created_count": created_count,
+            }
+        )
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/booking-slots/<int:slot_id>', methods=['PUT'])
+@app.route("/api/booking-slots/<int:slot_id>", methods=["PUT"])
 @require_staff()
 def api_update_booking_slot(slot_id):
     """Update a booking slot (toggle availability)"""
@@ -37692,34 +38301,36 @@ def api_update_booking_slot(slot_id):
 
         slot = db.query(BookingSlot).filter(BookingSlot.id == slot_id).first()
         if not slot:
-            return jsonify({'success': False, 'error': 'Slot not found'}), 404
+            return jsonify({"success": False, "error": "Slot not found"}), 404
 
         data = request.get_json()
 
-        if 'is_available' in data:
-            slot.is_available = data['is_available']
+        if "is_available" in data:
+            slot.is_available = data["is_available"]
 
         slot.updated_at = datetime.utcnow()
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'message': 'Slot updated',
-            'slot': {
-                'id': slot.id,
-                'is_available': slot.is_available,
-                'is_booked': slot.is_booked
+        return jsonify(
+            {
+                "success": True,
+                "message": "Slot updated",
+                "slot": {
+                    "id": slot.id,
+                    "is_available": slot.is_available,
+                    "is_booked": slot.is_booked,
+                },
             }
-        })
+        )
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/booking-slots/<int:slot_id>', methods=['DELETE'])
+@app.route("/api/booking-slots/<int:slot_id>", methods=["DELETE"])
 @require_staff()
 def api_delete_booking_slot(slot_id):
     """Delete a booking slot (only if not booked)"""
@@ -37729,308 +38340,324 @@ def api_delete_booking_slot(slot_id):
 
         slot = db.query(BookingSlot).filter(BookingSlot.id == slot_id).first()
         if not slot:
-            return jsonify({'success': False, 'error': 'Slot not found'}), 404
+            return jsonify({"success": False, "error": "Slot not found"}), 404
 
         if slot.is_booked:
-            return jsonify({'success': False, 'error': 'Cannot delete booked slot'}), 400
+            return (
+                jsonify({"success": False, "error": "Cannot delete booked slot"}),
+                400,
+            )
 
         db.delete(slot)
         db.commit()
 
-        return jsonify({'success': True, 'message': 'Slot deleted'})
+        return jsonify({"success": True, "message": "Slot deleted"})
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
 # ==================== Calendar Sync API (P33) ====================
 
-@app.route('/api/calendar/integrations', methods=['GET'])
+
+@app.route("/api/calendar/integrations", methods=["GET"])
 @require_staff()
 def api_get_calendar_integrations():
     """Get all calendar integrations for current staff"""
     from services.calendar_sync_service import get_calendar_service
 
-    staff_id = session.get('staff_id')
+    staff_id = session.get("staff_id")
     service = get_calendar_service()
     integrations = service.get_integrations(staff_id)
 
-    return jsonify({
-        'success': True,
-        'integrations': [
-            {
-                'id': i.id,
-                'provider': i.provider,
-                'calendar_id': i.calendar_id,
-                'calendar_name': i.calendar_name,
-                'sync_enabled': i.sync_enabled,
-                'sync_direction': i.sync_direction,
-                'check_free_busy': i.check_free_busy,
-                'is_active': i.is_active,
-                'connected_at': i.connected_at.isoformat() if i.connected_at else None,
-                'last_sync_at': i.last_sync_at.isoformat() if i.last_sync_at else None,
-                'last_sync_status': i.last_sync_status,
-            }
-            for i in integrations
-        ]
-    })
+    return jsonify(
+        {
+            "success": True,
+            "integrations": [
+                {
+                    "id": i.id,
+                    "provider": i.provider,
+                    "calendar_id": i.calendar_id,
+                    "calendar_name": i.calendar_name,
+                    "sync_enabled": i.sync_enabled,
+                    "sync_direction": i.sync_direction,
+                    "check_free_busy": i.check_free_busy,
+                    "is_active": i.is_active,
+                    "connected_at": (
+                        i.connected_at.isoformat() if i.connected_at else None
+                    ),
+                    "last_sync_at": (
+                        i.last_sync_at.isoformat() if i.last_sync_at else None
+                    ),
+                    "last_sync_status": i.last_sync_status,
+                }
+                for i in integrations
+            ],
+        }
+    )
 
 
-@app.route('/api/calendar/stats', methods=['GET'])
+@app.route("/api/calendar/stats", methods=["GET"])
 @require_staff()
 def api_get_calendar_stats():
     """Get calendar sync statistics"""
     from services.calendar_sync_service import get_calendar_service
 
-    staff_id = session.get('staff_id')
+    staff_id = session.get("staff_id")
     service = get_calendar_service()
     stats = service.get_sync_stats(staff_id)
 
-    return jsonify({'success': True, 'stats': stats})
+    return jsonify({"success": True, "stats": stats})
 
 
-@app.route('/api/calendar/google/auth', methods=['GET'])
+@app.route("/api/calendar/google/auth", methods=["GET"])
 @require_staff()
 def api_google_calendar_auth():
     """Get Google Calendar OAuth URL"""
     from services.calendar_sync_service import get_calendar_service
 
-    staff_id = session.get('staff_id')
+    staff_id = session.get("staff_id")
     service = get_calendar_service()
 
     try:
         auth_url = service.get_google_auth_url(staff_id)
-        return jsonify({'success': True, 'auth_url': auth_url})
+        return jsonify({"success": True, "auth_url": auth_url})
     except ValueError as e:
-        return jsonify({'success': False, 'error': str(e)}), 400
+        return jsonify({"success": False, "error": str(e)}), 400
 
 
-@app.route('/api/calendar/google/callback', methods=['GET'])
+@app.route("/api/calendar/google/callback", methods=["GET"])
 def api_google_calendar_callback():
     """Handle Google Calendar OAuth callback"""
     from services.calendar_sync_service import get_calendar_service
 
-    code = request.args.get('code')
-    state = request.args.get('state')  # Contains staff_id
-    error = request.args.get('error')
+    code = request.args.get("code")
+    state = request.args.get("state")  # Contains staff_id
+    error = request.args.get("error")
 
     if error:
-        return redirect(f'/dashboard/settings?calendar_error={error}')
+        return redirect(f"/dashboard/settings?calendar_error={error}")
 
     if not code or not state:
-        return redirect('/dashboard/settings?calendar_error=missing_params')
+        return redirect("/dashboard/settings?calendar_error=missing_params")
 
     try:
         staff_id = int(state)
         service = get_calendar_service()
         service.exchange_google_code(code, staff_id)
-        return redirect('/dashboard/settings?calendar_connected=google')
+        return redirect("/dashboard/settings?calendar_connected=google")
     except Exception as e:
         logger.error(f"Google Calendar callback error: {e}")
-        return redirect(f'/dashboard/settings?calendar_error={str(e)[:100]}')
+        return redirect(f"/dashboard/settings?calendar_error={str(e)[:100]}")
 
 
-@app.route('/api/calendar/outlook/auth', methods=['GET'])
+@app.route("/api/calendar/outlook/auth", methods=["GET"])
 @require_staff()
 def api_outlook_calendar_auth():
     """Get Outlook Calendar OAuth URL"""
     from services.calendar_sync_service import get_calendar_service
 
-    staff_id = session.get('staff_id')
+    staff_id = session.get("staff_id")
     service = get_calendar_service()
 
     try:
         auth_url = service.get_outlook_auth_url(staff_id)
-        return jsonify({'success': True, 'auth_url': auth_url})
+        return jsonify({"success": True, "auth_url": auth_url})
     except ValueError as e:
-        return jsonify({'success': False, 'error': str(e)}), 400
+        return jsonify({"success": False, "error": str(e)}), 400
 
 
-@app.route('/api/calendar/outlook/callback', methods=['GET'])
+@app.route("/api/calendar/outlook/callback", methods=["GET"])
 def api_outlook_calendar_callback():
     """Handle Outlook Calendar OAuth callback"""
     from services.calendar_sync_service import get_calendar_service
 
-    code = request.args.get('code')
-    state = request.args.get('state')  # Contains staff_id
-    error = request.args.get('error')
+    code = request.args.get("code")
+    state = request.args.get("state")  # Contains staff_id
+    error = request.args.get("error")
 
     if error:
-        return redirect(f'/dashboard/settings?calendar_error={error}')
+        return redirect(f"/dashboard/settings?calendar_error={error}")
 
     if not code or not state:
-        return redirect('/dashboard/settings?calendar_error=missing_params')
+        return redirect("/dashboard/settings?calendar_error=missing_params")
 
     try:
         staff_id = int(state)
         service = get_calendar_service()
         service.exchange_outlook_code(code, staff_id)
-        return redirect('/dashboard/settings?calendar_connected=outlook')
+        return redirect("/dashboard/settings?calendar_connected=outlook")
     except Exception as e:
         logger.error(f"Outlook Calendar callback error: {e}")
-        return redirect(f'/dashboard/settings?calendar_error={str(e)[:100]}')
+        return redirect(f"/dashboard/settings?calendar_error={str(e)[:100]}")
 
 
-@app.route('/api/calendar/integrations/<int:integration_id>/calendars', methods=['GET'])
+@app.route("/api/calendar/integrations/<int:integration_id>/calendars", methods=["GET"])
 @require_staff()
 def api_list_calendars(integration_id):
     """List available calendars for an integration"""
-    from services.calendar_sync_service import get_calendar_service
     from database import CalendarIntegration
+    from services.calendar_sync_service import get_calendar_service
 
-    staff_id = session.get('staff_id')
+    staff_id = session.get("staff_id")
     db = get_db()
 
     try:
-        integration = db.query(CalendarIntegration).filter_by(
-            id=integration_id,
-            staff_id=staff_id
-        ).first()
+        integration = (
+            db.query(CalendarIntegration)
+            .filter_by(id=integration_id, staff_id=staff_id)
+            .first()
+        )
 
         if not integration:
-            return jsonify({'success': False, 'error': 'Integration not found'}), 404
+            return jsonify({"success": False, "error": "Integration not found"}), 404
 
         service = get_calendar_service()
         calendars = service.list_calendars(integration)
 
-        return jsonify({'success': True, 'calendars': calendars})
+        return jsonify({"success": True, "calendars": calendars})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/calendar/integrations/<int:integration_id>/calendar', methods=['PUT'])
+@app.route("/api/calendar/integrations/<int:integration_id>/calendar", methods=["PUT"])
 @require_staff()
 def api_set_calendar(integration_id):
     """Set which calendar to use for sync"""
     from services.calendar_sync_service import get_calendar_service
 
-    staff_id = session.get('staff_id')
+    staff_id = session.get("staff_id")
     data = request.json
-    calendar_id = data.get('calendar_id')
-    calendar_name = data.get('calendar_name')
+    calendar_id = data.get("calendar_id")
+    calendar_name = data.get("calendar_name")
 
     if not calendar_id:
-        return jsonify({'success': False, 'error': 'calendar_id required'}), 400
+        return jsonify({"success": False, "error": "calendar_id required"}), 400
 
     service = get_calendar_service()
     success = service.set_calendar(integration_id, staff_id, calendar_id, calendar_name)
 
     if success:
-        return jsonify({'success': True, 'message': 'Calendar updated'})
-    return jsonify({'success': False, 'error': 'Integration not found'}), 404
+        return jsonify({"success": True, "message": "Calendar updated"})
+    return jsonify({"success": False, "error": "Integration not found"}), 404
 
 
-@app.route('/api/calendar/integrations/<int:integration_id>/settings', methods=['PUT'])
+@app.route("/api/calendar/integrations/<int:integration_id>/settings", methods=["PUT"])
 @require_staff()
 def api_update_calendar_settings(integration_id):
     """Update calendar sync settings"""
     from database import CalendarIntegration
 
-    staff_id = session.get('staff_id')
+    staff_id = session.get("staff_id")
     data = request.json
     db = get_db()
 
     try:
-        integration = db.query(CalendarIntegration).filter_by(
-            id=integration_id,
-            staff_id=staff_id
-        ).first()
+        integration = (
+            db.query(CalendarIntegration)
+            .filter_by(id=integration_id, staff_id=staff_id)
+            .first()
+        )
 
         if not integration:
-            return jsonify({'success': False, 'error': 'Integration not found'}), 404
+            return jsonify({"success": False, "error": "Integration not found"}), 404
 
-        if 'sync_enabled' in data:
-            integration.sync_enabled = data['sync_enabled']
-        if 'sync_direction' in data:
-            integration.sync_direction = data['sync_direction']
-        if 'check_free_busy' in data:
-            integration.check_free_busy = data['check_free_busy']
+        if "sync_enabled" in data:
+            integration.sync_enabled = data["sync_enabled"]
+        if "sync_direction" in data:
+            integration.sync_direction = data["sync_direction"]
+        if "check_free_busy" in data:
+            integration.check_free_busy = data["check_free_busy"]
 
         db.commit()
-        return jsonify({'success': True, 'message': 'Settings updated'})
+        return jsonify({"success": True, "message": "Settings updated"})
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/calendar/integrations/<int:integration_id>/disconnect', methods=['POST'])
+@app.route(
+    "/api/calendar/integrations/<int:integration_id>/disconnect", methods=["POST"]
+)
 @require_staff()
 def api_disconnect_calendar(integration_id):
     """Disconnect a calendar integration"""
     from services.calendar_sync_service import get_calendar_service
 
-    staff_id = session.get('staff_id')
+    staff_id = session.get("staff_id")
     service = get_calendar_service()
     success = service.disconnect(integration_id, staff_id)
 
     if success:
-        return jsonify({'success': True, 'message': 'Calendar disconnected'})
-    return jsonify({'success': False, 'error': 'Integration not found'}), 404
+        return jsonify({"success": True, "message": "Calendar disconnected"})
+    return jsonify({"success": False, "error": "Integration not found"}), 404
 
 
-@app.route('/api/calendar/free-busy', methods=['GET'])
+@app.route("/api/calendar/free-busy", methods=["GET"])
 @require_staff()
 def api_get_free_busy():
     """Get free/busy times for a date range"""
-    from services.calendar_sync_service import get_calendar_service
     from datetime import datetime
 
-    staff_id = session.get('staff_id')
-    start = request.args.get('start')
-    end = request.args.get('end')
+    from services.calendar_sync_service import get_calendar_service
+
+    staff_id = session.get("staff_id")
+    start = request.args.get("start")
+    end = request.args.get("end")
 
     if not start or not end:
-        return jsonify({'success': False, 'error': 'start and end required'}), 400
+        return jsonify({"success": False, "error": "start and end required"}), 400
 
     try:
-        start_time = datetime.fromisoformat(start.replace('Z', '+00:00'))
-        end_time = datetime.fromisoformat(end.replace('Z', '+00:00'))
+        start_time = datetime.fromisoformat(start.replace("Z", "+00:00"))
+        end_time = datetime.fromisoformat(end.replace("Z", "+00:00"))
     except ValueError:
-        return jsonify({'success': False, 'error': 'Invalid date format'}), 400
+        return jsonify({"success": False, "error": "Invalid date format"}), 400
 
     service = get_calendar_service()
     busy_times = service.get_free_busy(staff_id, start_time, end_time)
 
-    return jsonify({'success': True, 'busy_times': busy_times})
+    return jsonify({"success": True, "busy_times": busy_times})
 
 
-@app.route('/api/calendar/check-availability', methods=['POST'])
+@app.route("/api/calendar/check-availability", methods=["POST"])
 @require_staff()
 def api_check_availability():
     """Check if a specific time slot is available"""
-    from services.calendar_sync_service import get_calendar_service
     from datetime import datetime
 
-    staff_id = session.get('staff_id')
+    from services.calendar_sync_service import get_calendar_service
+
+    staff_id = session.get("staff_id")
     data = request.json
-    start = data.get('start')
-    end = data.get('end')
+    start = data.get("start")
+    end = data.get("end")
 
     if not start or not end:
-        return jsonify({'success': False, 'error': 'start and end required'}), 400
+        return jsonify({"success": False, "error": "start and end required"}), 400
 
     try:
-        start_time = datetime.fromisoformat(start.replace('Z', '+00:00'))
-        end_time = datetime.fromisoformat(end.replace('Z', '+00:00'))
+        start_time = datetime.fromisoformat(start.replace("Z", "+00:00"))
+        end_time = datetime.fromisoformat(end.replace("Z", "+00:00"))
     except ValueError:
-        return jsonify({'success': False, 'error': 'Invalid date format'}), 400
+        return jsonify({"success": False, "error": "Invalid date format"}), 400
 
     service = get_calendar_service()
     is_available = service.is_time_available(staff_id, start_time, end_time)
 
-    return jsonify({'success': True, 'available': is_available})
+    return jsonify({"success": True, "available": is_available})
 
 
-@app.route('/api/bookings', methods=['GET'])
+@app.route("/api/bookings", methods=["GET"])
 @require_staff()
 def api_get_bookings():
     """Get all bookings (staff view)"""
@@ -38038,48 +38665,54 @@ def api_get_bookings():
     try:
         from database import Booking, BookingSlot, Client
 
-        status_filter = request.args.get('status')
+        status_filter = request.args.get("status")
 
         query = db.query(Booking).join(BookingSlot)
 
         if status_filter:
             query = query.filter(Booking.status == status_filter)
 
-        bookings = query.order_by(BookingSlot.slot_date.desc(), BookingSlot.slot_time.desc()).all()
+        bookings = query.order_by(
+            BookingSlot.slot_date.desc(), BookingSlot.slot_time.desc()
+        ).all()
 
         result = []
         for booking in bookings:
             client = db.query(Client).filter(Client.id == booking.client_id).first()
-            result.append({
-                'id': booking.id,
-                'slot': {
-                    'id': booking.slot.id,
-                    'date': booking.slot.slot_date.isoformat(),
-                    'time': booking.slot.slot_time.strftime('%H:%M'),
-                    'duration': booking.slot.duration_minutes
-                },
-                'client': {
-                    'id': client.id if client else None,
-                    'name': client.name if client else 'Unknown',
-                    'email': client.email if client else '',
-                    'phone': client.phone or client.mobile if client else ''
-                },
-                'booking_type': booking.booking_type,
-                'notes': booking.notes,
-                'status': booking.status,
-                'booked_at': booking.booked_at.isoformat() if booking.booked_at else None,
-                'confirmation_sent': booking.confirmation_sent
-            })
+            result.append(
+                {
+                    "id": booking.id,
+                    "slot": {
+                        "id": booking.slot.id,
+                        "date": booking.slot.slot_date.isoformat(),
+                        "time": booking.slot.slot_time.strftime("%H:%M"),
+                        "duration": booking.slot.duration_minutes,
+                    },
+                    "client": {
+                        "id": client.id if client else None,
+                        "name": client.name if client else "Unknown",
+                        "email": client.email if client else "",
+                        "phone": client.phone or client.mobile if client else "",
+                    },
+                    "booking_type": booking.booking_type,
+                    "notes": booking.notes,
+                    "status": booking.status,
+                    "booked_at": (
+                        booking.booked_at.isoformat() if booking.booked_at else None
+                    ),
+                    "confirmation_sent": booking.confirmation_sent,
+                }
+            )
 
-        return jsonify({'success': True, 'bookings': result})
+        return jsonify({"success": True, "bookings": result})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/bookings/<int:booking_id>/status', methods=['PUT'])
+@app.route("/api/bookings/<int:booking_id>/status", methods=["PUT"])
 @require_staff()
 def api_update_booking_status(booking_id):
     """Update booking status (complete, no_show, etc.)"""
@@ -38089,25 +38722,26 @@ def api_update_booking_status(booking_id):
 
         booking = db.query(Booking).filter(Booking.id == booking_id).first()
         if not booking:
-            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+            return jsonify({"success": False, "error": "Booking not found"}), 404
 
         data = request.get_json()
-        new_status = data.get('status')
+        new_status = data.get("status")
 
-        if new_status not in ['confirmed', 'cancelled', 'completed', 'no_show']:
-            return jsonify({'success': False, 'error': 'Invalid status'}), 400
+        if new_status not in ["confirmed", "cancelled", "completed", "no_show"]:
+            return jsonify({"success": False, "error": "Invalid status"}), 400
 
         booking.status = new_status
 
-        if new_status == 'completed':
+        if new_status == "completed":
             booking.completed_at = datetime.utcnow()
-        elif new_status == 'cancelled':
+        elif new_status == "cancelled":
             booking.cancelled_at = datetime.utcnow()
             # Free up the slot
             booking.slot.is_booked = False
             # Delete from calendar
             try:
                 from services.calendar_sync_service import get_calendar_service
+
                 calendar_service = get_calendar_service()
                 calendar_service.delete_calendar_event(booking.id)
             except Exception as e:
@@ -38116,39 +38750,48 @@ def api_update_booking_status(booking_id):
         booking.updated_at = datetime.utcnow()
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'message': f'Booking marked as {new_status}',
-            'status': new_status
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Booking marked as {new_status}",
+                "status": new_status,
+            }
+        )
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
 # Portal Booking Endpoints (for clients)
 
-@app.route('/api/portal/booking-slots', methods=['GET'])
+
+@app.route("/api/portal/booking-slots", methods=["GET"])
 def api_portal_get_available_slots():
     """Get available booking slots for clients to book"""
     db = get_db()
     try:
-        from database import BookingSlot
         from datetime import date, timedelta
+
+        from database import BookingSlot
 
         # Only show slots in the next 14 days
         start_date = date.today()
         end_date = start_date + timedelta(days=14)
 
-        slots = db.query(BookingSlot).filter(
-            BookingSlot.slot_date >= start_date,
-            BookingSlot.slot_date <= end_date,
-            BookingSlot.is_available == True,
-            BookingSlot.is_booked == False
-        ).order_by(BookingSlot.slot_date, BookingSlot.slot_time).all()
+        slots = (
+            db.query(BookingSlot)
+            .filter(
+                BookingSlot.slot_date >= start_date,
+                BookingSlot.slot_date <= end_date,
+                BookingSlot.is_available == True,
+                BookingSlot.is_booked == False,
+            )
+            .order_by(BookingSlot.slot_date, BookingSlot.slot_time)
+            .all()
+        )
 
         # Group by date for easier UI display
         slots_by_date = {}
@@ -38156,64 +38799,71 @@ def api_portal_get_available_slots():
             date_str = slot.slot_date.isoformat()
             if date_str not in slots_by_date:
                 slots_by_date[date_str] = {
-                    'date': date_str,
-                    'day_name': slot.slot_date.strftime('%A'),
-                    'slots': []
+                    "date": date_str,
+                    "day_name": slot.slot_date.strftime("%A"),
+                    "slots": [],
                 }
-            slots_by_date[date_str]['slots'].append({
-                'id': slot.id,
-                'time': slot.slot_time.strftime('%H:%M'),
-                'time_display': slot.slot_time.strftime('%I:%M %p'),
-                'duration': slot.duration_minutes
-            })
+            slots_by_date[date_str]["slots"].append(
+                {
+                    "id": slot.id,
+                    "time": slot.slot_time.strftime("%H:%M"),
+                    "time_display": slot.slot_time.strftime("%I:%M %p"),
+                    "duration": slot.duration_minutes,
+                }
+            )
 
-        return jsonify({
-            'success': True,
-            'dates': list(slots_by_date.values())
-        })
+        return jsonify({"success": True, "dates": list(slots_by_date.values())})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/portal/bookings', methods=['POST'])
+@app.route("/api/portal/bookings", methods=["POST"])
 def api_portal_create_booking():
     """Create a booking (client books a slot)"""
     db = get_db()
     try:
-        from database import BookingSlot, Booking, Client
+        from database import Booking, BookingSlot, Client
         from services.email_service import send_email
 
         # Get client from session
-        client_id = session.get('portal_client_id')
+        client_id = session.get("portal_client_id")
         if not client_id:
-            return jsonify({'success': False, 'error': 'Please log in to book'}), 401
+            return jsonify({"success": False, "error": "Please log in to book"}), 401
 
         data = request.get_json()
-        slot_id = data.get('slot_id')
-        notes = data.get('notes', '').strip()
+        slot_id = data.get("slot_id")
+        notes = data.get("notes", "").strip()
 
         if not slot_id:
-            return jsonify({'success': False, 'error': 'Please select a time slot'}), 400
+            return (
+                jsonify({"success": False, "error": "Please select a time slot"}),
+                400,
+            )
 
         # Check slot is available
         slot = db.query(BookingSlot).filter(BookingSlot.id == slot_id).first()
         if not slot:
-            return jsonify({'success': False, 'error': 'Time slot not found'}), 404
+            return jsonify({"success": False, "error": "Time slot not found"}), 404
 
         if not slot.is_available or slot.is_booked:
-            return jsonify({'success': False, 'error': 'This time slot is no longer available'}), 400
+            return (
+                jsonify(
+                    {"success": False, "error": "This time slot is no longer available"}
+                ),
+                400,
+            )
 
         # Create booking
         booking = Booking(
             slot_id=slot_id,
             client_id=client_id,
-            booking_type='qa_call',
+            booking_type="qa_call",
             notes=notes,
-            status='confirmed',
-            booked_at=datetime.utcnow()
+            status="confirmed",
+            booked_at=datetime.utcnow(),
         )
         db.add(booking)
 
@@ -38226,6 +38876,7 @@ def api_portal_create_booking():
         # Sync to staff's calendar if connected
         try:
             from services.calendar_sync_service import get_calendar_service
+
             calendar_service = get_calendar_service()
             calendar_service.sync_booking_to_calendar(booking)
         except Exception as e:
@@ -38253,99 +38904,114 @@ def api_portal_create_booking():
                 result = send_email(
                     to_email=client.email,
                     subject="Q&A Call Confirmed - Brightpath Ascend",
-                    html_content=html_content
+                    html_content=html_content,
                 )
-                if result.get('success'):
+                if result.get("success"):
                     booking.confirmation_sent = True
                     booking.confirmation_sent_at = datetime.utcnow()
                     db.commit()
             except Exception as e:
                 print(f"Failed to send confirmation email: {e}")
 
-        return jsonify({
-            'success': True,
-            'message': 'Your Q&A call has been scheduled!',
-            'booking': {
-                'id': booking.id,
-                'date': slot.slot_date.isoformat(),
-                'time': slot.slot_time.strftime('%I:%M %p'),
-                'duration': slot.duration_minutes
+        return jsonify(
+            {
+                "success": True,
+                "message": "Your Q&A call has been scheduled!",
+                "booking": {
+                    "id": booking.id,
+                    "date": slot.slot_date.isoformat(),
+                    "time": slot.slot_time.strftime("%I:%M %p"),
+                    "duration": slot.duration_minutes,
+                },
             }
-        })
+        )
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/portal/bookings', methods=['GET'])
+@app.route("/api/portal/bookings", methods=["GET"])
 def api_portal_get_my_bookings():
     """Get client's own bookings"""
     db = get_db()
     try:
         from database import Booking, BookingSlot
 
-        client_id = session.get('portal_client_id')
+        client_id = session.get("portal_client_id")
         if not client_id:
-            return jsonify({'success': False, 'error': 'Please log in'}), 401
+            return jsonify({"success": False, "error": "Please log in"}), 401
 
-        bookings = db.query(Booking).join(BookingSlot).filter(
-            Booking.client_id == client_id,
-            Booking.status.in_(['confirmed', 'completed'])
-        ).order_by(BookingSlot.slot_date.desc(), BookingSlot.slot_time.desc()).all()
+        bookings = (
+            db.query(Booking)
+            .join(BookingSlot)
+            .filter(
+                Booking.client_id == client_id,
+                Booking.status.in_(["confirmed", "completed"]),
+            )
+            .order_by(BookingSlot.slot_date.desc(), BookingSlot.slot_time.desc())
+            .all()
+        )
 
         result = []
         for booking in bookings:
-            result.append({
-                'id': booking.id,
-                'date': booking.slot.slot_date.isoformat(),
-                'date_display': booking.slot.slot_date.strftime('%A, %B %d, %Y'),
-                'time': booking.slot.slot_time.strftime('%I:%M %p'),
-                'duration': booking.slot.duration_minutes,
-                'status': booking.status,
-                'notes': booking.notes
-            })
+            result.append(
+                {
+                    "id": booking.id,
+                    "date": booking.slot.slot_date.isoformat(),
+                    "date_display": booking.slot.slot_date.strftime("%A, %B %d, %Y"),
+                    "time": booking.slot.slot_time.strftime("%I:%M %p"),
+                    "duration": booking.slot.duration_minutes,
+                    "status": booking.status,
+                    "notes": booking.notes,
+                }
+            )
 
-        return jsonify({'success': True, 'bookings': result})
+        return jsonify({"success": True, "bookings": result})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/portal/bookings/<int:booking_id>', methods=['DELETE'])
+@app.route("/api/portal/bookings/<int:booking_id>", methods=["DELETE"])
 def api_portal_cancel_booking(booking_id):
     """Cancel a booking (client cancels their own booking)"""
     db = get_db()
     try:
         from database import Booking
 
-        client_id = session.get('portal_client_id')
+        client_id = session.get("portal_client_id")
         if not client_id:
-            return jsonify({'success': False, 'error': 'Please log in'}), 401
+            return jsonify({"success": False, "error": "Please log in"}), 401
 
-        booking = db.query(Booking).filter(
-            Booking.id == booking_id,
-            Booking.client_id == client_id
-        ).first()
+        booking = (
+            db.query(Booking)
+            .filter(Booking.id == booking_id, Booking.client_id == client_id)
+            .first()
+        )
 
         if not booking:
-            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+            return jsonify({"success": False, "error": "Booking not found"}), 404
 
-        if booking.status != 'confirmed':
-            return jsonify({'success': False, 'error': 'Cannot cancel this booking'}), 400
+        if booking.status != "confirmed":
+            return (
+                jsonify({"success": False, "error": "Cannot cancel this booking"}),
+                400,
+            )
 
         # Cancel booking and free up slot
-        booking.status = 'cancelled'
+        booking.status = "cancelled"
         booking.cancelled_at = datetime.utcnow()
         booking.slot.is_booked = False
 
         # Delete from calendar
         try:
             from services.calendar_sync_service import get_calendar_service
+
             calendar_service = get_calendar_service()
             calendar_service.delete_calendar_event(booking.id)
         except Exception as e:
@@ -38353,14 +39019,11 @@ def api_portal_cancel_booking(booking_id):
 
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'message': 'Booking cancelled successfully'
-        })
+        return jsonify({"success": True, "message": "Booking cancelled successfully"})
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
@@ -38370,113 +39033,143 @@ def api_portal_cancel_booking(booking_id):
 # =============================================================
 
 
-@app.route('/api/portal/messages', methods=['GET'])
+@app.route("/api/portal/messages", methods=["GET"])
 def api_portal_get_messages():
     """Get all messages for the current client"""
     db = get_db()
     try:
         from database import ClientMessage, Staff
 
-        client_id = session.get('portal_client_id') or session.get('client_id')
+        client_id = session.get("portal_client_id") or session.get("client_id")
         if not client_id:
-            return jsonify({'success': False, 'error': 'Please log in'}), 401
+            return jsonify({"success": False, "error": "Please log in"}), 401
 
-        messages = db.query(ClientMessage).filter(
-            ClientMessage.client_id == client_id
-        ).order_by(ClientMessage.created_at.asc()).all()
+        messages = (
+            db.query(ClientMessage)
+            .filter(ClientMessage.client_id == client_id)
+            .order_by(ClientMessage.created_at.asc())
+            .all()
+        )
 
         # Mark unread staff messages as read
         for msg in messages:
-            if msg.sender_type == 'staff' and not msg.is_read:
+            if msg.sender_type == "staff" and not msg.is_read:
                 msg.is_read = True
                 msg.read_at = datetime.utcnow()
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'messages': [{
-                'id': m.id,
-                'message': m.message,
-                'sender_type': m.sender_type,
-                'is_read': m.is_read,
-                'created_at': m.created_at.isoformat() if m.created_at else None,
-                'staff_name': (db.query(Staff).get(m.staff_id).full_name if m.staff_id else None)
-            } for m in messages]
-        })
+        return jsonify(
+            {
+                "success": True,
+                "messages": [
+                    {
+                        "id": m.id,
+                        "message": m.message,
+                        "sender_type": m.sender_type,
+                        "is_read": m.is_read,
+                        "created_at": (
+                            m.created_at.isoformat() if m.created_at else None
+                        ),
+                        "staff_name": (
+                            db.query(Staff).get(m.staff_id).full_name
+                            if m.staff_id
+                            else None
+                        ),
+                    }
+                    for m in messages
+                ],
+            }
+        )
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/portal/messages', methods=['POST'])
+@app.route("/api/portal/messages", methods=["POST"])
 def api_portal_send_message():
     """Send a message from the client"""
     db = get_db()
     try:
         from database import ClientMessage
 
-        client_id = session.get('portal_client_id') or session.get('client_id')
+        client_id = session.get("portal_client_id") or session.get("client_id")
         if not client_id:
-            return jsonify({'success': False, 'error': 'Please log in'}), 401
+            return jsonify({"success": False, "error": "Please log in"}), 401
 
         data = request.get_json() or {}
-        message_text = data.get('message', '').strip()
+        message_text = data.get("message", "").strip()
 
         if not message_text:
-            return jsonify({'success': False, 'error': 'Message is required'}), 400
+            return jsonify({"success": False, "error": "Message is required"}), 400
 
         if len(message_text) > 5000:
-            return jsonify({'success': False, 'error': 'Message too long (max 5000 characters)'}), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Message too long (max 5000 characters)",
+                    }
+                ),
+                400,
+            )
 
         message = ClientMessage(
             client_id=client_id,
             message=message_text,
-            sender_type='client',
-            is_read=False
+            sender_type="client",
+            is_read=False,
         )
         db.add(message)
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'message': {
-                'id': message.id,
-                'message': message.message,
-                'sender_type': message.sender_type,
-                'created_at': message.created_at.isoformat() if message.created_at else None
+        return jsonify(
+            {
+                "success": True,
+                "message": {
+                    "id": message.id,
+                    "message": message.message,
+                    "sender_type": message.sender_type,
+                    "created_at": (
+                        message.created_at.isoformat() if message.created_at else None
+                    ),
+                },
             }
-        })
+        )
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/portal/messages/unread-count', methods=['GET'])
+@app.route("/api/portal/messages/unread-count", methods=["GET"])
 def api_portal_unread_count():
     """Get count of unread messages for the client"""
     db = get_db()
     try:
         from database import ClientMessage
 
-        client_id = session.get('portal_client_id') or session.get('client_id')
+        client_id = session.get("portal_client_id") or session.get("client_id")
         if not client_id:
-            return jsonify({'success': False, 'error': 'Please log in'}), 401
+            return jsonify({"success": False, "error": "Please log in"}), 401
 
-        count = db.query(ClientMessage).filter(
-            ClientMessage.client_id == client_id,
-            ClientMessage.sender_type == 'staff',
-            ClientMessage.is_read == False
-        ).count()
+        count = (
+            db.query(ClientMessage)
+            .filter(
+                ClientMessage.client_id == client_id,
+                ClientMessage.sender_type == "staff",
+                ClientMessage.is_read == False,
+            )
+            .count()
+        )
 
-        return jsonify({'success': True, 'unread_count': count})
+        return jsonify({"success": True, "unread_count": count})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
@@ -38486,54 +39179,68 @@ def api_portal_unread_count():
 # =============================================================
 
 
-@app.route('/api/messages/clients', methods=['GET'])
+@app.route("/api/messages/clients", methods=["GET"])
 @require_staff()
 def api_get_messaging_clients():
     """Get all clients with messages (for staff view)"""
     db = get_db()
     try:
-        from database import ClientMessage, Client
+        from database import Client, ClientMessage
 
         # Get distinct clients with messages
         subq = db.query(ClientMessage.client_id).distinct()
-        clients_with_messages = db.query(Client).filter(
-            Client.id.in_(subq)
-        ).all()
+        clients_with_messages = db.query(Client).filter(Client.id.in_(subq)).all()
 
         result = []
         for client in clients_with_messages:
             # Get latest message and unread count
-            latest = db.query(ClientMessage).filter(
-                ClientMessage.client_id == client.id
-            ).order_by(ClientMessage.created_at.desc()).first()
+            latest = (
+                db.query(ClientMessage)
+                .filter(ClientMessage.client_id == client.id)
+                .order_by(ClientMessage.created_at.desc())
+                .first()
+            )
 
-            unread = db.query(ClientMessage).filter(
-                ClientMessage.client_id == client.id,
-                ClientMessage.sender_type == 'client',
-                ClientMessage.is_read == False
-            ).count()
+            unread = (
+                db.query(ClientMessage)
+                .filter(
+                    ClientMessage.client_id == client.id,
+                    ClientMessage.sender_type == "client",
+                    ClientMessage.is_read == False,
+                )
+                .count()
+            )
 
-            result.append({
-                'client_id': client.id,
-                'client_name': client.name,
-                'client_email': client.email,
-                'latest_message': latest.message[:100] if latest else None,
-                'latest_at': latest.created_at.isoformat() if latest and latest.created_at else None,
-                'unread_count': unread
-            })
+            result.append(
+                {
+                    "client_id": client.id,
+                    "client_name": client.name,
+                    "client_email": client.email,
+                    "latest_message": latest.message[:100] if latest else None,
+                    "latest_at": (
+                        latest.created_at.isoformat()
+                        if latest and latest.created_at
+                        else None
+                    ),
+                    "unread_count": unread,
+                }
+            )
 
         # Sort by latest message, unread first
-        result.sort(key=lambda x: (-(x['unread_count'] or 0), x['latest_at'] or ''), reverse=False)
+        result.sort(
+            key=lambda x: (-(x["unread_count"] or 0), x["latest_at"] or ""),
+            reverse=False,
+        )
 
-        return jsonify({'success': True, 'clients': result})
+        return jsonify({"success": True, "clients": result})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/messages/client/<int:client_id>', methods=['GET'])
+@app.route("/api/messages/client/<int:client_id>", methods=["GET"])
 @require_staff()
 def api_get_client_messages(client_id):
     """Get all messages for a specific client"""
@@ -38541,36 +39248,50 @@ def api_get_client_messages(client_id):
     try:
         from database import ClientMessage, Staff
 
-        messages = db.query(ClientMessage).filter(
-            ClientMessage.client_id == client_id
-        ).order_by(ClientMessage.created_at.asc()).all()
+        messages = (
+            db.query(ClientMessage)
+            .filter(ClientMessage.client_id == client_id)
+            .order_by(ClientMessage.created_at.asc())
+            .all()
+        )
 
         # Mark unread client messages as read
         for msg in messages:
-            if msg.sender_type == 'client' and not msg.is_read:
+            if msg.sender_type == "client" and not msg.is_read:
                 msg.is_read = True
                 msg.read_at = datetime.utcnow()
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'messages': [{
-                'id': m.id,
-                'message': m.message,
-                'sender_type': m.sender_type,
-                'is_read': m.is_read,
-                'created_at': m.created_at.isoformat() if m.created_at else None,
-                'staff_name': (db.query(Staff).get(m.staff_id).full_name if m.staff_id else None)
-            } for m in messages]
-        })
+        return jsonify(
+            {
+                "success": True,
+                "messages": [
+                    {
+                        "id": m.id,
+                        "message": m.message,
+                        "sender_type": m.sender_type,
+                        "is_read": m.is_read,
+                        "created_at": (
+                            m.created_at.isoformat() if m.created_at else None
+                        ),
+                        "staff_name": (
+                            db.query(Staff).get(m.staff_id).full_name
+                            if m.staff_id
+                            else None
+                        ),
+                    }
+                    for m in messages
+                ],
+            }
+        )
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/messages/client/<int:client_id>', methods=['POST'])
+@app.route("/api/messages/client/<int:client_id>", methods=["POST"])
 @require_staff()
 def api_send_client_message(client_id):
     """Send a message to a client (from staff)"""
@@ -38578,44 +39299,48 @@ def api_send_client_message(client_id):
     try:
         from database import ClientMessage
 
-        staff_id = session.get('staff_id')
+        staff_id = session.get("staff_id")
         if not staff_id:
-            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
 
         data = request.get_json() or {}
-        message_text = data.get('message', '').strip()
+        message_text = data.get("message", "").strip()
 
         if not message_text:
-            return jsonify({'success': False, 'error': 'Message is required'}), 400
+            return jsonify({"success": False, "error": "Message is required"}), 400
 
         message = ClientMessage(
             client_id=client_id,
             staff_id=staff_id,
             message=message_text,
-            sender_type='staff',
-            is_read=False
+            sender_type="staff",
+            is_read=False,
         )
         db.add(message)
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'message': {
-                'id': message.id,
-                'message': message.message,
-                'sender_type': message.sender_type,
-                'created_at': message.created_at.isoformat() if message.created_at else None
+        return jsonify(
+            {
+                "success": True,
+                "message": {
+                    "id": message.id,
+                    "message": message.message,
+                    "sender_type": message.sender_type,
+                    "created_at": (
+                        message.created_at.isoformat() if message.created_at else None
+                    ),
+                },
             }
-        })
+        )
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/messages/unread-total', methods=['GET'])
+@app.route("/api/messages/unread-total", methods=["GET"])
 @require_staff()
 def api_get_total_unread():
     """Get total unread messages from all clients"""
@@ -38623,15 +39348,18 @@ def api_get_total_unread():
     try:
         from database import ClientMessage
 
-        count = db.query(ClientMessage).filter(
-            ClientMessage.sender_type == 'client',
-            ClientMessage.is_read == False
-        ).count()
+        count = (
+            db.query(ClientMessage)
+            .filter(
+                ClientMessage.sender_type == "client", ClientMessage.is_read == False
+            )
+            .count()
+        )
 
-        return jsonify({'success': True, 'unread_count': count})
+        return jsonify({"success": True, "unread_count": count})
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
@@ -38640,7 +39368,8 @@ def api_get_total_unread():
 # AI CHAT SUPPORT - Staff endpoints for escalated conversations
 # =============================================================================
 
-@app.route('/api/chat/escalated', methods=['GET'])
+
+@app.route("/api/chat/escalated", methods=["GET"])
 @require_staff()
 def api_get_escalated_chats():
     """Get all escalated chat conversations for staff dashboard"""
@@ -38648,9 +39377,9 @@ def api_get_escalated_chats():
     try:
         from services.chat_service import get_chat_service
 
-        staff_id = session.get('staff_id')
+        staff_id = session.get("staff_id")
         # Pass staff_id to filter by assigned, or None for all escalated
-        filter_assigned = request.args.get('assigned', 'false').lower() == 'true'
+        filter_assigned = request.args.get("assigned", "false").lower() == "true"
 
         service = get_chat_service(db)
         result = service.get_escalated_conversations(
@@ -38659,12 +39388,12 @@ def api_get_escalated_chats():
 
         return jsonify(result)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/chat/conversation/<int:conversation_id>', methods=['GET'])
+@app.route("/api/chat/conversation/<int:conversation_id>", methods=["GET"])
 @require_staff()
 def api_staff_get_conversation(conversation_id):
     """Get a conversation (staff can view any conversation)"""
@@ -38675,17 +39404,20 @@ def api_staff_get_conversation(conversation_id):
         service = get_chat_service(db)
         result = service.get_conversation(conversation_id=conversation_id)
 
-        if not result.get('success'):
-            return jsonify({'error': result.get('error', 'Conversation not found')}), 404
+        if not result.get("success"):
+            return (
+                jsonify({"error": result.get("error", "Conversation not found")}),
+                404,
+            )
 
         return jsonify(result)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/chat/conversation/<int:conversation_id>/respond', methods=['POST'])
+@app.route("/api/chat/conversation/<int:conversation_id>/respond", methods=["POST"])
 @require_staff()
 def api_staff_respond_chat(conversation_id):
     """Staff responds to an escalated conversation"""
@@ -38693,34 +39425,40 @@ def api_staff_respond_chat(conversation_id):
     try:
         from services.chat_service import get_chat_service
 
-        staff_id = session.get('staff_id')
+        staff_id = session.get("staff_id")
         if not staff_id:
-            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
 
         data = request.get_json() or {}
-        message = data.get('message', '').strip()
+        message = data.get("message", "").strip()
 
         if not message:
-            return jsonify({'success': False, 'error': 'message is required'}), 400
+            return jsonify({"success": False, "error": "message is required"}), 400
 
         service = get_chat_service(db)
         result = service.staff_respond(
-            conversation_id=conversation_id,
-            staff_id=staff_id,
-            message=message
+            conversation_id=conversation_id, staff_id=staff_id, message=message
         )
 
-        if not result.get('success'):
-            return jsonify({'success': False, 'error': result.get('error', 'Failed to send response')}), 400
+        if not result.get("success"):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": result.get("error", "Failed to send response"),
+                    }
+                ),
+                400,
+            )
 
         return jsonify(result)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/api/chat/conversation/<int:conversation_id>/close', methods=['POST'])
+@app.route("/api/chat/conversation/<int:conversation_id>/close", methods=["POST"])
 @require_staff()
 def api_staff_close_chat(conversation_id):
     """Staff closes a conversation"""
@@ -38731,26 +39469,32 @@ def api_staff_close_chat(conversation_id):
         service = get_chat_service(db)
         result = service.close_conversation(conversation_id=conversation_id)
 
-        if not result.get('success'):
-            return jsonify({'success': False, 'error': result.get('error', 'Failed to close')}), 400
+        if not result.get("success"):
+            return (
+                jsonify(
+                    {"success": False, "error": result.get("error", "Failed to close")}
+                ),
+                400,
+            )
 
         return jsonify(result)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
 
-@app.route('/dashboard/chat')
+@app.route("/dashboard/chat")
 @require_staff()
 def dashboard_chat():
     """Staff dashboard page for managing escalated chats"""
-    return render_template('chat_dashboard.html')
+    return render_template("chat_dashboard.html")
 
 
 # =============================================================================
 # WHATSAPP WEBHOOKS - Twilio WhatsApp message handlers
 # =============================================================================
+
 
 @app.route("/api/webhooks/whatsapp", methods=["POST"])
 def whatsapp_webhook():
@@ -38771,10 +39515,10 @@ def whatsapp_webhook():
     db = get_db()
     try:
         # Get Twilio signature for validation
-        signature = request.headers.get('X-Twilio-Signature', '')
+        signature = request.headers.get("X-Twilio-Signature", "")
 
         # Validate Twilio signature (if auth token is configured)
-        twilio_auth_token = os.environ.get('TWILIO_AUTH_TOKEN', '')
+        twilio_auth_token = os.environ.get("TWILIO_AUTH_TOKEN", "")
         if twilio_auth_token:
             validator = RequestValidator(twilio_auth_token)
             # Build the full URL including query params
@@ -38786,17 +39530,17 @@ def whatsapp_webhook():
                 return "Invalid signature", 403
 
         # Parse the incoming message data
-        from_number = request.form.get('From', '')  # whatsapp:+1234567890
-        to_number = request.form.get('To', '')
-        body = request.form.get('Body', '')
-        message_sid = request.form.get('MessageSid', '')
-        num_media = int(request.form.get('NumMedia', 0))
-        profile_name = request.form.get('ProfileName', '')
+        from_number = request.form.get("From", "")  # whatsapp:+1234567890
+        to_number = request.form.get("To", "")
+        body = request.form.get("Body", "")
+        message_sid = request.form.get("MessageSid", "")
+        num_media = int(request.form.get("NumMedia", 0))
+        profile_name = request.form.get("ProfileName", "")
 
         # Status callback fields (for outbound message updates)
-        message_status = request.form.get('MessageStatus', '')
-        error_code = request.form.get('ErrorCode', '')
-        error_message = request.form.get('ErrorMessage', '')
+        message_status = request.form.get("MessageStatus", "")
+        error_code = request.form.get("ErrorCode", "")
+        error_message = request.form.get("ErrorMessage", "")
 
         # Import the webhook service
         from services.whatsapp_webhook_service import get_whatsapp_webhook_service
@@ -38804,21 +39548,21 @@ def whatsapp_webhook():
         service = get_whatsapp_webhook_service(db)
 
         # Handle status callbacks for outbound messages
-        if message_status and not from_number.startswith('whatsapp:'):
+        if message_status and not from_number.startswith("whatsapp:"):
             result = service.handle_status_callback(
                 message_sid=message_sid,
                 status=message_status,
                 error_code=error_code,
-                error_message=error_message
+                error_message=error_message,
             )
-            return '', 200
+            return "", 200
 
         # Handle incoming message
         media_urls = []
         media_types = []
         for i in range(num_media):
-            media_url = request.form.get(f'MediaUrl{i}', '')
-            media_type = request.form.get(f'MediaContentType{i}', '')
+            media_url = request.form.get(f"MediaUrl{i}", "")
+            media_type = request.form.get(f"MediaContentType{i}", "")
             if media_url:
                 media_urls.append(media_url)
                 media_types.append(media_type)
@@ -38830,21 +39574,22 @@ def whatsapp_webhook():
             message_sid=message_sid,
             profile_name=profile_name,
             media_urls=media_urls,
-            media_types=media_types
+            media_types=media_types,
         )
 
         # Return TwiML response if provided
-        twiml_response = result.get('twiml', '')
+        twiml_response = result.get("twiml", "")
         if twiml_response:
-            return twiml_response, 200, {'Content-Type': 'application/xml'}
+            return twiml_response, 200, {"Content-Type": "application/xml"}
 
-        return '', 200
+        return "", 200
 
     except Exception as e:
         print(f"WhatsApp webhook error: {e}")
         import traceback
+
         traceback.print_exc()
-        return '', 200  # Always return 200 to Twilio to prevent retries
+        return "", 200  # Always return 200 to Twilio to prevent retries
     finally:
         db.close()
 
@@ -38855,19 +39600,20 @@ def portal_whatsapp_request_verification():
     Request WhatsApp verification code.
     Client provides their WhatsApp number and receives a verification code.
     """
-    from flask import session
     import random
     from datetime import datetime, timedelta
 
-    client_id = session.get('client_id')
+    from flask import session
+
+    client_id = session.get("client_id")
     if not client_id:
-        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
 
     data = request.get_json() or {}
-    whatsapp_number = data.get('whatsapp_number', '').strip()
+    whatsapp_number = data.get("whatsapp_number", "").strip()
 
     if not whatsapp_number:
-        return jsonify({'success': False, 'error': 'WhatsApp number is required'}), 400
+        return jsonify({"success": False, "error": "WhatsApp number is required"}), 400
 
     db = get_db()
     try:
@@ -38876,10 +39622,10 @@ def portal_whatsapp_request_verification():
 
         client = db.query(Client).filter(Client.id == client_id).first()
         if not client:
-            return jsonify({'success': False, 'error': 'Client not found'}), 404
+            return jsonify({"success": False, "error": "Client not found"}), 404
 
         # Generate 6-digit verification code
-        verification_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        verification_code = "".join([str(random.randint(0, 9)) for _ in range(6)])
 
         # Store code and expiration (10 minutes)
         client.whatsapp_number = whatsapp_number
@@ -38892,25 +39638,28 @@ def portal_whatsapp_request_verification():
         # Note: This uses the 24hr reply window or requires an approved template
         message = f"Your verification code is: {verification_code}\n\nEnter this code in your portal to enable WhatsApp notifications."
 
-        result = send_whatsapp(
-            to_number=whatsapp_number,
-            message=message
-        )
+        result = send_whatsapp(to_number=whatsapp_number, message=message)
 
-        if result.get('success'):
-            return jsonify({
-                'success': True,
-                'message': 'Verification code sent to your WhatsApp'
-            })
+        if result.get("success"):
+            return jsonify(
+                {"success": True, "message": "Verification code sent to your WhatsApp"}
+            )
         else:
-            return jsonify({
-                'success': False,
-                'error': result.get('error', 'Failed to send verification code')
-            }), 500
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": result.get(
+                            "error", "Failed to send verification code"
+                        ),
+                    }
+                ),
+                500,
+            )
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
@@ -38920,18 +39669,22 @@ def portal_whatsapp_verify():
     """
     Verify WhatsApp number with code.
     """
-    from flask import session
     from datetime import datetime
 
-    client_id = session.get('client_id')
+    from flask import session
+
+    client_id = session.get("client_id")
     if not client_id:
-        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
 
     data = request.get_json() or {}
-    code = data.get('code', '').strip()
+    code = data.get("code", "").strip()
 
     if not code:
-        return jsonify({'success': False, 'error': 'Verification code is required'}), 400
+        return (
+            jsonify({"success": False, "error": "Verification code is required"}),
+            400,
+        )
 
     db = get_db()
     try:
@@ -38939,17 +39692,26 @@ def portal_whatsapp_verify():
 
         client = db.query(Client).filter(Client.id == client_id).first()
         if not client:
-            return jsonify({'success': False, 'error': 'Client not found'}), 404
+            return jsonify({"success": False, "error": "Client not found"}), 404
 
         # Check if code matches and hasn't expired
         if not client.whatsapp_verification_code:
-            return jsonify({'success': False, 'error': 'No verification pending'}), 400
+            return jsonify({"success": False, "error": "No verification pending"}), 400
 
-        if client.whatsapp_verification_expires and client.whatsapp_verification_expires < datetime.utcnow():
-            return jsonify({'success': False, 'error': 'Verification code expired'}), 400
+        if (
+            client.whatsapp_verification_expires
+            and client.whatsapp_verification_expires < datetime.utcnow()
+        ):
+            return (
+                jsonify({"success": False, "error": "Verification code expired"}),
+                400,
+            )
 
         if client.whatsapp_verification_code != code:
-            return jsonify({'success': False, 'error': 'Invalid verification code'}), 400
+            return (
+                jsonify({"success": False, "error": "Invalid verification code"}),
+                400,
+            )
 
         # Mark as verified
         client.whatsapp_verified = True
@@ -38959,14 +39721,11 @@ def portal_whatsapp_verify():
         client.whatsapp_verification_expires = None
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'message': 'WhatsApp verified successfully'
-        })
+        return jsonify({"success": True, "message": "WhatsApp verified successfully"})
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
@@ -38978,9 +39737,9 @@ def portal_whatsapp_status():
     """
     from flask import session
 
-    client_id = session.get('client_id')
+    client_id = session.get("client_id")
     if not client_id:
-        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
 
     db = get_db()
     try:
@@ -38988,17 +39747,19 @@ def portal_whatsapp_status():
 
         client = db.query(Client).filter(Client.id == client_id).first()
         if not client:
-            return jsonify({'success': False, 'error': 'Client not found'}), 404
+            return jsonify({"success": False, "error": "Client not found"}), 404
 
-        return jsonify({
-            'success': True,
-            'whatsapp_opt_in': client.whatsapp_opt_in or False,
-            'whatsapp_number': client.whatsapp_number,
-            'whatsapp_verified': client.whatsapp_verified or False
-        })
+        return jsonify(
+            {
+                "success": True,
+                "whatsapp_opt_in": client.whatsapp_opt_in or False,
+                "whatsapp_number": client.whatsapp_number,
+                "whatsapp_verified": client.whatsapp_verified or False,
+            }
+        )
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
@@ -39010,9 +39771,9 @@ def portal_whatsapp_opt_out():
     """
     from flask import session
 
-    client_id = session.get('client_id')
+    client_id = session.get("client_id")
     if not client_id:
-        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
 
     db = get_db()
     try:
@@ -39020,19 +39781,18 @@ def portal_whatsapp_opt_out():
 
         client = db.query(Client).filter(Client.id == client_id).first()
         if not client:
-            return jsonify({'success': False, 'error': 'Client not found'}), 404
+            return jsonify({"success": False, "error": "Client not found"}), 404
 
         client.whatsapp_opt_in = False
         db.commit()
 
-        return jsonify({
-            'success': True,
-            'message': 'Opted out of WhatsApp notifications'
-        })
+        return jsonify(
+            {"success": True, "message": "Opted out of WhatsApp notifications"}
+        )
 
     except Exception as e:
         db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
@@ -39045,11 +39805,11 @@ def api_request_document_via_whatsapp(client_id):
     Staff can request a specific document from a client via WhatsApp.
     """
     data = request.get_json() or {}
-    document_type = data.get('document_type', '')
-    custom_message = data.get('custom_message', '')
+    document_type = data.get("document_type", "")
+    custom_message = data.get("custom_message", "")
 
     if not document_type:
-        return jsonify({'success': False, 'error': 'Document type is required'}), 400
+        return jsonify({"success": False, "error": "Document type is required"}), 400
 
     db = get_db()
     try:
@@ -39058,22 +39818,27 @@ def api_request_document_via_whatsapp(client_id):
 
         client = db.query(Client).filter(Client.id == client_id).first()
         if not client:
-            return jsonify({'success': False, 'error': 'Client not found'}), 404
+            return jsonify({"success": False, "error": "Client not found"}), 404
 
         if not client.whatsapp_verified:
-            return jsonify({'success': False, 'error': 'Client has not verified WhatsApp'}), 400
+            return (
+                jsonify(
+                    {"success": False, "error": "Client has not verified WhatsApp"}
+                ),
+                400,
+            )
 
         result = trigger_whatsapp_document_request(
             db=db,
             client_id=client_id,
             document_type=document_type,
-            custom_message=custom_message
+            custom_message=custom_message,
         )
 
         return jsonify(result)
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
 
@@ -39088,12 +39853,15 @@ def api_request_document_via_whatsapp(client_id):
 def api_batch_action_types():
     """Get available batch action types"""
     from services.batch_processing_service import BatchProcessingService
+
     service = BatchProcessingService()
-    return jsonify({
-        "success": True,
-        "action_types": service.get_action_types(),
-        "status_options": service.get_status_options(),
-    })
+    return jsonify(
+        {
+            "success": True,
+            "action_types": service.get_action_types(),
+            "status_options": service.get_status_options(),
+        }
+    )
 
 
 @app.route("/api/batch/jobs", methods=["GET"])
@@ -39109,16 +39877,15 @@ def api_batch_list_jobs():
 
     service = BatchProcessingService()
     jobs = service.list_jobs(
-        status=status,
-        action_type=action_type,
-        limit=limit,
-        offset=offset
+        status=status, action_type=action_type, limit=limit, offset=offset
     )
 
-    return jsonify({
-        "success": True,
-        "jobs": jobs,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "jobs": jobs,
+        }
+    )
 
 
 @app.route("/api/batch/jobs", methods=["POST"])
@@ -39148,7 +39915,7 @@ def api_batch_create_job():
         action_type=action_type,
         client_ids=client_ids,
         action_params=action_params,
-        staff_id=staff_id
+        staff_id=staff_id,
     )
 
     if not success:
@@ -39158,17 +39925,21 @@ def api_batch_create_job():
     if execute_immediately and job:
         exec_success, exec_message = service.execute_job(job["id"])
         job = service.get_job(job_id=job["id"])
-        return jsonify({
-            "success": True,
-            "message": exec_message,
-            "job": job,
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": exec_message,
+                "job": job,
+            }
+        )
 
-    return jsonify({
-        "success": True,
-        "message": message,
-        "job": job,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "message": message,
+            "job": job,
+        }
+    )
 
 
 @app.route("/api/batch/jobs/<int:job_id>", methods=["GET"])
@@ -39183,10 +39954,12 @@ def api_batch_get_job(job_id):
     if not job:
         return jsonify({"success": False, "error": "Job not found"}), 404
 
-    return jsonify({
-        "success": True,
-        "job": job,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "job": job,
+        }
+    )
 
 
 @app.route("/api/batch/jobs/<int:job_id>/progress", methods=["GET"])
@@ -39201,10 +39974,12 @@ def api_batch_job_progress(job_id):
     if not progress:
         return jsonify({"success": False, "error": "Job not found"}), 404
 
-    return jsonify({
-        "success": True,
-        "progress": progress,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "progress": progress,
+        }
+    )
 
 
 @app.route("/api/batch/jobs/<int:job_id>/execute", methods=["POST"])
@@ -39220,11 +39995,13 @@ def api_batch_execute_job(job_id):
         return jsonify({"success": False, "error": message}), 400
 
     job = service.get_job(job_id=job_id)
-    return jsonify({
-        "success": True,
-        "message": message,
-        "job": job,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "message": message,
+            "job": job,
+        }
+    )
 
 
 @app.route("/api/batch/jobs/<int:job_id>/cancel", methods=["POST"])
@@ -39241,10 +40018,12 @@ def api_batch_cancel_job(job_id):
     if not success:
         return jsonify({"success": False, "error": message}), 400
 
-    return jsonify({
-        "success": True,
-        "message": message,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "message": message,
+        }
+    )
 
 
 @app.route("/api/batch/jobs/<int:job_id>/retry", methods=["POST"])
@@ -39262,10 +40041,12 @@ def api_batch_retry_job(job_id):
     # Re-execute the job
     exec_success, exec_message = service.execute_job(job_id)
 
-    return jsonify({
-        "success": True,
-        "message": f"{message}. {exec_message}",
-    })
+    return jsonify(
+        {
+            "success": True,
+            "message": f"{message}. {exec_message}",
+        }
+    )
 
 
 @app.route("/api/batch/stats", methods=["GET"])
@@ -39277,10 +40058,12 @@ def api_batch_stats():
     service = BatchProcessingService()
     stats = service.get_stats()
 
-    return jsonify({
-        "success": True,
-        "stats": stats,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "stats": stats,
+        }
+    )
 
 
 @app.route("/api/batch/history", methods=["GET"])
@@ -39295,10 +40078,12 @@ def api_batch_history():
     service = BatchProcessingService()
     history = service.get_job_history(days=days, limit=limit)
 
-    return jsonify({
-        "success": True,
-        "history": history,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "history": history,
+        }
+    )
 
 
 @app.route("/dashboard/batch-jobs", methods=["GET"])
@@ -39318,10 +40103,13 @@ def dashboard_batch_jobs():
 def api_staff_performance_activity_types():
     """Get available activity types"""
     from services.staff_performance_service import ACTIVITY_TYPES
-    return jsonify({
-        "success": True,
-        "activity_types": ACTIVITY_TYPES,
-    })
+
+    return jsonify(
+        {
+            "success": True,
+            "activity_types": ACTIVITY_TYPES,
+        }
+    )
 
 
 @app.route("/api/staff-performance/log", methods=["POST"])
@@ -39350,17 +40138,19 @@ def api_staff_performance_log():
         description=description,
         client_id=client_id,
         metadata=metadata,
-        quality_score=quality_score
+        quality_score=quality_score,
     )
 
     if not success:
         return jsonify({"success": False, "error": message}), 400
 
-    return jsonify({
-        "success": True,
-        "message": message,
-        "activity": activity,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "message": message,
+            "activity": activity,
+        }
+    )
 
 
 @app.route("/api/staff-performance/dashboard", methods=["GET"])
@@ -39372,10 +40162,12 @@ def api_staff_performance_dashboard():
     service = StaffPerformanceService()
     summary = service.get_dashboard_summary()
 
-    return jsonify({
-        "success": True,
-        "dashboard": summary,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "dashboard": summary,
+        }
+    )
 
 
 @app.route("/api/staff-performance/leaderboard", methods=["GET"])
@@ -39391,20 +40183,23 @@ def api_staff_performance_leaderboard():
     service = StaffPerformanceService()
     leaderboard = service.get_leaderboard(period=period, metric=metric, limit=limit)
 
-    return jsonify({
-        "success": True,
-        "leaderboard": leaderboard,
-        "period": period,
-        "metric": metric,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "leaderboard": leaderboard,
+            "period": period,
+            "metric": metric,
+        }
+    )
 
 
 @app.route("/api/staff-performance/staff/<int:staff_id>/metrics", methods=["GET"])
 @require_staff()
 def api_staff_performance_metrics(staff_id):
     """Get performance metrics for a specific staff member"""
-    from services.staff_performance_service import StaffPerformanceService
     from datetime import datetime, timedelta
+
+    from services.staff_performance_service import StaffPerformanceService
 
     days = int(request.args.get("days", 30))
     start_date = datetime.utcnow() - timedelta(days=days)
@@ -39412,15 +40207,15 @@ def api_staff_performance_metrics(staff_id):
 
     service = StaffPerformanceService()
     metrics = service.get_staff_metrics(
-        staff_id=staff_id,
-        start_date=start_date,
-        end_date=end_date
+        staff_id=staff_id, start_date=start_date, end_date=end_date
     )
 
-    return jsonify({
-        "success": True,
-        "metrics": metrics,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "metrics": metrics,
+        }
+    )
 
 
 @app.route("/api/staff-performance/staff/<int:staff_id>/activities", methods=["GET"])
@@ -39435,39 +40230,38 @@ def api_staff_performance_activities(staff_id):
 
     service = StaffPerformanceService()
     activities = service.get_staff_activities(
-        staff_id=staff_id,
-        limit=limit,
-        offset=offset,
-        activity_type=activity_type
+        staff_id=staff_id, limit=limit, offset=offset, activity_type=activity_type
     )
 
-    return jsonify({
-        "success": True,
-        "activities": activities,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "activities": activities,
+        }
+    )
 
 
 @app.route("/api/staff-performance/team/metrics", methods=["GET"])
 @require_staff()
 def api_staff_performance_team_metrics():
     """Get aggregate metrics for all staff"""
-    from services.staff_performance_service import StaffPerformanceService
     from datetime import datetime, timedelta
+
+    from services.staff_performance_service import StaffPerformanceService
 
     days = int(request.args.get("days", 30))
     start_date = datetime.utcnow() - timedelta(days=days)
     end_date = datetime.utcnow()
 
     service = StaffPerformanceService()
-    metrics = service.get_team_metrics(
-        start_date=start_date,
-        end_date=end_date
-    )
+    metrics = service.get_team_metrics(start_date=start_date, end_date=end_date)
 
-    return jsonify({
-        "success": True,
-        "metrics": metrics,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "metrics": metrics,
+        }
+    )
 
 
 @app.route("/api/staff-performance/trend", methods=["GET"])
@@ -39481,14 +40275,15 @@ def api_staff_performance_trend():
 
     service = StaffPerformanceService()
     trend = service.get_performance_trend(
-        staff_id=int(staff_id) if staff_id else None,
-        days=days
+        staff_id=int(staff_id) if staff_id else None, days=days
     )
 
-    return jsonify({
-        "success": True,
-        "trend": trend,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "trend": trend,
+        }
+    )
 
 
 @app.route("/api/staff-performance/recent", methods=["GET"])
@@ -39502,10 +40297,12 @@ def api_staff_performance_recent():
     service = StaffPerformanceService()
     activities = service.get_recent_team_activities(limit=limit)
 
-    return jsonify({
-        "success": True,
-        "activities": activities,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "activities": activities,
+        }
+    )
 
 
 @app.route("/dashboard/staff-performance", methods=["GET"])
@@ -39519,6 +40316,7 @@ def dashboard_staff_performance():
 # CLIENT SUCCESS METRICS API ENDPOINTS
 # =====================================================================
 
+
 @app.route("/api/client-success/dashboard", methods=["GET"])
 @require_staff()
 def api_client_success_dashboard():
@@ -39528,10 +40326,12 @@ def api_client_success_dashboard():
     service = ClientSuccessService(g.db_session)
     summary = service.get_dashboard_summary()
 
-    return jsonify({
-        "success": True,
-        **summary,
-    })
+    return jsonify(
+        {
+            "success": True,
+            **summary,
+        }
+    )
 
 
 @app.route("/api/client-success/aggregate", methods=["GET"])
@@ -39545,10 +40345,12 @@ def api_client_success_aggregate():
     service = ClientSuccessService(g.db_session)
     report = service.get_aggregate_report(period=period)
 
-    return jsonify({
-        "success": True,
-        **report,
-    })
+    return jsonify(
+        {
+            "success": True,
+            **report,
+        }
+    )
 
 
 @app.route("/api/client-success/client/<int:client_id>", methods=["GET"])
@@ -39563,10 +40365,12 @@ def api_client_success_client(client_id):
     if "error" in summary:
         return jsonify({"success": False, "error": summary["error"]}), 404
 
-    return jsonify({
-        "success": True,
-        **summary,
-    })
+    return jsonify(
+        {
+            "success": True,
+            **summary,
+        }
+    )
 
 
 @app.route("/api/client-success/client/<int:client_id>/snapshot", methods=["POST"])
@@ -39584,10 +40388,12 @@ def api_client_success_create_snapshot(client_id):
     if not snapshot:
         return jsonify({"success": False, "error": "Failed to create snapshot"}), 400
 
-    return jsonify({
-        "success": True,
-        "snapshot": snapshot.to_dict(),
-    })
+    return jsonify(
+        {
+            "success": True,
+            "snapshot": snapshot.to_dict(),
+        }
+    )
 
 
 @app.route("/api/client-success/client/<int:client_id>/history", methods=["GET"])
@@ -39601,10 +40407,12 @@ def api_client_success_history(client_id):
     service = ClientSuccessService(g.db_session)
     history = service.get_snapshot_history(client_id, limit=limit)
 
-    return jsonify({
-        "success": True,
-        "history": [s.to_dict() for s in history],
-    })
+    return jsonify(
+        {
+            "success": True,
+            "history": [s.to_dict() for s in history],
+        }
+    )
 
 
 @app.route("/api/client-success/top-performers", methods=["GET"])
@@ -39619,11 +40427,13 @@ def api_client_success_top_performers():
     service = ClientSuccessService(g.db_session)
     performers = service.get_top_performers(limit=limit, metric=metric)
 
-    return jsonify({
-        "success": True,
-        "metric": metric,
-        "performers": performers,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "metric": metric,
+            "performers": performers,
+        }
+    )
 
 
 @app.route("/api/client-success/trend", methods=["GET"])
@@ -39638,11 +40448,13 @@ def api_client_success_trend():
     service = ClientSuccessService(g.db_session)
     trend = service.get_success_trend(period=period, granularity=granularity)
 
-    return jsonify({
-        "success": True,
-        "period": period,
-        "trend": trend,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "period": period,
+            "trend": trend,
+        }
+    )
 
 
 @app.route("/api/client-success/bureau-breakdown", methods=["GET"])
@@ -39654,10 +40466,12 @@ def api_client_success_bureau_breakdown():
     service = ClientSuccessService(g.db_session)
     breakdown = service.get_bureau_breakdown()
 
-    return jsonify({
-        "success": True,
-        **breakdown,
-    })
+    return jsonify(
+        {
+            "success": True,
+            **breakdown,
+        }
+    )
 
 
 @app.route("/api/client-success/update-all", methods=["POST"])
@@ -39672,19 +40486,22 @@ def api_client_success_update_all():
     service = ClientSuccessService(g.db_session)
     result = service.update_all_clients(snapshot_type=snapshot_type)
 
-    return jsonify({
-        "success": True,
-        **result,
-    })
+    return jsonify(
+        {
+            "success": True,
+            **result,
+        }
+    )
 
 
 @app.route("/api/client-success/export", methods=["GET"])
 @require_staff()
 def api_client_success_export():
     """Export success metrics data"""
-    from services.client_success_service import ClientSuccessService
     import csv
     import io
+
+    from services.client_success_service import ClientSuccessService
 
     client_ids = request.args.get("client_ids")
     if client_ids:
@@ -39704,7 +40521,9 @@ def api_client_success_export():
 
     response = make_response(output.getvalue())
     response.headers["Content-Type"] = "text/csv"
-    response.headers["Content-Disposition"] = "attachment; filename=client_success_metrics.csv"
+    response.headers["Content-Disposition"] = (
+        "attachment; filename=client_success_metrics.csv"
+    )
 
     return response
 
@@ -39720,6 +40539,7 @@ def dashboard_client_success():
 # AI DISPUTE WRITER API ENDPOINTS
 # =====================================================================
 
+
 @app.route("/api/ai-dispute-writer/dashboard", methods=["GET"])
 @require_staff()
 def api_ai_dispute_writer_dashboard():
@@ -39734,10 +40554,12 @@ def api_ai_dispute_writer_dashboard():
     if "error" in data:
         return jsonify({"success": False, "error": data["error"]}), 400
 
-    return jsonify({
-        "success": True,
-        **data,
-    })
+    return jsonify(
+        {
+            "success": True,
+            **data,
+        }
+    )
 
 
 @app.route("/api/ai-dispute-writer/rounds", methods=["GET"])
@@ -39749,10 +40571,12 @@ def api_ai_dispute_writer_rounds():
     service = AIDisputeWriterService(g.db_session)
     rounds = service.get_all_rounds_info()
 
-    return jsonify({
-        "success": True,
-        "rounds": rounds,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "rounds": rounds,
+        }
+    )
 
 
 @app.route("/api/ai-dispute-writer/client/<int:client_id>/context", methods=["GET"])
@@ -39768,19 +40592,21 @@ def api_ai_dispute_writer_context(client_id):
         return jsonify({"success": False, "error": context["error"]}), 404
 
     # Serialize context
-    return jsonify({
-        "success": True,
-        "client": {
-            "id": context["client"].id,
-            "name": context["client"].name,
-            "email": context["client"].email,
-            "current_round": context["client"].current_dispute_round or 1,
-        },
-        "violations_count": len(context["violations"]),
-        "dispute_items_count": len(context["dispute_items"]),
-        "cra_responses_count": len(context["cra_responses"]),
-        "current_round": context["current_round"],
-    })
+    return jsonify(
+        {
+            "success": True,
+            "client": {
+                "id": context["client"].id,
+                "name": context["client"].name,
+                "email": context["client"].email,
+                "current_round": context["client"].current_dispute_round or 1,
+            },
+            "violations_count": len(context["violations"]),
+            "dispute_items_count": len(context["dispute_items"]),
+            "cra_responses_count": len(context["cra_responses"]),
+            "current_round": context["current_round"],
+        }
+    )
 
 
 @app.route("/api/ai-dispute-writer/client/<int:client_id>/suggest", methods=["GET"])
@@ -39795,10 +40621,12 @@ def api_ai_dispute_writer_suggest(client_id):
     if "error" in suggestion:
         return jsonify({"success": False, "error": suggestion["error"]}), 400
 
-    return jsonify({
-        "success": True,
-        **suggestion,
-    })
+    return jsonify(
+        {
+            "success": True,
+            **suggestion,
+        }
+    )
 
 
 @app.route("/api/ai-dispute-writer/generate", methods=["POST"])
@@ -39849,10 +40677,15 @@ def api_ai_dispute_writer_generate_quick():
     violation_type = data.get("violation_type")
 
     if not all([client_id, bureau, item_description, violation_type]):
-        return jsonify({
-            "success": False,
-            "error": "client_id, bureau, item_description, and violation_type required"
-        }), 400
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "client_id, bureau, item_description, and violation_type required",
+                }
+            ),
+            400,
+        )
 
     custom_text = data.get("custom_text")
 
@@ -39886,10 +40719,15 @@ def api_ai_dispute_writer_regenerate():
     round_number = data.get("round", 1)
 
     if not all([client_id, bureau, original_letter, feedback]):
-        return jsonify({
-            "success": False,
-            "error": "client_id, bureau, original_letter, and feedback required"
-        }), 400
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "client_id, bureau, original_letter, and feedback required",
+                }
+            ),
+            400,
+        )
 
     service = AIDisputeWriterService(g.db_session)
     result = service.regenerate_with_feedback(
@@ -39921,10 +40759,12 @@ def api_ai_dispute_writer_save():
     analysis_id = data.get("analysis_id")
 
     if not all([client_id, bureau, content]):
-        return jsonify({
-            "success": False,
-            "error": "client_id, bureau, and content required"
-        }), 400
+        return (
+            jsonify(
+                {"success": False, "error": "client_id, bureau, and content required"}
+            ),
+            400,
+        )
 
     service = AIDisputeWriterService(g.db_session)
     try:
@@ -39935,11 +40775,13 @@ def api_ai_dispute_writer_save():
             round_number=round_number,
             analysis_id=analysis_id,
         )
-        return jsonify({
-            "success": True,
-            "letter_id": letter.id,
-            "message": "Letter saved successfully",
-        })
+        return jsonify(
+            {
+                "success": True,
+                "letter_id": letter.id,
+                "message": "Letter saved successfully",
+            }
+        )
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
 
@@ -39955,20 +40797,22 @@ def api_ai_dispute_writer_letters(client_id):
     service = AIDisputeWriterService(g.db_session)
     letters = service.get_saved_letters(client_id, round_number=round_number)
 
-    return jsonify({
-        "success": True,
-        "letters": [
-            {
-                "id": l.id,
-                "bureau": l.bureau,
-                "round": l.round_number,
-                "content": l.letter_content,
-                "created_at": l.created_at.isoformat() if l.created_at else None,
-                "sent_at": l.sent_at.isoformat() if l.sent_at else None,
-            }
-            for l in letters
-        ],
-    })
+    return jsonify(
+        {
+            "success": True,
+            "letters": [
+                {
+                    "id": l.id,
+                    "bureau": l.bureau,
+                    "round": l.round_number,
+                    "content": l.letter_content,
+                    "created_at": l.created_at.isoformat() if l.created_at else None,
+                    "sent_at": l.sent_at.isoformat() if l.sent_at else None,
+                }
+                for l in letters
+            ],
+        }
+    )
 
 
 @app.route("/dashboard/ai-dispute-writer", methods=["GET"])
@@ -39981,6 +40825,7 @@ def dashboard_ai_dispute_writer():
 # =============================================================================
 # 5-DAY KNOCK-OUT (IDENTITY THEFT) ENDPOINTS
 # =============================================================================
+
 
 @app.route("/dashboard/5day-knockout", methods=["GET"])
 @require_staff()
@@ -39995,14 +40840,17 @@ def api_5day_knockout_strategies():
     """Get available special dispute strategies"""
     try:
         from services.ai_dispute_writer_service import AIDisputeWriterService
+
         with get_db() as db:
             service = AIDisputeWriterService(db)
             strategies = service.get_special_strategies_info()
-            return jsonify({
-                "success": True,
-                "strategies": strategies,
-                "bureau_fraud_addresses": service.BUREAU_FRAUD_ADDRESSES,
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "strategies": strategies,
+                    "bureau_fraud_addresses": service.BUREAU_FRAUD_ADDRESSES,
+                }
+            )
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -40013,23 +40861,29 @@ def api_5day_knockout_generate():
     """Generate 5-Day Knock-Out documents for a client"""
     try:
         from services.ai_dispute_writer_service import AIDisputeWriterService
+
         data = request.get_json() or {}
 
-        client_id = data.get('client_id')
+        client_id = data.get("client_id")
         if not client_id:
             return jsonify({"success": False, "error": "client_id required"}), 400
 
-        phase = data.get('phase', 1)
-        police_case_number = data.get('police_case_number')
-        ftc_reference_number = data.get('ftc_reference_number')
-        disputed_items = data.get('disputed_items')
+        phase = data.get("phase", 1)
+        police_case_number = data.get("police_case_number")
+        ftc_reference_number = data.get("ftc_reference_number")
+        disputed_items = data.get("disputed_items")
 
         # Phase 2 requires police case number
         if phase == 2 and not police_case_number:
-            return jsonify({
-                "success": False,
-                "error": "police_case_number required for Phase 2"
-            }), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "police_case_number required for Phase 2",
+                    }
+                ),
+                400,
+            )
 
         with get_db() as db:
             service = AIDisputeWriterService(db)
@@ -40041,8 +40895,8 @@ def api_5day_knockout_generate():
                 phase=phase,
             )
 
-            if 'error' in result:
-                return jsonify({"success": False, "error": result['error']}), 400
+            if "error" in result:
+                return jsonify({"success": False, "error": result["error"]}), 400
 
             return jsonify({"success": True, **result})
     except Exception as e:
@@ -40062,14 +40916,18 @@ def api_5day_knockout_client_items(client_id):
             items = []
 
             # First try to get accounts from the latest Analysis (already parsed)
-            analysis = db.query(Analysis).filter(
-                Analysis.client_id == client_id
-            ).order_by(Analysis.created_at.desc()).first()
+            analysis = (
+                db.query(Analysis)
+                .filter(Analysis.client_id == client_id)
+                .order_by(Analysis.created_at.desc())
+                .first()
+            )
 
             if analysis and analysis.stage_1_analysis:
                 try:
-                    import json
                     import ast
+                    import json
+
                     # stage_1_analysis may be JSON string or Python dict string
                     analysis_data = analysis.stage_1_analysis
                     if isinstance(analysis_data, str):
@@ -40096,28 +40954,43 @@ def api_5day_knockout_client_items(client_id):
                         if not bureaus:
                             bureaus = ["Equifax", "Experian", "TransUnion"]
 
-                        items.append({
-                            "id": f"analysis_{idx}",
-                            "creditor": acct.get("creditor") or acct.get("creditor_name") or "Unknown",
-                            "account_number": acct.get("account_number") or acct.get("account_num") or "N/A",
-                            "bureau": ", ".join(bureaus),
-                            "type": acct.get("account_type") or acct.get("type") or "Unknown",
-                            "status": acct.get("status") or acct.get("account_status") or "Unknown",
-                            "balance": acct.get("balance") or acct.get("balance_owed"),
-                            "source": "analysis"
-                        })
+                        items.append(
+                            {
+                                "id": f"analysis_{idx}",
+                                "creditor": acct.get("creditor")
+                                or acct.get("creditor_name")
+                                or "Unknown",
+                                "account_number": acct.get("account_number")
+                                or acct.get("account_num")
+                                or "N/A",
+                                "bureau": ", ".join(bureaus),
+                                "type": acct.get("account_type")
+                                or acct.get("type")
+                                or "Unknown",
+                                "status": acct.get("status")
+                                or acct.get("account_status")
+                                or "Unknown",
+                                "balance": acct.get("balance")
+                                or acct.get("balance_owed"),
+                                "source": "analysis",
+                            }
+                        )
                 except Exception as e:
                     print(f"Error parsing analysis data: {e}")
 
             # If no accounts from Analysis, try parsing CreditReport HTML directly
             if not items:
-                credit_report = db.query(CreditReport).filter(
-                    CreditReport.client_id == client_id
-                ).order_by(CreditReport.created_at.desc()).first()
+                credit_report = (
+                    db.query(CreditReport)
+                    .filter(CreditReport.client_id == client_id)
+                    .order_by(CreditReport.created_at.desc())
+                    .first()
+                )
 
                 if credit_report and credit_report.report_html:
                     try:
                         from services.credit_report_parser import CreditReportParser
+
                         parser = CreditReportParser(credit_report.report_html)
                         parsed_data = parser.parse()
                         accounts = parsed_data.get("accounts", [])
@@ -40133,44 +41006,63 @@ def api_5day_knockout_client_items(client_id):
                             if not bureaus:
                                 bureaus = ["Equifax", "Experian", "TransUnion"]
 
-                            items.append({
-                                "id": f"report_{idx}",
-                                "creditor": acct.get("creditor") or acct.get("creditor_name") or "Unknown",
-                                "account_number": acct.get("account_number") or "N/A",
-                                "bureau": ", ".join(bureaus),
-                                "type": acct.get("account_type") or "Unknown",
-                                "status": acct.get("status") or acct.get("account_status") or "Unknown",
-                                "balance": acct.get("balance") or acct.get("balance_owed"),
-                                "source": "credit_report"
-                            })
+                            items.append(
+                                {
+                                    "id": f"report_{idx}",
+                                    "creditor": acct.get("creditor")
+                                    or acct.get("creditor_name")
+                                    or "Unknown",
+                                    "account_number": acct.get("account_number")
+                                    or "N/A",
+                                    "bureau": ", ".join(bureaus),
+                                    "type": acct.get("account_type") or "Unknown",
+                                    "status": acct.get("status")
+                                    or acct.get("account_status")
+                                    or "Unknown",
+                                    "balance": acct.get("balance")
+                                    or acct.get("balance_owed"),
+                                    "source": "credit_report",
+                                }
+                            )
                     except Exception as e:
                         print(f"Error parsing credit report HTML: {e}")
 
             # Try parsing from CreditMonitoringCredential's last_report_path (saved HTML file)
             if not items:
-                credential = db.query(CreditMonitoringCredential).filter(
-                    CreditMonitoringCredential.client_id == client_id,
-                    CreditMonitoringCredential.last_report_path.isnot(None)
-                ).order_by(CreditMonitoringCredential.last_import_at.desc()).first()
+                credential = (
+                    db.query(CreditMonitoringCredential)
+                    .filter(
+                        CreditMonitoringCredential.client_id == client_id,
+                        CreditMonitoringCredential.last_report_path.isnot(None),
+                    )
+                    .order_by(CreditMonitoringCredential.last_import_at.desc())
+                    .first()
+                )
 
                 if credential and credential.last_report_path:
                     try:
                         import os
+
                         report_path = credential.last_report_path
                         # Handle relative paths
                         if not os.path.isabs(report_path):
-                            report_path = os.path.join(os.path.dirname(__file__), report_path)
+                            report_path = os.path.join(
+                                os.path.dirname(__file__), report_path
+                            )
 
                         if os.path.exists(report_path):
-                            with open(report_path, 'r', encoding='utf-8') as f:
+                            with open(report_path, "r", encoding="utf-8") as f:
                                 html_content = f.read()
 
                             from services.credit_report_parser import CreditReportParser
+
                             parser = CreditReportParser(html_content)
                             parsed_data = parser.parse()
                             accounts = parsed_data.get("accounts", [])
 
-                            print(f"Parsed {len(accounts)} accounts from credential report: {report_path}")
+                            print(
+                                f"Parsed {len(accounts)} accounts from credential report: {report_path}"
+                            )
 
                             for idx, acct in enumerate(accounts):
                                 bureaus = []
@@ -40183,40 +41075,53 @@ def api_5day_knockout_client_items(client_id):
                                 if not bureaus:
                                     bureaus = ["Equifax", "Experian", "TransUnion"]
 
-                                items.append({
-                                    "id": f"cred_{idx}",
-                                    "creditor": acct.get("creditor") or acct.get("creditor_name") or "Unknown",
-                                    "account_number": acct.get("account_number") or "N/A",
-                                    "bureau": ", ".join(bureaus),
-                                    "type": acct.get("account_type") or "Unknown",
-                                    "status": acct.get("status") or acct.get("account_status") or "Unknown",
-                                    "balance": acct.get("balance") or acct.get("balance_owed"),
-                                    "source": "credential_import"
-                                })
+                                items.append(
+                                    {
+                                        "id": f"cred_{idx}",
+                                        "creditor": acct.get("creditor")
+                                        or acct.get("creditor_name")
+                                        or "Unknown",
+                                        "account_number": acct.get("account_number")
+                                        or "N/A",
+                                        "bureau": ", ".join(bureaus),
+                                        "type": acct.get("account_type") or "Unknown",
+                                        "status": acct.get("status")
+                                        or acct.get("account_status")
+                                        or "Unknown",
+                                        "balance": acct.get("balance")
+                                        or acct.get("balance_owed"),
+                                        "source": "credential_import",
+                                    }
+                                )
 
                             # Also extract inquiries
                             inquiries = parsed_data.get("inquiries", [])
                             for idx, inq in enumerate(inquiries):
-                                items.append({
-                                    "id": f"inq_{idx}",
-                                    "creditor": inq.get("creditor") or "Unknown",
-                                    "account_number": inq.get("date") or "N/A",
-                                    "bureau": inq.get("bureau") or "Unknown",
-                                    "type": "Inquiry",
-                                    "status": inq.get("type") or "Hard Inquiry",
-                                    "balance": None,
-                                    "source": "inquiry"
-                                })
+                                items.append(
+                                    {
+                                        "id": f"inq_{idx}",
+                                        "creditor": inq.get("creditor") or "Unknown",
+                                        "account_number": inq.get("date") or "N/A",
+                                        "bureau": inq.get("bureau") or "Unknown",
+                                        "type": "Inquiry",
+                                        "status": inq.get("type") or "Hard Inquiry",
+                                        "balance": None,
+                                        "source": "inquiry",
+                                    }
+                                )
                     except Exception as e:
                         import traceback
+
                         print(f"Error parsing credential report HTML: {e}")
                         traceback.print_exc()
 
             # Fallback to DisputeItem table if still no items
             if not items:
-                dispute_items = db.query(DisputeItem).filter(
-                    DisputeItem.client_id == client_id
-                ).all()
+                dispute_items = (
+                    db.query(DisputeItem)
+                    .filter(DisputeItem.client_id == client_id)
+                    .all()
+                )
 
                 items = [
                     {
@@ -40226,34 +41131,41 @@ def api_5day_knockout_client_items(client_id):
                         "bureau": item.bureau,
                         "type": item.item_type,
                         "status": item.status,
-                        "balance": getattr(item, 'balance', None),
-                        "source": "dispute_item"
+                        "balance": getattr(item, "balance", None),
+                        "source": "dispute_item",
                     }
                     for item in dispute_items
                 ]
 
             # Check if client has any credit report source
             has_report = bool(
-                analysis or
-                db.query(CreditReport).filter(CreditReport.client_id == client_id).first() or
-                db.query(CreditMonitoringCredential).filter(
+                analysis
+                or db.query(CreditReport)
+                .filter(CreditReport.client_id == client_id)
+                .first()
+                or db.query(CreditMonitoringCredential)
+                .filter(
                     CreditMonitoringCredential.client_id == client_id,
-                    CreditMonitoringCredential.last_report_path.isnot(None)
-                ).first()
+                    CreditMonitoringCredential.last_report_path.isnot(None),
+                )
+                .first()
             )
 
-            return jsonify({
-                "success": True,
-                "client": {
-                    "id": client.id,
-                    "name": client.name,
-                    "email": client.email,
-                },
-                "items": items,
-                "has_credit_report": has_report,
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "client": {
+                        "id": client.id,
+                        "name": client.name,
+                        "email": client.email,
+                    },
+                    "items": items,
+                    "has_credit_report": has_report,
+                }
+            )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -40264,12 +41176,13 @@ def api_5day_knockout_create_packets():
     """Create envelope-ready packets for SendCertifiedMail from 5DKO documents"""
     try:
         from services.ai_dispute_writer_service import AIDisputeWriterService
+
         data = request.get_json() or {}
 
-        client_id = data.get('client_id')
-        documents = data.get('documents', {})
-        police_case_number = data.get('police_case_number')
-        ftc_reference_number = data.get('ftc_reference_number')
+        client_id = data.get("client_id")
+        documents = data.get("documents", {})
+        police_case_number = data.get("police_case_number")
+        ftc_reference_number = data.get("ftc_reference_number")
 
         if not client_id:
             return jsonify({"success": False, "error": "client_id required"}), 400
@@ -40278,7 +41191,10 @@ def api_5day_knockout_create_packets():
             return jsonify({"success": False, "error": "documents required"}), 400
 
         if not police_case_number:
-            return jsonify({"success": False, "error": "police_case_number required"}), 400
+            return (
+                jsonify({"success": False, "error": "police_case_number required"}),
+                400,
+            )
 
         with get_db() as db:
             service = AIDisputeWriterService(db)
@@ -40289,32 +41205,36 @@ def api_5day_knockout_create_packets():
                 ftc_reference_number=ftc_reference_number,
             )
 
-            if 'error' in result:
-                return jsonify({"success": False, "error": result['error']}), 400
+            if "error" in result:
+                return jsonify({"success": False, "error": result["error"]}), 400
 
             # Convert packet PDF bytes to base64 for JSON response
             import base64
+
             packets_serialized = {}
-            for bureau, packet in result.get('packets', {}).items():
+            for bureau, packet in result.get("packets", {}).items():
                 packet_copy = dict(packet)
-                if 'cover_sheet_pdf' in packet_copy:
-                    packet_copy['cover_sheet_pdf_base64'] = base64.b64encode(
-                        packet_copy['cover_sheet_pdf']
-                    ).decode('utf-8')
-                    del packet_copy['cover_sheet_pdf']
+                if "cover_sheet_pdf" in packet_copy:
+                    packet_copy["cover_sheet_pdf_base64"] = base64.b64encode(
+                        packet_copy["cover_sheet_pdf"]
+                    ).decode("utf-8")
+                    del packet_copy["cover_sheet_pdf"]
                 packets_serialized[bureau] = packet_copy
 
-            return jsonify({
-                "success": True,
-                "client_id": result['client_id'],
-                "client_name": result['client_name'],
-                "packets": packets_serialized,
-                "total_packets": result['total_packets'],
-                "estimated_cost": result['estimated_cost'],
-                "created_at": result['created_at'],
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "client_id": result["client_id"],
+                    "client_name": result["client_name"],
+                    "packets": packets_serialized,
+                    "total_packets": result["total_packets"],
+                    "estimated_cost": result["estimated_cost"],
+                    "created_at": result["created_at"],
+                }
+            )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -40324,14 +41244,15 @@ def api_5day_knockout_create_packets():
 def api_5day_knockout_queue_packets():
     """Queue 5-Day Knock-Out packets to SendCertifiedMail"""
     try:
+        import base64
+
         from services.ai_dispute_writer_service import AIDisputeWriterService
         from services.sendcertified_service import get_sendcertified_status
-        import base64
 
         data = request.get_json() or {}
 
-        client_id = data.get('client_id')
-        packets = data.get('packets', {})
+        client_id = data.get("client_id")
+        packets = data.get("packets", {})
 
         if not client_id:
             return jsonify({"success": False, "error": "client_id required"}), 400
@@ -40341,21 +41262,26 @@ def api_5day_knockout_queue_packets():
 
         # Check if SendCertified is configured
         sendcertified_status = get_sendcertified_status()
-        if not sendcertified_status.get('configured'):
-            return jsonify({
-                "success": False,
-                "error": "SendCertified is not configured. Go to Settings > Integrations to set up API credentials."
-            }), 400
+        if not sendcertified_status.get("configured"):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "SendCertified is not configured. Go to Settings > Integrations to set up API credentials.",
+                    }
+                ),
+                400,
+            )
 
         # Convert base64 PDFs back to bytes
         packets_with_bytes = {}
         for bureau, packet in packets.items():
             packet_copy = dict(packet)
-            if 'cover_sheet_pdf_base64' in packet_copy:
-                packet_copy['cover_sheet_pdf'] = base64.b64decode(
-                    packet_copy['cover_sheet_pdf_base64']
+            if "cover_sheet_pdf_base64" in packet_copy:
+                packet_copy["cover_sheet_pdf"] = base64.b64decode(
+                    packet_copy["cover_sheet_pdf_base64"]
                 )
-                del packet_copy['cover_sheet_pdf_base64']
+                del packet_copy["cover_sheet_pdf_base64"]
             packets_with_bytes[bureau] = packet_copy
 
         with get_db() as db:
@@ -40368,6 +41294,7 @@ def api_5day_knockout_queue_packets():
             return jsonify(result)
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -40377,14 +41304,20 @@ def api_5day_knockout_queue_packets():
 def api_5day_knockout_sendcertified_status():
     """Check SendCertified integration status for 5DKO"""
     try:
-        from services.sendcertified_service import get_sendcertified_status, get_mailing_statistics
+        from services.sendcertified_service import (
+            get_mailing_statistics,
+            get_sendcertified_status,
+        )
+
         status = get_sendcertified_status()
         stats = get_mailing_statistics()
-        return jsonify({
-            "success": True,
-            "status": status,
-            "statistics": stats,
-        })
+        return jsonify(
+            {
+                "success": True,
+                "status": status,
+                "statistics": stats,
+            }
+        )
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -40393,12 +41326,14 @@ def api_5day_knockout_sendcertified_status():
 # ROI CALCULATOR ENDPOINTS
 # =============================================================================
 
+
 @app.route("/api/roi-calculator/dashboard", methods=["GET"])
 @require_staff()
 def api_roi_calculator_dashboard():
     """Get ROI calculator dashboard summary"""
     try:
         from services.roi_calculator_service import ROICalculatorService
+
         service = ROICalculatorService()
         summary = service.get_dashboard_summary()
         return jsonify({"success": True, **summary})
@@ -40412,17 +41347,18 @@ def api_roi_calculator_calculate(client_id):
     """Calculate ROI for a specific client"""
     try:
         from services.roi_calculator_service import ROICalculatorService
+
         data = request.get_json() or {}
 
-        actual_damages = data.get('actual_damages')
-        save = data.get('save', True)
+        actual_damages = data.get("actual_damages")
+        save = data.get("save", True)
 
         service = ROICalculatorService()
         result = service.calculate_roi(
             client_id=client_id,
-            staff_id=session.get('staff_id'),
+            staff_id=session.get("staff_id"),
             actual_damages=actual_damages,
-            save=save
+            save=save,
         )
 
         return jsonify(result)
@@ -40436,18 +41372,19 @@ def api_roi_calculator_quick_estimate():
     """Quick ROI estimate without client data"""
     try:
         from services.roi_calculator_service import ROICalculatorService
+
         data = request.get_json() or {}
 
         service = ROICalculatorService()
         result = service.quick_estimate(
-            violations_count=data.get('violations_count', 0),
-            willful_count=data.get('willful_count', 0),
-            collections_count=data.get('collections_count', 0),
-            chargeoffs_count=data.get('chargeoffs_count', 0),
-            late_payments_count=data.get('late_payments_count', 0),
-            inquiries_count=data.get('inquiries_count', 0),
-            public_records_count=data.get('public_records_count', 0),
-            actual_damages=data.get('actual_damages', 0)
+            violations_count=data.get("violations_count", 0),
+            willful_count=data.get("willful_count", 0),
+            collections_count=data.get("collections_count", 0),
+            chargeoffs_count=data.get("chargeoffs_count", 0),
+            late_payments_count=data.get("late_payments_count", 0),
+            inquiries_count=data.get("inquiries_count", 0),
+            public_records_count=data.get("public_records_count", 0),
+            actual_damages=data.get("actual_damages", 0),
         )
 
         return jsonify(result)
@@ -40461,7 +41398,8 @@ def api_roi_calculator_client_history(client_id):
     """Get calculation history for a client"""
     try:
         from services.roi_calculator_service import ROICalculatorService
-        limit = request.args.get('limit', 10, type=int)
+
+        limit = request.args.get("limit", 10, type=int)
 
         service = ROICalculatorService()
         calculations = service.get_client_calculations(client_id, limit=limit)
@@ -40477,6 +41415,7 @@ def api_roi_calculator_get_calculation(calculation_id):
     """Get a specific calculation"""
     try:
         from services.roi_calculator_service import ROICalculatorService
+
         service = ROICalculatorService()
         calculation = service.get_calculation(calculation_id)
 
@@ -40493,7 +41432,8 @@ def api_roi_calculator_stats():
     """Get aggregate statistics"""
     try:
         from services.roi_calculator_service import ROICalculatorService
-        period = request.args.get('period', 'all')
+
+        period = request.args.get("period", "all")
 
         service = ROICalculatorService()
         stats = service.get_aggregate_stats(period=period)
@@ -40508,15 +41448,16 @@ def api_roi_calculator_stats():
 def api_roi_calculator_export():
     """Export calculations as CSV"""
     try:
-        from services.roi_calculator_service import ROICalculatorService
         import csv
         from io import StringIO
 
-        period = request.args.get('period', 'all')
-        client_ids = request.args.get('client_ids')
+        from services.roi_calculator_service import ROICalculatorService
+
+        period = request.args.get("period", "all")
+        client_ids = request.args.get("client_ids")
 
         if client_ids:
-            client_ids = [int(x) for x in client_ids.split(',')]
+            client_ids = [int(x) for x in client_ids.split(",")]
 
         service = ROICalculatorService()
         data = service.export_calculations(client_ids=client_ids, period=period)
@@ -40531,8 +41472,10 @@ def api_roi_calculator_export():
         writer.writerows(data)
 
         response = make_response(output.getvalue())
-        response.headers['Content-Type'] = 'text/csv'
-        response.headers['Content-Disposition'] = f'attachment; filename=roi_calculations_{period}.csv'
+        response.headers["Content-Type"] = "text/csv"
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename=roi_calculations_{period}.csv"
+        )
 
         return response
     except Exception as e:
@@ -40550,6 +41493,7 @@ def dashboard_roi_calculator():
 # PAYMENT PLANS ENDPOINTS
 # =============================================================================
 
+
 @app.route("/api/payment-plans", methods=["GET"])
 @require_staff()
 def api_payment_plans_list():
@@ -40557,17 +41501,14 @@ def api_payment_plans_list():
     try:
         from services.payment_plan_service import PaymentPlanService
 
-        status = request.args.get('status')
-        client_id = request.args.get('client_id', type=int)
-        limit = request.args.get('limit', 50, type=int)
-        offset = request.args.get('offset', 0, type=int)
+        status = request.args.get("status")
+        client_id = request.args.get("client_id", type=int)
+        limit = request.args.get("limit", 50, type=int)
+        offset = request.args.get("offset", 0, type=int)
 
         service = PaymentPlanService()
         result = service.list_plans(
-            status=status,
-            client_id=client_id,
-            limit=limit,
-            offset=offset
+            status=status, client_id=client_id, limit=limit, offset=offset
         )
 
         return jsonify({"success": True, **result})
@@ -40581,30 +41522,31 @@ def api_payment_plans_create():
     """Create a new payment plan"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         data = request.get_json() or {}
 
-        required = ['client_id', 'total_amount']
+        required = ["client_id", "total_amount"]
         for field in required:
             if field not in data:
                 return jsonify({"success": False, "error": f"Missing {field}"}), 400
 
         service = PaymentPlanService()
         result = service.create_plan(
-            client_id=data['client_id'],
-            total_amount=data['total_amount'],
-            num_installments=data.get('num_installments', 3),
-            down_payment=data.get('down_payment', 0),
-            start_date=data.get('start_date'),
-            frequency=data.get('frequency', 'monthly'),
-            plan_name=data.get('plan_name'),
-            plan_type=data.get('plan_type', 'custom'),
-            payment_method=data.get('payment_method'),
-            auto_charge=data.get('auto_charge', False),
-            grace_period_days=data.get('grace_period_days', 5),
-            late_fee_amount=data.get('late_fee_amount', 0),
-            late_fee_percent=data.get('late_fee_percent', 0),
-            notes=data.get('notes'),
-            staff_id=session.get('staff_id')
+            client_id=data["client_id"],
+            total_amount=data["total_amount"],
+            num_installments=data.get("num_installments", 3),
+            down_payment=data.get("down_payment", 0),
+            start_date=data.get("start_date"),
+            frequency=data.get("frequency", "monthly"),
+            plan_name=data.get("plan_name"),
+            plan_type=data.get("plan_type", "custom"),
+            payment_method=data.get("payment_method"),
+            auto_charge=data.get("auto_charge", False),
+            grace_period_days=data.get("grace_period_days", 5),
+            late_fee_amount=data.get("late_fee_amount", 0),
+            late_fee_percent=data.get("late_fee_percent", 0),
+            notes=data.get("notes"),
+            staff_id=session.get("staff_id"),
         )
 
         return jsonify(result)
@@ -40618,6 +41560,7 @@ def api_payment_plans_get(plan_id):
     """Get a payment plan with installments"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         service = PaymentPlanService()
         result = service.get_plan(plan_id)
 
@@ -40634,6 +41577,7 @@ def api_payment_plans_update(plan_id):
     """Update a payment plan"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         data = request.get_json() or {}
 
         service = PaymentPlanService()
@@ -40650,21 +41594,22 @@ def api_payment_plans_record_payment(plan_id):
     """Record a payment against a plan"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         data = request.get_json() or {}
 
-        if 'amount' not in data:
+        if "amount" not in data:
             return jsonify({"success": False, "error": "Amount is required"}), 400
 
         service = PaymentPlanService()
         result = service.record_payment(
             plan_id=plan_id,
-            amount=data['amount'],
-            payment_method=data.get('payment_method', 'manual'),
-            installment_id=data.get('installment_id'),
-            reference_number=data.get('reference_number'),
-            stripe_payment_intent_id=data.get('stripe_payment_intent_id'),
-            staff_id=session.get('staff_id'),
-            notes=data.get('notes')
+            amount=data["amount"],
+            payment_method=data.get("payment_method", "manual"),
+            installment_id=data.get("installment_id"),
+            reference_number=data.get("reference_number"),
+            stripe_payment_intent_id=data.get("stripe_payment_intent_id"),
+            staff_id=session.get("staff_id"),
+            notes=data.get("notes"),
         )
 
         return jsonify(result)
@@ -40678,10 +41623,11 @@ def api_payment_plans_pause(plan_id):
     """Pause a payment plan"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         data = request.get_json() or {}
 
         service = PaymentPlanService()
-        result = service.pause_plan(plan_id, reason=data.get('reason'))
+        result = service.pause_plan(plan_id, reason=data.get("reason"))
 
         return jsonify(result)
     except Exception as e:
@@ -40694,6 +41640,7 @@ def api_payment_plans_resume(plan_id):
     """Resume a paused payment plan"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         service = PaymentPlanService()
         result = service.resume_plan(plan_id)
 
@@ -40708,10 +41655,11 @@ def api_payment_plans_cancel(plan_id):
     """Cancel a payment plan"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         data = request.get_json() or {}
 
         service = PaymentPlanService()
-        result = service.cancel_plan(plan_id, reason=data.get('reason'))
+        result = service.cancel_plan(plan_id, reason=data.get("reason"))
 
         return jsonify(result)
     except Exception as e:
@@ -40724,26 +41672,30 @@ def api_payment_plans_default(plan_id):
     """Mark a payment plan as defaulted"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         data = request.get_json() or {}
 
         service = PaymentPlanService()
-        result = service.mark_defaulted(plan_id, reason=data.get('reason'))
+        result = service.mark_defaulted(plan_id, reason=data.get("reason"))
 
         return jsonify(result)
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/api/payment-plans/installments/<int:installment_id>/waive", methods=["POST"])
+@app.route(
+    "/api/payment-plans/installments/<int:installment_id>/waive", methods=["POST"]
+)
 @require_staff()
 def api_payment_plans_waive_installment(installment_id):
     """Waive an installment"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         data = request.get_json() or {}
 
         service = PaymentPlanService()
-        result = service.waive_installment(installment_id, reason=data.get('reason'))
+        result = service.waive_installment(installment_id, reason=data.get("reason"))
 
         return jsonify(result)
     except Exception as e:
@@ -40756,6 +41708,7 @@ def api_payment_plans_dashboard():
     """Get payment plans dashboard summary"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         service = PaymentPlanService()
         summary = service.get_dashboard_summary()
 
@@ -40770,7 +41723,8 @@ def api_payment_plans_due_soon():
     """Get installments due soon"""
     try:
         from services.payment_plan_service import PaymentPlanService
-        days = request.args.get('days', 7, type=int)
+
+        days = request.args.get("days", 7, type=int)
 
         service = PaymentPlanService()
         result = service.get_due_soon(days=days)
@@ -40786,6 +41740,7 @@ def api_payment_plans_overdue():
     """Get overdue installments"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         service = PaymentPlanService()
         result = service.get_overdue()
 
@@ -40800,6 +41755,7 @@ def api_payment_plans_check_late():
     """Check for late payments and apply late fees"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         service = PaymentPlanService()
         result = service.check_late_payments()
 
@@ -40813,11 +41769,12 @@ def api_payment_plans_check_late():
 def api_payment_plans_export():
     """Export payment plans as CSV"""
     try:
-        from services.payment_plan_service import PaymentPlanService
         import csv
         from io import StringIO
 
-        status = request.args.get('status')
+        from services.payment_plan_service import PaymentPlanService
+
+        status = request.args.get("status")
 
         service = PaymentPlanService()
         data = service.export_plans(status=status)
@@ -40832,8 +41789,10 @@ def api_payment_plans_export():
         writer.writerows(data)
 
         response = make_response(output.getvalue())
-        response.headers['Content-Type'] = 'text/csv'
-        response.headers['Content-Disposition'] = 'attachment; filename=payment_plans.csv'
+        response.headers["Content-Type"] = "text/csv"
+        response.headers["Content-Disposition"] = (
+            "attachment; filename=payment_plans.csv"
+        )
 
         return response
     except Exception as e:
@@ -40846,6 +41805,7 @@ def api_client_payment_plans(client_id):
     """Get payment plans for a specific client"""
     try:
         from services.payment_plan_service import PaymentPlanService
+
         service = PaymentPlanService()
         plans = service.get_client_plans(client_id)
 
@@ -40885,9 +41845,9 @@ def api_bureau_tracking_list():
     from services.bureau_response_service import BureauResponseService
 
     service = BureauResponseService()
-    bureau = request.args.get('bureau')
-    status = request.args.get('status')
-    client_id = request.args.get('client_id', type=int)
+    bureau = request.args.get("bureau")
+    status = request.args.get("status")
+    client_id = request.args.get("client_id", type=int)
 
     if client_id:
         disputes = service.get_client_disputes(client_id, bureau=bureau, status=status)
@@ -40901,36 +41861,37 @@ def api_bureau_tracking_list():
 @require_staff()
 def api_bureau_tracking_create():
     """Track a new dispute sent to a bureau"""
-    from services.bureau_response_service import BureauResponseService
     from datetime import datetime
+
+    from services.bureau_response_service import BureauResponseService
 
     data = request.get_json()
     service = BureauResponseService()
 
     # Parse sent_date
-    sent_date_str = data.get('sent_date')
+    sent_date_str = data.get("sent_date")
     if sent_date_str:
-        sent_date = datetime.strptime(sent_date_str, '%Y-%m-%d').date()
+        sent_date = datetime.strptime(sent_date_str, "%Y-%m-%d").date()
     else:
         sent_date = datetime.now().date()
 
     result = service.track_dispute_sent(
-        client_id=data.get('client_id'),
-        bureau=data.get('bureau'),
+        client_id=data.get("client_id"),
+        bureau=data.get("bureau"),
         sent_date=sent_date,
-        dispute_round=data.get('dispute_round', 1),
-        item_ids=data.get('item_ids'),
-        sent_method=data.get('sent_method', 'certified_mail'),
-        tracking_number=data.get('tracking_number'),
-        letter_id=data.get('letter_id'),
-        certified_mail_id=data.get('certified_mail_id'),
-        case_id=data.get('case_id'),
-        is_complex=data.get('is_complex', False),
-        sent_by_staff_id=session.get('staff_id'),
-        notes=data.get('notes')
+        dispute_round=data.get("dispute_round", 1),
+        item_ids=data.get("item_ids"),
+        sent_method=data.get("sent_method", "certified_mail"),
+        tracking_number=data.get("tracking_number"),
+        letter_id=data.get("letter_id"),
+        certified_mail_id=data.get("certified_mail_id"),
+        case_id=data.get("case_id"),
+        is_complex=data.get("is_complex", False),
+        sent_by_staff_id=session.get("staff_id"),
+        notes=data.get("notes"),
     )
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
@@ -40953,23 +41914,24 @@ def api_bureau_tracking_get(tracking_id):
 @require_staff()
 def api_bureau_tracking_confirm_delivery(tracking_id):
     """Confirm delivery of dispute letter"""
-    from services.bureau_response_service import BureauResponseService
     from datetime import datetime
+
+    from services.bureau_response_service import BureauResponseService
 
     data = request.get_json() or {}
     service = BureauResponseService()
 
     delivery_date = None
-    if data.get('delivery_date'):
-        delivery_date = datetime.strptime(data['delivery_date'], '%Y-%m-%d').date()
+    if data.get("delivery_date"):
+        delivery_date = datetime.strptime(data["delivery_date"], "%Y-%m-%d").date()
 
     result = service.confirm_delivery(
         tracking_id=tracking_id,
         delivery_date=delivery_date,
-        recalculate_deadline=data.get('recalculate_deadline', True)
+        recalculate_deadline=data.get("recalculate_deadline", True),
     )
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
@@ -40978,33 +41940,34 @@ def api_bureau_tracking_confirm_delivery(tracking_id):
 @require_staff()
 def api_bureau_tracking_record_response(tracking_id):
     """Record a response received from bureau"""
-    from services.bureau_response_service import BureauResponseService
     from datetime import datetime
+
+    from services.bureau_response_service import BureauResponseService
 
     data = request.get_json()
     service = BureauResponseService()
 
-    response_date_str = data.get('response_date')
+    response_date_str = data.get("response_date")
     if response_date_str:
-        response_date = datetime.strptime(response_date_str, '%Y-%m-%d').date()
+        response_date = datetime.strptime(response_date_str, "%Y-%m-%d").date()
     else:
         response_date = datetime.now().date()
 
     result = service.record_response(
         tracking_id=tracking_id,
         response_date=response_date,
-        response_type=data.get('response_type'),
-        items_deleted=data.get('items_deleted', 0),
-        items_updated=data.get('items_updated', 0),
-        items_verified=data.get('items_verified', 0),
-        items_investigating=data.get('items_investigating', 0),
-        response_document_id=data.get('response_document_id'),
-        follow_up_required=data.get('follow_up_required', False),
-        follow_up_type=data.get('follow_up_type'),
-        notes=data.get('notes')
+        response_type=data.get("response_type"),
+        items_deleted=data.get("items_deleted", 0),
+        items_updated=data.get("items_updated", 0),
+        items_verified=data.get("items_verified", 0),
+        items_investigating=data.get("items_investigating", 0),
+        response_document_id=data.get("response_document_id"),
+        follow_up_required=data.get("follow_up_required", False),
+        follow_up_type=data.get("follow_up_type"),
+        notes=data.get("notes"),
     )
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
@@ -41019,11 +41982,10 @@ def api_bureau_tracking_link_response(tracking_id):
     service = BureauResponseService()
 
     result = service.link_cra_response(
-        tracking_id=tracking_id,
-        cra_response_id=data.get('cra_response_id')
+        tracking_id=tracking_id, cra_response_id=data.get("cra_response_id")
     )
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
@@ -41037,12 +41999,9 @@ def api_bureau_tracking_close(tracking_id):
     data = request.get_json() or {}
     service = BureauResponseService()
 
-    result = service.close_dispute(
-        tracking_id=tracking_id,
-        notes=data.get('notes')
-    )
+    result = service.close_dispute(tracking_id=tracking_id, notes=data.get("notes"))
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
@@ -41057,11 +42016,10 @@ def api_bureau_tracking_complete_followup(tracking_id):
     service = BureauResponseService()
 
     result = service.complete_follow_up(
-        tracking_id=tracking_id,
-        notes=data.get('notes')
+        tracking_id=tracking_id, notes=data.get("notes")
     )
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
@@ -41084,7 +42042,7 @@ def api_bureau_tracking_due_soon():
     """Get disputes due within N days"""
     from services.bureau_response_service import BureauResponseService
 
-    days = request.args.get('days', 7, type=int)
+    days = request.args.get("days", 7, type=int)
     service = BureauResponseService()
     disputes = service.get_due_soon(days=days)
 
@@ -41119,22 +42077,19 @@ def api_bureau_tracking_breakdown():
 @require_staff()
 def api_bureau_tracking_export():
     """Export tracking data as CSV"""
-    from services.bureau_response_service import BureauResponseService
-    from datetime import datetime
     import csv
     import io
+    from datetime import datetime
+
+    from services.bureau_response_service import BureauResponseService
 
     service = BureauResponseService()
 
-    client_id = request.args.get('client_id', type=int)
-    status = request.args.get('status')
-    bureau = request.args.get('bureau')
+    client_id = request.args.get("client_id", type=int)
+    status = request.args.get("status")
+    bureau = request.args.get("bureau")
 
-    data = service.export_data(
-        client_id=client_id,
-        status=status,
-        bureau=bureau
-    )
+    data = service.export_data(client_id=client_id, status=status, bureau=bureau)
 
     # Create CSV
     output = io.StringIO()
@@ -41144,7 +42099,9 @@ def api_bureau_tracking_export():
         writer.writerows(data)
 
     response = make_response(output.getvalue())
-    response.headers["Content-Disposition"] = f"attachment; filename=bureau_tracking_{datetime.now().strftime('%Y%m%d')}.csv"
+    response.headers["Content-Disposition"] = (
+        f"attachment; filename=bureau_tracking_{datetime.now().strftime('%Y%m%d')}.csv"
+    )
     response.headers["Content-Type"] = "text/csv"
 
     return response
@@ -41157,13 +42114,11 @@ def api_client_bureau_tracking(client_id):
     from services.bureau_response_service import BureauResponseService
 
     service = BureauResponseService()
-    bureau = request.args.get('bureau')
-    dispute_round = request.args.get('round', type=int)
+    bureau = request.args.get("bureau")
+    dispute_round = request.args.get("round", type=int)
 
     disputes = service.get_client_disputes(
-        client_id=client_id,
-        bureau=bureau,
-        dispute_round=dispute_round
+        client_id=client_id, bureau=bureau, dispute_round=dispute_round
     )
 
     return jsonify({"success": True, "disputes": disputes})
@@ -41196,20 +42151,23 @@ def dashboard_bureau_tracking():
         response_types = BureauResponseService.get_response_type_breakdown(db)
 
         # Get client list for the tracking modal
-        clients = db.query(Client).filter(
-            Client.dispute_status.notin_(['lead', 'cancelled'])
-        ).order_by(Client.name).all()
+        clients = (
+            db.query(Client)
+            .filter(Client.dispute_status.notin_(["lead", "cancelled"]))
+            .order_by(Client.name)
+            .all()
+        )
 
         return render_template(
             "bureau_tracking.html",
-            active_page='bureau-tracking',
+            active_page="bureau-tracking",
             stats=stats,
             bureau_stats=bureau_stats,
             disputes=disputes,
             due_soon=due_soon,
             overdue=overdue,
             response_types=response_types,
-            clients=clients
+            clients=clients,
         )
     finally:
         db.close()
@@ -41219,19 +42177,20 @@ def dashboard_bureau_tracking():
 # LETTER TEMPLATE BUILDER ENDPOINTS (P26)
 # =============================================================================
 
+
 @app.route("/api/letter-templates", methods=["GET"])
 @require_staff()
 def api_letter_templates_list():
     """List letter templates with filtering"""
     from services.letter_template_service import LetterTemplateService
 
-    category = request.args.get('category')
-    dispute_round = request.args.get('dispute_round', type=int)
-    target_type = request.args.get('target_type')
-    is_active = request.args.get('is_active', 'true').lower() == 'true'
-    search = request.args.get('search')
-    limit = request.args.get('limit', 100, type=int)
-    offset = request.args.get('offset', 0, type=int)
+    category = request.args.get("category")
+    dispute_round = request.args.get("dispute_round", type=int)
+    target_type = request.args.get("target_type")
+    is_active = request.args.get("is_active", "true").lower() == "true"
+    search = request.args.get("search")
+    limit = request.args.get("limit", 100, type=int)
+    offset = request.args.get("offset", 0, type=int)
 
     service = LetterTemplateService()
     templates = service.list_templates(
@@ -41244,49 +42203,56 @@ def api_letter_templates_list():
         offset=offset,
     )
 
-    return jsonify({
-        'success': True,
-        'templates': templates,
-        'count': len(templates),
-    })
+    return jsonify(
+        {
+            "success": True,
+            "templates": templates,
+            "count": len(templates),
+        }
+    )
 
 
 @app.route("/api/letter-templates", methods=["POST"])
-@require_staff(roles=['admin', 'attorney', 'paralegal'])
+@require_staff(roles=["admin", "attorney", "paralegal"])
 def api_letter_templates_create():
     """Create a new letter template"""
     from services.letter_template_service import LetterTemplateService
 
     data = request.get_json()
     if not data:
-        return jsonify({'success': False, 'error': 'No data provided'}), 400
+        return jsonify({"success": False, "error": "No data provided"}), 400
 
-    required = ['name', 'code', 'category', 'content']
+    required = ["name", "code", "category", "content"]
     for field in required:
         if not data.get(field):
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+            return (
+                jsonify(
+                    {"success": False, "error": f"Missing required field: {field}"}
+                ),
+                400,
+            )
 
     service = LetterTemplateService()
     result = service.create_template(
-        name=data['name'],
-        code=data['code'],
-        category=data['category'],
-        content=data['content'],
-        dispute_round=data.get('dispute_round'),
-        target_type=data.get('target_type', 'bureau'),
-        subject=data.get('subject'),
-        footer=data.get('footer'),
-        variables=data.get('variables'),
-        required_attachments=data.get('required_attachments'),
-        recommended_for=data.get('recommended_for'),
-        description=data.get('description'),
-        instructions=data.get('instructions'),
-        legal_basis=data.get('legal_basis'),
+        name=data["name"],
+        code=data["code"],
+        category=data["category"],
+        content=data["content"],
+        dispute_round=data.get("dispute_round"),
+        target_type=data.get("target_type", "bureau"),
+        subject=data.get("subject"),
+        footer=data.get("footer"),
+        variables=data.get("variables"),
+        required_attachments=data.get("required_attachments"),
+        recommended_for=data.get("recommended_for"),
+        description=data.get("description"),
+        instructions=data.get("instructions"),
+        legal_basis=data.get("legal_basis"),
         is_system=False,
-        created_by_staff_id=session.get('staff_id'),
+        created_by_staff_id=session.get("staff_id"),
     )
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result), 201
     return jsonify(result), 400
 
@@ -41301,39 +42267,41 @@ def api_letter_templates_get(template_id):
     template = service.get_template(template_id)
 
     if not template:
-        return jsonify({'success': False, 'error': 'Template not found'}), 404
+        return jsonify({"success": False, "error": "Template not found"}), 404
 
-    return jsonify({
-        'success': True,
-        'template': template,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "template": template,
+        }
+    )
 
 
 @app.route("/api/letter-templates/<int:template_id>", methods=["PUT"])
-@require_staff(roles=['admin', 'attorney', 'paralegal'])
+@require_staff(roles=["admin", "attorney", "paralegal"])
 def api_letter_templates_update(template_id):
     """Update a letter template"""
     from services.letter_template_service import LetterTemplateService
 
     data = request.get_json()
     if not data:
-        return jsonify({'success': False, 'error': 'No data provided'}), 400
+        return jsonify({"success": False, "error": "No data provided"}), 400
 
     service = LetterTemplateService()
     result = service.update_template(
         template_id=template_id,
         updates=data,
-        change_summary=data.get('change_summary'),
-        staff_id=session.get('staff_id'),
+        change_summary=data.get("change_summary"),
+        staff_id=session.get("staff_id"),
     )
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
 
 @app.route("/api/letter-templates/<int:template_id>", methods=["DELETE"])
-@require_staff(roles=['admin'])
+@require_staff(roles=["admin"])
 def api_letter_templates_delete(template_id):
     """Delete a letter template"""
     from services.letter_template_service import LetterTemplateService
@@ -41341,33 +42309,36 @@ def api_letter_templates_delete(template_id):
     service = LetterTemplateService()
     result = service.delete_template(template_id)
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
 
 @app.route("/api/letter-templates/<int:template_id>/duplicate", methods=["POST"])
-@require_staff(roles=['admin', 'attorney', 'paralegal'])
+@require_staff(roles=["admin", "attorney", "paralegal"])
 def api_letter_templates_duplicate(template_id):
     """Duplicate an existing template"""
     from services.letter_template_service import LetterTemplateService
 
     data = request.get_json()
     if not data:
-        return jsonify({'success': False, 'error': 'No data provided'}), 400
+        return jsonify({"success": False, "error": "No data provided"}), 400
 
-    if not data.get('new_name') or not data.get('new_code'):
-        return jsonify({'success': False, 'error': 'new_name and new_code are required'}), 400
+    if not data.get("new_name") or not data.get("new_code"):
+        return (
+            jsonify({"success": False, "error": "new_name and new_code are required"}),
+            400,
+        )
 
     service = LetterTemplateService()
     result = service.duplicate_template(
         template_id=template_id,
-        new_name=data['new_name'],
-        new_code=data['new_code'],
-        staff_id=session.get('staff_id'),
+        new_name=data["new_name"],
+        new_code=data["new_code"],
+        staff_id=session.get("staff_id"),
     )
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result), 201
     return jsonify(result), 400
 
@@ -41381,15 +42352,19 @@ def api_letter_templates_versions(template_id):
     service = LetterTemplateService()
     versions = service.get_template_versions(template_id)
 
-    return jsonify({
-        'success': True,
-        'versions': versions,
-        'count': len(versions),
-    })
+    return jsonify(
+        {
+            "success": True,
+            "versions": versions,
+            "count": len(versions),
+        }
+    )
 
 
-@app.route("/api/letter-templates/<int:template_id>/restore/<int:version_id>", methods=["POST"])
-@require_staff(roles=['admin', 'attorney', 'paralegal'])
+@app.route(
+    "/api/letter-templates/<int:template_id>/restore/<int:version_id>", methods=["POST"]
+)
+@require_staff(roles=["admin", "attorney", "paralegal"])
 def api_letter_templates_restore(template_id, version_id):
     """Restore a template to a previous version"""
     from services.letter_template_service import LetterTemplateService
@@ -41398,10 +42373,10 @@ def api_letter_templates_restore(template_id, version_id):
     result = service.restore_version(
         template_id=template_id,
         version_id=version_id,
-        staff_id=session.get('staff_id'),
+        staff_id=session.get("staff_id"),
     )
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
@@ -41413,43 +42388,48 @@ def api_letter_templates_render(template_id):
     from services.letter_template_service import LetterTemplateService
 
     data = request.get_json()
-    variables = data.get('variables', {}) if data else {}
+    variables = data.get("variables", {}) if data else {}
 
     service = LetterTemplateService()
     result = service.render_template(template_id, variables)
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
 
 @app.route("/api/letter-templates/generate", methods=["POST"])
-@require_staff(roles=['admin', 'attorney', 'paralegal'])
+@require_staff(roles=["admin", "attorney", "paralegal"])
 def api_letter_templates_generate():
     """Generate a letter from a template for a client"""
     from services.letter_template_service import LetterTemplateService
 
     data = request.get_json()
     if not data:
-        return jsonify({'success': False, 'error': 'No data provided'}), 400
+        return jsonify({"success": False, "error": "No data provided"}), 400
 
-    required = ['template_id', 'client_id', 'target_type', 'target_name']
+    required = ["template_id", "client_id", "target_type", "target_name"]
     for field in required:
         if not data.get(field):
-            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+            return (
+                jsonify(
+                    {"success": False, "error": f"Missing required field: {field}"}
+                ),
+                400,
+            )
 
     service = LetterTemplateService()
     result = service.generate_letter(
-        template_id=data['template_id'],
-        client_id=data['client_id'],
-        target_type=data['target_type'],
-        target_name=data['target_name'],
-        custom_variables=data.get('custom_variables'),
-        staff_id=session.get('staff_id'),
-        case_id=data.get('case_id'),
+        template_id=data["template_id"],
+        client_id=data["client_id"],
+        target_type=data["target_type"],
+        target_name=data["target_name"],
+        custom_variables=data.get("custom_variables"),
+        staff_id=session.get("staff_id"),
+        case_id=data.get("case_id"),
     )
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result), 201
     return jsonify(result), 400
 
@@ -41460,11 +42440,11 @@ def api_letter_templates_generated_list():
     """List generated letters"""
     from services.letter_template_service import LetterTemplateService
 
-    client_id = request.args.get('client_id', type=int)
-    template_id = request.args.get('template_id', type=int)
-    status = request.args.get('status')
-    limit = request.args.get('limit', 50, type=int)
-    offset = request.args.get('offset', 0, type=int)
+    client_id = request.args.get("client_id", type=int)
+    template_id = request.args.get("template_id", type=int)
+    status = request.args.get("status")
+    limit = request.args.get("limit", 50, type=int)
+    offset = request.args.get("offset", 0, type=int)
 
     service = LetterTemplateService()
     letters = service.list_generated_letters(
@@ -41475,11 +42455,13 @@ def api_letter_templates_generated_list():
         offset=offset,
     )
 
-    return jsonify({
-        'success': True,
-        'letters': letters,
-        'count': len(letters),
-    })
+    return jsonify(
+        {
+            "success": True,
+            "letters": letters,
+            "count": len(letters),
+        }
+    )
 
 
 @app.route("/api/letter-templates/generated/<int:letter_id>", methods=["GET"])
@@ -41492,34 +42474,36 @@ def api_letter_templates_generated_get(letter_id):
     letter = service.get_generated_letter(letter_id)
 
     if not letter:
-        return jsonify({'success': False, 'error': 'Letter not found'}), 404
+        return jsonify({"success": False, "error": "Letter not found"}), 404
 
-    return jsonify({
-        'success': True,
-        'letter': letter,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "letter": letter,
+        }
+    )
 
 
 @app.route("/api/letter-templates/generated/<int:letter_id>/status", methods=["PUT"])
-@require_staff(roles=['admin', 'attorney', 'paralegal'])
+@require_staff(roles=["admin", "attorney", "paralegal"])
 def api_letter_templates_generated_status(letter_id):
     """Update generated letter status"""
     from services.letter_template_service import LetterTemplateService
 
     data = request.get_json()
-    if not data or not data.get('status'):
-        return jsonify({'success': False, 'error': 'Status is required'}), 400
+    if not data or not data.get("status"):
+        return jsonify({"success": False, "error": "Status is required"}), 400
 
     service = LetterTemplateService()
     result = service.update_letter_status(
         letter_id=letter_id,
-        status=data['status'],
-        sent_method=data.get('sent_method'),
-        tracking_number=data.get('tracking_number'),
-        staff_id=session.get('staff_id'),
+        status=data["status"],
+        sent_method=data.get("sent_method"),
+        tracking_number=data.get("tracking_number"),
+        staff_id=session.get("staff_id"),
     )
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
@@ -41533,10 +42517,12 @@ def api_letter_templates_dashboard():
     service = LetterTemplateService()
     summary = service.get_dashboard_summary()
 
-    return jsonify({
-        'success': True,
-        **summary,
-    })
+    return jsonify(
+        {
+            "success": True,
+            **summary,
+        }
+    )
 
 
 @app.route("/api/letter-templates/categories", methods=["GET"])
@@ -41545,10 +42531,12 @@ def api_letter_templates_categories():
     """Get available template categories"""
     from services.letter_template_service import LetterTemplateService
 
-    return jsonify({
-        'success': True,
-        'categories': LetterTemplateService.get_categories(),
-    })
+    return jsonify(
+        {
+            "success": True,
+            "categories": LetterTemplateService.get_categories(),
+        }
+    )
 
 
 @app.route("/api/letter-templates/target-types", methods=["GET"])
@@ -41557,10 +42545,12 @@ def api_letter_templates_target_types():
     """Get available target types"""
     from services.letter_template_service import LetterTemplateService
 
-    return jsonify({
-        'success': True,
-        'target_types': LetterTemplateService.get_target_types(),
-    })
+    return jsonify(
+        {
+            "success": True,
+            "target_types": LetterTemplateService.get_target_types(),
+        }
+    )
 
 
 @app.route("/api/letter-templates/variables", methods=["GET"])
@@ -41569,10 +42559,12 @@ def api_letter_templates_variables():
     """Get common template variables"""
     from services.letter_template_service import LetterTemplateService
 
-    return jsonify({
-        'success': True,
-        'variables': LetterTemplateService.get_common_variables(),
-    })
+    return jsonify(
+        {
+            "success": True,
+            "variables": LetterTemplateService.get_common_variables(),
+        }
+    )
 
 
 @app.route("/api/letter-templates/client-variables/<int:client_id>", methods=["GET"])
@@ -41581,19 +42573,21 @@ def api_letter_templates_client_variables(client_id):
     """Get variable values for a specific client"""
     from services.letter_template_service import LetterTemplateService
 
-    bureau = request.args.get('bureau')
+    bureau = request.args.get("bureau")
 
     service = LetterTemplateService()
     variables = service.get_client_variables(client_id, bureau)
 
-    return jsonify({
-        'success': True,
-        'variables': variables,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "variables": variables,
+        }
+    )
 
 
 @app.route("/api/letter-templates/seed", methods=["POST"])
-@require_staff(roles=['admin'])
+@require_staff(roles=["admin"])
 def api_letter_templates_seed():
     """Seed default letter templates"""
     from services.letter_template_service import LetterTemplateService
@@ -41601,7 +42595,7 @@ def api_letter_templates_seed():
     service = LetterTemplateService()
     result = service.seed_default_templates()
 
-    if result.get('success'):
+    if result.get("success"):
         return jsonify(result)
     return jsonify(result), 400
 
@@ -41610,7 +42604,11 @@ def api_letter_templates_seed():
 @require_staff()
 def dashboard_letter_templates():
     """Letter Template Builder dashboard page"""
-    from services.letter_template_service import LetterTemplateService, CATEGORIES, TARGET_TYPES
+    from services.letter_template_service import (
+        CATEGORIES,
+        TARGET_TYPES,
+        LetterTemplateService,
+    )
 
     service = LetterTemplateService()
     summary = service.get_dashboard_summary()
@@ -41618,13 +42616,16 @@ def dashboard_letter_templates():
 
     db = get_db()
     try:
-        clients = db.query(Client).filter(
-            Client.dispute_status.notin_(['lead', 'cancelled'])
-        ).order_by(Client.name).all()
+        clients = (
+            db.query(Client)
+            .filter(Client.dispute_status.notin_(["lead", "cancelled"]))
+            .order_by(Client.name)
+            .all()
+        )
 
         return render_template(
             "letter_templates.html",
-            active_page='letter-templates',
+            active_page="letter-templates",
             stats=summary,
             templates=templates,
             categories=CATEGORIES,
@@ -41637,23 +42638,29 @@ def dashboard_letter_templates():
 
 # ==================== VOICEMAIL DROP ENDPOINTS ====================
 
+
 @app.route("/api/voicemail/recordings", methods=["GET"])
 @require_staff()
 def api_voicemail_recordings_list():
     """List all voicemail recordings"""
-    from services.voicemail_drop_service import get_voicemail_drop_service, VOICEMAIL_CATEGORIES
+    from services.voicemail_drop_service import (
+        VOICEMAIL_CATEGORIES,
+        get_voicemail_drop_service,
+    )
 
     service = get_voicemail_drop_service()
     try:
-        category = request.args.get('category')
-        active_only = request.args.get('active', 'true').lower() == 'true'
+        category = request.args.get("category")
+        active_only = request.args.get("active", "true").lower() == "true"
 
         recordings = service.get_recordings(category=category, active_only=active_only)
-        return jsonify({
-            'success': True,
-            'recordings': [r.to_dict() for r in recordings],
-            'categories': VOICEMAIL_CATEGORIES
-        })
+        return jsonify(
+            {
+                "success": True,
+                "recordings": [r.to_dict() for r in recordings],
+                "categories": VOICEMAIL_CATEGORIES,
+            }
+        )
     finally:
         service.db.close()
 
@@ -41662,30 +42669,40 @@ def api_voicemail_recordings_list():
 @require_staff()
 def api_voicemail_recordings_create():
     """Create a new voicemail recording"""
-    from services.voicemail_drop_service import get_voicemail_drop_service
     import os
+
     from werkzeug.utils import secure_filename
 
-    # Check for file upload
-    if 'file' not in request.files:
-        return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+    from services.voicemail_drop_service import get_voicemail_drop_service
 
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'success': False, 'error': 'No file selected'}), 400
+    # Check for file upload
+    if "file" not in request.files:
+        return jsonify({"success": False, "error": "No file uploaded"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"success": False, "error": "No file selected"}), 400
 
     # Validate file type
-    allowed_extensions = {'mp3', 'wav', 'm4a'}
-    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    allowed_extensions = {"mp3", "wav", "m4a"}
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
     if ext not in allowed_extensions:
-        return jsonify({'success': False, 'error': f'Invalid file type. Allowed: {", ".join(allowed_extensions)}'}), 400
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f'Invalid file type. Allowed: {", ".join(allowed_extensions)}',
+                }
+            ),
+            400,
+        )
 
     # Save file
     filename = secure_filename(file.filename)
-    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{filename}"
 
-    upload_dir = os.path.join('static', 'voicemail')
+    upload_dir = os.path.join("static", "voicemail")
     os.makedirs(upload_dir, exist_ok=True)
     file_path = os.path.join(upload_dir, filename)
     file.save(file_path)
@@ -41696,21 +42713,18 @@ def api_voicemail_recordings_create():
     service = get_voicemail_drop_service()
     try:
         recording = service.create_recording(
-            name=request.form.get('name', filename),
-            description=request.form.get('description'),
-            category=request.form.get('category', 'custom'),
-            file_path=f'/static/voicemail/{filename}',
+            name=request.form.get("name", filename),
+            description=request.form.get("description"),
+            category=request.form.get("category", "custom"),
+            file_path=f"/static/voicemail/{filename}",
             file_name=filename,
             file_size_bytes=file_size,
-            duration_seconds=int(request.form.get('duration', 0)) or None,
+            duration_seconds=int(request.form.get("duration", 0)) or None,
             format=ext,
-            staff_id=session.get('staff_id')
+            staff_id=session.get("staff_id"),
         )
 
-        return jsonify({
-            'success': True,
-            'recording': recording.to_dict()
-        }), 201
+        return jsonify({"success": True, "recording": recording.to_dict()}), 201
     finally:
         service.db.close()
 
@@ -41725,12 +42739,9 @@ def api_voicemail_recording_get(recording_id):
     try:
         recording = service.get_recording(recording_id)
         if not recording:
-            return jsonify({'success': False, 'error': 'Recording not found'}), 404
+            return jsonify({"success": False, "error": "Recording not found"}), 404
 
-        return jsonify({
-            'success': True,
-            'recording': recording.to_dict()
-        })
+        return jsonify({"success": True, "recording": recording.to_dict()})
     finally:
         service.db.close()
 
@@ -41746,19 +42757,16 @@ def api_voicemail_recording_update(recording_id):
     try:
         recording = service.update_recording(
             recording_id,
-            name=data.get('name'),
-            description=data.get('description'),
-            category=data.get('category'),
-            is_active=data.get('is_active')
+            name=data.get("name"),
+            description=data.get("description"),
+            category=data.get("category"),
+            is_active=data.get("is_active"),
         )
 
         if not recording:
-            return jsonify({'success': False, 'error': 'Recording not found'}), 404
+            return jsonify({"success": False, "error": "Recording not found"}), 404
 
-        return jsonify({
-            'success': True,
-            'recording': recording.to_dict()
-        })
+        return jsonify({"success": True, "recording": recording.to_dict()})
     finally:
         service.db.close()
 
@@ -41772,7 +42780,7 @@ def api_voicemail_recording_delete(recording_id):
     service = get_voicemail_drop_service()
     try:
         result = service.delete_recording(recording_id)
-        status = 200 if result['success'] else 400
+        status = 200 if result["success"] else 400
         return jsonify(result), status
     finally:
         service.db.close()
@@ -41787,18 +42795,15 @@ def api_voicemail_drops_list():
     service = get_voicemail_drop_service()
     try:
         drops = service.get_drops(
-            client_id=request.args.get('client_id', type=int),
-            recording_id=request.args.get('recording_id', type=int),
-            status=request.args.get('status'),
-            provider=request.args.get('provider'),
-            limit=request.args.get('limit', 100, type=int),
-            offset=request.args.get('offset', 0, type=int)
+            client_id=request.args.get("client_id", type=int),
+            recording_id=request.args.get("recording_id", type=int),
+            status=request.args.get("status"),
+            provider=request.args.get("provider"),
+            limit=request.args.get("limit", 100, type=int),
+            offset=request.args.get("offset", 0, type=int),
         )
 
-        return jsonify({
-            'success': True,
-            'drops': [d.to_dict() for d in drops]
-        })
+        return jsonify({"success": True, "drops": [d.to_dict() for d in drops]})
     finally:
         service.db.close()
 
@@ -41811,33 +42816,41 @@ def api_voicemail_drops_send():
 
     data = request.get_json()
     if not data:
-        return jsonify({'success': False, 'error': 'Request body required'}), 400
+        return jsonify({"success": False, "error": "Request body required"}), 400
 
-    if not data.get('recording_id') or not data.get('client_id'):
-        return jsonify({'success': False, 'error': 'recording_id and client_id required'}), 400
+    if not data.get("recording_id") or not data.get("client_id"):
+        return (
+            jsonify({"success": False, "error": "recording_id and client_id required"}),
+            400,
+        )
 
     # Parse scheduled time if provided
     scheduled_at = None
-    if data.get('scheduled_at'):
+    if data.get("scheduled_at"):
         try:
-            scheduled_at = datetime.fromisoformat(data['scheduled_at'].replace('Z', '+00:00'))
+            scheduled_at = datetime.fromisoformat(
+                data["scheduled_at"].replace("Z", "+00:00")
+            )
         except ValueError:
-            return jsonify({'success': False, 'error': 'Invalid scheduled_at format'}), 400
+            return (
+                jsonify({"success": False, "error": "Invalid scheduled_at format"}),
+                400,
+            )
 
     service = get_voicemail_drop_service()
     try:
         result = service.send_drop(
-            recording_id=data['recording_id'],
-            client_id=data['client_id'],
-            phone_number=data.get('phone_number'),
-            trigger_type=data.get('trigger_type', 'manual'),
-            trigger_event=data.get('trigger_event'),
+            recording_id=data["recording_id"],
+            client_id=data["client_id"],
+            phone_number=data.get("phone_number"),
+            trigger_type=data.get("trigger_type", "manual"),
+            trigger_event=data.get("trigger_event"),
             scheduled_at=scheduled_at,
-            staff_id=session.get('staff_id'),
-            provider=data.get('provider')
+            staff_id=session.get("staff_id"),
+            provider=data.get("provider"),
         )
 
-        status = 201 if result['success'] else 400
+        status = 201 if result["success"] else 400
         return jsonify(result), status
     finally:
         service.db.close()
@@ -41853,12 +42866,9 @@ def api_voicemail_drop_get(drop_id):
     try:
         drop = service.get_drop(drop_id)
         if not drop:
-            return jsonify({'success': False, 'error': 'Drop not found'}), 404
+            return jsonify({"success": False, "error": "Drop not found"}), 404
 
-        return jsonify({
-            'success': True,
-            'drop': drop.to_dict()
-        })
+        return jsonify({"success": True, "drop": drop.to_dict()})
     finally:
         service.db.close()
 
@@ -41872,7 +42882,7 @@ def api_voicemail_drop_retry(drop_id):
     service = get_voicemail_drop_service()
     try:
         result = service.retry_drop(drop_id)
-        status = 200 if result['success'] else 400
+        status = 200 if result["success"] else 400
         return jsonify(result), status
     finally:
         service.db.close()
@@ -41887,7 +42897,7 @@ def api_voicemail_drop_cancel(drop_id):
     service = get_voicemail_drop_service()
     try:
         result = service.cancel_drop(drop_id)
-        status = 200 if result['success'] else 400
+        status = 200 if result["success"] else 400
         return jsonify(result), status
     finally:
         service.db.close()
@@ -41902,13 +42912,9 @@ def api_voicemail_client_history(client_id):
     service = get_voicemail_drop_service()
     try:
         history = service.get_client_drop_history(
-            client_id,
-            limit=request.args.get('limit', 20, type=int)
+            client_id, limit=request.args.get("limit", 20, type=int)
         )
-        return jsonify({
-            'success': True,
-            'history': history
-        })
+        return jsonify({"success": True, "history": history})
     finally:
         service.db.close()
 
@@ -41921,13 +42927,8 @@ def api_voicemail_campaigns_list():
 
     service = get_voicemail_drop_service()
     try:
-        campaigns = service.get_campaigns(
-            status=request.args.get('status')
-        )
-        return jsonify({
-            'success': True,
-            'campaigns': [c.to_dict() for c in campaigns]
-        })
+        campaigns = service.get_campaigns(status=request.args.get("status"))
+        return jsonify({"success": True, "campaigns": [c.to_dict() for c in campaigns]})
     finally:
         service.db.close()
 
@@ -41940,38 +42941,43 @@ def api_voicemail_campaigns_create():
 
     data = request.get_json()
     if not data:
-        return jsonify({'success': False, 'error': 'Request body required'}), 400
+        return jsonify({"success": False, "error": "Request body required"}), 400
 
-    if not data.get('name') or not data.get('recording_id'):
-        return jsonify({'success': False, 'error': 'name and recording_id required'}), 400
+    if not data.get("name") or not data.get("recording_id"):
+        return (
+            jsonify({"success": False, "error": "name and recording_id required"}),
+            400,
+        )
 
     # Parse scheduled time if provided
     scheduled_at = None
-    if data.get('scheduled_at'):
+    if data.get("scheduled_at"):
         try:
-            scheduled_at = datetime.fromisoformat(data['scheduled_at'].replace('Z', '+00:00'))
+            scheduled_at = datetime.fromisoformat(
+                data["scheduled_at"].replace("Z", "+00:00")
+            )
         except ValueError:
-            return jsonify({'success': False, 'error': 'Invalid scheduled_at format'}), 400
+            return (
+                jsonify({"success": False, "error": "Invalid scheduled_at format"}),
+                400,
+            )
 
     service = get_voicemail_drop_service()
     try:
         campaign = service.create_campaign(
-            name=data['name'],
-            recording_id=data['recording_id'],
-            description=data.get('description'),
-            target_type=data.get('target_type', 'manual'),
-            target_filters=data.get('target_filters'),
+            name=data["name"],
+            recording_id=data["recording_id"],
+            description=data.get("description"),
+            target_type=data.get("target_type", "manual"),
+            target_filters=data.get("target_filters"),
             scheduled_at=scheduled_at,
-            send_window_start=data.get('send_window_start'),
-            send_window_end=data.get('send_window_end'),
-            send_days=data.get('send_days'),
-            staff_id=session.get('staff_id')
+            send_window_start=data.get("send_window_start"),
+            send_window_end=data.get("send_window_end"),
+            send_days=data.get("send_days"),
+            staff_id=session.get("staff_id"),
         )
 
-        return jsonify({
-            'success': True,
-            'campaign': campaign.to_dict()
-        }), 201
+        return jsonify({"success": True, "campaign": campaign.to_dict()}), 201
     finally:
         service.db.close()
 
@@ -41986,12 +42992,9 @@ def api_voicemail_campaign_get(campaign_id):
     try:
         campaign = service.get_campaign(campaign_id)
         if not campaign:
-            return jsonify({'success': False, 'error': 'Campaign not found'}), 404
+            return jsonify({"success": False, "error": "Campaign not found"}), 404
 
-        return jsonify({
-            'success': True,
-            'campaign': campaign.to_dict()
-        })
+        return jsonify({"success": True, "campaign": campaign.to_dict()})
     finally:
         service.db.close()
 
@@ -42003,13 +43006,13 @@ def api_voicemail_campaign_add_targets(campaign_id):
     from services.voicemail_drop_service import get_voicemail_drop_service
 
     data = request.get_json()
-    if not data or not data.get('client_ids'):
-        return jsonify({'success': False, 'error': 'client_ids array required'}), 400
+    if not data or not data.get("client_ids"):
+        return jsonify({"success": False, "error": "client_ids array required"}), 400
 
     service = get_voicemail_drop_service()
     try:
-        result = service.add_targets_to_campaign(campaign_id, data['client_ids'])
-        status = 200 if result['success'] else 400
+        result = service.add_targets_to_campaign(campaign_id, data["client_ids"])
+        status = 200 if result["success"] else 400
         return jsonify(result), status
     finally:
         service.db.close()
@@ -42024,7 +43027,7 @@ def api_voicemail_campaign_start(campaign_id):
     service = get_voicemail_drop_service()
     try:
         result = service.start_campaign(campaign_id)
-        status = 200 if result['success'] else 400
+        status = 200 if result["success"] else 400
         return jsonify(result), status
     finally:
         service.db.close()
@@ -42039,7 +43042,7 @@ def api_voicemail_campaign_pause(campaign_id):
     service = get_voicemail_drop_service()
     try:
         result = service.pause_campaign(campaign_id)
-        status = 200 if result['success'] else 400
+        status = 200 if result["success"] else 400
         return jsonify(result), status
     finally:
         service.db.close()
@@ -42054,7 +43057,7 @@ def api_voicemail_campaign_cancel(campaign_id):
     service = get_voicemail_drop_service()
     try:
         result = service.cancel_campaign(campaign_id)
-        status = 200 if result['success'] else 400
+        status = 200 if result["success"] else 400
         return jsonify(result), status
     finally:
         service.db.close()
@@ -42069,10 +43072,7 @@ def api_voicemail_stats():
     service = get_voicemail_drop_service()
     try:
         stats = service.get_stats()
-        return jsonify({
-            'success': True,
-            'stats': stats
-        })
+        return jsonify({"success": True, "stats": stats})
     finally:
         service.db.close()
 
@@ -42081,7 +43081,10 @@ def api_voicemail_stats():
 @require_staff()
 def dashboard_voicemail():
     """Voicemail Drops dashboard page"""
-    from services.voicemail_drop_service import get_voicemail_drop_service, VOICEMAIL_CATEGORIES
+    from services.voicemail_drop_service import (
+        VOICEMAIL_CATEGORIES,
+        get_voicemail_drop_service,
+    )
 
     service = get_voicemail_drop_service()
     try:
@@ -42092,14 +43095,19 @@ def dashboard_voicemail():
 
         db = get_db()
         try:
-            clients = db.query(Client).filter(
-                Client.phone.isnot(None),
-                Client.dispute_status.notin_(['lead', 'cancelled'])
-            ).order_by(Client.name).all()
+            clients = (
+                db.query(Client)
+                .filter(
+                    Client.phone.isnot(None),
+                    Client.dispute_status.notin_(["lead", "cancelled"]),
+                )
+                .order_by(Client.name)
+                .all()
+            )
 
             return render_template(
                 "voicemail_drops.html",
-                active_page='voicemail',
+                active_page="voicemail",
                 stats=stats,
                 recordings=recordings,
                 recent_drops=recent_drops,
@@ -42117,6 +43125,7 @@ def dashboard_voicemail():
 # UNIFIED INBOX API (P32)
 # ===========================================================================
 
+
 @app.route("/dashboard/unified-inbox")
 @require_staff()
 def dashboard_unified_inbox():
@@ -42129,7 +43138,7 @@ def dashboard_unified_inbox():
 
     try:
         # Get current staff
-        staff_id = session.get('staff_id')
+        staff_id = session.get("staff_id")
 
         # Get dashboard stats
         stats = service.get_dashboard_stats(staff_id=staff_id)
@@ -42138,9 +43147,11 @@ def dashboard_unified_inbox():
         unread = service.get_unread_counts(staff_id=staff_id)
 
         # Get clients for filter dropdown
-        client_query = db.query(Client).filter(
-            Client.dispute_status.notin_(['lead', 'cancelled'])
-        ).order_by(Client.name)
+        client_query = (
+            db.query(Client)
+            .filter(Client.dispute_status.notin_(["lead", "cancelled"]))
+            .order_by(Client.name)
+        )
 
         if staff_id:
             client_query = client_query.filter(Client.assigned_to == staff_id)
@@ -42149,10 +43160,10 @@ def dashboard_unified_inbox():
 
         return render_template(
             "unified_inbox.html",
-            active_page='unified-inbox',
+            active_page="unified-inbox",
             stats=stats,
             unread=unread,
-            clients=clients
+            clients=clients,
         )
     finally:
         db.close()
@@ -42166,16 +43177,16 @@ def api_inbox_list():
 
     service = get_unified_inbox_service()
     try:
-        staff_id = session.get('staff_id')
+        staff_id = session.get("staff_id")
 
         # Parse filters
-        channels = request.args.getlist('channel') or None
-        is_read = request.args.get('is_read')
+        channels = request.args.getlist("channel") or None
+        is_read = request.args.get("is_read")
         if is_read is not None:
-            is_read = is_read.lower() == 'true'
-        search = request.args.get('search')
-        limit = int(request.args.get('limit', 50))
-        offset = int(request.args.get('offset', 0))
+            is_read = is_read.lower() == "true"
+        search = request.args.get("search")
+        limit = int(request.args.get("limit", 50))
+        offset = int(request.args.get("offset", 0))
 
         result = service.get_staff_inbox(
             staff_id=staff_id,
@@ -42183,15 +43194,12 @@ def api_inbox_list():
             is_read=is_read,
             search_query=search,
             limit=limit,
-            offset=offset
+            offset=offset,
         )
 
-        return jsonify({
-            'success': True,
-            **result
-        })
+        return jsonify({"success": True, **result})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/inbox/client/<int:client_id>", methods=["GET"])
@@ -42202,14 +43210,14 @@ def api_inbox_client(client_id):
 
     service = get_unified_inbox_service()
     try:
-        channels = request.args.getlist('channel') or None
-        direction = request.args.get('direction')
-        is_read = request.args.get('is_read')
+        channels = request.args.getlist("channel") or None
+        direction = request.args.get("direction")
+        is_read = request.args.get("is_read")
         if is_read is not None:
-            is_read = is_read.lower() == 'true'
-        search = request.args.get('search')
-        limit = int(request.args.get('limit', 50))
-        offset = int(request.args.get('offset', 0))
+            is_read = is_read.lower() == "true"
+        search = request.args.get("search")
+        limit = int(request.args.get("limit", 50))
+        offset = int(request.args.get("offset", 0))
 
         result = service.get_client_inbox(
             client_id=client_id,
@@ -42218,15 +43226,12 @@ def api_inbox_client(client_id):
             is_read=is_read,
             search_query=search,
             limit=limit,
-            offset=offset
+            offset=offset,
         )
 
-        return jsonify({
-            'success': True,
-            **result
-        })
+        return jsonify({"success": True, **result})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/inbox/client/<int:client_id>/thread", methods=["GET"])
@@ -42237,21 +43242,16 @@ def api_inbox_client_thread(client_id):
 
     service = get_unified_inbox_service()
     try:
-        channels = request.args.getlist('channel') or None
-        limit = int(request.args.get('limit', 100))
+        channels = request.args.getlist("channel") or None
+        limit = int(request.args.get("limit", 100))
 
         result = service.get_conversation_thread(
-            client_id=client_id,
-            include_channels=channels,
-            limit=limit
+            client_id=client_id, include_channels=channels, limit=limit
         )
 
-        return jsonify({
-            'success': True,
-            **result
-        })
+        return jsonify({"success": True, **result})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/inbox/search", methods=["GET"])
@@ -42262,26 +43262,25 @@ def api_inbox_search():
 
     service = get_unified_inbox_service()
     try:
-        query = request.args.get('q', '')
-        client_id = request.args.get('client_id', type=int)
-        channels = request.args.getlist('channel') or None
-        limit = int(request.args.get('limit', 50))
+        query = request.args.get("q", "")
+        client_id = request.args.get("client_id", type=int)
+        channels = request.args.getlist("channel") or None
+        limit = int(request.args.get("limit", 50))
 
         messages = service.search_messages(
-            query=query,
-            client_id=client_id,
-            channels=channels,
-            limit=limit
+            query=query, client_id=client_id, channels=channels, limit=limit
         )
 
-        return jsonify({
-            'success': True,
-            'messages': messages,
-            'total': len(messages),
-            'query': query
-        })
+        return jsonify(
+            {
+                "success": True,
+                "messages": messages,
+                "total": len(messages),
+                "query": query,
+            }
+        )
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/inbox/unread", methods=["GET"])
@@ -42292,20 +43291,16 @@ def api_inbox_unread():
 
     service = get_unified_inbox_service()
     try:
-        staff_id = session.get('staff_id')
-        client_id = request.args.get('client_id', type=int)
+        staff_id = session.get("staff_id")
+        client_id = request.args.get("client_id", type=int)
 
         counts = service.get_unread_counts(
-            client_id=client_id,
-            staff_id=staff_id if not client_id else None
+            client_id=client_id, staff_id=staff_id if not client_id else None
         )
 
-        return jsonify({
-            'success': True,
-            'counts': counts
-        })
+        return jsonify({"success": True, "counts": counts})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/inbox/stats", methods=["GET"])
@@ -42316,20 +43311,14 @@ def api_inbox_stats():
 
     service = get_unified_inbox_service()
     try:
-        staff_id = session.get('staff_id')
-        days = int(request.args.get('days', 7))
+        staff_id = session.get("staff_id")
+        days = int(request.args.get("days", 7))
 
-        stats = service.get_dashboard_stats(
-            staff_id=staff_id,
-            days=days
-        )
+        stats = service.get_dashboard_stats(staff_id=staff_id, days=days)
 
-        return jsonify({
-            'success': True,
-            'stats': stats
-        })
+        return jsonify({"success": True, "stats": stats})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/inbox/<int:message_id>/read", methods=["PUT"])
@@ -42340,20 +43329,16 @@ def api_inbox_mark_read(message_id):
 
     service = get_unified_inbox_service()
     try:
-        staff_id = session.get('staff_id')
-        channel = request.json.get('channel', 'portal')
+        staff_id = session.get("staff_id")
+        channel = request.json.get("channel", "portal")
 
         success = service.mark_read(
-            channel=channel,
-            message_id=message_id,
-            read_by_staff_id=staff_id
+            channel=channel, message_id=message_id, read_by_staff_id=staff_id
         )
 
-        return jsonify({
-            'success': success
-        })
+        return jsonify({"success": success})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/inbox/client/<int:client_id>/read-all", methods=["PUT"])
@@ -42364,21 +43349,16 @@ def api_inbox_mark_all_read(client_id):
 
     service = get_unified_inbox_service()
     try:
-        staff_id = session.get('staff_id')
-        channel = request.json.get('channel') if request.json else None
+        staff_id = session.get("staff_id")
+        channel = request.json.get("channel") if request.json else None
 
         count = service.mark_client_messages_read(
-            client_id=client_id,
-            channel=channel,
-            read_by_staff_id=staff_id
+            client_id=client_id, channel=channel, read_by_staff_id=staff_id
         )
 
-        return jsonify({
-            'success': True,
-            'marked_read': count
-        })
+        return jsonify({"success": True, "marked_read": count})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/inbox/reply", methods=["POST"])
@@ -42389,30 +43369,30 @@ def api_inbox_reply():
 
     service = get_unified_inbox_service()
     try:
-        staff_id = session.get('staff_id')
+        staff_id = session.get("staff_id")
         data = request.json
 
-        client_id = data.get('client_id')
-        channel = data.get('channel', 'portal')
-        content = data.get('content', '')
-        subject = data.get('subject')
+        client_id = data.get("client_id")
+        channel = data.get("channel", "portal")
+        content = data.get("content", "")
+        subject = data.get("subject")
 
         if not client_id:
-            return jsonify({'success': False, 'error': 'client_id is required'}), 400
+            return jsonify({"success": False, "error": "client_id is required"}), 400
         if not content:
-            return jsonify({'success': False, 'error': 'content is required'}), 400
+            return jsonify({"success": False, "error": "content is required"}), 400
 
         result = service.send_reply(
             client_id=client_id,
             channel=channel,
             content=content,
             staff_id=staff_id,
-            subject=subject
+            subject=subject,
         )
 
         return jsonify(result)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 # END UNIFIED INBOX API
@@ -42423,31 +43403,34 @@ def api_inbox_reply():
 # CALL LOGGING API (P34)
 # ===========================================================================
 
+
 @app.route("/api/call-logs", methods=["GET"])
 @require_staff()
 def api_get_call_logs():
     """Get call logs with filtering"""
     from services.call_log_service import get_call_log_service
+
     db = get_db()
     try:
         service = get_call_log_service(db)
 
         # Parse query parameters
-        client_id = request.args.get('client_id', type=int)
-        staff_id = request.args.get('staff_id', type=int)
-        direction = request.args.get('direction')
-        status = request.args.get('status')
-        outcome = request.args.get('outcome')
-        follow_up = request.args.get('follow_up_required')
-        follow_up_required = follow_up.lower() == 'true' if follow_up else None
-        date_from = request.args.get('date_from')
-        date_to = request.args.get('date_to')
-        search = request.args.get('search')
-        limit = request.args.get('limit', 50, type=int)
-        offset = request.args.get('offset', 0, type=int)
+        client_id = request.args.get("client_id", type=int)
+        staff_id = request.args.get("staff_id", type=int)
+        direction = request.args.get("direction")
+        status = request.args.get("status")
+        outcome = request.args.get("outcome")
+        follow_up = request.args.get("follow_up_required")
+        follow_up_required = follow_up.lower() == "true" if follow_up else None
+        date_from = request.args.get("date_from")
+        date_to = request.args.get("date_to")
+        search = request.args.get("search")
+        limit = request.args.get("limit", 50, type=int)
+        offset = request.args.get("offset", 0, type=int)
 
         # Parse dates
         from datetime import date as date_type
+
         date_from_parsed = date_type.fromisoformat(date_from) if date_from else None
         date_to_parsed = date_type.fromisoformat(date_to) if date_to else None
 
@@ -42462,7 +43445,7 @@ def api_get_call_logs():
             date_to=date_to_parsed,
             search=search,
             limit=limit,
-            offset=offset
+            offset=offset,
         )
 
         return jsonify({"success": True, **result})
@@ -42477,44 +43460,58 @@ def api_get_call_logs():
 def api_create_call_log():
     """Create a new call log"""
     from services.call_log_service import get_call_log_service
+
     db = get_db()
     try:
         service = get_call_log_service(db)
         data = request.json
 
         # Get staff ID from session
-        staff_id = data.get('staff_id') or session.get('staff_id')
+        staff_id = data.get("staff_id") or session.get("staff_id")
         if not staff_id:
             return jsonify({"success": False, "error": "Staff ID required"}), 400
 
         # Parse datetime
-        call_started_at = datetime.fromisoformat(data.get('call_started_at')) if data.get('call_started_at') else datetime.now()
-        call_ended_at = datetime.fromisoformat(data.get('call_ended_at')) if data.get('call_ended_at') else None
+        call_started_at = (
+            datetime.fromisoformat(data.get("call_started_at"))
+            if data.get("call_started_at")
+            else datetime.now()
+        )
+        call_ended_at = (
+            datetime.fromisoformat(data.get("call_ended_at"))
+            if data.get("call_ended_at")
+            else None
+        )
 
         # Parse follow-up date
         from datetime import date as date_type
-        follow_up_date = date_type.fromisoformat(data.get('follow_up_date')) if data.get('follow_up_date') else None
+
+        follow_up_date = (
+            date_type.fromisoformat(data.get("follow_up_date"))
+            if data.get("follow_up_date")
+            else None
+        )
 
         result = service.create_call_log(
             staff_id=staff_id,
-            direction=data.get('direction', 'outbound'),
+            direction=data.get("direction", "outbound"),
             call_started_at=call_started_at,
-            client_id=data.get('client_id'),
-            phone_number=data.get('phone_number'),
+            client_id=data.get("client_id"),
+            phone_number=data.get("phone_number"),
             call_ended_at=call_ended_at,
-            duration_seconds=data.get('duration_seconds'),
-            status=data.get('status', 'completed'),
-            outcome=data.get('outcome'),
-            subject=data.get('subject'),
-            notes=data.get('notes'),
-            follow_up_required=data.get('follow_up_required', False),
+            duration_seconds=data.get("duration_seconds"),
+            status=data.get("status", "completed"),
+            outcome=data.get("outcome"),
+            subject=data.get("subject"),
+            notes=data.get("notes"),
+            follow_up_required=data.get("follow_up_required", False),
             follow_up_date=follow_up_date,
-            follow_up_notes=data.get('follow_up_notes'),
-            recording_url=data.get('recording_url'),
-            recording_duration=data.get('recording_duration')
+            follow_up_notes=data.get("follow_up_notes"),
+            recording_url=data.get("recording_url"),
+            recording_duration=data.get("recording_duration"),
         )
 
-        if result.get('success'):
+        if result.get("success"):
             return jsonify(result)
         return jsonify(result), 400
     except Exception as e:
@@ -42528,6 +43525,7 @@ def api_create_call_log():
 def api_get_call_log(call_log_id):
     """Get a single call log"""
     from services.call_log_service import get_call_log_service
+
     db = get_db()
     try:
         service = get_call_log_service(db)
@@ -42548,23 +43546,25 @@ def api_get_call_log(call_log_id):
 def api_update_call_log(call_log_id):
     """Update a call log"""
     from services.call_log_service import get_call_log_service
+
     db = get_db()
     try:
         service = get_call_log_service(db)
         data = request.json
 
         # Parse datetime fields if present
-        if data.get('call_ended_at'):
-            data['call_ended_at'] = datetime.fromisoformat(data['call_ended_at'])
+        if data.get("call_ended_at"):
+            data["call_ended_at"] = datetime.fromisoformat(data["call_ended_at"])
 
         # Parse follow-up date if present
-        if data.get('follow_up_date'):
+        if data.get("follow_up_date"):
             from datetime import date as date_type
-            data['follow_up_date'] = date_type.fromisoformat(data['follow_up_date'])
+
+            data["follow_up_date"] = date_type.fromisoformat(data["follow_up_date"])
 
         result = service.update_call_log(call_log_id, **data)
 
-        if result.get('success'):
+        if result.get("success"):
             return jsonify(result)
         return jsonify(result), 400
     except Exception as e:
@@ -42578,12 +43578,13 @@ def api_update_call_log(call_log_id):
 def api_delete_call_log(call_log_id):
     """Delete a call log"""
     from services.call_log_service import get_call_log_service
+
     db = get_db()
     try:
         service = get_call_log_service(db)
         result = service.delete_call_log(call_log_id)
 
-        if result.get('success'):
+        if result.get("success"):
             return jsonify(result)
         return jsonify(result), 404
     except Exception as e:
@@ -42597,12 +43598,13 @@ def api_delete_call_log(call_log_id):
 def api_complete_call_follow_up(call_log_id):
     """Mark a call follow-up as complete"""
     from services.call_log_service import get_call_log_service
+
     db = get_db()
     try:
         service = get_call_log_service(db)
         result = service.mark_follow_up_complete(call_log_id)
 
-        if result.get('success'):
+        if result.get("success"):
             return jsonify(result)
         return jsonify(result), 404
     except Exception as e:
@@ -42616,23 +43618,21 @@ def api_complete_call_follow_up(call_log_id):
 def api_get_pending_follow_ups():
     """Get all pending follow-ups"""
     from services.call_log_service import get_call_log_service
+
     db = get_db()
     try:
         service = get_call_log_service(db)
 
-        staff_id = request.args.get('staff_id', type=int)
-        include_overdue = request.args.get('include_overdue', 'true').lower() == 'true'
+        staff_id = request.args.get("staff_id", type=int)
+        include_overdue = request.args.get("include_overdue", "true").lower() == "true"
 
         follow_ups = service.get_pending_follow_ups(
-            staff_id=staff_id,
-            include_overdue=include_overdue
+            staff_id=staff_id, include_overdue=include_overdue
         )
 
-        return jsonify({
-            "success": True,
-            "follow_ups": follow_ups,
-            "total": len(follow_ups)
-        })
+        return jsonify(
+            {"success": True, "follow_ups": follow_ups, "total": len(follow_ups)}
+        )
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
@@ -42644,20 +43644,21 @@ def api_get_pending_follow_ups():
 def api_get_call_statistics():
     """Get call statistics"""
     from services.call_log_service import get_call_log_service
+
     db = get_db()
     try:
         service = get_call_log_service(db)
 
-        date_from = request.args.get('date_from')
-        date_to = request.args.get('date_to')
+        date_from = request.args.get("date_from")
+        date_to = request.args.get("date_to")
 
         from datetime import date as date_type
+
         date_from_parsed = date_type.fromisoformat(date_from) if date_from else None
         date_to_parsed = date_type.fromisoformat(date_to) if date_to else None
 
         stats = service.get_call_statistics(
-            date_from=date_from_parsed,
-            date_to=date_to_parsed
+            date_from=date_from_parsed, date_to=date_to_parsed
         )
 
         return jsonify({"success": True, **stats})
@@ -42672,21 +43673,21 @@ def api_get_call_statistics():
 def api_get_staff_call_activity(staff_id):
     """Get call activity for a specific staff member"""
     from services.call_log_service import get_call_log_service
+
     db = get_db()
     try:
         service = get_call_log_service(db)
 
-        date_from = request.args.get('date_from')
-        date_to = request.args.get('date_to')
+        date_from = request.args.get("date_from")
+        date_to = request.args.get("date_to")
 
         from datetime import date as date_type
+
         date_from_parsed = date_type.fromisoformat(date_from) if date_from else None
         date_to_parsed = date_type.fromisoformat(date_to) if date_to else None
 
         activity = service.get_staff_call_activity(
-            staff_id=staff_id,
-            date_from=date_from_parsed,
-            date_to=date_to_parsed
+            staff_id=staff_id, date_from=date_from_parsed, date_to=date_to_parsed
         )
 
         return jsonify({"success": True, **activity})
@@ -42701,18 +43702,17 @@ def api_get_staff_call_activity(staff_id):
 def api_get_client_call_history(client_id):
     """Get call history for a specific client"""
     from services.call_log_service import get_call_log_service
+
     db = get_db()
     try:
         service = get_call_log_service(db)
-        limit = request.args.get('limit', 20, type=int)
+        limit = request.args.get("limit", 20, type=int)
 
         call_logs = service.get_client_call_history(client_id, limit=limit)
 
-        return jsonify({
-            "success": True,
-            "call_logs": call_logs,
-            "total": len(call_logs)
-        })
+        return jsonify(
+            {"success": True, "call_logs": call_logs, "total": len(call_logs)}
+        )
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
@@ -42725,12 +43725,14 @@ def api_get_call_log_options():
     """Get available options for call log dropdowns"""
     from services.call_log_service import CallLogService
 
-    return jsonify({
-        "success": True,
-        "directions": CallLogService.DIRECTIONS,
-        "statuses": CallLogService.STATUSES,
-        "outcomes": CallLogService.OUTCOMES
-    })
+    return jsonify(
+        {
+            "success": True,
+            "directions": CallLogService.DIRECTIONS,
+            "statuses": CallLogService.STATUSES,
+            "outcomes": CallLogService.OUTCOMES,
+        }
+    )
 
 
 @app.route("/dashboard/call-logs")
@@ -42777,7 +43779,7 @@ def api_get_staff_tasks():
             search=search,
             overdue_only=overdue_only,
             page=page,
-            per_page=per_page
+            per_page=per_page,
         )
 
         return jsonify({"success": True, **result})
@@ -42801,7 +43803,10 @@ def api_create_staff_task():
         # Get current staff ID
         staff = get_current_staff()
         if not staff:
-            return jsonify({"success": False, "error": "Staff authentication required"}), 401
+            return (
+                jsonify({"success": False, "error": "Staff authentication required"}),
+                401,
+            )
 
         task = TaskService.create_task(
             title=data.get("title"),
@@ -42814,7 +43819,7 @@ def api_create_staff_task():
             due_date=data.get("due_date"),
             is_recurring=data.get("is_recurring", False),
             recurrence_pattern=data.get("recurrence_pattern"),
-            tags=data.get("tags")
+            tags=data.get("tags"),
         )
 
         return jsonify({"success": True, "task": task})
@@ -42879,7 +43884,10 @@ def api_complete_staff_task(task_id):
     try:
         staff = get_current_staff()
         if not staff:
-            return jsonify({"success": False, "error": "Staff authentication required"}), 401
+            return (
+                jsonify({"success": False, "error": "Staff authentication required"}),
+                401,
+            )
 
         task = TaskService.complete_task(task_id, staff.id)
         if not task:
@@ -42915,7 +43923,10 @@ def api_assign_staff_task(task_id):
 
         assigned_to_id = data.get("assigned_to_id")
         if not assigned_to_id:
-            return jsonify({"success": False, "error": "assigned_to_id is required"}), 400
+            return (
+                jsonify({"success": False, "error": "assigned_to_id is required"}),
+                400,
+            )
 
         task = TaskService.assign_task(task_id, assigned_to_id)
         if not task:
@@ -42935,9 +43946,14 @@ def api_get_my_staff_tasks():
     try:
         staff = get_current_staff()
         if not staff:
-            return jsonify({"success": False, "error": "Staff authentication required"}), 401
+            return (
+                jsonify({"success": False, "error": "Staff authentication required"}),
+                401,
+            )
 
-        include_completed = request.args.get("include_completed", "false").lower() == "true"
+        include_completed = (
+            request.args.get("include_completed", "false").lower() == "true"
+        )
 
         result = TaskService.get_my_tasks(staff.id, include_completed=include_completed)
 
@@ -42981,11 +43997,17 @@ def api_add_staff_task_comment(task_id):
 
         content = data.get("content")
         if not content:
-            return jsonify({"success": False, "error": "Comment content is required"}), 400
+            return (
+                jsonify({"success": False, "error": "Comment content is required"}),
+                400,
+            )
 
         staff = get_current_staff()
         if not staff:
-            return jsonify({"success": False, "error": "Staff authentication required"}), 401
+            return (
+                jsonify({"success": False, "error": "Staff authentication required"}),
+                401,
+            )
 
         comment = TaskService.add_comment(task_id, staff.id, content)
         if not comment:
@@ -43063,13 +44085,15 @@ def api_get_client_staff_tasks(client_id):
 @require_staff()
 def api_get_staff_task_options():
     """Get dropdown options for staff task forms"""
-    return jsonify({
-        "success": True,
-        "categories": TaskService.CATEGORIES,
-        "priorities": TaskService.PRIORITIES,
-        "statuses": TaskService.STATUSES,
-        "recurrence_patterns": TaskService.RECURRENCE_PATTERNS
-    })
+    return jsonify(
+        {
+            "success": True,
+            "categories": TaskService.CATEGORIES,
+            "priorities": TaskService.PRIORITIES,
+            "statuses": TaskService.STATUSES,
+            "recurrence_patterns": TaskService.RECURRENCE_PATTERNS,
+        }
+    )
 
 
 @app.route("/dashboard/tasks")

@@ -81,13 +81,14 @@ def get_client_email_html(analysis_id):
 END OF ROUTES TO ADD
 """
 
-from datetime import datetime
 import os
+from datetime import datetime
 
 # WeasyPrint imports - lazy loaded to allow import of HTML generators without WeasyPrint
 try:
-    from weasyprint import HTML, CSS
+    from weasyprint import CSS, HTML
     from weasyprint.text.fonts import FontConfiguration
+
     WEASYPRINT_AVAILABLE = True
 except ImportError:
     HTML = None
@@ -120,8 +121,7 @@ def html_to_pdf(html_content, output_path, base_url=None):
     """
     if not WEASYPRINT_AVAILABLE:
         raise ImportError(
-            "WeasyPrint is not installed. "
-            "Install with: pip install weasyprint"
+            "WeasyPrint is not installed. " "Install with: pip install weasyprint"
         )
 
     # Ensure output directory exists
@@ -131,7 +131,8 @@ def html_to_pdf(html_content, output_path, base_url=None):
     font_config = FontConfiguration()
 
     # Add print-specific CSS to preserve colors and handle page breaks
-    print_css = CSS(string='''
+    print_css = CSS(
+        string="""
         @page {
             size: letter;
             margin: 0;
@@ -146,20 +147,20 @@ def html_to_pdf(html_content, output_path, base_url=None):
         .no-break {
             page-break-inside: avoid;
         }
-    ''', font_config=font_config)
+    """,
+        font_config=font_config,
+    )
 
     # Generate PDF
     html_obj = HTML(string=html_content, base_url=base_url)
-    html_obj.write_pdf(
-        output_path,
-        stylesheets=[print_css],
-        font_config=font_config
-    )
+    html_obj.write_pdf(output_path, stylesheets=[print_css], font_config=font_config)
 
     return output_path
 
 
-def generate_internal_analysis_html(analysis, violations, standing, damages, case_score, credit_scores=None):
+def generate_internal_analysis_html(
+    analysis, violations, standing, damages, case_score, credit_scores=None
+):
     """
     Generate Apple-style Internal Analysis HTML from database objects.
 
@@ -180,7 +181,9 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
 
     # Count willful violations
     willful_count = sum(1 for v in violations if v.is_willful)
-    willfulness_percentage = int((willful_count / violation_count * 100)) if violation_count > 0 else 0
+    willfulness_percentage = (
+        int((willful_count / violation_count * 100)) if violation_count > 0 else 0
+    )
 
     # Get unique defendants
     defendants = set()
@@ -199,13 +202,18 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     # Group violations by category
     violation_categories = {}
     for v in violations:
-        category = v.violation_type or 'Unknown'
+        category = v.violation_type or "Unknown"
         if category not in violation_categories:
             violation_categories[category] = []
         violation_categories[category].append(v)
 
     # Find impossible contradictions
-    contradiction_violations = [v for v in violations if 'contradiction' in (v.violation_type or '').lower() or 'impossible' in (v.description or '').lower()]
+    contradiction_violations = [
+        v
+        for v in violations
+        if "contradiction" in (v.violation_type or "").lower()
+        or "impossible" in (v.description or "").lower()
+    ]
 
     # Standing components
     has_dissemination = standing.has_dissemination if standing else False
@@ -218,9 +226,9 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     willfulness_score = case_score.willfulness_score if case_score else 0
 
     # Credit scores
-    tu_score = credit_scores.get('tu') if credit_scores else 'N/A'
-    ex_score = credit_scores.get('ex') if credit_scores else 'N/A'
-    eq_score = credit_scores.get('eq') if credit_scores else 'N/A'
+    tu_score = credit_scores.get("tu") if credit_scores else "N/A"
+    ex_score = credit_scores.get("ex") if credit_scores else "N/A"
+    eq_score = credit_scores.get("eq") if credit_scores else "N/A"
 
     # Pre-compute willfulness analysis text to avoid f-string quote issues
     if willfulness_percentage > 50:
@@ -523,8 +531,10 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     # Add violation rows
     for category, category_violations in violation_categories.items():
         willful_in_category = sum(1 for v in category_violations if v.is_willful)
-        fcra_sections = set(v.fcra_section for v in category_violations if v.fcra_section)
-        fcra_section = ', '.join(fcra_sections) if fcra_sections else 'N/A'
+        fcra_sections = set(
+            v.fcra_section for v in category_violations if v.fcra_section
+        )
+        fcra_section = ", ".join(fcra_sections) if fcra_sections else "N/A"
 
         html += f"""
         <tr>
@@ -728,7 +738,9 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     return html
 
 
-def generate_client_email_html(analysis, violations, standing, damages, case_score, credit_scores=None):
+def generate_client_email_html(
+    analysis, violations, standing, damages, case_score, credit_scores=None
+):
     """
     Generate Apple-style Client Email HTML from database objects.
     Email-optimized (not print-friendly) - single page summary.
@@ -748,7 +760,9 @@ def generate_client_email_html(analysis, violations, standing, damages, case_sco
     case_number = f"BAG-FCRA-{analysis.id:04d}"
     violation_count = len(violations)
     willful_count = sum(1 for v in violations if v.is_willful)
-    willfulness_pct = int((willful_count / violation_count * 100)) if violation_count > 0 else 0
+    willfulness_pct = (
+        int((willful_count / violation_count * 100)) if violation_count > 0 else 0
+    )
 
     # Get unique accounts and defendants
     accounts = set(v.account_name for v in violations if v.account_name)
@@ -772,7 +786,10 @@ def generate_client_email_html(analysis, violations, standing, damages, case_sco
     # Find most compelling violation
     compelling_violation = None
     for v in violations:
-        if 'contradiction' in (v.violation_type or '').lower() or 'impossible' in (v.description or '').lower():
+        if (
+            "contradiction" in (v.violation_type or "").lower()
+            or "impossible" in (v.description or "").lower()
+        ):
             compelling_violation = v
             break
     if not compelling_violation and violations:
@@ -891,7 +908,9 @@ def generate_client_email_html(analysis, violations, standing, damages, case_sco
     return html
 
 
-def generate_client_report_html(analysis, violations, standing, damages, case_score, credit_scores=None):
+def generate_client_report_html(
+    analysis, violations, standing, damages, case_score, credit_scores=None
+):
     """
     Generate 7-page Apple-style client report HTML.
     Print-optimized PDF-ready document for client delivery.
@@ -918,10 +937,12 @@ def generate_client_report_html(analysis, violations, standing, damages, case_sc
     """
     # Calculate metrics
     case_number = f"BAG-FCRA-2025-{analysis.id:04d}"
-    date_generated = datetime.now().strftime('%B %d, %Y')
+    date_generated = datetime.now().strftime("%B %d, %Y")
     violation_count = len(violations)
     willful_count = sum(1 for v in violations if v.is_willful)
-    willfulness_pct = int((willful_count / violation_count * 100)) if violation_count > 0 else 0
+    willfulness_pct = (
+        int((willful_count / violation_count * 100)) if violation_count > 0 else 0
+    )
 
     # Get unique defendants and accounts
     defendants = set()
@@ -931,11 +952,11 @@ def generate_client_report_html(analysis, violations, standing, damages, case_sc
             defendants.add(v.bureau)
         if v.account_name:
             if v.account_name not in accounts:
-                accounts[v.account_name] = {'violations': [], 'bureaus': {}}
-            accounts[v.account_name]['violations'].append(v)
+                accounts[v.account_name] = {"violations": [], "bureaus": {}}
+            accounts[v.account_name]["violations"].append(v)
             if v.bureau:
-                accounts[v.account_name]['bureaus'][v.bureau] = {
-                    'status': v.description or 'Unknown'
+                accounts[v.account_name]["bureaus"][v.bureau] = {
+                    "status": v.description or "Unknown"
                 }
 
     # Standing and scores
@@ -1179,12 +1200,16 @@ def generate_client_report_html(analysis, violations, standing, damages, case_sc
     # Group violations by type
     violation_types = {}
     for v in violations:
-        vtype = v.violation_type or 'Unknown'
+        vtype = v.violation_type or "Unknown"
         if vtype not in violation_types:
-            violation_types[vtype] = {'count': 0, 'willful': 0, 'section': v.fcra_section or 'N/A'}
-        violation_types[vtype]['count'] += 1
+            violation_types[vtype] = {
+                "count": 0,
+                "willful": 0,
+                "section": v.fcra_section or "N/A",
+            }
+        violation_types[vtype]["count"] += 1
         if v.is_willful:
-            violation_types[vtype]['willful'] += 1
+            violation_types[vtype]["willful"] += 1
 
     for vtype, data in violation_types.items():
         html += f"""
@@ -1218,8 +1243,8 @@ def generate_client_report_html(analysis, violations, standing, damages, case_sc
                 <h3>{account_name}</h3>
                 <div class="bureau-status">
 """
-        for bureau in ['Equifax', 'Experian', 'TransUnion']:
-            status = account_data['bureaus'].get(bureau, {}).get('status', 'N/A')
+        for bureau in ["Equifax", "Experian", "TransUnion"]:
+            status = account_data["bureaus"].get(bureau, {}).get("status", "N/A")
             html += f"                    <div><strong>{bureau}:</strong> {status[:30]}</div>\n"
 
         html += """
@@ -1312,6 +1337,10 @@ def generate_client_report_html(analysis, violations, standing, damages, case_sc
         </div>
     </div>
 </body>
-</html>""".format(round_number=analysis.dispute_round, case_number=case_number, date_generated=date_generated)
+</html>""".format(
+        round_number=analysis.dispute_round,
+        case_number=case_number,
+        date_generated=date_generated,
+    )
 
     return html

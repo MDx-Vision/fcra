@@ -16,7 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar
 import bleach  # type: ignore[import-untyped]
 from flask import jsonify, request
 
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 # Allowed HTML tags for rich text fields (very restrictive)
 ALLOWED_TAGS = ["b", "i", "u", "strong", "em", "p", "br", "ul", "ol", "li"]
@@ -68,7 +68,9 @@ class ValidationError(Exception):
         super().__init__(f"{field}: {message}")
 
 
-def sanitize_string(value: Any, max_length: Optional[int] = None, allow_html: bool = False) -> Optional[str]:
+def sanitize_string(
+    value: Any, max_length: Optional[int] = None, allow_html: bool = False
+) -> Optional[str]:
     """
     Sanitize a string value.
 
@@ -256,7 +258,10 @@ def sanitize_dict(data: Any, rules: Optional[Dict[str, str]] = None) -> Any:
     return sanitized
 
 
-def validate_request_data(required_fields: Optional[List[str]] = None, field_rules: Optional[Dict[str, str]] = None) -> Callable[[F], F]:
+def validate_request_data(
+    required_fields: Optional[List[str]] = None,
+    field_rules: Optional[Dict[str, str]] = None,
+) -> Callable[[F], F]:
     """
     Decorator to validate and sanitize request JSON data.
 

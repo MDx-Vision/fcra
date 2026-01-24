@@ -1,8 +1,9 @@
-import jwt
 import datetime
 from functools import wraps
 from typing import Optional
-from flask import request, jsonify
+
+import jwt
+from flask import jsonify, request
 
 from services.config import config
 
@@ -24,7 +25,7 @@ def create_token(user_id: Optional[int] = None, scopes: Optional[list] = None):
     payload = {
         "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7),
         "iat": datetime.datetime.utcnow(),
-        "scope": "fcra_access"
+        "scope": "fcra_access",
     }
     if user_id:
         payload["sub"] = user_id
@@ -36,6 +37,7 @@ def create_token(user_id: Optional[int] = None, scopes: Optional[list] = None):
 
 def require_jwt(f):
     """Decorator to protect Flask routes with JWT authentication"""
+
     @wraps(f)
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get("Authorization")
@@ -52,4 +54,5 @@ def require_jwt(f):
             return jsonify({"error": f"Invalid token: {str(e)}"}), 401
 
         return f(*args, **kwargs)
+
     return wrapper

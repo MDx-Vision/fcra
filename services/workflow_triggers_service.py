@@ -802,7 +802,10 @@ class WorkflowTriggersService:
 
             for action in trigger.actions:
                 action_result = WorkflowTriggersService._execute_single_action(
-                    session, action, cast(int, client_id) if client_id else 0, event_data
+                    session,
+                    action,
+                    cast(int, client_id) if client_id else 0,
+                    event_data,
                 )
                 actions_executed.append(action_result)
                 if not action_result.get("success"):
@@ -962,8 +965,12 @@ class WorkflowTriggersService:
                 return {"success": False, "error": "Client phone not found"}
 
             # Check SMS opt-in before sending
-            if not getattr(client, 'sms_opt_in', False):
-                return {"success": False, "error": "Client has not opted in for SMS", "skipped": True}
+            if not getattr(client, "sms_opt_in", False):
+                return {
+                    "success": False,
+                    "error": "Client has not opted in for SMS",
+                    "skipped": True,
+                }
 
             from services.task_queue_service import TaskQueueService
 
@@ -1122,14 +1129,23 @@ class WorkflowTriggersService:
     ) -> Dict[str, Any]:
         """Send push notification action"""
         try:
-            from services.push_notification_service import send_to_client, is_push_configured
+            from services.push_notification_service import (
+                is_push_configured,
+                send_to_client,
+            )
 
             if not is_push_configured():
-                return {"success": False, "error": "Push notifications not configured", "skipped": True}
+                return {
+                    "success": False,
+                    "error": "Push notifications not configured",
+                    "skipped": True,
+                }
 
             notification_type = params.get("notification_type", "case_update")
             title = params.get("title")
-            body = params.get("body", "You have a new notification from Brightpath Ascend")
+            body = params.get(
+                "body", "You have a new notification from Brightpath Ascend"
+            )
             url = params.get("url")
 
             result = send_to_client(
@@ -1174,7 +1190,7 @@ class WorkflowTriggersService:
                     recording_id=int(recording_id),
                     client_id=client_id,
                     trigger_type="workflow",
-                    trigger_event=event_data.get("event_type", "workflow_trigger")
+                    trigger_event=event_data.get("event_type", "workflow_trigger"),
                 )
 
                 return {
@@ -1428,5 +1444,5 @@ def handle_execute_workflow(payload: Dict[str, Any]) -> Dict[str, Any]:
     return WorkflowTriggersService.execute_actions(
         cast(int, trigger_id) if trigger_id else 0,
         cast(str, event_type) if event_type else "",
-        event_data
+        event_data,
     )

@@ -97,7 +97,9 @@ class DocumentScanner:
         except Exception as e:
             print(f"Warning: Anthropic client not initialized: {e}")
 
-    def process_uploaded_image(self, image_data: bytes, filename: str) -> Dict[str, Any]:
+    def process_uploaded_image(
+        self, image_data: bytes, filename: str
+    ) -> Dict[str, Any]:
         """
         Process a single uploaded image - validate, optimize, and save.
 
@@ -529,7 +531,9 @@ scan_sessions: Dict[str, ScanSession] = {}
 
 
 def create_scan_session(
-    client_id: Optional[int] = None, client_name: Optional[str] = None, document_type: str = "credit_report"
+    client_id: Optional[int] = None,
+    client_name: Optional[str] = None,
+    document_type: str = "credit_report",
 ) -> Dict[str, Any]:
     """Create a new scanning session"""
     session = ScanSession(client_id, client_name, document_type)

@@ -296,7 +296,9 @@ class FranchiseService:
 
         all_children = list(direct_children)
         for child in direct_children:
-            all_children.extend(self.get_child_organizations(cast(int, child.id), recursive=True))
+            all_children.extend(
+                self.get_child_organizations(cast(int, child.id), recursive=True)
+            )
 
         return all_children
 
@@ -1080,7 +1082,9 @@ class FranchiseService:
                     cast(int, parent_membership.organization_id), recursive=True
                 )
                 if any(child.id == org_id for child in children):
-                    role_config = FRANCHISE_MEMBER_ROLES.get(cast(str, parent_membership.role), {})
+                    role_config = FRANCHISE_MEMBER_ROLES.get(
+                        cast(str, parent_membership.role), {}
+                    )
                     return {
                         "has_access": True,
                         "is_direct_member": False,

@@ -24,32 +24,26 @@ Usage:
 
 import time
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
 from functools import wraps
+from typing import Any, Dict, List, Optional
 
-from database import get_db, AIUsageLog
-from sqlalchemy import func, extract
+from sqlalchemy import extract, func
 
+from database import AIUsageLog, get_db
 
 # Claude pricing per 1M tokens (in dollars)
 PRICING = {
     "claude-sonnet-4-20250514": {
-        "input": 3.00,   # $3 per 1M input tokens
-        "output": 15.00  # $15 per 1M output tokens
+        "input": 3.00,  # $3 per 1M input tokens
+        "output": 15.00,  # $15 per 1M output tokens
     },
     "claude-opus-4-5-20251101": {
         "input": 15.00,  # $15 per 1M input tokens
-        "output": 75.00  # $75 per 1M output tokens
+        "output": 75.00,  # $75 per 1M output tokens
     },
-    "claude-3-5-sonnet-20241022": {
-        "input": 3.00,
-        "output": 15.00
-    },
+    "claude-3-5-sonnet-20241022": {"input": 3.00, "output": 15.00},
     # Default fallback
-    "default": {
-        "input": 3.00,
-        "output": 15.00
-    }
+    "default": {"input": 3.00, "output": 15.00},
 }
 
 
@@ -82,7 +76,7 @@ def log_ai_usage(
     dispute_round: int = None,
     letter_type: str = None,
     success: bool = True,
-    error_message: str = None
+    error_message: str = None,
 ) -> Optional[AIUsageLog]:
     """
     Log an AI API call with token usage and cost.
@@ -126,7 +120,7 @@ def log_ai_usage(
             dispute_round=dispute_round,
             letter_type=letter_type,
             success=success,
-            error_message=error_message
+            error_message=error_message,
         )
 
         db.add(log)
@@ -143,10 +137,7 @@ def log_ai_usage(
         db.close()
 
 
-def get_usage_summary(
-    days: int = 30,
-    client_id: int = None
-) -> Dict[str, Any]:
+def get_usage_summary(days: int = 30, client_id: int = None) -> Dict[str, Any]:
     """
     Get usage summary for the specified period.
 
@@ -181,7 +172,7 @@ def get_usage_summary(
                     "calls": 0,
                     "input_tokens": 0,
                     "output_tokens": 0,
-                    "cost_cents": 0
+                    "cost_cents": 0,
                 }
             by_service[log.service]["calls"] += 1
             by_service[log.service]["input_tokens"] += log.input_tokens or 0
@@ -208,9 +199,11 @@ def get_usage_summary(
             "total_tokens": total_input + total_output,
             "total_cost_cents": total_cost,
             "total_cost_dollars": total_cost / 100,
-            "avg_cost_per_call_cents": total_cost / total_calls if total_calls > 0 else 0,
+            "avg_cost_per_call_cents": (
+                total_cost / total_calls if total_calls > 0 else 0
+            ),
             "by_service": by_service,
-            "by_day": dict(sorted(by_day.items()))
+            "by_day": dict(sorted(by_day.items())),
         }
 
     except Exception as e:
@@ -231,35 +224,38 @@ def get_usage_by_client(days: int = 30, limit: int = 20) -> List[Dict[str, Any]]
     try:
         since = datetime.utcnow() - timedelta(days=days)
 
-        results = db.query(
-            AIUsageLog.client_id,
-            func.count(AIUsageLog.id).label('total_calls'),
-            func.sum(AIUsageLog.input_tokens).label('total_input'),
-            func.sum(AIUsageLog.output_tokens).label('total_output'),
-            func.sum(AIUsageLog.total_cost_cents).label('total_cost')
-        ).filter(
-            AIUsageLog.created_at >= since,
-            AIUsageLog.client_id.isnot(None)
-        ).group_by(
-            AIUsageLog.client_id
-        ).order_by(
-            func.sum(AIUsageLog.total_cost_cents).desc()
-        ).limit(limit).all()
+        results = (
+            db.query(
+                AIUsageLog.client_id,
+                func.count(AIUsageLog.id).label("total_calls"),
+                func.sum(AIUsageLog.input_tokens).label("total_input"),
+                func.sum(AIUsageLog.output_tokens).label("total_output"),
+                func.sum(AIUsageLog.total_cost_cents).label("total_cost"),
+            )
+            .filter(AIUsageLog.created_at >= since, AIUsageLog.client_id.isnot(None))
+            .group_by(AIUsageLog.client_id)
+            .order_by(func.sum(AIUsageLog.total_cost_cents).desc())
+            .limit(limit)
+            .all()
+        )
 
         # Get client names
         from database import Client
+
         clients = []
         for r in results:
             client = db.query(Client).filter_by(id=r.client_id).first()
-            clients.append({
-                "client_id": r.client_id,
-                "client_name": client.name if client else "Unknown",
-                "total_calls": r.total_calls,
-                "total_input_tokens": r.total_input or 0,
-                "total_output_tokens": r.total_output or 0,
-                "total_cost_cents": r.total_cost or 0,
-                "total_cost_dollars": (r.total_cost or 0) / 100
-            })
+            clients.append(
+                {
+                    "client_id": r.client_id,
+                    "client_name": client.name if client else "Unknown",
+                    "total_calls": r.total_calls,
+                    "total_input_tokens": r.total_input or 0,
+                    "total_output_tokens": r.total_output or 0,
+                    "total_cost_cents": r.total_cost or 0,
+                    "total_cost_dollars": (r.total_cost or 0) / 100,
+                }
+            )
 
         return clients
 
@@ -274,9 +270,12 @@ def get_recent_logs(limit: int = 50) -> List[Dict[str, Any]]:
     """Get recent AI usage logs."""
     db = get_db()
     try:
-        logs = db.query(AIUsageLog).order_by(
-            AIUsageLog.created_at.desc()
-        ).limit(limit).all()
+        logs = (
+            db.query(AIUsageLog)
+            .order_by(AIUsageLog.created_at.desc())
+            .limit(limit)
+            .all()
+        )
 
         return [log.to_dict() for log in logs]
 
@@ -311,10 +310,13 @@ def get_monthly_report(year: int = None, month: int = None) -> Dict[str, Any]:
         else:
             last_day = datetime(year, month + 1, 1)
 
-        logs = db.query(AIUsageLog).filter(
-            AIUsageLog.created_at >= first_day,
-            AIUsageLog.created_at < last_day
-        ).all()
+        logs = (
+            db.query(AIUsageLog)
+            .filter(
+                AIUsageLog.created_at >= first_day, AIUsageLog.created_at < last_day
+            )
+            .all()
+        )
 
         total_input = sum(log.input_tokens or 0 for log in logs)
         total_output = sum(log.output_tokens or 0 for log in logs)
@@ -338,7 +340,7 @@ def get_monthly_report(year: int = None, month: int = None) -> Dict[str, Any]:
             "total_output_tokens": total_output,
             "total_cost_cents": total_cost,
             "total_cost_dollars": total_cost / 100,
-            "by_operation": by_operation
+            "by_operation": by_operation,
         }
 
     except Exception as e:
@@ -362,6 +364,7 @@ def track_ai_usage(service: str, operation: str):
     Note: The decorated function should return the Anthropic response object
     or a dict with 'response' key containing the response object.
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -373,21 +376,21 @@ def track_ai_usage(service: str, operation: str):
 
                 # Extract response object
                 response = result
-                if isinstance(result, dict) and 'response' in result:
-                    response = result['response']
+                if isinstance(result, dict) and "response" in result:
+                    response = result["response"]
 
                 # Log usage if response has usage info
-                if hasattr(response, 'usage'):
+                if hasattr(response, "usage"):
                     log_ai_usage(
                         service=service,
                         operation=operation,
-                        model=getattr(response, 'model', 'unknown'),
+                        model=getattr(response, "model", "unknown"),
                         input_tokens=response.usage.input_tokens,
                         output_tokens=response.usage.output_tokens,
                         duration_ms=duration_ms,
-                        client_id=kwargs.get('client_id'),
-                        staff_id=kwargs.get('staff_id'),
-                        success=True
+                        client_id=kwargs.get("client_id"),
+                        staff_id=kwargs.get("staff_id"),
+                        success=True,
                     )
 
                 return result
@@ -401,12 +404,13 @@ def track_ai_usage(service: str, operation: str):
                     input_tokens=0,
                     output_tokens=0,
                     duration_ms=duration_ms,
-                    client_id=kwargs.get('client_id'),
-                    staff_id=kwargs.get('staff_id'),
+                    client_id=kwargs.get("client_id"),
+                    staff_id=kwargs.get("staff_id"),
                     success=False,
-                    error_message=str(e)
+                    error_message=str(e),
                 )
                 raise
 
         return wrapper
+
     return decorator

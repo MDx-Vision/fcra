@@ -484,7 +484,8 @@ def extract_accounts(text: str) -> List[Dict[str, Any]]:
 
             if creditor and len(creditor) >= 3:
                 if not any(
-                    str(a.get("name", "") or "").upper() == creditor.upper() for a in accounts
+                    str(a.get("name", "") or "").upper() == creditor.upper()
+                    for a in accounts
                 ):
                     accounts.append(
                         {
@@ -662,7 +663,8 @@ def extract_collections(text: str) -> List[Dict[str, Any]]:
                 }
 
                 if not any(
-                    str(c.get("agency", "") or "").upper() == agency.upper() for c in collections
+                    str(c.get("agency", "") or "").upper() == agency.upper()
+                    for c in collections
                 ):
                     collections.append(collection_data)
 

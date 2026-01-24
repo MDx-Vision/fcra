@@ -25,10 +25,10 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from database import (
+    ESIGN_AUDIT_ACTIONS,
     Client,
     CROAComplianceTracker,
     DocumentTemplate,
-    ESIGN_AUDIT_ACTIONS,
     ESignatureRequest,
     SessionLocal,
     SignatureAuditLog,
@@ -128,7 +128,7 @@ def _generate_certificate_number():
 
 def _compute_document_hash(content: str) -> str:
     """Compute SHA-256 hash of document content."""
-    return hashlib.sha256(content.encode('utf-8')).hexdigest()
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
 def _add_business_days(start_date: datetime, num_days: int) -> datetime:
@@ -184,6 +184,7 @@ def _log_audit_action(
 # SESSION MANAGEMENT
 # =============================================================================
 
+
 def initiate_signing_session(
     client_id: int,
     documents: List[Dict],
@@ -223,7 +224,9 @@ def initiate_signing_session(
         # Create session
         session_uuid = _generate_uuid()
         base_url = _get_base_url()
-        signing_link = f"{base_url}/esign/{session_uuid}" if base_url else f"/esign/{session_uuid}"
+        signing_link = (
+            f"{base_url}/esign/{session_uuid}" if base_url else f"/esign/{session_uuid}"
+        )
         expires_at = datetime.utcnow() + timedelta(days=SESSION_EXPIRY_DAYS)
 
         signing_session = SignatureSession(
@@ -277,7 +280,9 @@ def initiate_signing_session(
 
         db_session.commit()
 
-        logger.info(f"Created signing session {session_uuid} for client {client_id} with {len(documents)} documents")
+        logger.info(
+            f"Created signing session {session_uuid} for client {client_id} with {len(documents)} documents"
+        )
 
         return {
             "success": True,
@@ -316,7 +321,10 @@ def get_session_by_uuid(session_uuid: str) -> Dict[str, Any]:
             }
 
         # Check expiration
-        if signing_session.expires_at and signing_session.expires_at < datetime.utcnow():
+        if (
+            signing_session.expires_at
+            and signing_session.expires_at < datetime.utcnow()
+        ):
             return {
                 "success": False,
                 "error": "Session has expired",
@@ -326,17 +334,21 @@ def get_session_by_uuid(session_uuid: str) -> Dict[str, Any]:
         # Get documents
         documents = []
         for doc in signing_session.documents:
-            documents.append({
-                "document_uuid": doc.document_uuid,
-                "document_name": doc.document_name,
-                "document_type": doc.document_type,
-                "status": doc.status,
-                "is_croa_document": doc.is_croa_document,
-                "croa_signing_order": doc.croa_signing_order,
-            })
+            documents.append(
+                {
+                    "document_uuid": doc.document_uuid,
+                    "document_name": doc.document_name,
+                    "document_type": doc.document_type,
+                    "status": doc.status,
+                    "is_croa_document": doc.is_croa_document,
+                    "croa_signing_order": doc.croa_signing_order,
+                }
+            )
 
         # Sort CROA documents by order
-        documents.sort(key=lambda x: (not x["is_croa_document"], x["croa_signing_order"]))
+        documents.sort(
+            key=lambda x: (not x["is_croa_document"], x["croa_signing_order"])
+        )
 
         return {
             "success": True,
@@ -358,6 +370,7 @@ def get_session_by_uuid(session_uuid: str) -> Dict[str, Any]:
 # =============================================================================
 # ESIGN ACT CONSENT
 # =============================================================================
+
 
 def submit_esign_consent(
     session_uuid: str,
@@ -394,15 +407,20 @@ def submit_esign_consent(
         if not signing_session:
             return {"success": False, "error": "Session not found"}
 
-        if signing_session.expires_at and signing_session.expires_at < datetime.utcnow():
+        if (
+            signing_session.expires_at
+            and signing_session.expires_at < datetime.utcnow()
+        ):
             return {"success": False, "error": "Session has expired"}
 
         # All 3 acknowledgments required
-        if not all([
-            hardware_software_acknowledged,
-            paper_copy_right_acknowledged,
-            consent_withdrawal_acknowledged,
-        ]):
+        if not all(
+            [
+                hardware_software_acknowledged,
+                paper_copy_right_acknowledged,
+                consent_withdrawal_acknowledged,
+            ]
+        ):
             return {
                 "success": False,
                 "error": "All three acknowledgments are required",
@@ -458,6 +476,7 @@ def submit_esign_consent(
 # DOCUMENT REVIEW & SIGNING
 # =============================================================================
 
+
 def get_document_for_review(session_uuid: str, document_uuid: str) -> Dict[str, Any]:
     """Get a document for review before signing."""
     db_session = SessionLocal()
@@ -472,7 +491,10 @@ def get_document_for_review(session_uuid: str, document_uuid: str) -> Dict[str, 
             return {"success": False, "error": "Session not found"}
 
         if not signing_session.esign_consent_given:
-            return {"success": False, "error": "ESIGN consent required before reviewing documents"}
+            return {
+                "success": False,
+                "error": "ESIGN consent required before reviewing documents",
+            }
 
         document = (
             db_session.query(SignedDocument)
@@ -574,8 +596,12 @@ def record_document_review_progress(
             return {"success": False, "error": "Document not found"}
 
         # Update progress
-        document.scroll_percentage = max(document.scroll_percentage or 0, scroll_percentage)
-        document.review_duration_seconds = max(document.review_duration_seconds or 0, review_duration_seconds)
+        document.scroll_percentage = max(
+            document.scroll_percentage or 0, scroll_percentage
+        )
+        document.review_duration_seconds = max(
+            document.review_duration_seconds or 0, review_duration_seconds
+        )
 
         if scroll_percentage >= 95:
             document.scrolled_to_bottom = True
@@ -727,7 +753,9 @@ def sign_document(
 
         # Update document record
         document.signature_type = signature_type
-        document.signature_value = signature_value if signature_type == "typed" else typed_name
+        document.signature_value = (
+            signature_value if signature_type == "typed" else typed_name
+        )
         document.signature_image_path = signature_image_path
         document.intent_checkbox_checked = True
         document.intent_statement = INTENT_STATEMENT
@@ -873,7 +901,9 @@ def complete_signing_session(
             ip_address=ip_address,
             details={
                 "documents_signed": len(signing_session.documents),
-                "total_duration_seconds": int((now - signing_session.initiated_at).total_seconds()),
+                "total_duration_seconds": int(
+                    (now - signing_session.initiated_at).total_seconds()
+                ),
             },
         )
 
@@ -900,6 +930,7 @@ def complete_signing_session(
 # VERIFICATION & AUDIT
 # =============================================================================
 
+
 def verify_document_integrity(document_uuid: str) -> Dict[str, Any]:
     """Verify a signed document hasn't been tampered with."""
     db_session = SessionLocal()
@@ -924,7 +955,11 @@ def verify_document_integrity(document_uuid: str) -> Dict[str, Any]:
             "certificate_number": document.certificate_number,
             "integrity_valid": is_valid,
             "original_hash": document.document_hash_sha256,
-            "signature_timestamp": document.signature_timestamp.isoformat() if document.signature_timestamp else None,
+            "signature_timestamp": (
+                document.signature_timestamp.isoformat()
+                if document.signature_timestamp
+                else None
+            ),
             "signer_name": document.signer_name,
         }
 
@@ -973,6 +1008,7 @@ def get_session_audit_trail(session_uuid: str) -> Dict[str, Any]:
 # CROA COMPLIANCE
 # =============================================================================
 
+
 def get_croa_compliance_status(client_id: int) -> Dict[str, Any]:
     """Get CROA compliance status for a client."""
     db_session = SessionLocal()
@@ -1013,12 +1049,29 @@ def get_croa_compliance_status(client_id: int) -> Dict[str, Any]:
             "success": True,
             "has_tracker": True,
             "rights_disclosure_signed": tracker.rights_disclosure_signed,
-            "rights_disclosure_signed_at": tracker.rights_disclosure_signed_at.isoformat() if tracker.rights_disclosure_signed_at else None,
+            "rights_disclosure_signed_at": (
+                tracker.rights_disclosure_signed_at.isoformat()
+                if tracker.rights_disclosure_signed_at
+                else None
+            ),
             "contract_signed": tracker.contract_package_signed,
-            "contract_signed_at": tracker.contract_package_signed_at.isoformat() if tracker.contract_package_signed_at else None,
-            "cancellation_period_start": tracker.cancellation_period_start.isoformat() if tracker.cancellation_period_start else None,
-            "cancellation_period_end": tracker.cancellation_period_end.isoformat() if tracker.cancellation_period_end else None,
-            "cancellation_period_complete": tracker.cancellation_period_complete or cancellation_complete,
+            "contract_signed_at": (
+                tracker.contract_package_signed_at.isoformat()
+                if tracker.contract_package_signed_at
+                else None
+            ),
+            "cancellation_period_start": (
+                tracker.cancellation_period_start.isoformat()
+                if tracker.cancellation_period_start
+                else None
+            ),
+            "cancellation_period_end": (
+                tracker.cancellation_period_end.isoformat()
+                if tracker.cancellation_period_end
+                else None
+            ),
+            "cancellation_period_complete": tracker.cancellation_period_complete
+            or cancellation_complete,
             "remaining_cancellation_hours": round(remaining_hours, 1),
             "client_cancelled": tracker.client_cancelled,
             "cancellation_waived": tracker.cancellation_waived,
@@ -1129,6 +1182,7 @@ def waive_cancellation_period(
 # CLIENT HISTORY & MANAGEMENT
 # =============================================================================
 
+
 def get_client_signing_history(client_id: int) -> Dict[str, Any]:
     """Get all signing sessions and documents for a client."""
     db_session = SessionLocal()
@@ -1148,18 +1202,32 @@ def get_client_signing_history(client_id: int) -> Dict[str, Any]:
                     "document_name": doc.document_name,
                     "status": doc.status,
                     "certificate_number": doc.certificate_number,
-                    "signature_timestamp": doc.signature_timestamp.isoformat() if doc.signature_timestamp else None,
+                    "signature_timestamp": (
+                        doc.signature_timestamp.isoformat()
+                        if doc.signature_timestamp
+                        else None
+                    ),
                 }
                 for doc in session.documents
             ]
 
-            session_list.append({
-                "session_uuid": session.session_uuid,
-                "status": session.status,
-                "initiated_at": session.initiated_at.isoformat() if session.initiated_at else None,
-                "completed_at": session.completed_at.isoformat() if session.completed_at else None,
-                "documents": documents,
-            })
+            session_list.append(
+                {
+                    "session_uuid": session.session_uuid,
+                    "status": session.status,
+                    "initiated_at": (
+                        session.initiated_at.isoformat()
+                        if session.initiated_at
+                        else None
+                    ),
+                    "completed_at": (
+                        session.completed_at.isoformat()
+                        if session.completed_at
+                        else None
+                    ),
+                    "documents": documents,
+                }
+            )
 
         return {
             "success": True,
@@ -1277,6 +1345,7 @@ def regenerate_signing_link(session_uuid: str) -> Dict[str, Any]:
 # =============================================================================
 # DOCUMENT TYPES HELPER
 # =============================================================================
+
 
 def list_document_types() -> Dict[str, str]:
     """Get list of supported document types."""

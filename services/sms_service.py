@@ -11,7 +11,7 @@ import os
 
 from twilio.rest import Client as TwilioClient
 
-from services.activity_logger import log_sms_sent, log_sms_failed
+from services.activity_logger import log_sms_failed, log_sms_sent
 
 _twilio_client = None
 
@@ -117,7 +117,7 @@ def send_sms(to_number, message, from_number=None):
             sms = client.messages.create(
                 body=message,
                 messaging_service_sid=messaging_service_sid,
-                to=formatted_to
+                to=formatted_to,
             )
             sender = f"MessagingService:{messaging_service_sid}"
         else:
@@ -132,7 +132,9 @@ def send_sms(to_number, message, from_number=None):
                     "error": "No Twilio phone number or Messaging Service configured",
                 }
 
-            sms = client.messages.create(body=message, from_=from_number, to=formatted_to)
+            sms = client.messages.create(
+                body=message, from_=from_number, to=formatted_to
+            )
             sender = from_number
 
         log_sms_sent(formatted_to)
@@ -235,6 +237,7 @@ def is_twilio_configured():
 # WhatsApp Functions (via Twilio WhatsApp Business API)
 # =============================================================================
 
+
 def get_whatsapp_number():
     """
     Get the configured Twilio WhatsApp number.
@@ -296,11 +299,7 @@ def send_whatsapp(to_number, message, from_number=None):
 
         client = get_twilio_client()
 
-        msg = client.messages.create(
-            body=message,
-            from_=from_number,
-            to=formatted_to
-        )
+        msg = client.messages.create(body=message, from_=from_number, to=formatted_to)
 
         return {
             "success": True,
@@ -316,7 +315,9 @@ def send_whatsapp(to_number, message, from_number=None):
         return {"success": False, "message_sid": None, "error": str(e)}
 
 
-def send_whatsapp_template(to_number, template_sid, template_variables=None, from_number=None):
+def send_whatsapp_template(
+    to_number, template_sid, template_variables=None, from_number=None
+):
     """
     Send a WhatsApp template message (for business-initiated conversations).
 
@@ -365,7 +366,7 @@ def send_whatsapp_template(to_number, template_sid, template_variables=None, fro
             content_sid=template_sid,
             content_variables=content_variables if content_variables else None,
             from_=from_number,
-            to=formatted_to
+            to=formatted_to,
         )
 
         return {
@@ -400,12 +401,14 @@ def send_bulk_whatsapp(recipients, message):
 
     for phone in recipients:
         result = send_whatsapp(phone, message)
-        results.append({
-            "phone": phone,
-            "success": result["success"],
-            "message_sid": result.get("message_sid"),
-            "error": result.get("error"),
-        })
+        results.append(
+            {
+                "phone": phone,
+                "success": result["success"],
+                "message_sid": result.get("message_sid"),
+                "error": result.get("error"),
+            }
+        )
 
         if result["success"]:
             sent_count += 1
@@ -430,15 +433,15 @@ def is_whatsapp_configured():
         creds = get_twilio_credentials()
         whatsapp_number = get_whatsapp_number()
         return bool(
-            creds.get("account_sid")
-            and creds.get("auth_token")
-            and whatsapp_number
+            creds.get("account_sid") and creds.get("auth_token") and whatsapp_number
         )
     except Exception:
         return False
 
 
-def send_message(to_number, message, channel="sms", template_sid=None, template_variables=None):
+def send_message(
+    to_number, message, channel="sms", template_sid=None, template_variables=None
+):
     """
     Universal message sender - routes to SMS or WhatsApp based on channel.
 

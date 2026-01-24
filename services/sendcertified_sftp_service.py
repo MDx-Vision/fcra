@@ -173,7 +173,9 @@ def send_letter_batch(db: Session, letter_ids: List[int]) -> Dict:
     batch_letters = []
     for letter in letters:
         # Get bureau address
-        bureau_name: str = str(letter.bureau) if letter.bureau else "Equifax"  # Default to Equifax if not specified
+        bureau_name: str = (
+            str(letter.bureau) if letter.bureau else "Equifax"
+        )  # Default to Equifax if not specified
         bureau_info = BUREAU_ADDRESSES.get(bureau_name)
 
         if not bureau_info:

@@ -11,11 +11,12 @@ NOT a full chat system - for conversations use portal messaging.
 
 import os
 import re
-import requests
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
-from database import Client, WhatsAppMessage, ClientUpload
+import requests
+
+from database import Client, ClientUpload, WhatsAppMessage
 
 
 class WhatsAppWebhookService:
@@ -23,30 +24,30 @@ class WhatsAppWebhookService:
 
     # Keyword commands (case-insensitive)
     KEYWORDS = {
-        'STATUS': 'status',
-        'HELP': 'help',
-        'STOP': 'stop',  # Handled by Twilio, but we track it
+        "STATUS": "status",
+        "HELP": "help",
+        "STOP": "stop",  # Handled by Twilio, but we track it
     }
 
     # Document type mapping for common descriptions
     DOCUMENT_HINTS = {
-        'id': 'id_document',
-        'license': 'drivers_license',
-        'dl': 'drivers_license',
-        'ssn': 'ssn_card',
-        'social': 'ssn_card',
-        'utility': 'utility_bill',
-        'bill': 'utility_bill',
-        'report': 'credit_report',
-        'letter': 'cra_response',
-        'response': 'cra_response',
+        "id": "id_document",
+        "license": "drivers_license",
+        "dl": "drivers_license",
+        "ssn": "ssn_card",
+        "social": "ssn_card",
+        "utility": "utility_bill",
+        "bill": "utility_bill",
+        "report": "credit_report",
+        "letter": "cra_response",
+        "response": "cra_response",
     }
 
     def __init__(self, db):
         self.db = db
-        self.twilio_account_sid = os.environ.get('TWILIO_ACCOUNT_SID', '')
-        self.twilio_auth_token = os.environ.get('TWILIO_AUTH_TOKEN', '')
-        self.upload_folder = os.environ.get('UPLOAD_FOLDER', 'static/client_uploads')
+        self.twilio_account_sid = os.environ.get("TWILIO_ACCOUNT_SID", "")
+        self.twilio_auth_token = os.environ.get("TWILIO_AUTH_TOKEN", "")
+        self.upload_folder = os.environ.get("UPLOAD_FOLDER", "static/client_uploads")
 
     def process_incoming(
         self,
@@ -54,9 +55,9 @@ class WhatsAppWebhookService:
         to_number: str,
         body: str,
         message_sid: str,
-        profile_name: str = '',
+        profile_name: str = "",
         media_urls: List[str] = None,
-        media_types: List[str] = None
+        media_types: List[str] = None,
     ) -> Dict[str, Any]:
         """
         Process an incoming WhatsApp message.
@@ -86,7 +87,7 @@ class WhatsAppWebhookService:
         message = WhatsAppMessage(
             client_id=client.id if client else None,
             twilio_sid=message_sid,
-            direction='inbound',
+            direction="inbound",
             from_number=from_number,
             to_number=to_number,
             body=body,
@@ -95,7 +96,7 @@ class WhatsAppWebhookService:
             media_url=media_urls[0] if media_urls else None,
             media_type=media_types[0] if media_types else None,
             profile_name=profile_name,
-            status='received'
+            status="received",
         )
         self.db.add(message)
         self.db.commit()
@@ -108,12 +109,16 @@ class WhatsAppWebhookService:
         if not client.whatsapp_opt_in:
             # Still process media but don't send auto-replies
             if media_urls:
-                self._process_media_attachments(client, message, media_urls, media_types)
-            return {'success': True, 'message_id': message.id}
+                self._process_media_attachments(
+                    client, message, media_urls, media_types
+                )
+            return {"success": True, "message_id": message.id}
 
         # Handle media attachments (document intake)
         if media_urls:
-            return self._handle_media_message(client, message, media_urls, media_types, body)
+            return self._handle_media_message(
+                client, message, media_urls, media_types, body
+            )
 
         # Handle text message (check for keywords)
         return self._handle_text_message(client, message, body)
@@ -122,8 +127,8 @@ class WhatsAppWebhookService:
         self,
         message_sid: str,
         status: str,
-        error_code: str = '',
-        error_message: str = ''
+        error_code: str = "",
+        error_message: str = "",
     ) -> Dict[str, Any]:
         """
         Handle status updates for outbound messages.
@@ -134,9 +139,11 @@ class WhatsAppWebhookService:
             error_code: Error code if failed
             error_message: Error message if failed
         """
-        message = self.db.query(WhatsAppMessage).filter(
-            WhatsAppMessage.twilio_sid == message_sid
-        ).first()
+        message = (
+            self.db.query(WhatsAppMessage)
+            .filter(WhatsAppMessage.twilio_sid == message_sid)
+            .first()
+        )
 
         if message:
             message.status = status
@@ -147,7 +154,7 @@ class WhatsAppWebhookService:
             message.updated_at = datetime.utcnow()
             self.db.commit()
 
-        return {'success': True}
+        return {"success": True}
 
     def _identify_client(self, phone: str) -> Optional[Client]:
         """
@@ -159,9 +166,7 @@ class WhatsAppWebhookService:
             return None
 
         # Try exact match on whatsapp_number first
-        client = self.db.query(Client).filter(
-            Client.whatsapp_number == phone
-        ).first()
+        client = self.db.query(Client).filter(Client.whatsapp_number == phone).first()
         if client:
             return client
 
@@ -169,12 +174,16 @@ class WhatsAppWebhookService:
         phone_variants = self._get_phone_variants(phone)
 
         for variant in phone_variants:
-            client = self.db.query(Client).filter(
-                (Client.phone == variant) |
-                (Client.mobile == variant) |
-                (Client.phone_2 == variant) |
-                (Client.whatsapp_number == variant)
-            ).first()
+            client = (
+                self.db.query(Client)
+                .filter(
+                    (Client.phone == variant)
+                    | (Client.mobile == variant)
+                    | (Client.phone_2 == variant)
+                    | (Client.whatsapp_number == variant)
+                )
+                .first()
+            )
             if client:
                 return client
 
@@ -188,15 +197,15 @@ class WhatsAppWebhookService:
         Output: +15551234567
         """
         if not whatsapp_number:
-            return ''
+            return ""
 
         # Remove whatsapp: prefix
-        phone = whatsapp_number.replace('whatsapp:', '')
+        phone = whatsapp_number.replace("whatsapp:", "")
 
         # Keep only digits and leading +
-        if phone.startswith('+'):
-            return '+' + re.sub(r'[^\d]', '', phone[1:])
-        return re.sub(r'[^\d]', '', phone)
+        if phone.startswith("+"):
+            return "+" + re.sub(r"[^\d]", "", phone[1:])
+        return re.sub(r"[^\d]", "", phone)
 
     def _get_phone_variants(self, phone: str) -> List[str]:
         """
@@ -206,17 +215,17 @@ class WhatsAppWebhookService:
         """
         variants = [phone]
 
-        digits_only = re.sub(r'[^\d]', '', phone)
+        digits_only = re.sub(r"[^\d]", "", phone)
         if digits_only:
             variants.append(digits_only)
 
             # Without country code (assuming US +1)
-            if digits_only.startswith('1') and len(digits_only) == 11:
+            if digits_only.startswith("1") and len(digits_only) == 11:
                 variants.append(digits_only[1:])
 
             # With + prefix
-            if not phone.startswith('+'):
-                variants.append('+' + digits_only)
+            if not phone.startswith("+"):
+                variants.append("+" + digits_only)
 
         return variants
 
@@ -230,10 +239,10 @@ class WhatsAppWebhookService:
             "We couldn't find your account. Please log into your portal or contact us for assistance."
         )
         return {
-            'success': True,
-            'message_id': message.id,
-            'twiml': twiml,
-            'identified': False
+            "success": True,
+            "message_id": message.id,
+            "twiml": twiml,
+            "identified": False,
         }
 
     def _handle_media_message(
@@ -242,29 +251,33 @@ class WhatsAppWebhookService:
         message: WhatsAppMessage,
         media_urls: List[str],
         media_types: List[str],
-        body: str
+        body: str,
     ) -> Dict[str, Any]:
         """
         Handle incoming media attachments (document intake).
 
         Downloads media from Twilio, creates ClientUpload record.
         """
-        uploads = self._process_media_attachments(client, message, media_urls, media_types, body)
+        uploads = self._process_media_attachments(
+            client, message, media_urls, media_types, body
+        )
 
         # Send confirmation
         count = len(uploads)
         if count == 1:
-            reply = "Got it! We received your document. Our team will review it shortly."
+            reply = (
+                "Got it! We received your document. Our team will review it shortly."
+            )
         else:
             reply = f"Got it! We received {count} documents. Our team will review them shortly."
 
         twiml = self._build_twiml_response(reply)
 
         return {
-            'success': True,
-            'message_id': message.id,
-            'twiml': twiml,
-            'uploads': [u.id for u in uploads]
+            "success": True,
+            "message_id": message.id,
+            "twiml": twiml,
+            "uploads": [u.id for u in uploads],
         }
 
     def _process_media_attachments(
@@ -273,7 +286,7 @@ class WhatsAppWebhookService:
         message: WhatsAppMessage,
         media_urls: List[str],
         media_types: List[str],
-        body: str = ''
+        body: str = "",
     ) -> List[ClientUpload]:
         """
         Download and store media attachments.
@@ -294,7 +307,7 @@ class WhatsAppWebhookService:
                 ext = self._get_extension_from_content_type(content_type)
 
                 # Create filename
-                timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+                timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
                 filename = f"whatsapp_{timestamp}_{i}{ext}"
 
                 # Save file
@@ -302,20 +315,24 @@ class WhatsAppWebhookService:
                 os.makedirs(client_folder, exist_ok=True)
                 file_path = os.path.join(client_folder, filename)
 
-                with open(file_path, 'wb') as f:
+                with open(file_path, "wb") as f:
                     f.write(media_bytes)
 
                 # Create ClientUpload record
                 upload = ClientUpload(
                     client_id=client.id,
-                    category='whatsapp_intake',
+                    category="whatsapp_intake",
                     document_type=doc_type,
                     file_name=filename,
                     file_path=file_path,
                     file_size=len(media_bytes),
                     file_type=content_type,
-                    notes=f"Received via WhatsApp. Message: {body[:200]}" if body else "Received via WhatsApp",
-                    uploaded_at=datetime.utcnow()
+                    notes=(
+                        f"Received via WhatsApp. Message: {body[:200]}"
+                        if body
+                        else "Received via WhatsApp"
+                    ),
+                    uploaded_at=datetime.utcnow(),
                 )
                 self.db.add(upload)
                 self.db.commit()
@@ -344,9 +361,7 @@ class WhatsAppWebhookService:
 
         try:
             response = requests.get(
-                url,
-                auth=(self.twilio_account_sid, self.twilio_auth_token),
-                timeout=30
+                url, auth=(self.twilio_account_sid, self.twilio_auth_token), timeout=30
             )
             response.raise_for_status()
             return response.content
@@ -359,7 +374,7 @@ class WhatsAppWebhookService:
         Try to infer document type from message text.
         """
         if not body:
-            return 'pending_classification'
+            return "pending_classification"
 
         body_lower = body.lower()
 
@@ -367,29 +382,26 @@ class WhatsAppWebhookService:
             if hint in body_lower:
                 return doc_type
 
-        return 'pending_classification'
+        return "pending_classification"
 
     def _get_extension_from_content_type(self, content_type: str) -> str:
         """
         Get file extension from MIME type.
         """
         mapping = {
-            'image/jpeg': '.jpg',
-            'image/jpg': '.jpg',
-            'image/png': '.png',
-            'image/gif': '.gif',
-            'image/webp': '.webp',
-            'application/pdf': '.pdf',
-            'application/msword': '.doc',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+            "image/jpeg": ".jpg",
+            "image/jpg": ".jpg",
+            "image/png": ".png",
+            "image/gif": ".gif",
+            "image/webp": ".webp",
+            "application/pdf": ".pdf",
+            "application/msword": ".doc",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
         }
-        return mapping.get(content_type, '.bin')
+        return mapping.get(content_type, ".bin")
 
     def _handle_text_message(
-        self,
-        client: Client,
-        message: WhatsAppMessage,
-        body: str
+        self, client: Client, message: WhatsAppMessage, body: str
     ) -> Dict[str, Any]:
         """
         Handle text-only messages (check for keywords).
@@ -400,49 +412,53 @@ class WhatsAppWebhookService:
         if body_upper in self.KEYWORDS:
             keyword = self.KEYWORDS[body_upper]
 
-            if keyword == 'status':
+            if keyword == "status":
                 return self._handle_status_keyword(client, message)
-            elif keyword == 'help':
+            elif keyword == "help":
                 return self._handle_help_keyword(client, message)
-            elif keyword == 'stop':
+            elif keyword == "stop":
                 # Twilio handles STOP automatically, but we track opt-out
                 client.whatsapp_opt_in = False
                 self.db.commit()
-                return {'success': True, 'message_id': message.id}
+                return {"success": True, "message_id": message.id}
 
         # No keyword match - just acknowledge within 24hr window
         # Don't send unsolicited replies to avoid template requirements
-        return {'success': True, 'message_id': message.id}
+        return {"success": True, "message_id": message.id}
 
-    def _handle_status_keyword(self, client: Client, message: WhatsAppMessage) -> Dict[str, Any]:
+    def _handle_status_keyword(
+        self, client: Client, message: WhatsAppMessage
+    ) -> Dict[str, Any]:
         """
         Handle STATUS keyword - send case status summary.
         """
         # Build status summary
         round_num = client.current_dispute_round or 0
-        status = client.dispute_status or 'new'
+        status = client.dispute_status or "new"
 
         status_messages = {
-            'new': 'Your case is being set up.',
-            'active': f'Your case is active. Currently in Round {round_num}.',
-            'waiting_response': f'Round {round_num} disputes sent. Waiting for bureau responses.',
-            'complete': 'Your case has been completed.',
+            "new": "Your case is being set up.",
+            "active": f"Your case is active. Currently in Round {round_num}.",
+            "waiting_response": f"Round {round_num} disputes sent. Waiting for bureau responses.",
+            "complete": "Your case has been completed.",
         }
 
-        status_text = status_messages.get(status, f'Case status: {status}')
+        status_text = status_messages.get(status, f"Case status: {status}")
 
-        first_name = client.first_name or client.name.split()[0] if client.name else 'there'
-        reply = f"Hi {first_name}! {status_text}\n\nLog into your portal for more details."
+        first_name = (
+            client.first_name or client.name.split()[0] if client.name else "there"
+        )
+        reply = (
+            f"Hi {first_name}! {status_text}\n\nLog into your portal for more details."
+        )
 
         twiml = self._build_twiml_response(reply)
 
-        return {
-            'success': True,
-            'message_id': message.id,
-            'twiml': twiml
-        }
+        return {"success": True, "message_id": message.id, "twiml": twiml}
 
-    def _handle_help_keyword(self, client: Client, message: WhatsAppMessage) -> Dict[str, Any]:
+    def _handle_help_keyword(
+        self, client: Client, message: WhatsAppMessage
+    ) -> Dict[str, Any]:
         """
         Handle HELP keyword - send available commands.
         """
@@ -456,11 +472,7 @@ class WhatsAppWebhookService:
 
         twiml = self._build_twiml_response(reply)
 
-        return {
-            'success': True,
-            'message_id': message.id,
-            'twiml': twiml
-        }
+        return {"success": True, "message_id": message.id, "twiml": twiml}
 
     def _build_twiml_response(self, message: str) -> str:
         """
@@ -468,18 +480,17 @@ class WhatsAppWebhookService:
         """
         # Escape XML special characters
         escaped = (
-            message
-            .replace('&', '&amp;')
-            .replace('<', '&lt;')
-            .replace('>', '&gt;')
-            .replace('"', '&quot;')
-            .replace("'", '&apos;')
+            message.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&apos;")
         )
 
-        return f'''<?xml version="1.0" encoding="UTF-8"?>
+        return f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Message>{escaped}</Message>
-</Response>'''
+</Response>"""
 
 
 def get_whatsapp_webhook_service(db) -> WhatsAppWebhookService:

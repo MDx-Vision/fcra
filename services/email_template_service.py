@@ -7,17 +7,16 @@ Allows staff to create, edit, and manage email templates used for client communi
 
 import re
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
-from database import SessionLocal, EmailTemplate
+from database import EmailTemplate, SessionLocal
 from services.email_templates import (
-    get_base_template,
     COMPANY_NAME,
+    DARK_COLOR,
     PRIMARY_COLOR,
     SECONDARY_COLOR,
-    DARK_COLOR,
+    get_base_template,
 )
-
 
 # Template categories
 TEMPLATE_CATEGORIES = {
@@ -33,14 +32,38 @@ TEMPLATE_CATEGORIES = {
 
 # Common template variables that can be used
 COMMON_VARIABLES = [
-    {"name": "client_name", "description": "Client's full name", "example": "John Smith"},
+    {
+        "name": "client_name",
+        "description": "Client's full name",
+        "example": "John Smith",
+    },
     {"name": "first_name", "description": "Client's first name", "example": "John"},
-    {"name": "email", "description": "Client's email address", "example": "john@example.com"},
-    {"name": "phone", "description": "Client's phone number", "example": "(555) 123-4567"},
-    {"name": "portal_url", "description": "Link to client portal", "example": "https://portal.example.com"},
+    {
+        "name": "email",
+        "description": "Client's email address",
+        "example": "john@example.com",
+    },
+    {
+        "name": "phone",
+        "description": "Client's phone number",
+        "example": "(555) 123-4567",
+    },
+    {
+        "name": "portal_url",
+        "description": "Link to client portal",
+        "example": "https://portal.example.com",
+    },
     {"name": "company_name", "description": "Company name", "example": COMPANY_NAME},
-    {"name": "current_date", "description": "Today's date", "example": "January 1, 2026"},
-    {"name": "dispute_round", "description": "Current dispute round", "example": "Round 2"},
+    {
+        "name": "current_date",
+        "description": "Today's date",
+        "example": "January 1, 2026",
+    },
+    {
+        "name": "dispute_round",
+        "description": "Current dispute round",
+        "example": "Round 2",
+    },
     {"name": "bureau", "description": "Credit bureau name", "example": "Equifax"},
     {"name": "status", "description": "Current case status", "example": "Active"},
 ]
@@ -97,9 +120,11 @@ class EmailTemplateService:
 
         try:
             # Check if template_type already exists
-            existing = session.query(EmailTemplate).filter(
-                EmailTemplate.template_type == template_type
-            ).first()
+            existing = (
+                session.query(EmailTemplate)
+                .filter(EmailTemplate.template_type == template_type)
+                .first()
+            )
             if existing:
                 return {
                     "success": False,
@@ -163,9 +188,11 @@ class EmailTemplateService:
             close_session = True
 
         try:
-            template = session.query(EmailTemplate).filter(
-                EmailTemplate.id == template_id
-            ).first()
+            template = (
+                session.query(EmailTemplate)
+                .filter(EmailTemplate.id == template_id)
+                .first()
+            )
 
             if not template:
                 return {"success": False, "error": "Template not found"}
@@ -216,9 +243,11 @@ class EmailTemplateService:
             close_session = True
 
         try:
-            template = session.query(EmailTemplate).filter(
-                EmailTemplate.id == template_id
-            ).first()
+            template = (
+                session.query(EmailTemplate)
+                .filter(EmailTemplate.id == template_id)
+                .first()
+            )
 
             if not template:
                 return {"success": False, "error": "Template not found"}
@@ -243,7 +272,9 @@ class EmailTemplateService:
                 session.close()
 
     @staticmethod
-    def get_template(template_id: int = None, template_type: str = None, session=None) -> Optional[Dict[str, Any]]:
+    def get_template(
+        template_id: int = None, template_type: str = None, session=None
+    ) -> Optional[Dict[str, Any]]:
         """
         Get a template by ID or type.
 
@@ -261,7 +292,9 @@ class EmailTemplateService:
             if template_id:
                 template = query.filter(EmailTemplate.id == template_id).first()
             elif template_type:
-                template = query.filter(EmailTemplate.template_type == template_type).first()
+                template = query.filter(
+                    EmailTemplate.template_type == template_type
+                ).first()
             else:
                 return None
 
@@ -273,7 +306,9 @@ class EmailTemplateService:
                 "template_type": template.template_type,
                 "name": template.name,
                 "category": template.category,
-                "category_label": TEMPLATE_CATEGORIES.get(template.category, template.category),
+                "category_label": TEMPLATE_CATEGORIES.get(
+                    template.category, template.category
+                ),
                 "description": template.description,
                 "subject": template.subject,
                 "html_content": template.html_content,
@@ -281,8 +316,12 @@ class EmailTemplateService:
                 "variables": template.variables or [],
                 "is_custom": template.is_custom,
                 "is_active": template.is_active,
-                "created_at": template.created_at.isoformat() if template.created_at else None,
-                "updated_at": template.updated_at.isoformat() if template.updated_at else None,
+                "created_at": (
+                    template.created_at.isoformat() if template.created_at else None
+                ),
+                "updated_at": (
+                    template.updated_at.isoformat() if template.updated_at else None
+                ),
             }
 
         finally:
@@ -326,8 +365,8 @@ class EmailTemplateService:
             if search:
                 search_pattern = f"%{search}%"
                 query = query.filter(
-                    (EmailTemplate.name.ilike(search_pattern)) |
-                    (EmailTemplate.description.ilike(search_pattern))
+                    (EmailTemplate.name.ilike(search_pattern))
+                    | (EmailTemplate.description.ilike(search_pattern))
                 )
 
             templates = query.order_by(EmailTemplate.category, EmailTemplate.name).all()
@@ -434,7 +473,9 @@ class EmailTemplateService:
         Returns:
             Dict with new template info
         """
-        template = EmailTemplateService.get_template(template_id=template_id, session=session)
+        template = EmailTemplateService.get_template(
+            template_id=template_id, session=session
+        )
 
         if not template:
             return {"success": False, "error": "Template not found"}
@@ -472,16 +513,30 @@ class EmailTemplateService:
 
         try:
             total = session.query(EmailTemplate).count()
-            active = session.query(EmailTemplate).filter(EmailTemplate.is_active == True).count()
-            custom = session.query(EmailTemplate).filter(EmailTemplate.is_custom == True).count()
-            system = session.query(EmailTemplate).filter(EmailTemplate.is_custom == False).count()
+            active = (
+                session.query(EmailTemplate)
+                .filter(EmailTemplate.is_active == True)
+                .count()
+            )
+            custom = (
+                session.query(EmailTemplate)
+                .filter(EmailTemplate.is_custom == True)
+                .count()
+            )
+            system = (
+                session.query(EmailTemplate)
+                .filter(EmailTemplate.is_custom == False)
+                .count()
+            )
 
             # Count by category
             by_category = {}
             for category_key in TEMPLATE_CATEGORIES:
-                count = session.query(EmailTemplate).filter(
-                    EmailTemplate.category == category_key
-                ).count()
+                count = (
+                    session.query(EmailTemplate)
+                    .filter(EmailTemplate.category == category_key)
+                    .count()
+                )
                 if count > 0:
                     by_category[category_key] = count
 
@@ -657,14 +712,14 @@ def seed_default_templates(session=None) -> Dict[str, Any]:
         Dict with results of seeding operation
     """
     from services.email_templates import (
-        welcome_email,
-        document_reminder_email,
-        case_update_email,
-        dispute_sent_email,
-        cra_response_email,
-        payment_reminder_email,
         analysis_ready_email,
+        case_update_email,
+        cra_response_email,
+        dispute_sent_email,
+        document_reminder_email,
         letters_ready_email,
+        payment_reminder_email,
+        welcome_email,
     )
 
     close_session = False
@@ -679,9 +734,11 @@ def seed_default_templates(session=None) -> Dict[str, Any]:
     try:
         for template_data in DEFAULT_TEMPLATES:
             # Check if already exists
-            existing = session.query(EmailTemplate).filter(
-                EmailTemplate.template_type == template_data["template_type"]
-            ).first()
+            existing = (
+                session.query(EmailTemplate)
+                .filter(EmailTemplate.template_type == template_data["template_type"])
+                .first()
+            )
 
             if existing:
                 skipped += 1
@@ -694,19 +751,33 @@ def seed_default_templates(session=None) -> Dict[str, Any]:
             if template_type == "welcome":
                 html_content = welcome_email("{client_name}", "{portal_url}")
             elif template_type == "document_reminder":
-                html_content = document_reminder_email("{client_name}", ["{missing_docs}"], "{portal_url}")
+                html_content = document_reminder_email(
+                    "{client_name}", ["{missing_docs}"], "{portal_url}"
+                )
             elif template_type == "case_update":
-                html_content = case_update_email("{client_name}", "{status}", "{details}", "{portal_url}")
+                html_content = case_update_email(
+                    "{client_name}", "{status}", "{details}", "{portal_url}"
+                )
             elif template_type == "dispute_sent":
-                html_content = dispute_sent_email("{client_name}", "{bureau}", "{tracking_number}", "{portal_url}")
+                html_content = dispute_sent_email(
+                    "{client_name}", "{bureau}", "{tracking_number}", "{portal_url}"
+                )
             elif template_type == "cra_response":
-                html_content = cra_response_email("{client_name}", "{bureau}", "{result_summary}", "{portal_url}")
+                html_content = cra_response_email(
+                    "{client_name}", "{bureau}", "{result_summary}", "{portal_url}"
+                )
             elif template_type == "payment_reminder":
-                html_content = payment_reminder_email("{client_name}", "{amount}", "{due_date}", "{payment_url}")
+                html_content = payment_reminder_email(
+                    "{client_name}", "{amount}", "{due_date}", "{payment_url}"
+                )
             elif template_type == "analysis_ready":
-                html_content = analysis_ready_email("{client_name}", "{violations_count}", "{exposure}", "{portal_url}")
+                html_content = analysis_ready_email(
+                    "{client_name}", "{violations_count}", "{exposure}", "{portal_url}"
+                )
             elif template_type == "letters_ready":
-                html_content = letters_ready_email("{client_name}", "{letter_count}", ["{bureaus}"], "{portal_url}")
+                html_content = letters_ready_email(
+                    "{client_name}", "{letter_count}", ["{bureaus}"], "{portal_url}"
+                )
             else:
                 # Generate basic HTML for templates without existing functions
                 html_content = f"""
@@ -755,9 +826,13 @@ def get_template(template_type: str) -> Optional[Dict]:
     return EmailTemplateService.get_template(template_type=template_type)
 
 
-def render_email(template_type: str, variables: Dict[str, str] = None) -> Dict[str, Any]:
+def render_email(
+    template_type: str, variables: Dict[str, str] = None
+) -> Dict[str, Any]:
     """Render an email template with variables"""
-    return EmailTemplateService.render_template(template_type=template_type, variables=variables)
+    return EmailTemplateService.render_template(
+        template_type=template_type, variables=variables
+    )
 
 
 def list_all_templates() -> List[Dict]:

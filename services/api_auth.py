@@ -134,7 +134,10 @@ def add_rate_limit_headers(response, rate_info: dict):
 
 
 def log_api_request(
-    api_key_id: int, response_status: int, start_time: float, error: Optional[str] = None
+    api_key_id: int,
+    response_status: int,
+    start_time: float,
+    error: Optional[str] = None,
 ) -> None:
     """Log an API request for analytics."""
     try:
@@ -312,7 +315,9 @@ def require_api_key(scopes: Optional[List[str]] = None):
 
 
 def require_auth(
-    scopes: Optional[List[str]] = None, allow_session: bool = True, allow_api_key: bool = True
+    scopes: Optional[List[str]] = None,
+    allow_session: bool = True,
+    allow_api_key: bool = True,
 ):
     """
     Flexible authentication decorator that accepts session auth OR API key.

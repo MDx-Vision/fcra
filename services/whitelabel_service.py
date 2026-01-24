@@ -284,7 +284,7 @@ class WhiteLabelConfigService:
             if key in allowed_fields:
                 setattr(config, key, value)
 
-        setattr(config, 'updated_at', datetime.utcnow())
+        setattr(config, "updated_at", datetime.utcnow())
         self.db.commit()
         self.db.refresh(config)
 

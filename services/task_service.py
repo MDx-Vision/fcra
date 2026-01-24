@@ -5,9 +5,10 @@ Manages staff task assignment, tracking, and completion.
 Supports recurring tasks, priorities, categories, and comments.
 """
 
-from datetime import datetime, date, time, timedelta
-from typing import Optional, List, Dict, Any
-from sqlalchemy import func, and_, or_, desc, asc
+from datetime import date, datetime, time, timedelta
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import and_, asc, desc, func, or_
 from sqlalchemy.orm import Session
 
 
@@ -16,25 +17,25 @@ class TaskService:
 
     # Task categories
     CATEGORIES = [
-        'general',       # General tasks
-        'follow_up',     # Follow-up with client
-        'document',      # Document review/processing
-        'call',          # Make a call
-        'review',        # Review case/analysis
-        'dispute',       # Dispute-related task
-        'payment',       # Payment-related task
-        'onboarding',    # Client onboarding
-        'other'          # Other
+        "general",  # General tasks
+        "follow_up",  # Follow-up with client
+        "document",  # Document review/processing
+        "call",  # Make a call
+        "review",  # Review case/analysis
+        "dispute",  # Dispute-related task
+        "payment",  # Payment-related task
+        "onboarding",  # Client onboarding
+        "other",  # Other
     ]
 
     # Task priorities
-    PRIORITIES = ['low', 'medium', 'high', 'urgent']
+    PRIORITIES = ["low", "medium", "high", "urgent"]
 
     # Task statuses
-    STATUSES = ['pending', 'in_progress', 'completed', 'cancelled']
+    STATUSES = ["pending", "in_progress", "completed", "cancelled"]
 
     # Recurrence patterns
-    RECURRENCE_PATTERNS = ['daily', 'weekly', 'biweekly', 'monthly']
+    RECURRENCE_PATTERNS = ["daily", "weekly", "biweekly", "monthly"]
 
     def __init__(self, db: Session):
         self.db = db
@@ -46,14 +47,14 @@ class TaskService:
         assigned_by_id: Optional[int] = None,
         client_id: Optional[int] = None,
         description: Optional[str] = None,
-        category: str = 'general',
-        priority: str = 'medium',
+        category: str = "general",
+        priority: str = "medium",
         due_date: Optional[date] = None,
         due_time: Optional[time] = None,
         reminder_at: Optional[datetime] = None,
         is_recurring: bool = False,
         recurrence_pattern: Optional[str] = None,
-        recurrence_end_date: Optional[date] = None
+        recurrence_end_date: Optional[date] = None,
     ) -> Dict[str, Any]:
         """
         Create a new task.
@@ -76,7 +77,8 @@ class TaskService:
         Returns:
             Dict with success status and task data
         """
-        from database import StaffTask as Task, Staff, Client
+        from database import Client, Staff
+        from database import StaffTask as Task
 
         # Validate assigned_to exists
         assigned_to = self.db.query(Staff).filter_by(id=assigned_to_id).first()
@@ -91,15 +93,24 @@ class TaskService:
 
         # Validate category
         if category not in self.CATEGORIES:
-            return {"success": False, "error": f"Invalid category. Must be one of: {self.CATEGORIES}"}
+            return {
+                "success": False,
+                "error": f"Invalid category. Must be one of: {self.CATEGORIES}",
+            }
 
         # Validate priority
         if priority not in self.PRIORITIES:
-            return {"success": False, "error": f"Invalid priority. Must be one of: {self.PRIORITIES}"}
+            return {
+                "success": False,
+                "error": f"Invalid priority. Must be one of: {self.PRIORITIES}",
+            }
 
         # Validate recurrence
         if is_recurring and recurrence_pattern not in self.RECURRENCE_PATTERNS:
-            return {"success": False, "error": f"Invalid recurrence pattern. Must be one of: {self.RECURRENCE_PATTERNS}"}
+            return {
+                "success": False,
+                "error": f"Invalid recurrence pattern. Must be one of: {self.RECURRENCE_PATTERNS}",
+            }
 
         try:
             task = Task(
@@ -110,13 +121,13 @@ class TaskService:
                 description=description,
                 category=category,
                 priority=priority,
-                status='pending',
+                status="pending",
                 due_date=due_date,
                 due_time=due_time,
                 reminder_at=reminder_at,
                 is_recurring=is_recurring,
                 recurrence_pattern=recurrence_pattern if is_recurring else None,
-                recurrence_end_date=recurrence_end_date if is_recurring else None
+                recurrence_end_date=recurrence_end_date if is_recurring else None,
             )
 
             self.db.add(task)
@@ -126,7 +137,7 @@ class TaskService:
             return {
                 "success": True,
                 "task_id": task.id,
-                "task": self._serialize_task(task)
+                "task": self._serialize_task(task),
             }
 
         except Exception as e:
@@ -151,9 +162,19 @@ class TaskService:
             return {"success": False, "error": "Task not found"}
 
         allowed_fields = [
-            'assigned_to_id', 'client_id', 'title', 'description',
-            'category', 'priority', 'status', 'due_date', 'due_time',
-            'reminder_at', 'is_recurring', 'recurrence_pattern', 'recurrence_end_date'
+            "assigned_to_id",
+            "client_id",
+            "title",
+            "description",
+            "category",
+            "priority",
+            "status",
+            "due_date",
+            "due_time",
+            "reminder_at",
+            "is_recurring",
+            "recurrence_pattern",
+            "recurrence_end_date",
         ]
 
         try:
@@ -165,20 +186,14 @@ class TaskService:
             self.db.commit()
             self.db.refresh(task)
 
-            return {
-                "success": True,
-                "task": self._serialize_task(task)
-            }
+            return {"success": True, "task": self._serialize_task(task)}
 
         except Exception as e:
             self.db.rollback()
             return {"success": False, "error": str(e)}
 
     def complete_task(
-        self,
-        task_id: int,
-        completed_by_id: int,
-        completion_notes: Optional[str] = None
+        self, task_id: int, completed_by_id: int, completion_notes: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Mark a task as completed.
@@ -198,7 +213,7 @@ class TaskService:
             return {"success": False, "error": "Task not found"}
 
         try:
-            task.status = 'completed'
+            task.status = "completed"
             task.completed_at = datetime.utcnow()
             task.completed_by_id = completed_by_id
             task.completion_notes = completion_notes
@@ -214,7 +229,7 @@ class TaskService:
             result = {
                 "success": True,
                 "message": "Task completed",
-                "task": self._serialize_task(task)
+                "task": self._serialize_task(task),
             }
 
             if next_task:
@@ -234,20 +249,23 @@ class TaskService:
             return None
 
         # Calculate next due date
-        if completed_task.recurrence_pattern == 'daily':
+        if completed_task.recurrence_pattern == "daily":
             next_due = completed_task.due_date + timedelta(days=1)
-        elif completed_task.recurrence_pattern == 'weekly':
+        elif completed_task.recurrence_pattern == "weekly":
             next_due = completed_task.due_date + timedelta(weeks=1)
-        elif completed_task.recurrence_pattern == 'biweekly':
+        elif completed_task.recurrence_pattern == "biweekly":
             next_due = completed_task.due_date + timedelta(weeks=2)
-        elif completed_task.recurrence_pattern == 'monthly':
+        elif completed_task.recurrence_pattern == "monthly":
             # Add approximately one month
             next_due = completed_task.due_date + timedelta(days=30)
         else:
             return None
 
         # Check if past recurrence end date
-        if completed_task.recurrence_end_date and next_due > completed_task.recurrence_end_date:
+        if (
+            completed_task.recurrence_end_date
+            and next_due > completed_task.recurrence_end_date
+        ):
             return None
 
         # Create the next task
@@ -259,13 +277,13 @@ class TaskService:
             description=completed_task.description,
             category=completed_task.category,
             priority=completed_task.priority,
-            status='pending',
+            status="pending",
             due_date=next_due,
             due_time=completed_task.due_time,
             is_recurring=True,
             recurrence_pattern=completed_task.recurrence_pattern,
             recurrence_end_date=completed_task.recurrence_end_date,
-            parent_task_id=completed_task.parent_task_id or completed_task.id
+            parent_task_id=completed_task.parent_task_id or completed_task.id,
         )
 
         self.db.add(next_task)
@@ -279,7 +297,7 @@ class TaskService:
         if not task:
             return {"success": False, "error": "Task not found"}
 
-        task.status = 'cancelled'
+        task.status = "cancelled"
         task.updated_at = datetime.utcnow()
         self.db.commit()
 
@@ -287,7 +305,8 @@ class TaskService:
 
     def delete_task(self, task_id: int) -> Dict[str, Any]:
         """Delete a task."""
-        from database import StaffTask as Task, StaffTaskComment as TaskComment
+        from database import StaffTask as Task
+        from database import StaffTaskComment as TaskComment
 
         task = self.db.query(Task).filter_by(id=task_id).first()
         if not task:
@@ -324,10 +343,10 @@ class TaskService:
         due_date_to: Optional[date] = None,
         overdue_only: bool = False,
         search: Optional[str] = None,
-        sort_by: str = 'due_date',
-        sort_order: str = 'asc',
+        sort_by: str = "due_date",
+        sort_order: str = "asc",
         limit: int = 50,
-        offset: int = 0
+        offset: int = 0,
     ) -> Dict[str, Any]:
         """
         Get tasks with filtering and sorting.
@@ -375,15 +394,12 @@ class TaskService:
         if overdue_only:
             query = query.filter(
                 Task.due_date < date.today(),
-                Task.status.in_(['pending', 'in_progress'])
+                Task.status.in_(["pending", "in_progress"]),
             )
         if search:
             search_term = f"%{search}%"
             query = query.filter(
-                or_(
-                    Task.title.ilike(search_term),
-                    Task.description.ilike(search_term)
-                )
+                or_(Task.title.ilike(search_term), Task.description.ilike(search_term))
             )
 
         # Get total count
@@ -391,7 +407,7 @@ class TaskService:
 
         # Apply sorting
         sort_column = getattr(Task, sort_by, Task.due_date)
-        if sort_order == 'desc':
+        if sort_order == "desc":
             query = query.order_by(desc(sort_column).nullslast())
         else:
             query = query.order_by(asc(sort_column).nullsfirst())
@@ -404,117 +420,128 @@ class TaskService:
             "total": total,
             "limit": limit,
             "offset": offset,
-            "has_more": total > offset + limit
+            "has_more": total > offset + limit,
         }
 
-    def get_my_tasks(self, staff_id: int, include_completed: bool = False) -> Dict[str, Any]:
+    def get_my_tasks(
+        self, staff_id: int, include_completed: bool = False
+    ) -> Dict[str, Any]:
         """Get tasks assigned to a staff member grouped by status."""
         from database import StaffTask as Task
 
         query = self.db.query(Task).filter(Task.assigned_to_id == staff_id)
 
         if not include_completed:
-            query = query.filter(Task.status.in_(['pending', 'in_progress']))
+            query = query.filter(Task.status.in_(["pending", "in_progress"]))
 
         tasks = query.order_by(
             # Order by priority (urgent first), then due date
             asc(
                 func.case(
-                    (Task.priority == 'urgent', 0),
-                    (Task.priority == 'high', 1),
-                    (Task.priority == 'medium', 2),
-                    (Task.priority == 'low', 3),
-                    else_=4
+                    (Task.priority == "urgent", 0),
+                    (Task.priority == "high", 1),
+                    (Task.priority == "medium", 2),
+                    (Task.priority == "low", 3),
+                    else_=4,
                 )
             ),
-            asc(Task.due_date).nullslast()
+            asc(Task.due_date).nullslast(),
         ).all()
 
         # Group by status
         grouped = {
-            'overdue': [],
-            'today': [],
-            'upcoming': [],
-            'no_due_date': [],
-            'in_progress': [],
-            'completed': []
+            "overdue": [],
+            "today": [],
+            "upcoming": [],
+            "no_due_date": [],
+            "in_progress": [],
+            "completed": [],
         }
 
         today = date.today()
         for task in tasks:
             serialized = self._serialize_task(task)
 
-            if task.status == 'completed':
-                grouped['completed'].append(serialized)
-            elif task.status == 'in_progress':
-                grouped['in_progress'].append(serialized)
+            if task.status == "completed":
+                grouped["completed"].append(serialized)
+            elif task.status == "in_progress":
+                grouped["in_progress"].append(serialized)
             elif task.due_date is None:
-                grouped['no_due_date'].append(serialized)
+                grouped["no_due_date"].append(serialized)
             elif task.due_date < today:
-                grouped['overdue'].append(serialized)
+                grouped["overdue"].append(serialized)
             elif task.due_date == today:
-                grouped['today'].append(serialized)
+                grouped["today"].append(serialized)
             else:
-                grouped['upcoming'].append(serialized)
+                grouped["upcoming"].append(serialized)
 
         return {
             "tasks": grouped,
             "counts": {k: len(v) for k, v in grouped.items()},
-            "total": len(tasks)
+            "total": len(tasks),
         }
 
     def get_team_workload(self) -> List[Dict[str, Any]]:
         """Get task counts per staff member."""
-        from database import StaffTask as Task, Staff
+        from database import Staff
+        from database import StaffTask as Task
 
         staff_list = self.db.query(Staff).filter(Staff.is_active == True).all()
 
         workload = []
         for staff in staff_list:
-            pending = self.db.query(Task).filter(
-                Task.assigned_to_id == staff.id,
-                Task.status == 'pending'
-            ).count()
+            pending = (
+                self.db.query(Task)
+                .filter(Task.assigned_to_id == staff.id, Task.status == "pending")
+                .count()
+            )
 
-            in_progress = self.db.query(Task).filter(
-                Task.assigned_to_id == staff.id,
-                Task.status == 'in_progress'
-            ).count()
+            in_progress = (
+                self.db.query(Task)
+                .filter(Task.assigned_to_id == staff.id, Task.status == "in_progress")
+                .count()
+            )
 
-            overdue = self.db.query(Task).filter(
-                Task.assigned_to_id == staff.id,
-                Task.status.in_(['pending', 'in_progress']),
-                Task.due_date < date.today()
-            ).count()
+            overdue = (
+                self.db.query(Task)
+                .filter(
+                    Task.assigned_to_id == staff.id,
+                    Task.status.in_(["pending", "in_progress"]),
+                    Task.due_date < date.today(),
+                )
+                .count()
+            )
 
-            completed_this_week = self.db.query(Task).filter(
-                Task.assigned_to_id == staff.id,
-                Task.status == 'completed',
-                Task.completed_at >= datetime.now() - timedelta(days=7)
-            ).count()
+            completed_this_week = (
+                self.db.query(Task)
+                .filter(
+                    Task.assigned_to_id == staff.id,
+                    Task.status == "completed",
+                    Task.completed_at >= datetime.now() - timedelta(days=7),
+                )
+                .count()
+            )
 
-            workload.append({
-                "staff_id": staff.id,
-                "staff_name": staff.name,
-                "pending": pending,
-                "in_progress": in_progress,
-                "overdue": overdue,
-                "completed_this_week": completed_this_week,
-                "total_active": pending + in_progress
-            })
+            workload.append(
+                {
+                    "staff_id": staff.id,
+                    "staff_name": staff.name,
+                    "pending": pending,
+                    "in_progress": in_progress,
+                    "overdue": overdue,
+                    "completed_this_week": completed_this_week,
+                    "total_active": pending + in_progress,
+                }
+            )
 
         # Sort by total active tasks descending
-        workload.sort(key=lambda x: x['total_active'], reverse=True)
+        workload.sort(key=lambda x: x["total_active"], reverse=True)
         return workload
 
-    def add_comment(
-        self,
-        task_id: int,
-        staff_id: int,
-        comment: str
-    ) -> Dict[str, Any]:
+    def add_comment(self, task_id: int, staff_id: int, comment: str) -> Dict[str, Any]:
         """Add a comment to a task."""
-        from database import StaffTask as Task, StaffTaskComment as TaskComment
+        from database import StaffTask as Task
+        from database import StaffTaskComment as TaskComment
 
         task = self.db.query(Task).filter_by(id=task_id).first()
         if not task:
@@ -522,9 +549,7 @@ class TaskService:
 
         try:
             task_comment = TaskComment(
-                task_id=task_id,
-                staff_id=staff_id,
-                comment=comment
+                task_id=task_id, staff_id=staff_id, comment=comment
             )
             self.db.add(task_comment)
             self.db.commit()
@@ -536,10 +561,12 @@ class TaskService:
                     "id": task_comment.id,
                     "task_id": task_comment.task_id,
                     "staff_id": task_comment.staff_id,
-                    "staff_name": task_comment.staff.name if task_comment.staff else None,
+                    "staff_name": (
+                        task_comment.staff.name if task_comment.staff else None
+                    ),
                     "comment": task_comment.comment,
-                    "created_at": task_comment.created_at.isoformat()
-                }
+                    "created_at": task_comment.created_at.isoformat(),
+                },
             }
         except Exception as e:
             self.db.rollback()
@@ -549,7 +576,7 @@ class TaskService:
         self,
         staff_id: Optional[int] = None,
         date_from: Optional[date] = None,
-        date_to: Optional[date] = None
+        date_to: Optional[date] = None,
     ) -> Dict[str, Any]:
         """Get task statistics."""
         from database import StaffTask as Task
@@ -566,19 +593,17 @@ class TaskService:
         # All tasks in period
         tasks_in_period = query.filter(
             Task.created_at >= datetime.combine(date_from, time.min),
-            Task.created_at <= datetime.combine(date_to, time.max)
+            Task.created_at <= datetime.combine(date_to, time.max),
         ).all()
 
         # Current active tasks
-        active_tasks = query.filter(
-            Task.status.in_(['pending', 'in_progress'])
-        ).all()
+        active_tasks = query.filter(Task.status.in_(["pending", "in_progress"])).all()
 
         # Overdue tasks
         overdue = [t for t in active_tasks if t.due_date and t.due_date < date.today()]
 
         # Completed in period
-        completed = [t for t in tasks_in_period if t.status == 'completed']
+        completed = [t for t in tasks_in_period if t.status == "completed"]
 
         # By category
         by_category = {}
@@ -591,16 +616,13 @@ class TaskService:
             by_priority[pri] = len([t for t in active_tasks if t.priority == pri])
 
         return {
-            "period": {
-                "from": date_from.isoformat(),
-                "to": date_to.isoformat()
-            },
+            "period": {"from": date_from.isoformat(), "to": date_to.isoformat()},
             "created": len(tasks_in_period),
             "completed": len(completed),
             "active": len(active_tasks),
             "overdue": len(overdue),
             "by_category": by_category,
-            "by_priority": by_priority
+            "by_priority": by_priority,
         }
 
     def get_upcoming_reminders(self, within_hours: int = 24) -> List[Dict[str, Any]]:
@@ -609,12 +631,16 @@ class TaskService:
 
         reminder_deadline = datetime.now() + timedelta(hours=within_hours)
 
-        tasks = self.db.query(Task).filter(
-            Task.reminder_at.isnot(None),
-            Task.reminder_at <= reminder_deadline,
-            Task.reminder_at >= datetime.now(),
-            Task.status.in_(['pending', 'in_progress'])
-        ).all()
+        tasks = (
+            self.db.query(Task)
+            .filter(
+                Task.reminder_at.isnot(None),
+                Task.reminder_at <= reminder_deadline,
+                Task.reminder_at >= datetime.now(),
+                Task.status.in_(["pending", "in_progress"]),
+            )
+            .all()
+        )
 
         return [self._serialize_task(t) for t in tasks]
 
@@ -627,7 +653,11 @@ class TaskService:
             "assigned_by_id": task.assigned_by_id,
             "assigned_by_name": task.assigned_by.name if task.assigned_by else None,
             "client_id": task.client_id,
-            "client_name": f"{task.client.first_name} {task.client.last_name}" if task.client else None,
+            "client_name": (
+                f"{task.client.first_name} {task.client.last_name}"
+                if task.client
+                else None
+            ),
             "title": task.title,
             "description": task.description,
             "category": task.category,
@@ -636,26 +666,36 @@ class TaskService:
             "due_date": task.due_date.isoformat() if task.due_date else None,
             "due_time": task.due_time.isoformat() if task.due_time else None,
             "reminder_at": task.reminder_at.isoformat() if task.reminder_at else None,
-            "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+            "completed_at": (
+                task.completed_at.isoformat() if task.completed_at else None
+            ),
             "completed_by_id": task.completed_by_id,
             "completed_by_name": task.completed_by.name if task.completed_by else None,
             "completion_notes": task.completion_notes,
             "is_recurring": task.is_recurring,
             "recurrence_pattern": task.recurrence_pattern,
-            "recurrence_end_date": task.recurrence_end_date.isoformat() if task.recurrence_end_date else None,
+            "recurrence_end_date": (
+                task.recurrence_end_date.isoformat()
+                if task.recurrence_end_date
+                else None
+            ),
             "created_at": task.created_at.isoformat() if task.created_at else None,
             "updated_at": task.updated_at.isoformat() if task.updated_at else None,
-            "is_overdue": task.due_date < date.today() if task.due_date and task.status in ['pending', 'in_progress'] else False
+            "is_overdue": (
+                task.due_date < date.today()
+                if task.due_date and task.status in ["pending", "in_progress"]
+                else False
+            ),
         }
 
-        if include_comments and hasattr(task, 'comments'):
-            data['comments'] = [
+        if include_comments and hasattr(task, "comments"):
+            data["comments"] = [
                 {
                     "id": c.id,
                     "staff_id": c.staff_id,
                     "staff_name": c.staff.name if c.staff else None,
                     "comment": c.comment,
-                    "created_at": c.created_at.isoformat()
+                    "created_at": c.created_at.isoformat(),
                 }
                 for c in sorted(task.comments, key=lambda x: x.created_at)
             ]

@@ -11,36 +11,41 @@ Features:
 - Auto-generate invoice numbers
 """
 
-import os
 import hashlib
-from datetime import datetime, date, timedelta
-from typing import Dict, Any, List, Optional
+import os
+from datetime import date, datetime, timedelta
 from decimal import Decimal
+from typing import Any, Dict, List, Optional
 
 # PDF generation
 try:
-    from weasyprint import HTML, CSS
+    from weasyprint import CSS, HTML
+
     WEASYPRINT_AVAILABLE = True
 except ImportError:
     WEASYPRINT_AVAILABLE = False
 
 from database import (
-    SessionLocal, Invoice, InvoiceItem, InvoicePayment, Client,
-    INVOICE_STATUSES, INVOICE_ITEM_TYPES
+    INVOICE_ITEM_TYPES,
+    INVOICE_STATUSES,
+    Client,
+    Invoice,
+    InvoiceItem,
+    InvoicePayment,
+    SessionLocal,
 )
 
-
 # Service configuration
-INVOICE_PREFIX = os.getenv('INVOICE_PREFIX', 'INV')
-INVOICE_PDF_DIR = os.getenv('INVOICE_PDF_DIR', 'static/invoices')
-DEFAULT_DUE_DAYS = int(os.getenv('INVOICE_DUE_DAYS', '30'))
-DEFAULT_TAX_RATE = float(os.getenv('INVOICE_TAX_RATE', '0.0'))
+INVOICE_PREFIX = os.getenv("INVOICE_PREFIX", "INV")
+INVOICE_PDF_DIR = os.getenv("INVOICE_PDF_DIR", "static/invoices")
+DEFAULT_DUE_DAYS = int(os.getenv("INVOICE_DUE_DAYS", "30"))
+DEFAULT_TAX_RATE = float(os.getenv("INVOICE_TAX_RATE", "0.0"))
 
 # Company defaults (can be overridden per invoice)
-DEFAULT_COMPANY_NAME = os.getenv('COMPANY_NAME', 'Brightpath Ascend Group')
-DEFAULT_COMPANY_ADDRESS = os.getenv('COMPANY_ADDRESS', '')
-DEFAULT_COMPANY_PHONE = os.getenv('COMPANY_PHONE', '')
-DEFAULT_COMPANY_EMAIL = os.getenv('COMPANY_EMAIL', '')
+DEFAULT_COMPANY_NAME = os.getenv("COMPANY_NAME", "Brightpath Ascend Group")
+DEFAULT_COMPANY_ADDRESS = os.getenv("COMPANY_ADDRESS", "")
+DEFAULT_COMPANY_PHONE = os.getenv("COMPANY_PHONE", "")
+DEFAULT_COMPANY_EMAIL = os.getenv("COMPANY_EMAIL", "")
 
 
 def _generate_invoice_number(session=None) -> str:
@@ -57,13 +62,16 @@ def _generate_invoice_number(session=None) -> str:
     try:
         # Find the highest invoice number for this year
         prefix = f"{INVOICE_PREFIX}-{year}-"
-        latest = db.query(Invoice).filter(
-            Invoice.invoice_number.like(f"{prefix}%")
-        ).order_by(Invoice.id.desc()).first()
+        latest = (
+            db.query(Invoice)
+            .filter(Invoice.invoice_number.like(f"{prefix}%"))
+            .order_by(Invoice.id.desc())
+            .first()
+        )
 
         if latest:
             try:
-                last_num = int(latest.invoice_number.split('-')[-1])
+                last_num = int(latest.invoice_number.split("-")[-1])
                 next_num = last_num + 1
             except (ValueError, IndexError):
                 next_num = 1
@@ -92,7 +100,7 @@ def create_invoice(
     company_logo_url: Optional[str] = None,
     tenant_id: Optional[int] = None,
     created_by_id: Optional[int] = None,
-    status: str = 'draft',
+    status: str = "draft",
 ) -> Dict[str, Any]:
     """
     Create a new invoice with line items.
@@ -125,11 +133,11 @@ def create_invoice(
         # Validate client exists
         client = db.query(Client).filter(Client.id == client_id).first()
         if not client:
-            return {'success': False, 'error': 'Client not found'}
+            return {"success": False, "error": "Client not found"}
 
         # Validate items
         if not items or len(items) == 0:
-            return {'success': False, 'error': 'At least one line item is required'}
+            return {"success": False, "error": "At least one line item is required"}
 
         # Generate invoice number
         invoice_number = _generate_invoice_number(db)
@@ -155,10 +163,19 @@ def create_invoice(
         if client.address_street:
             billing_parts.append(client.address_street)
         if client.address_city or client.address_state or client.address_zip:
-            city_state_zip = ', '.join(filter(None, [
-                client.address_city,
-                f"{client.address_state} {client.address_zip}".strip() if client.address_state or client.address_zip else None
-            ]))
+            city_state_zip = ", ".join(
+                filter(
+                    None,
+                    [
+                        client.address_city,
+                        (
+                            f"{client.address_state} {client.address_zip}".strip()
+                            if client.address_state or client.address_zip
+                            else None
+                        ),
+                    ],
+                )
+            )
             billing_parts.append(city_state_zip)
 
         # Create invoice
@@ -174,7 +191,7 @@ def create_invoice(
             status=status,
             billing_name=client.name,
             billing_email=client.email,
-            billing_address='\n'.join(billing_parts) if billing_parts else None,
+            billing_address="\n".join(billing_parts) if billing_parts else None,
             company_name=company_name,
             company_address=company_address,
             company_phone=company_phone,
@@ -191,18 +208,18 @@ def create_invoice(
         discount_total = 0
 
         for i, item_data in enumerate(items):
-            description = item_data.get('description')
+            description = item_data.get("description")
             if not description:
                 db.rollback()
-                return {'success': False, 'error': f'Item {i+1} missing description'}
+                return {"success": False, "error": f"Item {i+1} missing description"}
 
-            quantity = float(item_data.get('quantity', 1.0))
-            unit_price = int(item_data.get('unit_price', 0))
+            quantity = float(item_data.get("quantity", 1.0))
+            unit_price = int(item_data.get("unit_price", 0))
             amount = int(quantity * unit_price)
-            item_type = item_data.get('item_type', 'service')
+            item_type = item_data.get("item_type", "service")
 
             # Track discounts/credits separately
-            if item_type in ('discount', 'credit'):
+            if item_type in ("discount", "credit"):
                 discount_total += abs(amount)
                 amount = -abs(amount)  # Ensure negative
             else:
@@ -215,8 +232,8 @@ def create_invoice(
                 quantity=quantity,
                 unit_price=unit_price,
                 amount=amount,
-                reference_type=item_data.get('reference_type'),
-                reference_id=item_data.get('reference_id'),
+                reference_type=item_data.get("reference_type"),
+                reference_id=item_data.get("reference_id"),
                 sort_order=i,
             )
             db.add(item)
@@ -232,15 +249,15 @@ def create_invoice(
         db.refresh(invoice)
 
         return {
-            'success': True,
-            'invoice': invoice.to_dict(),
-            'invoice_id': invoice.id,
-            'invoice_number': invoice.invoice_number,
+            "success": True,
+            "invoice": invoice.to_dict(),
+            "invoice_id": invoice.id,
+            "invoice_number": invoice.invoice_number,
         }
 
     except Exception as e:
         db.rollback()
-        return {'success': False, 'error': str(e)}
+        return {"success": False, "error": str(e)}
     finally:
         db.close()
 
@@ -251,27 +268,35 @@ def get_invoice(invoice_id: int, include_payments: bool = False) -> Dict[str, An
     try:
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
         return {
-            'success': True,
-            'invoice': invoice.to_dict(include_items=True, include_payments=include_payments),
+            "success": True,
+            "invoice": invoice.to_dict(
+                include_items=True, include_payments=include_payments
+            ),
         }
     finally:
         db.close()
 
 
-def get_invoice_by_number(invoice_number: str, include_payments: bool = False) -> Dict[str, Any]:
+def get_invoice_by_number(
+    invoice_number: str, include_payments: bool = False
+) -> Dict[str, Any]:
     """Get invoice by invoice number"""
     db = SessionLocal()
     try:
-        invoice = db.query(Invoice).filter(Invoice.invoice_number == invoice_number).first()
+        invoice = (
+            db.query(Invoice).filter(Invoice.invoice_number == invoice_number).first()
+        )
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
         return {
-            'success': True,
-            'invoice': invoice.to_dict(include_items=True, include_payments=include_payments),
+            "success": True,
+            "invoice": invoice.to_dict(
+                include_items=True, include_payments=include_payments
+            ),
         }
     finally:
         db.close()
@@ -303,15 +328,19 @@ def list_invoices(
             query = query.filter(Invoice.invoice_date <= to_date)
 
         total = query.count()
-        invoices = query.order_by(Invoice.invoice_date.desc(), Invoice.id.desc())\
-            .offset(offset).limit(limit).all()
+        invoices = (
+            query.order_by(Invoice.invoice_date.desc(), Invoice.id.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
 
         return {
-            'success': True,
-            'invoices': [inv.to_dict(include_items=False) for inv in invoices],
-            'total': total,
-            'limit': limit,
-            'offset': offset,
+            "success": True,
+            "invoices": [inv.to_dict(include_items=False) for inv in invoices],
+            "total": total,
+            "limit": limit,
+            "offset": offset,
         }
     finally:
         db.close()
@@ -331,11 +360,14 @@ def update_invoice(
     try:
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
         # Don't allow editing paid/cancelled invoices
-        if invoice.status in ('paid', 'cancelled', 'refunded'):
-            return {'success': False, 'error': f'Cannot edit invoice with status: {invoice.status}'}
+        if invoice.status in ("paid", "cancelled", "refunded"):
+            return {
+                "success": False,
+                "error": f"Cannot edit invoice with status: {invoice.status}",
+            }
 
         if title is not None:
             invoice.title = title
@@ -348,12 +380,16 @@ def update_invoice(
         if tax_rate is not None:
             invoice.tax_rate = tax_rate
             # Recalculate tax
-            invoice.tax_amount = int((invoice.subtotal - invoice.discount_amount) * invoice.tax_rate)
-            invoice.total = invoice.subtotal - invoice.discount_amount + invoice.tax_amount
+            invoice.tax_amount = int(
+                (invoice.subtotal - invoice.discount_amount) * invoice.tax_rate
+            )
+            invoice.total = (
+                invoice.subtotal - invoice.discount_amount + invoice.tax_amount
+            )
             invoice.amount_due = invoice.total - invoice.amount_paid
         if status is not None:
             if status not in INVOICE_STATUSES:
-                return {'success': False, 'error': f'Invalid status: {status}'}
+                return {"success": False, "error": f"Invalid status: {status}"}
             invoice.status = status
 
         invoice.updated_at = datetime.utcnow()
@@ -361,12 +397,12 @@ def update_invoice(
         db.refresh(invoice)
 
         return {
-            'success': True,
-            'invoice': invoice.to_dict(),
+            "success": True,
+            "invoice": invoice.to_dict(),
         }
     except Exception as e:
         db.rollback()
-        return {'success': False, 'error': str(e)}
+        return {"success": False, "error": str(e)}
     finally:
         db.close()
 
@@ -376,7 +412,7 @@ def add_item(
     description: str,
     unit_price: int,
     quantity: float = 1.0,
-    item_type: str = 'service',
+    item_type: str = "service",
     reference_type: Optional[str] = None,
     reference_id: Optional[int] = None,
 ) -> Dict[str, Any]:
@@ -385,20 +421,23 @@ def add_item(
     try:
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
-        if invoice.status in ('paid', 'cancelled', 'refunded'):
-            return {'success': False, 'error': f'Cannot modify invoice with status: {invoice.status}'}
+        if invoice.status in ("paid", "cancelled", "refunded"):
+            return {
+                "success": False,
+                "error": f"Cannot modify invoice with status: {invoice.status}",
+            }
 
         # Get next sort order
-        max_order = db.query(InvoiceItem).filter(
-            InvoiceItem.invoice_id == invoice_id
-        ).count()
+        max_order = (
+            db.query(InvoiceItem).filter(InvoiceItem.invoice_id == invoice_id).count()
+        )
 
         amount = int(quantity * unit_price)
 
         # Handle discounts/credits
-        if item_type in ('discount', 'credit'):
+        if item_type in ("discount", "credit"):
             amount = -abs(amount)
 
         item = InvoiceItem(
@@ -421,13 +460,13 @@ def add_item(
         db.refresh(invoice)
 
         return {
-            'success': True,
-            'invoice': invoice.to_dict(),
-            'item': item.to_dict(),
+            "success": True,
+            "invoice": invoice.to_dict(),
+            "item": item.to_dict(),
         }
     except Exception as e:
         db.rollback()
-        return {'success': False, 'error': str(e)}
+        return {"success": False, "error": str(e)}
     finally:
         db.close()
 
@@ -438,17 +477,21 @@ def remove_item(invoice_id: int, item_id: int) -> Dict[str, Any]:
     try:
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
-        if invoice.status in ('paid', 'cancelled', 'refunded'):
-            return {'success': False, 'error': f'Cannot modify invoice with status: {invoice.status}'}
+        if invoice.status in ("paid", "cancelled", "refunded"):
+            return {
+                "success": False,
+                "error": f"Cannot modify invoice with status: {invoice.status}",
+            }
 
-        item = db.query(InvoiceItem).filter(
-            InvoiceItem.id == item_id,
-            InvoiceItem.invoice_id == invoice_id
-        ).first()
+        item = (
+            db.query(InvoiceItem)
+            .filter(InvoiceItem.id == item_id, InvoiceItem.invoice_id == invoice_id)
+            .first()
+        )
         if not item:
-            return {'success': False, 'error': 'Item not found'}
+            return {"success": False, "error": "Item not found"}
 
         db.delete(item)
 
@@ -459,12 +502,12 @@ def remove_item(invoice_id: int, item_id: int) -> Dict[str, Any]:
         db.refresh(invoice)
 
         return {
-            'success': True,
-            'invoice': invoice.to_dict(),
+            "success": True,
+            "invoice": invoice.to_dict(),
         }
     except Exception as e:
         db.rollback()
-        return {'success': False, 'error': str(e)}
+        return {"success": False, "error": str(e)}
     finally:
         db.close()
 
@@ -477,7 +520,7 @@ def _recalculate_invoice_totals(invoice: Invoice, db) -> None:
     discount_total = 0
 
     for item in items:
-        if item.item_type in ('discount', 'credit'):
+        if item.item_type in ("discount", "credit"):
             discount_total += abs(item.amount)
         else:
             subtotal += item.amount
@@ -493,7 +536,7 @@ def _recalculate_invoice_totals(invoice: Invoice, db) -> None:
 def record_payment(
     invoice_id: int,
     amount: int,
-    payment_method: str = 'other',
+    payment_method: str = "other",
     stripe_payment_intent_id: Optional[str] = None,
     stripe_charge_id: Optional[str] = None,
     transaction_id: Optional[str] = None,
@@ -506,16 +549,22 @@ def record_payment(
     try:
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
-        if invoice.status in ('cancelled', 'refunded'):
-            return {'success': False, 'error': f'Cannot pay invoice with status: {invoice.status}'}
+        if invoice.status in ("cancelled", "refunded"):
+            return {
+                "success": False,
+                "error": f"Cannot pay invoice with status: {invoice.status}",
+            }
 
         if amount <= 0:
-            return {'success': False, 'error': 'Payment amount must be positive'}
+            return {"success": False, "error": "Payment amount must be positive"}
 
         if amount > invoice.amount_due:
-            return {'success': False, 'error': f'Payment amount ({amount}) exceeds amount due ({invoice.amount_due})'}
+            return {
+                "success": False,
+                "error": f"Payment amount ({amount}) exceeds amount due ({invoice.amount_due})",
+            }
 
         payment = InvoicePayment(
             invoice_id=invoice_id,
@@ -527,7 +576,7 @@ def record_payment(
             notes=notes,
             recorded_by_id=recorded_by_id,
             paid_at=paid_at or datetime.utcnow(),
-            status='completed',
+            status="completed",
         )
         db.add(payment)
 
@@ -541,10 +590,10 @@ def record_payment(
 
         # Update status based on payment
         if invoice.amount_due <= 0:
-            invoice.status = 'paid'
+            invoice.status = "paid"
             invoice.paid_at = payment.paid_at
         elif invoice.amount_paid > 0:
-            invoice.status = 'partial'
+            invoice.status = "partial"
 
         invoice.updated_at = datetime.utcnow()
 
@@ -552,14 +601,14 @@ def record_payment(
         db.refresh(invoice)
 
         return {
-            'success': True,
-            'invoice': invoice.to_dict(include_payments=True),
-            'payment': payment.to_dict(),
-            'fully_paid': invoice.amount_due <= 0,
+            "success": True,
+            "invoice": invoice.to_dict(include_payments=True),
+            "payment": payment.to_dict(),
+            "fully_paid": invoice.amount_due <= 0,
         }
     except Exception as e:
         db.rollback()
-        return {'success': False, 'error': str(e)}
+        return {"success": False, "error": str(e)}
     finally:
         db.close()
 
@@ -570,28 +619,33 @@ def void_invoice(invoice_id: int, reason: Optional[str] = None) -> Dict[str, Any
     try:
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
-        if invoice.status == 'paid':
-            return {'success': False, 'error': 'Cannot void a paid invoice - use refund instead'}
+        if invoice.status == "paid":
+            return {
+                "success": False,
+                "error": "Cannot void a paid invoice - use refund instead",
+            }
 
-        if invoice.status == 'cancelled':
-            return {'success': False, 'error': 'Invoice already cancelled'}
+        if invoice.status == "cancelled":
+            return {"success": False, "error": "Invoice already cancelled"}
 
-        invoice.status = 'cancelled'
+        invoice.status = "cancelled"
         if reason:
-            invoice.internal_notes = (invoice.internal_notes or '') + f'\n\nVoided: {reason}'
+            invoice.internal_notes = (
+                invoice.internal_notes or ""
+            ) + f"\n\nVoided: {reason}"
         invoice.updated_at = datetime.utcnow()
 
         db.commit()
 
         return {
-            'success': True,
-            'invoice': invoice.to_dict(),
+            "success": True,
+            "invoice": invoice.to_dict(),
         }
     except Exception as e:
         db.rollback()
-        return {'success': False, 'error': str(e)}
+        return {"success": False, "error": str(e)}
     finally:
         db.close()
 
@@ -602,10 +656,10 @@ def mark_sent(invoice_id: int) -> Dict[str, Any]:
     try:
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
-        if invoice.status == 'draft':
-            invoice.status = 'sent'
+        if invoice.status == "draft":
+            invoice.status = "sent"
         invoice.sent_at = datetime.utcnow()
         invoice.email_sent_count = (invoice.email_sent_count or 0) + 1
         invoice.updated_at = datetime.utcnow()
@@ -614,8 +668,8 @@ def mark_sent(invoice_id: int) -> Dict[str, Any]:
         db.refresh(invoice)
 
         return {
-            'success': True,
-            'invoice': invoice.to_dict(),
+            "success": True,
+            "invoice": invoice.to_dict(),
         }
     finally:
         db.close()
@@ -627,20 +681,20 @@ def mark_viewed(invoice_id: int) -> Dict[str, Any]:
     try:
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
         if not invoice.viewed_at:
             invoice.viewed_at = datetime.utcnow()
-        if invoice.status == 'sent':
-            invoice.status = 'viewed'
+        if invoice.status == "sent":
+            invoice.status = "viewed"
         invoice.updated_at = datetime.utcnow()
 
         db.commit()
         db.refresh(invoice)
 
         return {
-            'success': True,
-            'invoice': invoice.to_dict(),
+            "success": True,
+            "invoice": invoice.to_dict(),
         }
     finally:
         db.close()
@@ -653,24 +707,28 @@ def check_overdue_invoices() -> Dict[str, Any]:
         today = date.today()
 
         # Find invoices that are overdue
-        overdue_invoices = db.query(Invoice).filter(
-            Invoice.status.in_(['sent', 'viewed', 'partial']),
-            Invoice.due_date < today,
-            Invoice.amount_due > 0,
-        ).all()
+        overdue_invoices = (
+            db.query(Invoice)
+            .filter(
+                Invoice.status.in_(["sent", "viewed", "partial"]),
+                Invoice.due_date < today,
+                Invoice.amount_due > 0,
+            )
+            .all()
+        )
 
         updated = 0
         for invoice in overdue_invoices:
-            invoice.status = 'overdue'
+            invoice.status = "overdue"
             invoice.updated_at = datetime.utcnow()
             updated += 1
 
         db.commit()
 
         return {
-            'success': True,
-            'updated_count': updated,
-            'overdue_invoice_ids': [inv.id for inv in overdue_invoices],
+            "success": True,
+            "updated_count": updated,
+            "overdue_invoice_ids": [inv.id for inv in overdue_invoices],
         }
     finally:
         db.close()
@@ -679,13 +737,13 @@ def check_overdue_invoices() -> Dict[str, Any]:
 def generate_invoice_pdf(invoice_id: int) -> Dict[str, Any]:
     """Generate PDF for an invoice"""
     if not WEASYPRINT_AVAILABLE:
-        return {'success': False, 'error': 'WeasyPrint not installed'}
+        return {"success": False, "error": "WeasyPrint not installed"}
 
     db = SessionLocal()
     try:
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
         # Build HTML
         html_content = _build_invoice_html(invoice)
@@ -707,12 +765,12 @@ def generate_invoice_pdf(invoice_id: int) -> Dict[str, Any]:
         db.commit()
 
         return {
-            'success': True,
-            'pdf_filename': filename,
-            'pdf_path': filepath,
+            "success": True,
+            "pdf_filename": filename,
+            "pdf_path": filepath,
         }
     except Exception as e:
-        return {'success': False, 'error': str(e)}
+        return {"success": False, "error": str(e)}
     finally:
         db.close()
 
@@ -738,16 +796,16 @@ def _build_invoice_html(invoice: Invoice) -> str:
 
     # Status badge color
     status_colors = {
-        'draft': '#6b7280',
-        'sent': '#3b82f6',
-        'viewed': '#8b5cf6',
-        'paid': '#22c55e',
-        'partial': '#f59e0b',
-        'overdue': '#ef4444',
-        'cancelled': '#6b7280',
-        'refunded': '#6b7280',
+        "draft": "#6b7280",
+        "sent": "#3b82f6",
+        "viewed": "#8b5cf6",
+        "paid": "#22c55e",
+        "partial": "#f59e0b",
+        "overdue": "#ef4444",
+        "cancelled": "#6b7280",
+        "refunded": "#6b7280",
     }
-    status_color = status_colors.get(invoice.status, '#6b7280')
+    status_color = status_colors.get(invoice.status, "#6b7280")
 
     html = f"""
     <!DOCTYPE html>
@@ -920,22 +978,22 @@ def send_invoice_email(invoice_id: int) -> Dict[str, Any]:
     try:
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
         if not invoice.billing_email:
-            return {'success': False, 'error': 'Client has no email address'}
+            return {"success": False, "error": "Client has no email address"}
 
         # Generate PDF if not already generated
         if not invoice.pdf_filename:
             pdf_result = generate_invoice_pdf(invoice_id)
-            if not pdf_result.get('success'):
+            if not pdf_result.get("success"):
                 return pdf_result
 
         # Import email service
         try:
             from services.email_service import send_email_with_attachment
         except ImportError:
-            return {'success': False, 'error': 'Email service not available'}
+            return {"success": False, "error": "Email service not available"}
 
         # Build email
         subject = f"Invoice {invoice.invoice_number} from {invoice.company_name or DEFAULT_COMPANY_NAME}"
@@ -972,14 +1030,14 @@ Thank you for your business!
             attachment_name=invoice.pdf_filename,
         )
 
-        if result.get('success'):
+        if result.get("success"):
             # Mark as sent
             mark_sent(invoice_id)
 
         return result
 
     except Exception as e:
-        return {'success': False, 'error': str(e)}
+        return {"success": False, "error": str(e)}
     finally:
         db.close()
 
@@ -1001,27 +1059,27 @@ def get_invoice_stats(
         invoices = query.all()
 
         stats = {
-            'total_invoices': len(invoices),
-            'total_invoiced': 0,
-            'total_paid': 0,
-            'total_outstanding': 0,
-            'by_status': {},
+            "total_invoices": len(invoices),
+            "total_invoiced": 0,
+            "total_paid": 0,
+            "total_outstanding": 0,
+            "by_status": {},
         }
 
         for inv in invoices:
-            stats['total_invoiced'] += inv.total
-            stats['total_paid'] += inv.amount_paid
-            stats['total_outstanding'] += inv.amount_due
+            stats["total_invoiced"] += inv.total
+            stats["total_paid"] += inv.amount_paid
+            stats["total_outstanding"] += inv.amount_due
 
             status = inv.status
-            if status not in stats['by_status']:
-                stats['by_status'][status] = {'count': 0, 'total': 0}
-            stats['by_status'][status]['count'] += 1
-            stats['by_status'][status]['total'] += inv.total
+            if status not in stats["by_status"]:
+                stats["by_status"][status] = {"count": 0, "total": 0}
+            stats["by_status"][status]["count"] += 1
+            stats["by_status"][status]["total"] += inv.total
 
         return {
-            'success': True,
-            'stats': stats,
+            "success": True,
+            "stats": stats,
         }
     finally:
         db.close()
@@ -1038,10 +1096,10 @@ def delete_invoice(invoice_id: int) -> Dict[str, Any]:
     try:
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if not invoice:
-            return {'success': False, 'error': 'Invoice not found'}
+            return {"success": False, "error": "Invoice not found"}
 
-        if invoice.status != 'draft':
-            return {'success': False, 'error': 'Only draft invoices can be deleted'}
+        if invoice.status != "draft":
+            return {"success": False, "error": "Only draft invoices can be deleted"}
 
         # Delete PDF if exists
         if invoice.pdf_filename:
@@ -1052,10 +1110,10 @@ def delete_invoice(invoice_id: int) -> Dict[str, Any]:
         db.delete(invoice)
         db.commit()
 
-        return {'success': True}
+        return {"success": True}
     except Exception as e:
         db.rollback()
-        return {'success': False, 'error': str(e)}
+        return {"success": False, "error": str(e)}
     finally:
         db.close()
 
@@ -1069,15 +1127,17 @@ def create_invoice_for_round(
     """Create an invoice for a dispute round"""
     return create_invoice(
         client_id=client_id,
-        items=[{
-            'description': f'Dispute Round {round_number} Services',
-            'item_type': 'round',
-            'unit_price': amount,
-            'quantity': 1,
-            'reference_type': 'dispute_round',
-            'reference_id': round_number,
-        }],
-        title=f'Dispute Round {round_number}',
+        items=[
+            {
+                "description": f"Dispute Round {round_number} Services",
+                "item_type": "round",
+                "unit_price": amount,
+                "quantity": 1,
+                "reference_type": "dispute_round",
+                "reference_id": round_number,
+            }
+        ],
+        title=f"Dispute Round {round_number}",
         created_by_id=created_by_id,
     )
 
@@ -1091,15 +1151,17 @@ def create_invoice_for_analysis(
     """Create an invoice for credit analysis"""
     return create_invoice(
         client_id=client_id,
-        items=[{
-            'description': 'Full Credit Analysis',
-            'item_type': 'analysis',
-            'unit_price': amount,
-            'quantity': 1,
-            'reference_type': 'analysis',
-            'reference_id': analysis_id,
-        }],
-        title='Credit Analysis',
+        items=[
+            {
+                "description": "Full Credit Analysis",
+                "item_type": "analysis",
+                "unit_price": amount,
+                "quantity": 1,
+                "reference_type": "analysis",
+                "reference_id": analysis_id,
+            }
+        ],
+        title="Credit Analysis",
         created_by_id=created_by_id,
     )
 
@@ -1116,14 +1178,16 @@ def create_invoice_for_settlement(
 
     return create_invoice(
         client_id=client_id,
-        items=[{
-            'description': f'Settlement Fee (30% of ${settlement_amount / 100:,.2f})',
-            'item_type': 'settlement',
-            'unit_price': fee_amount,
-            'quantity': 1,
-            'reference_type': 'settlement',
-            'reference_id': settlement_id,
-        }],
-        title='Settlement Fee',
+        items=[
+            {
+                "description": f"Settlement Fee (30% of ${settlement_amount / 100:,.2f})",
+                "item_type": "settlement",
+                "unit_price": fee_amount,
+                "quantity": 1,
+                "reference_type": "settlement",
+                "reference_id": settlement_id,
+            }
+        ],
+        title="Settlement Fee",
         created_by_id=created_by_id,
     )

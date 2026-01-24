@@ -8,7 +8,7 @@ Uses fpdf2 for PDF generation and python-docx for Word document generation.
 import os
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 from docx import Document
 from docx.shared import Pt
@@ -75,7 +75,10 @@ class PIICorrectionPDF(FPDF):
 def get_client_pii(client) -> Dict[str, Any]:
     """Extract PII from client object or dict"""
     if isinstance(client, dict):
-        name = client.get("name", "") or f"{client.get('first_name', '')} {client.get('last_name', '')}".strip()
+        name = (
+            client.get("name", "")
+            or f"{client.get('first_name', '')} {client.get('last_name', '')}".strip()
+        )
         return {
             "name": name,
             "first_name": client.get("first_name", ""),
@@ -88,7 +91,8 @@ def get_client_pii(client) -> Dict[str, Any]:
             "date_of_birth": client.get("date_of_birth", None),
             "email": client.get("email", ""),
             "phone": client.get("phone", ""),
-            "employer": client.get("employer", "") or client.get("employer_company", ""),
+            "employer": client.get("employer", "")
+            or client.get("employer_company", ""),
         }
     else:
         name = client.name or ""
@@ -106,7 +110,9 @@ def get_client_pii(client) -> Dict[str, Any]:
             "date_of_birth": client.date_of_birth,
             "email": client.email or "",
             "phone": client.phone or "",
-            "employer": getattr(client, "employer", "") or getattr(client, "employer_company", "") or "",
+            "employer": getattr(client, "employer", "")
+            or getattr(client, "employer_company", "")
+            or "",
         }
 
 
@@ -145,7 +151,9 @@ def generate_pii_correction_letter(
         dict: Letter content for PDF generation
     """
     if bureau_name not in CRA_ADDRESSES:
-        raise ValueError(f"Unknown bureau: {bureau_name}. Must be one of: {list(CRA_ADDRESSES.keys())}")
+        raise ValueError(
+            f"Unknown bureau: {bureau_name}. Must be one of: {list(CRA_ADDRESSES.keys())}"
+        )
 
     bureau_info = CRA_ADDRESSES[bureau_name]
     client_pii = get_client_pii(client)
@@ -161,7 +169,7 @@ def generate_pii_correction_letter(
     if "address" not in correct_pii:
         addr_parts = [
             client_pii["address_street"],
-            f"{client_pii['address_city']}, {client_pii['address_state']} {client_pii['address_zip']}"
+            f"{client_pii['address_city']}, {client_pii['address_state']} {client_pii['address_zip']}",
         ]
         correct_pii["address"] = ", ".join(p for p in addr_parts if p.strip())
     if "ssn" not in correct_pii:
@@ -181,7 +189,9 @@ def generate_pii_correction_letter(
 
     # Generate case number if not provided
     if not case_number:
-        case_number = f"PII-{datetime.now().strftime('%Y%m%d')}-{client_pii['ssn_last_four']}"
+        case_number = (
+            f"PII-{datetime.now().strftime('%Y%m%d')}-{client_pii['ssn_last_four']}"
+        )
 
     bureau_full_address = f"{bureau_info['dispute_address']}\n{bureau_info['city']}, {bureau_info['state']} {bureau_info['zip']}"
 
@@ -231,8 +241,15 @@ def _add_pii_letter_to_pdf(pdf: FPDF, letter_content: Dict[str, Any]) -> None:
     # Subject line
     pdf.set_font("Arial", "B", 11)
     pdf.cell(0, 6, "=" * 70, ln=True)
-    pdf.cell(0, 8, "RE: FORMAL DEMAND TO CORRECT PERSONAL IDENTIFYING INFORMATION", ln=True)
-    pdf.cell(0, 6, "FCRA Sections 1681e(b), 1681i - INACCURATE PII VIOLATES FEDERAL LAW", ln=True)
+    pdf.cell(
+        0, 8, "RE: FORMAL DEMAND TO CORRECT PERSONAL IDENTIFYING INFORMATION", ln=True
+    )
+    pdf.cell(
+        0,
+        6,
+        "FCRA Sections 1681e(b), 1681i - INACCURATE PII VIOLATES FEDERAL LAW",
+        ln=True,
+    )
     pdf.cell(0, 6, "=" * 70, ln=True)
     pdf.ln(4)
 
@@ -258,7 +275,9 @@ def _add_pii_letter_to_pdf(pdf: FPDF, letter_content: Dict[str, Any]) -> None:
     pdf.multi_cell(0, 6, intro)
     pdf.ln(4)
     pdf.set_font("Arial", "B", 11)
-    pdf.cell(0, 6, "This is not a request. This is a DEMAND backed by federal law.", ln=True)
+    pdf.cell(
+        0, 6, "This is not a request. This is a DEMAND backed by federal law.", ln=True
+    )
     pdf.set_font("Arial", "", 11)
     pdf.ln(6)
 
@@ -402,10 +421,14 @@ def _add_pii_letter_to_pdf(pdf: FPDF, letter_content: Dict[str, Any]) -> None:
     pdf.set_font("Arial", "", 11)
     pdf.cell(0, 6, "- Copy of government-issued photo ID", ln=True)
     pdf.cell(0, 6, "- Copy of Social Security Card", ln=True)
-    pdf.cell(0, 6, "- Proof of current address (utility bill or bank statement)", ln=True)
+    pdf.cell(
+        0, 6, "- Proof of current address (utility bill or bank statement)", ln=True
+    )
 
 
-def _add_pii_letter_to_docx(doc: Document, letter_content: Dict[str, Any], add_page_break: bool = True) -> None:
+def _add_pii_letter_to_docx(
+    doc: Document, letter_content: Dict[str, Any], add_page_break: bool = True
+) -> None:
     """Add a single PII correction letter to the Word document"""
 
     def add_para(text: str, bold: bool = False, size: int = 11):
@@ -438,7 +461,9 @@ def _add_pii_letter_to_docx(doc: Document, letter_content: Dict[str, Any], add_p
     # Subject
     add_para("=" * 70)
     add_para("RE: FORMAL DEMAND TO CORRECT PERSONAL IDENTIFYING INFORMATION", bold=True)
-    add_para("FCRA Sections 1681e(b), 1681i - INACCURATE PII VIOLATES FEDERAL LAW", bold=True)
+    add_para(
+        "FCRA Sections 1681e(b), 1681i - INACCURATE PII VIOLATES FEDERAL LAW", bold=True
+    )
     add_para("=" * 70)
     doc.add_paragraph()
 
@@ -457,7 +482,9 @@ def _add_pii_letter_to_docx(doc: Document, letter_content: Dict[str, Any], add_p
         "INACCURATE PERSONAL IDENTIFYING INFORMATION in violation of FCRA Section 1681e(b)."
     )
     add_para(intro)
-    add_para("This is not a request. This is a DEMAND backed by federal law.", bold=True)
+    add_para(
+        "This is not a request. This is a DEMAND backed by federal law.", bold=True
+    )
     doc.add_paragraph()
 
     # Section 1
@@ -507,7 +534,10 @@ def _add_pii_letter_to_docx(doc: Document, letter_content: Dict[str, Any], add_p
     add_para("2. Identity theft vulnerability")
     add_para("3. Inaccurate credit reporting")
     add_para("4. Employment and housing impact")
-    add_para("EVERY DAY you maintain inaccurate PII = continuing Section 1681e(b) violation.", bold=True)
+    add_para(
+        "EVERY DAY you maintain inaccurate PII = continuing Section 1681e(b) violation.",
+        bold=True,
+    )
     doc.add_paragraph()
 
     # Section 4
@@ -519,7 +549,10 @@ def _add_pii_letter_to_docx(doc: Document, letter_content: Dict[str, Any], add_p
     add_para("Mixed file (if applicable): $1,000+")
     add_para("Punitive (if willful): 2-4x statutory")
     add_para("Attorney fees: $15,000+")
-    add_para("You are on notice. Continued inaccuracy after this letter = willfulness under Safeco v. Burr.", bold=True)
+    add_para(
+        "You are on notice. Continued inaccuracy after this letter = willfulness under Safeco v. Burr.",
+        bold=True,
+    )
     doc.add_paragraph()
 
     # Section 5
@@ -530,7 +563,9 @@ def _add_pii_letter_to_docx(doc: Document, letter_content: Dict[str, Any], add_p
     add_para("1. DELETE all incorrect PII listed in Section 1")
     add_para("2. CONFIRM corrections in writing within 30 days")
     add_para("3. PROVIDE updated disclosure showing ONLY correct PII")
-    add_para("Non-compliance = CFPB, FTC, State AG complaints + FCRA litigation.", bold=True)
+    add_para(
+        "Non-compliance = CFPB, FTC, State AG complaints + FCRA litigation.", bold=True
+    )
     doc.add_paragraph()
 
     # Signature
@@ -602,7 +637,9 @@ def generate_pii_correction_letters(
         batch_uuid = str(uuid.uuid4())
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         client_name_safe = "".join(
-            c for c in (client.name or client.last_name or "client") if c.isalnum() or c in " _-"
+            c
+            for c in (client.name or client.last_name or "client")
+            if c.isalnum() or c in " _-"
         ).replace(" ", "_")
 
         pdf_filename = f"{client_name_safe}_PII_Correction_{timestamp}.pdf"
@@ -676,7 +713,9 @@ def generate_pii_correction_for_bureau(
     )
 
 
-def get_pii_discrepancies_from_report(parsed_report: Dict[str, Any]) -> Dict[str, List[str]]:
+def get_pii_discrepancies_from_report(
+    parsed_report: Dict[str, Any],
+) -> Dict[str, List[str]]:
     """
     Extract PII discrepancies from a parsed credit report.
 
@@ -731,7 +770,9 @@ def get_pii_discrepancies_from_report(parsed_report: Dict[str, Any]) -> Dict[str
 
 
 # Convenience function for quick PII-only dispute
-def generate_pii_only_dispute(client_id: int, incorrect_items: Dict[str, List[str]]) -> Dict[str, Any]:
+def generate_pii_only_dispute(
+    client_id: int, incorrect_items: Dict[str, List[str]]
+) -> Dict[str, Any]:
     """
     Quick function to generate PII correction letters for a client with clean credit
     who only needs PII corrections (no negative items to dispute).

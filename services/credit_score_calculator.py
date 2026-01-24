@@ -963,6 +963,7 @@ def quick_estimate(current_score, num_negatives):
 # PORTAL SCORE SIMULATOR FUNCTIONS
 # =============================================================
 
+
 def get_client_dispute_items_with_impact(client_id):
     """
     Get a client's dispute items with estimated score impact for each.
@@ -975,7 +976,7 @@ def get_client_dispute_items_with_impact(client_id):
         items = (
             db.query(DisputeItem)
             .filter_by(client_id=client_id)
-            .filter(DisputeItem.status.notin_(['deleted', 'removed']))
+            .filter(DisputeItem.status.notin_(["deleted", "removed"]))
             .order_by(DisputeItem.bureau, DisputeItem.creditor_name)
             .all()
         )
@@ -985,26 +986,30 @@ def get_client_dispute_items_with_impact(client_id):
             item_type = categorize_violation_type(
                 f"{item.item_type} {item.creditor_name} {item.reason_for_dispute or ''}"
             )
-            impact = SCORE_IMPACT_BY_TYPE.get(item_type, SCORE_IMPACT_BY_TYPE["unknown"])
+            impact = SCORE_IMPACT_BY_TYPE.get(
+                item_type, SCORE_IMPACT_BY_TYPE["unknown"]
+            )
 
-            result.append({
-                "id": item.id,
-                "bureau": item.bureau,
-                "creditor_name": item.creditor_name,
-                "account_id": item.account_id,
-                "item_type": item.item_type,
-                "classified_type": item_type,
-                "status": item.status,
-                "dispute_round": item.dispute_round,
-                "impact": {
-                    "min": impact["min"],
-                    "max": impact["max"],
-                    "avg": impact["avg"],
-                    "label": impact["label"],
-                    "severity": impact.get("severity", "moderate"),
-                    "category": impact.get("category", "other"),
-                },
-            })
+            result.append(
+                {
+                    "id": item.id,
+                    "bureau": item.bureau,
+                    "creditor_name": item.creditor_name,
+                    "account_id": item.account_id,
+                    "item_type": item.item_type,
+                    "classified_type": item_type,
+                    "status": item.status,
+                    "dispute_round": item.dispute_round,
+                    "impact": {
+                        "min": impact["min"],
+                        "max": impact["max"],
+                        "avg": impact["avg"],
+                        "label": impact["label"],
+                        "severity": impact.get("severity", "moderate"),
+                        "category": impact.get("category", "other"),
+                    },
+                }
+            )
 
         return result
     finally:
@@ -1064,18 +1069,22 @@ def simulate_score_with_items(client_id, selected_item_ids, current_score=None):
             item_type = categorize_violation_type(
                 f"{item.item_type} {item.creditor_name} {item.reason_for_dispute or ''}"
             )
-            impact = SCORE_IMPACT_BY_TYPE.get(item_type, SCORE_IMPACT_BY_TYPE["unknown"])
+            impact = SCORE_IMPACT_BY_TYPE.get(
+                item_type, SCORE_IMPACT_BY_TYPE["unknown"]
+            )
 
             selected_items_for_calc.append({"type": item_type, "count": 1})
-            item_details.append({
-                "id": item.id,
-                "bureau": item.bureau,
-                "creditor_name": item.creditor_name,
-                "item_type": item_type,
-                "impact_avg": impact["avg"],
-                "impact_range": f"{impact['min']}-{impact['max']}",
-                "severity": impact.get("severity", "moderate"),
-            })
+            item_details.append(
+                {
+                    "id": item.id,
+                    "bureau": item.bureau,
+                    "creditor_name": item.creditor_name,
+                    "item_type": item_type,
+                    "impact_avg": impact["avg"],
+                    "impact_range": f"{impact['min']}-{impact['max']}",
+                    "severity": impact.get("severity", "moderate"),
+                }
+            )
 
         # Run calculation
         projection = estimate_by_item_types(current_score, selected_items_for_calc)
@@ -1104,8 +1113,16 @@ def _calculate_confidence(items):
     high_confidence_types = ["collection", "inquiry", "late_payment_30", "hard_inquiry"]
     low_confidence_types = ["bankruptcy", "foreclosure", "judgment", "identity_theft"]
 
-    high_count = sum(1 for item in items if categorize_violation_type(item.item_type) in high_confidence_types)
-    low_count = sum(1 for item in items if categorize_violation_type(item.item_type) in low_confidence_types)
+    high_count = sum(
+        1
+        for item in items
+        if categorize_violation_type(item.item_type) in high_confidence_types
+    )
+    low_count = sum(
+        1
+        for item in items
+        if categorize_violation_type(item.item_type) in low_confidence_types
+    )
 
     if low_count > len(items) * 0.3:
         return "low"
@@ -1255,9 +1272,7 @@ def get_goal_recommendations(current_score, target_score):
 
     # Prioritize by impact
     sorted_types = sorted(
-        SCORE_IMPACT_BY_TYPE.items(),
-        key=lambda x: x[1]["avg"],
-        reverse=True
+        SCORE_IMPACT_BY_TYPE.items(), key=lambda x: x[1]["avg"], reverse=True
     )
 
     points_remaining = gap
@@ -1269,12 +1284,14 @@ def get_goal_recommendations(current_score, target_score):
         if type_data["category"] in ["fraud", "error"]:
             continue  # Skip fraud/error as those are special cases
 
-        suggested_removals.append({
-            "type": type_key,
-            "label": type_data["label"],
-            "avg_impact": type_data["avg"],
-            "category": type_data["category"],
-        })
+        suggested_removals.append(
+            {
+                "type": type_key,
+                "label": type_data["label"],
+                "avg_impact": type_data["avg"],
+                "category": type_data["category"],
+            }
+        )
         points_remaining -= type_data["avg"]
 
     # Build recommendations
@@ -1282,7 +1299,9 @@ def get_goal_recommendations(current_score, target_score):
         recommendations.append("Focus on removing hard inquiries and small collections")
         recommendations.append("Your goal is achievable with minimal removals")
     elif gap <= 75:
-        recommendations.append("Target collections and late payments for biggest impact")
+        recommendations.append(
+            "Target collections and late payments for biggest impact"
+        )
         recommendations.append("Consider disputing inaccurate account statuses")
     elif gap <= 150:
         recommendations.append("Focus on major derogatory items like charge-offs")
@@ -1328,8 +1347,8 @@ def get_portal_score_summary(client_id):
 
         # Get dispute items count
         items = db.query(DisputeItem).filter_by(client_id=client_id).all()
-        active_items = [i for i in items if i.status not in ['deleted', 'removed']]
-        removed_items = [i for i in items if i.status in ['deleted', 'removed']]
+        active_items = [i for i in items if i.status not in ["deleted", "removed"]]
+        removed_items = [i for i in items if i.status in ["deleted", "removed"]]
 
         # Get saved scenarios
         scenarios = get_client_scenarios(client_id)
@@ -1341,7 +1360,9 @@ def get_portal_score_summary(client_id):
                 "experian": snapshot.experian_score if snapshot else None,
                 "transunion": snapshot.transunion_score if snapshot else None,
                 "average": snapshot.average_score if snapshot else None,
-                "range": get_score_range_label(snapshot.average_score if snapshot else None),
+                "range": get_score_range_label(
+                    snapshot.average_score if snapshot else None
+                ),
                 "snapshot_date": snapshot.created_at.isoformat() if snapshot else None,
             },
             "items": {

@@ -13,52 +13,61 @@ Integrates with SendCertifiedMail for automated mailing queue.
 """
 
 import io
-import os
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, Image, HRFlowable
+    HRFlowable,
+    Image,
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
 )
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 from database import Client, SessionLocal
-from services.sendcertified_service import SendCertifiedService, get_sendcertified_service
+from services.sendcertified_service import (
+    SendCertifiedService,
+    get_sendcertified_service,
+)
 
 logger = logging.getLogger(__name__)
 
 
 # Bureau fraud department addresses (for 5-Day Knockout under FCRA §605B)
 BUREAU_FRAUD_ADDRESSES = {
-    'Experian': {
-        'name': 'Experian Fraud Department',
-        'street': 'P.O. Box 9554',
-        'city': 'Allen',
-        'state': 'TX',
-        'zip': '75013',
-        'full': 'P.O. Box 9554, Allen, TX 75013',
+    "Experian": {
+        "name": "Experian Fraud Department",
+        "street": "P.O. Box 9554",
+        "city": "Allen",
+        "state": "TX",
+        "zip": "75013",
+        "full": "P.O. Box 9554, Allen, TX 75013",
     },
-    'Equifax': {
-        'name': 'Equifax Information Services LLC',
-        'street': 'P.O. Box 105069',
-        'city': 'Atlanta',
-        'state': 'GA',
-        'zip': '30348',
-        'full': 'P.O. Box 105069, Atlanta, GA 30348',
+    "Equifax": {
+        "name": "Equifax Information Services LLC",
+        "street": "P.O. Box 105069",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30348",
+        "full": "P.O. Box 105069, Atlanta, GA 30348",
     },
-    'TransUnion': {
-        'name': 'TransUnion Fraud Victim Assistance Dept',
-        'street': 'P.O. Box 2000',
-        'city': 'Chester',
-        'state': 'PA',
-        'zip': '19016',
-        'full': 'Fraud Victim Assistance Dept, P.O. Box 2000, Chester, PA 19016',
+    "TransUnion": {
+        "name": "TransUnion Fraud Victim Assistance Dept",
+        "street": "P.O. Box 2000",
+        "city": "Chester",
+        "state": "PA",
+        "zip": "19016",
+        "full": "Fraud Victim Assistance Dept, P.O. Box 2000, Chester, PA 19016",
     },
 }
 
@@ -75,47 +84,57 @@ class EnvelopePacketService:
 
     def _setup_custom_styles(self):
         """Setup custom paragraph styles for documents"""
-        self.styles.add(ParagraphStyle(
-            name='CoverTitle',
-            parent=self.styles['Heading1'],
-            fontSize=18,
-            alignment=TA_CENTER,
-            spaceAfter=20,
-            textColor=colors.HexColor('#1a1a2e'),
-        ))
-        self.styles.add(ParagraphStyle(
-            name='BureauAddress',
-            parent=self.styles['Normal'],
-            fontSize=12,
-            alignment=TA_LEFT,
-            spaceAfter=6,
-            leftIndent=0,
-        ))
-        self.styles.add(ParagraphStyle(
-            name='ChecklistItem',
-            parent=self.styles['Normal'],
-            fontSize=11,
-            alignment=TA_LEFT,
-            spaceAfter=8,
-            leftIndent=20,
-        ))
-        self.styles.add(ParagraphStyle(
-            name='ImportantNote',
-            parent=self.styles['Normal'],
-            fontSize=10,
-            alignment=TA_LEFT,
-            backColor=colors.HexColor('#fff3cd'),
-            borderPadding=10,
-            spaceAfter=12,
-        ))
-        self.styles.add(ParagraphStyle(
-            name='SectionHeader',
-            parent=self.styles['Heading2'],
-            fontSize=14,
-            textColor=colors.HexColor('#0066cc'),
-            spaceBefore=15,
-            spaceAfter=10,
-        ))
+        self.styles.add(
+            ParagraphStyle(
+                name="CoverTitle",
+                parent=self.styles["Heading1"],
+                fontSize=18,
+                alignment=TA_CENTER,
+                spaceAfter=20,
+                textColor=colors.HexColor("#1a1a2e"),
+            )
+        )
+        self.styles.add(
+            ParagraphStyle(
+                name="BureauAddress",
+                parent=self.styles["Normal"],
+                fontSize=12,
+                alignment=TA_LEFT,
+                spaceAfter=6,
+                leftIndent=0,
+            )
+        )
+        self.styles.add(
+            ParagraphStyle(
+                name="ChecklistItem",
+                parent=self.styles["Normal"],
+                fontSize=11,
+                alignment=TA_LEFT,
+                spaceAfter=8,
+                leftIndent=20,
+            )
+        )
+        self.styles.add(
+            ParagraphStyle(
+                name="ImportantNote",
+                parent=self.styles["Normal"],
+                fontSize=10,
+                alignment=TA_LEFT,
+                backColor=colors.HexColor("#fff3cd"),
+                borderPadding=10,
+                spaceAfter=12,
+            )
+        )
+        self.styles.add(
+            ParagraphStyle(
+                name="SectionHeader",
+                parent=self.styles["Heading2"],
+                fontSize=14,
+                textColor=colors.HexColor("#0066cc"),
+                spaceBefore=15,
+                spaceAfter=10,
+            )
+        )
 
     def create_cover_sheet(
         self,
@@ -140,10 +159,10 @@ class EnvelopePacketService:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=letter,
-            rightMargin=0.75*inch,
-            leftMargin=0.75*inch,
-            topMargin=0.75*inch,
-            bottomMargin=0.75*inch,
+            rightMargin=0.75 * inch,
+            leftMargin=0.75 * inch,
+            topMargin=0.75 * inch,
+            bottomMargin=0.75 * inch,
         )
 
         elements = []
@@ -151,49 +170,68 @@ class EnvelopePacketService:
         bureau_info = BUREAU_FRAUD_ADDRESSES.get(bureau, {})
 
         # Header
-        elements.append(Paragraph(
-            f"5-DAY KNOCK-OUT PACKET",
-            self.styles['CoverTitle']
-        ))
-        elements.append(Paragraph(
-            f"<b>FCRA §605B Identity Theft Block Request</b>",
-            ParagraphStyle(
-                name='Subtitle',
-                parent=self.styles['Normal'],
-                fontSize=14,
-                alignment=TA_CENTER,
+        elements.append(Paragraph(f"5-DAY KNOCK-OUT PACKET", self.styles["CoverTitle"]))
+        elements.append(
+            Paragraph(
+                f"<b>FCRA §605B Identity Theft Block Request</b>",
+                ParagraphStyle(
+                    name="Subtitle",
+                    parent=self.styles["Normal"],
+                    fontSize=14,
+                    alignment=TA_CENTER,
+                    spaceAfter=20,
+                ),
+            )
+        )
+        elements.append(
+            HRFlowable(
+                width="100%",
+                thickness=2,
+                color=colors.HexColor("#0066cc"),
                 spaceAfter=20,
             )
-        ))
-        elements.append(HRFlowable(
-            width="100%",
-            thickness=2,
-            color=colors.HexColor('#0066cc'),
-            spaceAfter=20,
-        ))
+        )
 
         # Bureau Address Section
-        elements.append(Paragraph("SEND TO:", self.styles['SectionHeader']))
-        elements.append(Paragraph(f"<b>{bureau_info.get('name', bureau)}</b>", self.styles['BureauAddress']))
-        elements.append(Paragraph(bureau_info.get('street', ''), self.styles['BureauAddress']))
-        elements.append(Paragraph(
-            f"{bureau_info.get('city', '')}, {bureau_info.get('state', '')} {bureau_info.get('zip', '')}",
-            self.styles['BureauAddress']
-        ))
+        elements.append(Paragraph("SEND TO:", self.styles["SectionHeader"]))
+        elements.append(
+            Paragraph(
+                f"<b>{bureau_info.get('name', bureau)}</b>",
+                self.styles["BureauAddress"],
+            )
+        )
+        elements.append(
+            Paragraph(bureau_info.get("street", ""), self.styles["BureauAddress"])
+        )
+        elements.append(
+            Paragraph(
+                f"{bureau_info.get('city', '')}, {bureau_info.get('state', '')} {bureau_info.get('zip', '')}",
+                self.styles["BureauAddress"],
+            )
+        )
         elements.append(Spacer(1, 20))
 
         # Client Info
-        elements.append(Paragraph("FROM:", self.styles['SectionHeader']))
-        elements.append(Paragraph(f"<b>{client_name}</b>", self.styles['BureauAddress']))
-        elements.append(Paragraph(f"Date: {packet_date.strftime('%B %d, %Y')}", self.styles['BureauAddress']))
+        elements.append(Paragraph("FROM:", self.styles["SectionHeader"]))
+        elements.append(
+            Paragraph(f"<b>{client_name}</b>", self.styles["BureauAddress"])
+        )
+        elements.append(
+            Paragraph(
+                f"Date: {packet_date.strftime('%B %d, %Y')}",
+                self.styles["BureauAddress"],
+            )
+        )
         elements.append(Spacer(1, 20))
 
         # Document Checklist
-        elements.append(Paragraph("DOCUMENT CHECKLIST:", self.styles['SectionHeader']))
-        elements.append(Paragraph(
-            "<i>Verify all documents are included before mailing:</i>",
-            self.styles['Normal']
-        ))
+        elements.append(Paragraph("DOCUMENT CHECKLIST:", self.styles["SectionHeader"]))
+        elements.append(
+            Paragraph(
+                "<i>Verify all documents are included before mailing:</i>",
+                self.styles["Normal"],
+            )
+        )
         elements.append(Spacer(1, 10))
 
         checklist_items = [
@@ -208,63 +246,73 @@ class EnvelopePacketService:
         for num, item, included in checklist_items:
             checkbox = "☑" if included else "☐"
             status = "(INCLUDED)" if included else "(ADD BEFORE MAILING)"
-            checklist_data.append([
-                checkbox,
-                f"{num} {item}",
-                status
-            ])
+            checklist_data.append([checkbox, f"{num} {item}", status])
 
         checklist_table = Table(
             checklist_data,
-            colWidths=[0.4*inch, 4*inch, 2*inch],
+            colWidths=[0.4 * inch, 4 * inch, 2 * inch],
         )
-        checklist_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 11),
-            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
-            ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
-            ('TEXTCOLOR', (2, 0), (2, -1), colors.HexColor('#666666')),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ]))
+        checklist_table.setStyle(
+            TableStyle(
+                [
+                    ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 11),
+                    ("ALIGN", (0, 0), (0, -1), "CENTER"),
+                    ("ALIGN", (2, 0), (2, -1), "RIGHT"),
+                    ("TEXTCOLOR", (2, 0), (2, -1), colors.HexColor("#666666")),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ]
+            )
+        )
         elements.append(checklist_table)
         elements.append(Spacer(1, 20))
 
         # Accounts Being Disputed
-        elements.append(Paragraph("ACCOUNTS DISPUTED:", self.styles['SectionHeader']))
+        elements.append(Paragraph("ACCOUNTS DISPUTED:", self.styles["SectionHeader"]))
 
         if accounts_disputed:
             account_data = [["#", "Creditor/Account", "Type", "Account #"]]
             for i, acct in enumerate(accounts_disputed[:15], 1):  # Limit to 15 accounts
-                account_data.append([
-                    str(i),
-                    acct.get('creditor', 'Unknown')[:30],
-                    acct.get('type', 'Account')[:15],
-                    acct.get('account_number', 'N/A')[:12],
-                ])
+                account_data.append(
+                    [
+                        str(i),
+                        acct.get("creditor", "Unknown")[:30],
+                        acct.get("type", "Account")[:15],
+                        acct.get("account_number", "N/A")[:12],
+                    ]
+                )
 
             account_table = Table(
                 account_data,
-                colWidths=[0.5*inch, 3*inch, 1.5*inch, 1.5*inch],
+                colWidths=[0.5 * inch, 3 * inch, 1.5 * inch, 1.5 * inch],
             )
-            account_table.setStyle(TableStyle([
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e8e8e8')),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-                ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ]))
+            account_table.setStyle(
+                TableStyle(
+                    [
+                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                        ("FONTSIZE", (0, 0), (-1, -1), 10),
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e8e8e8")),
+                        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cccccc")),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                        ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ]
+                )
+            )
             elements.append(account_table)
         else:
-            elements.append(Paragraph("See attached letter for disputed accounts.", self.styles['Normal']))
+            elements.append(
+                Paragraph(
+                    "See attached letter for disputed accounts.", self.styles["Normal"]
+                )
+            )
 
         elements.append(Spacer(1, 25))
 
         # Important Notes
-        elements.append(Paragraph("IMPORTANT NOTES:", self.styles['SectionHeader']))
+        elements.append(Paragraph("IMPORTANT NOTES:", self.styles["SectionHeader"]))
         notes = [
             "<b>DEADLINE:</b> Under FCRA §605B, the bureau must BLOCK these items within 4 BUSINESS DAYS of receiving this packet with all required documents.",
             "<b>CERTIFIED MAIL:</b> Send via Certified Mail with Return Receipt Requested. Keep tracking number for your records.",
@@ -274,33 +322,42 @@ class EnvelopePacketService:
         ]
 
         for note in notes:
-            elements.append(Paragraph(f"• {note}", ParagraphStyle(
-                name='NoteItem',
-                parent=self.styles['Normal'],
-                fontSize=10,
-                spaceAfter=8,
-                leftIndent=15,
-            )))
+            elements.append(
+                Paragraph(
+                    f"• {note}",
+                    ParagraphStyle(
+                        name="NoteItem",
+                        parent=self.styles["Normal"],
+                        fontSize=10,
+                        spaceAfter=8,
+                        leftIndent=15,
+                    ),
+                )
+            )
 
         elements.append(Spacer(1, 30))
 
         # Footer
-        elements.append(HRFlowable(
-            width="100%",
-            thickness=1,
-            color=colors.HexColor('#cccccc'),
-            spaceAfter=10,
-        ))
-        elements.append(Paragraph(
-            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')} | 5-Day Knock-Out Strategy | FCRA §605B",
-            ParagraphStyle(
-                name='Footer',
-                parent=self.styles['Normal'],
-                fontSize=8,
-                alignment=TA_CENTER,
-                textColor=colors.HexColor('#888888'),
+        elements.append(
+            HRFlowable(
+                width="100%",
+                thickness=1,
+                color=colors.HexColor("#cccccc"),
+                spaceAfter=10,
             )
-        ))
+        )
+        elements.append(
+            Paragraph(
+                f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')} | 5-Day Knock-Out Strategy | FCRA §605B",
+                ParagraphStyle(
+                    name="Footer",
+                    parent=self.styles["Normal"],
+                    fontSize=8,
+                    alignment=TA_CENTER,
+                    textColor=colors.HexColor("#888888"),
+                ),
+            )
+        )
 
         doc.build(elements)
         return buffer.getvalue()
@@ -333,42 +390,48 @@ class EnvelopePacketService:
         elements = []
 
         # Border box
-        elements.append(Spacer(1, 2*inch))
-        elements.append(Paragraph(
-            f"<b>{title}</b>",
-            ParagraphStyle(
-                name='PlaceholderTitle',
-                parent=self.styles['Heading1'],
-                fontSize=24,
-                alignment=TA_CENTER,
-                textColor=colors.HexColor('#cc0000'),
+        elements.append(Spacer(1, 2 * inch))
+        elements.append(
+            Paragraph(
+                f"<b>{title}</b>",
+                ParagraphStyle(
+                    name="PlaceholderTitle",
+                    parent=self.styles["Heading1"],
+                    fontSize=24,
+                    alignment=TA_CENTER,
+                    textColor=colors.HexColor("#cc0000"),
+                ),
             )
-        ))
+        )
         elements.append(Spacer(1, 30))
-        elements.append(Paragraph(
-            "⚠️ REPLACE THIS PAGE WITH YOUR DOCUMENT ⚠️",
-            ParagraphStyle(
-                name='Warning',
-                parent=self.styles['Normal'],
-                fontSize=16,
-                alignment=TA_CENTER,
-                textColor=colors.HexColor('#cc6600'),
+        elements.append(
+            Paragraph(
+                "⚠️ REPLACE THIS PAGE WITH YOUR DOCUMENT ⚠️",
+                ParagraphStyle(
+                    name="Warning",
+                    parent=self.styles["Normal"],
+                    fontSize=16,
+                    alignment=TA_CENTER,
+                    textColor=colors.HexColor("#cc6600"),
+                ),
             )
-        ))
+        )
         elements.append(Spacer(1, 40))
 
         for instruction in instructions:
-            elements.append(Paragraph(
-                f"• {instruction}",
-                ParagraphStyle(
-                    name='Instruction',
-                    parent=self.styles['Normal'],
-                    fontSize=12,
-                    alignment=TA_LEFT,
-                    spaceAfter=12,
-                    leftIndent=40,
+            elements.append(
+                Paragraph(
+                    f"• {instruction}",
+                    ParagraphStyle(
+                        name="Instruction",
+                        parent=self.styles["Normal"],
+                        fontSize=12,
+                        alignment=TA_LEFT,
+                        spaceAfter=12,
+                        leftIndent=40,
+                    ),
                 )
-            ))
+            )
 
         doc.build(elements)
         return buffer.getvalue()
@@ -419,7 +482,9 @@ class EnvelopePacketService:
 
         # 3. FTC Report (if provided)
         if ftc_report_content:
-            ftc_pdf = self._html_to_pdf(ftc_report_content, title="FTC Identity Theft Report")
+            ftc_pdf = self._html_to_pdf(
+                ftc_report_content, title="FTC Identity Theft Report"
+            )
             merger.append(io.BytesIO(ftc_pdf))
             documents_included.append("FTC Identity Theft Report")
 
@@ -441,7 +506,7 @@ class EnvelopePacketService:
                     "",
                     "The ID must show your full name and photo.",
                     "Make sure all text is legible in the copy.",
-                ]
+                ],
             )
             merger.append(io.BytesIO(id_placeholder))
             documents_included.append("ID Placeholder (NEEDS CLIENT DOCUMENT)")
@@ -458,10 +523,12 @@ class EnvelopePacketService:
                     "",
                     "The document must show your full name and current address.",
                     "The address must match what's on your credit report.",
-                ]
+                ],
             )
             merger.append(io.BytesIO(address_placeholder))
-            documents_included.append("Address Proof Placeholder (NEEDS CLIENT DOCUMENT)")
+            documents_included.append(
+                "Address Proof Placeholder (NEEDS CLIENT DOCUMENT)"
+            )
 
         # Merge all PDFs
         output = io.BytesIO()
@@ -471,21 +538,21 @@ class EnvelopePacketService:
         bureau_info = BUREAU_FRAUD_ADDRESSES.get(bureau, {})
 
         metadata = {
-            'bureau': bureau,
-            'client_id': client.id,
-            'client_name': client.name,
-            'recipient_name': bureau_info.get('name', bureau),
-            'recipient_address': {
-                'street': bureau_info.get('street', ''),
-                'city': bureau_info.get('city', ''),
-                'state': bureau_info.get('state', ''),
-                'zip': bureau_info.get('zip', ''),
+            "bureau": bureau,
+            "client_id": client.id,
+            "client_name": client.name,
+            "recipient_name": bureau_info.get("name", bureau),
+            "recipient_address": {
+                "street": bureau_info.get("street", ""),
+                "city": bureau_info.get("city", ""),
+                "state": bureau_info.get("state", ""),
+                "zip": bureau_info.get("zip", ""),
             },
-            'accounts_count': len(accounts),
-            'documents_included': documents_included,
-            'page_count': self._count_pages(output.getvalue()),
-            'created_at': datetime.now().isoformat(),
-            'needs_client_documents': include_placeholders,
+            "accounts_count": len(accounts),
+            "documents_included": documents_included,
+            "page_count": self._count_pages(output.getvalue()),
+            "created_at": datetime.now().isoformat(),
+            "needs_client_documents": include_placeholders,
         }
 
         return output.getvalue(), metadata
@@ -513,7 +580,7 @@ class EnvelopePacketService:
         """
         packets = {}
 
-        for bureau in ['Experian', 'Equifax', 'TransUnion']:
+        for bureau in ["Experian", "Equifax", "TransUnion"]:
             accounts = accounts_by_bureau.get(bureau, [])
             letter_content = letters_by_bureau.get(bureau)
 
@@ -527,7 +594,9 @@ class EnvelopePacketService:
                     police_report_content=police_report_content,
                 )
                 packets[bureau] = (pdf_bytes, metadata)
-                logger.info(f"Created packet for {bureau}: {metadata['page_count']} pages, {len(accounts)} accounts")
+                logger.info(
+                    f"Created packet for {bureau}: {metadata['page_count']} pages, {len(accounts)} accounts"
+                )
 
         return packets
 
@@ -552,30 +621,30 @@ class EnvelopePacketService:
 
         if not service.is_configured():
             return {
-                'success': False,
-                'error': 'SendCertified is not configured. Please configure API credentials first.',
-                'queued': False,
+                "success": False,
+                "error": "SendCertified is not configured. Please configure API credentials first.",
+                "queued": False,
             }
 
         result = service.create_mailing(
-            recipient=metadata['recipient_name'],
-            address=metadata['recipient_address'],
+            recipient=metadata["recipient_name"],
+            address=metadata["recipient_address"],
             document_content=pdf_bytes,
-            mail_class='certified_return_receipt',
+            mail_class="certified_return_receipt",
             client_id=client_id,
-            letter_type='5day_knockout',
-            bureau=metadata['bureau'],
+            letter_type="5day_knockout",
+            bureau=metadata["bureau"],
         )
 
         return {
-            'success': result['success'],
-            'error': result.get('error'),
-            'queued': result['success'],
-            'tracking_number': result.get('tracking_number'),
-            'order_id': result.get('order_id'),
-            'label_id': result.get('label_id'),
-            'estimated_delivery': result.get('estimated_delivery'),
-            'cost': result.get('cost'),
+            "success": result["success"],
+            "error": result.get("error"),
+            "queued": result["success"],
+            "tracking_number": result.get("tracking_number"),
+            "order_id": result.get("order_id"),
+            "label_id": result.get("label_id"),
+            "estimated_delivery": result.get("estimated_delivery"),
+            "cost": result.get("cost"),
         }
 
     def queue_all_packets(
@@ -603,8 +672,10 @@ class EnvelopePacketService:
             )
             results[bureau] = result
 
-            if result['success']:
-                logger.info(f"Queued {bureau} packet: tracking {result.get('tracking_number')}")
+            if result["success"]:
+                logger.info(
+                    f"Queued {bureau} packet: tracking {result.get('tracking_number')}"
+                )
             else:
                 logger.error(f"Failed to queue {bureau} packet: {result.get('error')}")
 
@@ -618,30 +689,32 @@ class EnvelopePacketService:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=letter,
-            rightMargin=0.75*inch,
-            leftMargin=0.75*inch,
-            topMargin=0.75*inch,
-            bottomMargin=0.75*inch,
+            rightMargin=0.75 * inch,
+            leftMargin=0.75 * inch,
+            topMargin=0.75 * inch,
+            bottomMargin=0.75 * inch,
         )
 
         elements = []
 
         # Parse HTML and convert to reportlab elements
-        soup = BeautifulSoup(html_content, 'html.parser')
-        text = soup.get_text(separator='\n')
+        soup = BeautifulSoup(html_content, "html.parser")
+        text = soup.get_text(separator="\n")
 
         # Split into paragraphs and add
-        paragraphs = text.split('\n\n')
+        paragraphs = text.split("\n\n")
         for para in paragraphs:
             para = para.strip()
             if para:
                 # Check if it looks like a heading
                 if len(para) < 60 and para.isupper():
-                    elements.append(Paragraph(para, self.styles['Heading2']))
-                elif para.startswith('RE:') or para.startswith('Date:'):
-                    elements.append(Paragraph(para, self.styles['Normal']))
+                    elements.append(Paragraph(para, self.styles["Heading2"]))
+                elif para.startswith("RE:") or para.startswith("Date:"):
+                    elements.append(Paragraph(para, self.styles["Normal"]))
                 else:
-                    elements.append(Paragraph(para.replace('\n', '<br/>'), self.styles['Normal']))
+                    elements.append(
+                        Paragraph(para.replace("\n", "<br/>"), self.styles["Normal"])
+                    )
                 elements.append(Spacer(1, 6))
 
         doc.build(elements)
@@ -651,6 +724,7 @@ class EnvelopePacketService:
         """Count pages in a PDF"""
         try:
             from PyPDF2 import PdfReader
+
             reader = PdfReader(io.BytesIO(pdf_bytes))
             return len(reader.pages)
         except Exception:

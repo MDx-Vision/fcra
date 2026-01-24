@@ -1174,8 +1174,14 @@ class CreditPullService:
                     "error": pull_request.error_message,
                 }
 
-            self.set_provider(str(pull_request.provider) if pull_request.provider else "smartcredit")
-            status_result = self.adapter.get_status(str(pull_request.external_request_id) if pull_request.external_request_id else "")
+            self.set_provider(
+                str(pull_request.provider) if pull_request.provider else "smartcredit"
+            )
+            status_result = self.adapter.get_status(
+                str(pull_request.external_request_id)
+                if pull_request.external_request_id
+                else ""
+            )
 
             if (
                 status_result.get("success")
@@ -1249,8 +1255,14 @@ class CreditPullService:
                     "error": "No external request ID - report not fetched from provider",
                 }
 
-            self.set_provider(str(pull_request.provider) if pull_request.provider else "smartcredit")
-            report_result = self.adapter.get_report(str(pull_request.external_request_id) if pull_request.external_request_id else "")
+            self.set_provider(
+                str(pull_request.provider) if pull_request.provider else "smartcredit"
+            )
+            report_result = self.adapter.get_report(
+                str(pull_request.external_request_id)
+                if pull_request.external_request_id
+                else ""
+            )
 
             if not report_result.get("success"):
                 return {

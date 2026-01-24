@@ -35,10 +35,14 @@ def handle_send_email(payload: Dict[str, Any]) -> Dict[str, Any]:
         result = email_service.send_template_email(
             to_email, subject, template, template_data
         )
-        success = result.get("success", False) if isinstance(result, dict) else bool(result)
+        success = (
+            result.get("success", False) if isinstance(result, dict) else bool(result)
+        )
     else:
         result = email_service.send_email(to_email, subject, body)
-        success = result.get("success", False) if isinstance(result, dict) else bool(result)
+        success = (
+            result.get("success", False) if isinstance(result, dict) else bool(result)
+        )
 
     return {"success": success, "to_email": to_email}
 

@@ -13,17 +13,22 @@ Features:
 
 import os
 import time
-import requests
-from typing import Optional, Dict, Any, Tuple
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional, Tuple
+
+import requests
 
 from services.activity_logger import log_api_call
 
-
 # USPS API Configuration (New OAuth2 API)
-USPS_CLIENT_ID = os.environ.get("USPS_CLIENT_ID", "rgAdfxqZRgogGP93LTV25vguQ2PGqrTvJK1gthUtCpjKAb8B")
-USPS_CLIENT_SECRET = os.environ.get("USPS_CLIENT_SECRET", "BA5JBMoQKMNdPgnq7GGqQ4p2gHSkXGGwU01ybmRkfon3glkj5Y90WPOYlKbuyPvh")
+USPS_CLIENT_ID = os.environ.get(
+    "USPS_CLIENT_ID", "rgAdfxqZRgogGP93LTV25vguQ2PGqrTvJK1gthUtCpjKAb8B"
+)
+USPS_CLIENT_SECRET = os.environ.get(
+    "USPS_CLIENT_SECRET",
+    "BA5JBMoQKMNdPgnq7GGqQ4p2gHSkXGGwU01ybmRkfon3glkj5Y90WPOYlKbuyPvh",
+)
 
 # API Endpoints
 USPS_OAUTH_URL = "https://apis.usps.com/oauth2/v3/token"
@@ -37,6 +42,7 @@ USPS_ADDRESS_URL = "https://apis.usps.com/addresses/v3/address"
 @dataclass
 class ValidatedAddress:
     """Represents a validated/standardized address"""
+
     street: str
     street2: str  # Apt, Suite, Unit, etc.
     city: str
@@ -75,12 +81,10 @@ class AddressValidationService:
                 data={
                     "grant_type": "client_credentials",
                     "client_id": self.client_id,
-                    "client_secret": self.client_secret
+                    "client_secret": self.client_secret,
                 },
-                headers={
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                timeout=10
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                timeout=10,
             )
             duration_ms = (time.time() - start_time) * 1000
             log_api_call("USPS", "/oauth2/v3/token", response.status_code, duration_ms)
@@ -89,7 +93,9 @@ class AddressValidationService:
 
             self._access_token = data.get("access_token")
             expires_in = data.get("expires_in", 3600)  # Default 1 hour
-            self._token_expires_at = datetime.now() + timedelta(seconds=expires_in - 60)  # Refresh 1 min early
+            self._token_expires_at = datetime.now() + timedelta(
+                seconds=expires_in - 60
+            )  # Refresh 1 min early
 
             return self._access_token
 
@@ -98,12 +104,7 @@ class AddressValidationService:
             return None
 
     def validate_address(
-        self,
-        street: str,
-        city: str,
-        state: str,
-        zip_code: str = "",
-        street2: str = ""
+        self, street: str, city: str, state: str, zip_code: str = "", street2: str = ""
     ) -> ValidatedAddress:
         """
         Validate and standardize an address using USPS API.
@@ -123,7 +124,7 @@ class AddressValidationService:
             "street2": street2,
             "city": city,
             "state": state,
-            "zip_code": zip_code
+            "zip_code": zip_code,
         }
 
         # If USPS not configured, return as-is with warning
@@ -139,7 +140,7 @@ class AddressValidationService:
                 error_message="USPS API not configured - address not verified",
                 return_text="",
                 was_corrected=False,
-                original=original
+                original=original,
             )
 
         # Get OAuth token
@@ -156,7 +157,7 @@ class AddressValidationService:
                 error_message="Could not authenticate with USPS API",
                 return_text="",
                 was_corrected=False,
-                original=original
+                original=original,
             )
 
         # Build request payload
@@ -166,15 +167,11 @@ class AddressValidationService:
             street_address = f"{street}, {street2}"
 
         # Clean ZIP code
-        zip_clean = ''.join(c for c in (zip_code or '') if c.isdigit())
+        zip_clean = "".join(c for c in (zip_code or "") if c.isdigit())
         zip5 = zip_clean[:5] if len(zip_clean) >= 5 else zip_clean
         zip4 = zip_clean[5:9] if len(zip_clean) > 5 else ""
 
-        params = {
-            "streetAddress": street_address,
-            "city": city,
-            "state": state.upper()
-        }
+        params = {"streetAddress": street_address, "city": city, "state": state.upper()}
         if zip5:
             params["ZIPCode"] = zip5
         if zip4:
@@ -187,12 +184,14 @@ class AddressValidationService:
                 params=params,
                 headers={
                     "Authorization": f"Bearer {token}",
-                    "Accept": "application/json"
+                    "Accept": "application/json",
                 },
-                timeout=10
+                timeout=10,
             )
             duration_ms = (time.time() - start_time) * 1000
-            log_api_call("USPS", "/addresses/v3/address", response.status_code, duration_ms)
+            log_api_call(
+                "USPS", "/addresses/v3/address", response.status_code, duration_ms
+            )
 
             if response.status_code == 404:
                 return ValidatedAddress(
@@ -206,7 +205,7 @@ class AddressValidationService:
                     error_message="Address not found - please verify the address is correct",
                     return_text="",
                     was_corrected=False,
-                    original=original
+                    original=original,
                 )
 
             response.raise_for_status()
@@ -226,7 +225,7 @@ class AddressValidationService:
                 error_message=f"USPS API error: {str(e)}",
                 return_text="",
                 was_corrected=False,
-                original=original
+                original=original,
             )
 
     def _parse_response(self, data: Dict, original: Dict) -> ValidatedAddress:
@@ -260,15 +259,17 @@ class AddressValidationService:
             if not is_valid:
                 error_message = "Address not confirmed as deliverable"
             elif dpv_confirmation == "S":
-                error_message = "Secondary address (apt/unit) is missing - please add unit number"
+                error_message = (
+                    "Secondary address (apt/unit) is missing - please add unit number"
+                )
             elif dpv_confirmation == "D":
                 error_message = "Secondary address exists but could not be confirmed"
 
             # Check if address was corrected
             was_corrected = (
-                street_address.upper() != original["street"].upper() or
-                city.upper() != original["city"].upper() or
-                state.upper() != original["state"].upper()
+                street_address.upper() != original["street"].upper()
+                or city.upper() != original["city"].upper()
+                or state.upper() != original["state"].upper()
             )
 
             return ValidatedAddress(
@@ -282,7 +283,7 @@ class AddressValidationService:
                 error_message=error_message,
                 return_text=return_text,
                 was_corrected=was_corrected,
-                original=original
+                original=original,
             )
 
         except Exception as e:
@@ -297,7 +298,7 @@ class AddressValidationService:
                 error_message=f"Failed to parse USPS response: {str(e)}",
                 return_text="",
                 was_corrected=False,
-                original=original
+                original=original,
             )
 
     def format_full_address(self, validated: ValidatedAddress) -> str:
@@ -323,48 +324,54 @@ class AddressValidationService:
         corrections = []
 
         if validated.street.upper() != original["street"].upper():
-            corrections.append({
-                "field": "Street",
-                "original": original["street"],
-                "corrected": validated.street
-            })
+            corrections.append(
+                {
+                    "field": "Street",
+                    "original": original["street"],
+                    "corrected": validated.street,
+                }
+            )
 
         if validated.city.upper() != original["city"].upper():
-            corrections.append({
-                "field": "City",
-                "original": original["city"],
-                "corrected": validated.city
-            })
+            corrections.append(
+                {
+                    "field": "City",
+                    "original": original["city"],
+                    "corrected": validated.city,
+                }
+            )
 
         if validated.state.upper() != original["state"].upper():
-            corrections.append({
-                "field": "State",
-                "original": original["state"],
-                "corrected": validated.state
-            })
+            corrections.append(
+                {
+                    "field": "State",
+                    "original": original["state"],
+                    "corrected": validated.state,
+                }
+            )
 
         orig_zip = original["zip_code"][:5] if original["zip_code"] else ""
         if validated.zip5 != orig_zip:
-            corrections.append({
-                "field": "ZIP Code",
-                "original": orig_zip,
-                "corrected": validated.zip5
-            })
+            corrections.append(
+                {"field": "ZIP Code", "original": orig_zip, "corrected": validated.zip5}
+            )
 
         # Check if apartment/unit was added
         if validated.street2 and not original["street2"]:
-            corrections.append({
-                "field": "Unit/Apt",
-                "original": "(none)",
-                "corrected": validated.street2
-            })
+            corrections.append(
+                {
+                    "field": "Unit/Apt",
+                    "original": "(none)",
+                    "corrected": validated.street2,
+                }
+            )
 
         return {
             "was_corrected": len(corrections) > 0,
             "corrections": corrections,
             "is_valid": validated.is_valid,
             "error_message": validated.error_message,
-            "formatted_address": self.format_full_address(validated)
+            "formatted_address": self.format_full_address(validated),
         }
 
 
@@ -381,11 +388,7 @@ def get_address_validation_service() -> AddressValidationService:
 
 
 def validate_client_address(
-    street: str,
-    city: str,
-    state: str,
-    zip_code: str = "",
-    street2: str = ""
+    street: str, city: str, state: str, zip_code: str = "", street2: str = ""
 ) -> Tuple[bool, Dict[str, Any]]:
     """
     Convenience function to validate a client address.
@@ -407,11 +410,15 @@ def validate_client_address(
             "state": validated.state,
             "zip5": validated.zip5,
             "zip4": validated.zip4,
-            "full_zip": f"{validated.zip5}-{validated.zip4}" if validated.zip4 else validated.zip5
+            "full_zip": (
+                f"{validated.zip5}-{validated.zip4}"
+                if validated.zip4
+                else validated.zip5
+            ),
         },
         "original_address": validated.original,
         "was_corrected": comparison["was_corrected"],
         "corrections": comparison["corrections"],
         "error_message": validated.error_message,
-        "formatted_address": comparison["formatted_address"]
+        "formatted_address": comparison["formatted_address"],
     }

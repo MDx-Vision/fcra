@@ -8,20 +8,26 @@ Generates customized FCRA dispute letters using AI based on:
 - Current dispute round (R1-R4)
 """
 
-import os
 import json
+import os
 import re
-from datetime import datetime, date
-from typing import Optional, List, Dict, Any
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy.orm import Session
 
 from database import (
-    Client, Analysis, Violation, DisputeItem, CRAResponse,
-    DisputeLetter, CreditScoreSnapshot
+    Analysis,
+    Client,
+    CRAResponse,
+    CreditScoreSnapshot,
+    DisputeItem,
+    DisputeLetter,
+    Violation,
 )
-from services.prompt_loader import PromptLoader
 from services.activity_logger import log_activity, log_dispute_generated
 from services.ai_usage_service import log_ai_usage
+from services.prompt_loader import PromptLoader
 
 
 class AIDisputeWriterService:
@@ -30,79 +36,79 @@ class AIDisputeWriterService:
     # Letter types by round
     ROUND_STRATEGIES = {
         1: {
-            'name': 'Round 1 - Initial Dispute',
-            'description': 'Section 611 dispute with RLPP bundling',
-            'prompt_key': 'r1',
-            'focus': 'Initial disputes citing specific violations',
+            "name": "Round 1 - Initial Dispute",
+            "description": "Section 611 dispute with RLPP bundling",
+            "prompt_key": "r1",
+            "focus": "Initial disputes citing specific violations",
         },
         2: {
-            'name': 'Round 2 - Method of Verification',
-            'description': 'Cushman-style MOV demands',
-            'prompt_key': 'r2',
-            'focus': 'Demand proof of investigation procedures',
+            "name": "Round 2 - Method of Verification",
+            "description": "Cushman-style MOV demands",
+            "prompt_key": "r2",
+            "focus": "Demand proof of investigation procedures",
         },
         3: {
-            'name': 'Round 3 - Regulatory Escalation',
-            'description': 'CFPB, state AG, and FTC complaints',
-            'prompt_key': 'r3',
-            'focus': 'Escalate with regulatory agency involvement',
+            "name": "Round 3 - Regulatory Escalation",
+            "description": "CFPB, state AG, and FTC complaints",
+            "prompt_key": "r3",
+            "focus": "Escalate with regulatory agency involvement",
         },
         4: {
-            'name': 'Round 4 - Pre-Litigation',
-            'description': 'Pre-arbitration demands and lawsuit threats',
-            'prompt_key': 'r4',
-            'focus': 'Final demand before legal action',
+            "name": "Round 4 - Pre-Litigation",
+            "description": "Pre-arbitration demands and lawsuit threats",
+            "prompt_key": "r4",
+            "focus": "Final demand before legal action",
         },
     }
 
     # Special dispute strategies (non-round based)
     SPECIAL_STRATEGIES = {
-        '5dayknockout': {
-            'name': '5-Day Knock-Out (Identity Theft)',
-            'description': 'FCRA §605B identity theft block - bureaus must block within 4 business days',
-            'prompt_key': '5dayknockout',
-            'focus': 'Fast removal using identity theft provisions with police report + FTC complaint',
-            'requires': ['police_report', 'ftc_complaint', 'notarized_affidavit'],
-            'output_files': 15,  # 15 document types generated
+        "5dayknockout": {
+            "name": "5-Day Knock-Out (Identity Theft)",
+            "description": "FCRA §605B identity theft block - bureaus must block within 4 business days",
+            "prompt_key": "5dayknockout",
+            "focus": "Fast removal using identity theft provisions with police report + FTC complaint",
+            "requires": ["police_report", "ftc_complaint", "notarized_affidavit"],
+            "output_files": 15,  # 15 document types generated
         },
-        'idtheft': {
-            'name': 'Identity Theft Disputes',
-            'description': 'Full identity theft dispute package',
-            'prompt_key': 'idtheft',
-            'focus': 'Comprehensive identity theft dispute with all supporting documents',
-            'requires': ['police_report', 'ftc_complaint'],
+        "idtheft": {
+            "name": "Identity Theft Disputes",
+            "description": "Full identity theft dispute package",
+            "prompt_key": "idtheft",
+            "focus": "Comprehensive identity theft dispute with all supporting documents",
+            "requires": ["police_report", "ftc_complaint"],
         },
-        'inquiry': {
-            'name': 'Inquiry Disputes (Permissible Purpose)',
-            'description': 'Challenge unauthorized hard inquiries under §604',
-            'prompt_key': 'inquiry',
-            'focus': 'Remove unauthorized inquiries - no identity theft required',
-            'requires': [],
+        "inquiry": {
+            "name": "Inquiry Disputes (Permissible Purpose)",
+            "description": "Challenge unauthorized hard inquiries under §604",
+            "prompt_key": "inquiry",
+            "focus": "Remove unauthorized inquiries - no identity theft required",
+            "requires": [],
         },
-        'inquirytheft': {
-            'name': 'Inquiry Disputes (Identity Theft)',
-            'description': 'Challenge fraudulent inquiries from identity theft',
-            'prompt_key': 'inquirytheft',
-            'focus': 'Remove inquiries caused by identity theft',
-            'requires': ['ftc_complaint'],
+        "inquirytheft": {
+            "name": "Inquiry Disputes (Identity Theft)",
+            "description": "Challenge fraudulent inquiries from identity theft",
+            "prompt_key": "inquirytheft",
+            "focus": "Remove inquiries caused by identity theft",
+            "requires": ["ftc_complaint"],
         },
-        'portalfix': {
-            'name': 'Portal Quick Fix',
-            'description': 'Fast PII & inquiry fixes via online portal',
-            'prompt_key': 'portalfix',
-            'focus': 'Quick fixes for funding/approval - portal submission + phone follow-up',
-            'requires': [],
+        "portalfix": {
+            "name": "Portal Quick Fix",
+            "description": "Fast PII & inquiry fixes via online portal",
+            "prompt_key": "portalfix",
+            "focus": "Quick fixes for funding/approval - portal submission + phone follow-up",
+            "requires": [],
         },
     }
 
     # Bureaus
-    BUREAUS = ['Equifax', 'Experian', 'TransUnion']
+    BUREAUS = ["Equifax", "Experian", "TransUnion"]
 
     # Bureau fraud department addresses (for 5-Day Knockout)
     BUREAU_FRAUD_ADDRESSES = {
-        'Experian': 'P.O. Box 9554, Allen, TX 75013',
-        'Equifax': 'P.O. Box 105069, Atlanta, GA 30348',
-        'TransUnion': 'Fraud Victim Assistance Dept, P.O. Box 2000, Chester, PA 19016',
+        "Experian": "P.O. Box 9554, Allen, TX 75013",
+        "Equifax": "P.O. Box 105069, Atlanta, GA 30348",
+        "TransUnion": "Fraud Victim Assistance Dept, P.O. Box 2000, Chester, PA 19016",
     }
 
     def __init__(self, db: Session):
@@ -116,8 +122,9 @@ class AIDisputeWriterService:
         if self._anthropic_client is None:
             try:
                 from anthropic import Anthropic
+
                 self._anthropic_client = Anthropic(
-                    api_key=os.environ.get('ANTHROPIC_API_KEY')
+                    api_key=os.environ.get("ANTHROPIC_API_KEY")
                 )
             except Exception as e:
                 print(f"Error initializing Anthropic client: {e}")
@@ -132,46 +139,58 @@ class AIDisputeWriterService:
         """Gather all relevant context for a client"""
         client = self.db.query(Client).filter(Client.id == client_id).first()
         if not client:
-            return {'error': 'Client not found'}
+            return {"error": "Client not found"}
 
         # Get violations from analysis
-        violations = self.db.query(Violation).filter(
-            Violation.client_id == client_id
-        ).all()
+        violations = (
+            self.db.query(Violation).filter(Violation.client_id == client_id).all()
+        )
 
         # Get dispute items
-        dispute_items = self.db.query(DisputeItem).filter(
-            DisputeItem.client_id == client_id
-        ).all()
+        dispute_items = (
+            self.db.query(DisputeItem).filter(DisputeItem.client_id == client_id).all()
+        )
 
         # Get CRA responses
-        cra_responses = self.db.query(CRAResponse).filter(
-            CRAResponse.client_id == client_id
-        ).order_by(CRAResponse.dispute_round, CRAResponse.response_date).all()
+        cra_responses = (
+            self.db.query(CRAResponse)
+            .filter(CRAResponse.client_id == client_id)
+            .order_by(CRAResponse.dispute_round, CRAResponse.response_date)
+            .all()
+        )
 
         # Get latest analysis
-        analysis = self.db.query(Analysis).filter(
-            Analysis.client_id == client_id
-        ).order_by(Analysis.created_at.desc()).first()
+        analysis = (
+            self.db.query(Analysis)
+            .filter(Analysis.client_id == client_id)
+            .order_by(Analysis.created_at.desc())
+            .first()
+        )
 
         # Get credit score snapshots
-        score_snapshots = self.db.query(CreditScoreSnapshot).filter(
-            CreditScoreSnapshot.client_id == client_id
-        ).order_by(CreditScoreSnapshot.created_at.desc()).limit(2).all()
+        score_snapshots = (
+            self.db.query(CreditScoreSnapshot)
+            .filter(CreditScoreSnapshot.client_id == client_id)
+            .order_by(CreditScoreSnapshot.created_at.desc())
+            .limit(2)
+            .all()
+        )
 
         return {
-            'client': client,
-            'violations': violations,
-            'dispute_items': dispute_items,
-            'cra_responses': cra_responses,
-            'analysis': analysis,
-            'score_snapshots': score_snapshots,
-            'current_round': client.current_dispute_round or 1,
+            "client": client,
+            "violations": violations,
+            "dispute_items": dispute_items,
+            "cra_responses": cra_responses,
+            "analysis": analysis,
+            "score_snapshots": score_snapshots,
+            "current_round": client.current_dispute_round or 1,
         }
 
     def format_client_info(self, client: Client) -> str:
         """Format client information for the prompt"""
-        dob_str = client.date_of_birth.strftime('%m/%d/%Y') if client.date_of_birth else 'N/A'
+        dob_str = (
+            client.date_of_birth.strftime("%m/%d/%Y") if client.date_of_birth else "N/A"
+        )
 
         return f"""
 CLIENT INFORMATION:
@@ -199,14 +218,14 @@ Phone: {client.phone or 'N/A'}
             lines.append(f"   FCRA Section: {v.fcra_section or 'N/A'}")
             lines.append(f"   Description: {v.description or 'N/A'}")
             if v.statutory_damages_min or v.statutory_damages_max:
-                lines.append(f"   Potential Damages: ${v.statutory_damages_min or 0:,.0f} - ${v.statutory_damages_max or 0:,.0f}")
+                lines.append(
+                    f"   Potential Damages: ${v.statutory_damages_min or 0:,.0f} - ${v.statutory_damages_max or 0:,.0f}"
+                )
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def format_dispute_items(
-        self,
-        items: List[DisputeItem],
-        selected_ids: Optional[List[int]] = None
+        self, items: List[DisputeItem], selected_ids: Optional[List[int]] = None
     ) -> str:
         """Format dispute items for the prompt"""
         if not items:
@@ -224,7 +243,7 @@ Phone: {client.phone or 'N/A'}
         # Group by bureau
         by_bureau = {}
         for item in items:
-            bureau = item.bureau or 'Unknown'
+            bureau = item.bureau or "Unknown"
             if bureau not in by_bureau:
                 by_bureau[bureau] = []
             by_bureau[bureau].append(item)
@@ -237,13 +256,17 @@ Phone: {client.phone or 'N/A'}
                     status_info = f" [Status: {item.status}]" if item.status else ""
                     lines.append(f"  - {item.creditor_name or 'Unknown Creditor'}")
                     lines.append(f"    Type: {item.item_type or 'N/A'}")
-                    lines.append(f"    Account: {item.account_id or 'N/A'}{status_info}")
+                    lines.append(
+                        f"    Account: {item.account_id or 'N/A'}{status_info}"
+                    )
                     if item.reason:
                         lines.append(f"    Reason: {item.reason}")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
-    def format_cra_responses(self, responses: List[CRAResponse], current_round: int) -> str:
+    def format_cra_responses(
+        self, responses: List[CRAResponse], current_round: int
+    ) -> str:
         """Format CRA responses for context"""
         if not responses:
             return "No previous CRA responses."
@@ -263,14 +286,20 @@ Phone: {client.phone or 'N/A'}
                 lines.append(f"\nRound {rnd}:")
                 lines.append("-" * 20)
                 for resp in by_round[rnd]:
-                    date_str = resp.response_date.strftime('%m/%d/%Y') if resp.response_date else 'N/A'
-                    lines.append(f"  {resp.bureau}: {resp.response_type or 'Unknown'} ({date_str})")
+                    date_str = (
+                        resp.response_date.strftime("%m/%d/%Y")
+                        if resp.response_date
+                        else "N/A"
+                    )
+                    lines.append(
+                        f"  {resp.bureau}: {resp.response_type or 'Unknown'} ({date_str})"
+                    )
                     if resp.items_deleted:
                         lines.append(f"    Items deleted: {resp.items_deleted}")
                     if resp.items_verified:
                         lines.append(f"    Items verified: {resp.items_verified}")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     # =========================================================================
     # LETTER GENERATION
@@ -283,7 +312,7 @@ Phone: {client.phone or 'N/A'}
         selected_item_ids: Optional[List[int]] = None,
         bureaus: Optional[List[str]] = None,
         custom_instructions: Optional[str] = None,
-        tone: str = 'professional',  # professional, aggressive, formal
+        tone: str = "professional",  # professional, aggressive, formal
     ) -> Dict[str, Any]:
         """
         Generate dispute letters for a client.
@@ -300,59 +329,92 @@ Phone: {client.phone or 'N/A'}
             Dict with generated letters by bureau
         """
         import time
+
         start_time = time.time()
 
-        log_activity("Generate Dispute Letters", f"Starting Round {round_number} for client {client_id}",
-                    client_id=client_id, status="info")
+        log_activity(
+            "Generate Dispute Letters",
+            f"Starting Round {round_number} for client {client_id}",
+            client_id=client_id,
+            status="info",
+        )
 
         # Gather context
-        log_activity("Load Client Data", f"Fetching client context...", client_id=client_id, status="info")
+        log_activity(
+            "Load Client Data",
+            f"Fetching client context...",
+            client_id=client_id,
+            status="info",
+        )
         context = self.get_client_context(client_id)
-        if 'error' in context:
-            log_activity("Load Client Data", f"Failed to load client",
-                        client_id=client_id, status="error", error=context['error'])
+        if "error" in context:
+            log_activity(
+                "Load Client Data",
+                f"Failed to load client",
+                client_id=client_id,
+                status="error",
+                error=context["error"],
+            )
             return context
 
-        client = context['client']
-        violations = context['violations']
-        dispute_items = context['dispute_items']
-        cra_responses = context['cra_responses']
+        client = context["client"]
+        violations = context["violations"]
+        dispute_items = context["dispute_items"]
+        cra_responses = context["cra_responses"]
 
-        log_activity("Client Data Loaded",
-                    f"{client.name} | {len(violations)} violations | {len(dispute_items)} items",
-                    client_id=client_id, status="success")
+        log_activity(
+            "Client Data Loaded",
+            f"{client.name} | {len(violations)} violations | {len(dispute_items)} items",
+            client_id=client_id,
+            status="success",
+        )
 
         # Validate round
         if round_number not in self.ROUND_STRATEGIES:
-            log_activity("Invalid Round", f"Round {round_number} is not valid",
-                        client_id=client_id, status="error")
-            return {'error': f'Invalid round number: {round_number}. Must be 1-4.'}
+            log_activity(
+                "Invalid Round",
+                f"Round {round_number} is not valid",
+                client_id=client_id,
+                status="error",
+            )
+            return {"error": f"Invalid round number: {round_number}. Must be 1-4."}
 
         round_info = self.ROUND_STRATEGIES[round_number]
 
         # Filter items by selected IDs
         if selected_item_ids:
-            dispute_items = [item for item in dispute_items if item.id in selected_item_ids]
+            dispute_items = [
+                item for item in dispute_items if item.id in selected_item_ids
+            ]
 
         # Determine which bureaus to generate for
         if bureaus:
             target_bureaus = [b for b in bureaus if b in self.BUREAUS]
         else:
             # Get bureaus that have items
-            target_bureaus = list(set(
-                item.bureau for item in dispute_items
-                if item.bureau in self.BUREAUS
-            ))
+            target_bureaus = list(
+                set(
+                    item.bureau for item in dispute_items if item.bureau in self.BUREAUS
+                )
+            )
 
         if not target_bureaus:
             target_bureaus = self.BUREAUS  # Default to all if no items
 
-        log_activity("Target Bureaus", f"Generating for: {', '.join(target_bureaus)}",
-                    client_id=client_id, status="info")
+        log_activity(
+            "Target Bureaus",
+            f"Generating for: {', '.join(target_bureaus)}",
+            client_id=client_id,
+            status="info",
+        )
 
         # Build the prompt
-        log_activity("Build AI Prompt", f"Preparing Round {round_number} prompt ({round_info['name']})",
-                    client_id=client_id, status="info")
+        log_activity(
+            "Build AI Prompt",
+            f"Preparing Round {round_number} prompt ({round_info['name']})",
+            client_id=client_id,
+            status="info",
+        )
         prompt = self._build_generation_prompt(
             client=client,
             violations=violations,
@@ -366,31 +428,45 @@ Phone: {client.phone or 'N/A'}
         )
 
         # Call AI to generate letters
-        log_activity("Call Claude AI", f"Sending to AI ({len(prompt)} chars)...",
-                    client_id=client_id, status="info")
+        log_activity(
+            "Call Claude AI",
+            f"Sending to AI ({len(prompt)} chars)...",
+            client_id=client_id,
+            status="info",
+        )
         try:
-            letters = self._call_ai_generate(prompt, round_info['prompt_key'])
+            letters = self._call_ai_generate(prompt, round_info["prompt_key"])
             duration_ms = (time.time() - start_time) * 1000
-            log_activity("AI Response Received", f"Generated {len(letters)} letters in {duration_ms:.0f}ms",
-                        client_id=client_id, status="success")
+            log_activity(
+                "AI Response Received",
+                f"Generated {len(letters)} letters in {duration_ms:.0f}ms",
+                client_id=client_id,
+                status="success",
+            )
         except Exception as e:
-            log_activity("AI Generation Failed", str(e), client_id=client_id, status="error", error=str(e))
-            return {'error': f'AI generation failed: {str(e)}'}
+            log_activity(
+                "AI Generation Failed",
+                str(e),
+                client_id=client_id,
+                status="error",
+                error=str(e),
+            )
+            return {"error": f"AI generation failed: {str(e)}"}
 
         # Log the successful completion
         log_dispute_generated(client_id, round_number, len(letters))
 
         return {
-            'success': True,
-            'client_id': client_id,
-            'client_name': client.name,
-            'round': round_number,
-            'round_name': round_info['name'],
-            'bureaus': target_bureaus,
-            'letters': letters,
-            'generated_at': datetime.utcnow().isoformat(),
-            'items_disputed': len(dispute_items),
-            'violations_cited': len(violations),
+            "success": True,
+            "client_id": client_id,
+            "client_name": client.name,
+            "round": round_number,
+            "round_name": round_info["name"],
+            "bureaus": target_bureaus,
+            "letters": letters,
+            "generated_at": datetime.utcnow().isoformat(),
+            "items_disputed": len(dispute_items),
+            "violations_cited": len(violations),
         }
 
     def _build_generation_prompt(
@@ -415,9 +491,9 @@ Phone: {client.phone or 'N/A'}
 
         # Tone instructions
         tone_instructions = {
-            'professional': 'Use a professional but firm tone. Be clear about violations while maintaining a business-like approach.',
-            'aggressive': 'Use an aggressive, demanding tone. Emphasize legal consequences and statutory damages. Reference specific case law.',
-            'formal': 'Use a formal, legal tone. Structure the letter as a formal legal demand with proper citations.',
+            "professional": "Use a professional but firm tone. Be clear about violations while maintaining a business-like approach.",
+            "aggressive": "Use an aggressive, demanding tone. Emphasize legal consequences and statutory damages. Reference specific case law.",
+            "formal": "Use a formal, legal tone. Structure the letter as a formal legal demand with proper citations.",
         }
 
         prompt = f"""
@@ -475,11 +551,11 @@ Generate all letters now:
         # Load the round-specific prompt from knowledge base
         try:
             system_prompt = self.prompt_loader.get_round_prompt(
-                int(round_key.replace('r', ''))
+                int(round_key.replace("r", ""))
             )
         except Exception:
             # Fallback to quick prompt
-            system_prompt = self.prompt_loader.load_prompt('quick')
+            system_prompt = self.prompt_loader.load_prompt("quick")
 
         # Truncate system prompt if too long (keep first 50k chars)
         if len(system_prompt) > 50000:
@@ -487,15 +563,14 @@ Generate all letters now:
 
         # Call Claude
         import time
+
         start_time = time.time()
         response = self.anthropic_client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=8000,
             temperature=0.3,
             system=system_prompt,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}],
         )
         duration_ms = int((time.time() - start_time) * 1000)
 
@@ -508,7 +583,7 @@ Generate all letters now:
             output_tokens=response.usage.output_tokens,
             duration_ms=duration_ms,
             client_id=client.id if client else None,
-            dispute_round=round_number
+            dispute_round=round_number,
         )
 
         # Extract text from response
@@ -524,7 +599,7 @@ Generate all letters now:
         letters = {}
 
         # Pattern to match ===START LETTER: Bureau=== ... ===END LETTER: Bureau===
-        pattern = r'===START LETTER:\s*(\w+)===\s*(.*?)\s*===END LETTER:\s*\1==='
+        pattern = r"===START LETTER:\s*(\w+)===\s*(.*?)\s*===END LETTER:\s*\1==="
 
         matches = re.findall(pattern, response_text, re.DOTALL | re.IGNORECASE)
 
@@ -538,7 +613,7 @@ Generate all letters now:
             for bureau in self.BUREAUS:
                 # Look for bureau headers
                 patterns = [
-                    rf'(?:Letter to |For ){bureau}[:\s]*\n(.*?)(?=(?:Letter to |For )(?:Equifax|Experian|TransUnion)|$)',
+                    rf"(?:Letter to |For ){bureau}[:\s]*\n(.*?)(?=(?:Letter to |For )(?:Equifax|Experian|TransUnion)|$)",
                     rf'{bureau}\s*-+\s*\n(.*?)(?={"|".join(self.BUREAUS)}|$)',
                 ]
                 for p in patterns:
@@ -549,7 +624,7 @@ Generate all letters now:
 
         # If still no letters parsed, return the whole response as a single letter
         if not letters:
-            letters['Combined'] = response_text.strip()
+            letters["Combined"] = response_text.strip()
 
         return letters
 
@@ -568,10 +643,10 @@ Generate all letters now:
         """Generate a quick single letter for one item"""
 
         context = self.get_client_context(client_id)
-        if 'error' in context:
+        if "error" in context:
             return context
 
-        client = context['client']
+        client = context["client"]
 
         prompt = f"""
 Generate a single FCRA dispute letter for:
@@ -589,18 +664,19 @@ Include a 30-day response deadline.
 """
 
         try:
-            system_prompt = self.prompt_loader.load_prompt('quick')
+            system_prompt = self.prompt_loader.load_prompt("quick")
             if len(system_prompt) > 30000:
                 system_prompt = system_prompt[:30000]
 
             import time
+
             start_time = time.time()
             response = self.anthropic_client.messages.create(
                 model="claude-sonnet-4-20250514",
                 max_tokens=3000,
                 temperature=0.3,
                 system=system_prompt,
-                messages=[{"role": "user", "content": prompt}]
+                messages=[{"role": "user", "content": prompt}],
             )
             duration_ms = int((time.time() - start_time) * 1000)
 
@@ -613,21 +689,21 @@ Include a 30-day response deadline.
                 output_tokens=response.usage.output_tokens,
                 duration_ms=duration_ms,
                 client_id=client_id,
-                letter_type=bureau
+                letter_type=bureau,
             )
 
             letter_content = response.content[0].text
 
             return {
-                'success': True,
-                'client_id': client_id,
-                'bureau': bureau,
-                'letter': letter_content,
-                'generated_at': datetime.utcnow().isoformat(),
+                "success": True,
+                "client_id": client_id,
+                "bureau": bureau,
+                "letter": letter_content,
+                "generated_at": datetime.utcnow().isoformat(),
             }
 
         except Exception as e:
-            return {'error': f'Generation failed: {str(e)}'}
+            return {"error": f"Generation failed: {str(e)}"}
 
     # =========================================================================
     # LETTER MANAGEMENT
@@ -684,35 +760,32 @@ Include a 30-day response deadline.
     def get_round_info(self, round_number: int) -> Dict[str, Any]:
         """Get information about a specific round"""
         if round_number not in self.ROUND_STRATEGIES:
-            return {'error': 'Invalid round number'}
+            return {"error": "Invalid round number"}
 
         return {
-            'round': round_number,
+            "round": round_number,
             **self.ROUND_STRATEGIES[round_number],
         }
 
     def get_all_rounds_info(self) -> List[Dict[str, Any]]:
         """Get information about all rounds"""
-        return [
-            {'round': rnd, **info}
-            for rnd, info in self.ROUND_STRATEGIES.items()
-        ]
+        return [{"round": rnd, **info} for rnd, info in self.ROUND_STRATEGIES.items()]
 
     def suggest_next_action(self, client_id: int) -> Dict[str, Any]:
         """Suggest the next dispute action based on client's history"""
         context = self.get_client_context(client_id)
-        if 'error' in context:
+        if "error" in context:
             return context
 
-        client = context['client']
-        cra_responses = context['cra_responses']
-        dispute_items = context['dispute_items']
-        current_round = context['current_round']
+        client = context["client"]
+        cra_responses = context["cra_responses"]
+        dispute_items = context["dispute_items"]
+        current_round = context["current_round"]
 
         # Count items by status
         items_by_status = {}
         for item in dispute_items:
-            status = item.status or 'unknown'
+            status = item.status or "unknown"
             items_by_status[status] = items_by_status.get(status, 0) + 1
 
         # Check CRA response status
@@ -722,35 +795,41 @@ Include a 30-day response deadline.
                 responses_by_bureau[resp.bureau] = resp.response_type
 
         # Determine suggestion
-        verified_count = items_by_status.get('verified', 0) + items_by_status.get('no_change', 0)
-        pending_count = items_by_status.get('sent', 0) + items_by_status.get('in_progress', 0)
-        deleted_count = items_by_status.get('deleted', 0)
+        verified_count = items_by_status.get("verified", 0) + items_by_status.get(
+            "no_change", 0
+        )
+        pending_count = items_by_status.get("sent", 0) + items_by_status.get(
+            "in_progress", 0
+        )
+        deleted_count = items_by_status.get("deleted", 0)
 
         suggestion = {
-            'client_id': client_id,
-            'current_round': current_round,
-            'items_summary': items_by_status,
-            'responses_received': responses_by_bureau,
+            "client_id": client_id,
+            "current_round": current_round,
+            "items_summary": items_by_status,
+            "responses_received": responses_by_bureau,
         }
 
         if pending_count > 0:
-            suggestion['action'] = 'wait'
-            suggestion['message'] = f'Waiting for responses on {pending_count} items'
-            suggestion['next_round'] = current_round
+            suggestion["action"] = "wait"
+            suggestion["message"] = f"Waiting for responses on {pending_count} items"
+            suggestion["next_round"] = current_round
         elif verified_count > 0 and current_round < 4:
-            suggestion['action'] = 'escalate'
-            suggestion['message'] = f'{verified_count} items verified. Recommend escalating to Round {current_round + 1}'
-            suggestion['next_round'] = current_round + 1
-            suggestion['round_info'] = self.ROUND_STRATEGIES[current_round + 1]
+            suggestion["action"] = "escalate"
+            suggestion["message"] = (
+                f"{verified_count} items verified. Recommend escalating to Round {current_round + 1}"
+            )
+            suggestion["next_round"] = current_round + 1
+            suggestion["round_info"] = self.ROUND_STRATEGIES[current_round + 1]
         elif current_round == 4:
-            suggestion['action'] = 'litigation'
-            suggestion['message'] = 'Round 4 complete. Consider litigation referral.'
-            suggestion['next_round'] = None
+            suggestion["action"] = "litigation"
+            suggestion["message"] = "Round 4 complete. Consider litigation referral."
+            suggestion["next_round"] = None
         else:
-            suggestion['action'] = 'generate'
-            suggestion['message'] = f'Ready to generate Round {current_round} letters'
-            suggestion['next_round'] = current_round
-            suggestion['round_info'] = self.ROUND_STRATEGIES[current_round]
+            suggestion["action"] = "generate"
+            suggestion["message"] = f"Ready to generate Round {current_round} letters"
+            suggestion["next_round"] = current_round
+            suggestion["round_info"] = self.ROUND_STRATEGIES[current_round]
 
         return suggestion
 
@@ -769,10 +848,10 @@ Include a 30-day response deadline.
         """Regenerate a letter incorporating user feedback"""
 
         context = self.get_client_context(client_id)
-        if 'error' in context:
+        if "error" in context:
             return context
 
-        client = context['client']
+        client = context["client"]
 
         prompt = f"""
 I previously generated this dispute letter:
@@ -800,12 +879,13 @@ Generate the revised letter:
 
         try:
             import time
+
             start_time = time.time()
             response = self.anthropic_client.messages.create(
                 model="claude-sonnet-4-20250514",
                 max_tokens=4000,
                 temperature=0.3,
-                messages=[{"role": "user", "content": prompt}]
+                messages=[{"role": "user", "content": prompt}],
             )
             duration_ms = int((time.time() - start_time) * 1000)
 
@@ -819,22 +899,22 @@ Generate the revised letter:
                 duration_ms=duration_ms,
                 client_id=client_id,
                 dispute_round=round_number,
-                letter_type=bureau
+                letter_type=bureau,
             )
 
             revised_letter = response.content[0].text
 
             return {
-                'success': True,
-                'client_id': client_id,
-                'bureau': bureau,
-                'letter': revised_letter,
-                'feedback_applied': feedback,
-                'generated_at': datetime.utcnow().isoformat(),
+                "success": True,
+                "client_id": client_id,
+                "bureau": bureau,
+                "letter": revised_letter,
+                "feedback_applied": feedback,
+                "generated_at": datetime.utcnow().isoformat(),
             }
 
         except Exception as e:
-            return {'error': f'Regeneration failed: {str(e)}'}
+            return {"error": f"Regeneration failed: {str(e)}"}
 
     # =========================================================================
     # DASHBOARD DATA
@@ -846,13 +926,13 @@ Generate the revised letter:
         if client_id:
             # Single client view
             context = self.get_client_context(client_id)
-            if 'error' in context:
+            if "error" in context:
                 return context
 
-            client = context['client']
-            violations = context['violations']
-            dispute_items = context['dispute_items']
-            cra_responses = context['cra_responses']
+            client = context["client"]
+            violations = context["violations"]
+            dispute_items = context["dispute_items"]
+            cra_responses = context["cra_responses"]
 
             # Get saved letters
             saved_letters = self.get_saved_letters(client_id)
@@ -861,83 +941,93 @@ Generate the revised letter:
             suggestion = self.suggest_next_action(client_id)
 
             return {
-                'client': {
-                    'id': client.id,
-                    'name': client.name,
-                    'email': client.email,
-                    'current_round': client.current_dispute_round or 1,
-                    'dispute_status': client.dispute_status,
+                "client": {
+                    "id": client.id,
+                    "name": client.name,
+                    "email": client.email,
+                    "current_round": client.current_dispute_round or 1,
+                    "dispute_status": client.dispute_status,
                 },
-                'stats': {
-                    'violations_count': len(violations),
-                    'dispute_items_count': len(dispute_items),
-                    'cra_responses_count': len(cra_responses),
-                    'saved_letters_count': len(saved_letters),
+                "stats": {
+                    "violations_count": len(violations),
+                    "dispute_items_count": len(dispute_items),
+                    "cra_responses_count": len(cra_responses),
+                    "saved_letters_count": len(saved_letters),
                 },
-                'violations': [
+                "violations": [
                     {
-                        'id': v.id,
-                        'type': v.violation_type,
-                        'bureau': v.bureau,
-                        'account': v.account_name,
-                        'fcra_section': v.fcra_section,
+                        "id": v.id,
+                        "type": v.violation_type,
+                        "bureau": v.bureau,
+                        "account": v.account_name,
+                        "fcra_section": v.fcra_section,
                     }
                     for v in violations
                 ],
-                'dispute_items': [
+                "dispute_items": [
                     {
-                        'id': item.id,
-                        'bureau': item.bureau,
-                        'creditor': item.creditor_name,
-                        'type': item.item_type,
-                        'status': item.status,
-                        'account_id': item.account_id,
+                        "id": item.id,
+                        "bureau": item.bureau,
+                        "creditor": item.creditor_name,
+                        "type": item.item_type,
+                        "status": item.status,
+                        "account_id": item.account_id,
                     }
                     for item in dispute_items
                 ],
-                'suggestion': suggestion,
-                'rounds_info': self.get_all_rounds_info(),
+                "suggestion": suggestion,
+                "rounds_info": self.get_all_rounds_info(),
             }
 
         else:
             # Overview dashboard
             # Get clients ready for letter generation
-            active_clients = self.db.query(Client).filter(
-                Client.status == 'active',
-                Client.dispute_status.in_(['active', 'new', 'waiting_response'])
-            ).limit(20).all()
+            active_clients = (
+                self.db.query(Client)
+                .filter(
+                    Client.status == "active",
+                    Client.dispute_status.in_(["active", "new", "waiting_response"]),
+                )
+                .limit(20)
+                .all()
+            )
 
             # Get recent letters
-            recent_letters = self.db.query(DisputeLetter).order_by(
-                DisputeLetter.created_at.desc()
-            ).limit(10).all()
+            recent_letters = (
+                self.db.query(DisputeLetter)
+                .order_by(DisputeLetter.created_at.desc())
+                .limit(10)
+                .all()
+            )
 
             # Count totals
             total_letters = self.db.query(DisputeLetter).count()
 
             return {
-                'active_clients': [
+                "active_clients": [
                     {
-                        'id': c.id,
-                        'name': c.name,
-                        'current_round': c.current_dispute_round or 1,
-                        'dispute_status': c.dispute_status,
+                        "id": c.id,
+                        "name": c.name,
+                        "current_round": c.current_dispute_round or 1,
+                        "dispute_status": c.dispute_status,
                     }
                     for c in active_clients
                 ],
-                'recent_letters': [
+                "recent_letters": [
                     {
-                        'id': l.id,
-                        'client_id': l.client_id,
-                        'client_name': l.client_name,
-                        'bureau': l.bureau,
-                        'round': l.round_number,
-                        'created_at': l.created_at.isoformat() if l.created_at else None,
+                        "id": l.id,
+                        "client_id": l.client_id,
+                        "client_name": l.client_name,
+                        "bureau": l.bureau,
+                        "round": l.round_number,
+                        "created_at": (
+                            l.created_at.isoformat() if l.created_at else None
+                        ),
                     }
                     for l in recent_letters
                 ],
-                'total_letters': total_letters,
-                'rounds_info': self.get_all_rounds_info(),
+                "total_letters": total_letters,
+                "rounds_info": self.get_all_rounds_info(),
             }
 
     # =========================================================================
@@ -978,12 +1068,12 @@ Generate the revised letter:
             Dict with generated documents
         """
         context = self.get_client_context(client_id)
-        if 'error' in context:
+        if "error" in context:
             return context
 
-        client = context['client']
-        violations = context['violations']
-        dispute_items = context['dispute_items']
+        client = context["client"]
+        violations = context["violations"]
+        dispute_items = context["dispute_items"]
 
         # Use provided items or all dispute items
         if disputed_items:
@@ -991,16 +1081,16 @@ Generate the revised letter:
         else:
             items_to_dispute = [
                 {
-                    'creditor': item.creditor_name,
-                    'account_number': item.account_id,
-                    'bureau': item.bureau,
-                    'type': item.item_type,
-                    'balance': getattr(item, 'balance', 'Unknown'),
+                    "creditor": item.creditor_name,
+                    "account_number": item.account_id,
+                    "bureau": item.bureau,
+                    "type": item.item_type,
+                    "balance": getattr(item, "balance", "Unknown"),
                 }
                 for item in dispute_items
             ]
 
-        strategy = self.SPECIAL_STRATEGIES['5dayknockout']
+        strategy = self.SPECIAL_STRATEGIES["5dayknockout"]
 
         # Build the prompt
         prompt = self._build_5day_knockout_prompt(
@@ -1015,21 +1105,23 @@ Generate the revised letter:
         try:
             documents = self._call_ai_5day_knockout(prompt, phase)
         except Exception as e:
-            return {'error': f'AI generation failed: {str(e)}'}
+            return {"error": f"AI generation failed: {str(e)}"}
 
         return {
-            'success': True,
-            'client_id': client_id,
-            'client_name': client.name,
-            'strategy': strategy['name'],
-            'phase': phase,
-            'phase_name': 'Preparation Documents' if phase == 1 else 'Full Dispute Package',
-            'police_case_number': police_case_number,
-            'ftc_reference_number': ftc_reference_number,
-            'documents': documents,
-            'items_disputed': len(items_to_dispute),
-            'generated_at': datetime.utcnow().isoformat(),
-            'next_steps': self._get_5day_knockout_next_steps(phase, police_case_number),
+            "success": True,
+            "client_id": client_id,
+            "client_name": client.name,
+            "strategy": strategy["name"],
+            "phase": phase,
+            "phase_name": (
+                "Preparation Documents" if phase == 1 else "Full Dispute Package"
+            ),
+            "police_case_number": police_case_number,
+            "ftc_reference_number": ftc_reference_number,
+            "documents": documents,
+            "items_disputed": len(items_to_dispute),
+            "generated_at": datetime.utcnow().isoformat(),
+            "next_steps": self._get_5day_knockout_next_steps(phase, police_case_number),
         }
 
     def _build_5day_knockout_prompt(
@@ -1052,7 +1144,7 @@ Generate the revised letter:
             items_text += f"   Account: {item.get('account_number', 'N/A')}\n"
             items_text += f"   Bureau: {item.get('bureau', 'All')}\n"
             items_text += f"   Type: {item.get('type', 'N/A')}\n"
-            if item.get('balance'):
+            if item.get("balance"):
                 items_text += f"   Balance: ${item.get('balance')}\n"
 
         prompt = f"""
@@ -1154,20 +1246,21 @@ Format each document with clear headers:
             system_prompt = self.prompt_loader.get_5day_knockout_prompt()
         except Exception:
             # Fallback to quick prompt if 5dayknockout not found
-            system_prompt = self.prompt_loader.load_prompt('quick')
+            system_prompt = self.prompt_loader.load_prompt("quick")
 
         # Truncate if needed
         if len(system_prompt) > 80000:
             system_prompt = system_prompt[:80000] + "\n\n[Truncated for length]"
 
         import time
+
         start_time = time.time()
         response = self.anthropic_client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=16000,  # Larger for multiple documents
             temperature=0.2,
             system=system_prompt,
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
         )
         duration_ms = int((time.time() - start_time) * 1000)
 
@@ -1179,14 +1272,14 @@ Format each document with clear headers:
             input_tokens=response.usage.input_tokens,
             output_tokens=response.usage.output_tokens,
             duration_ms=duration_ms,
-            letter_type="5day_knockout"
+            letter_type="5day_knockout",
         )
 
         response_text = response.content[0].text
 
         # Parse documents from response
         documents = {}
-        pattern = r'===START DOCUMENT:\s*(.+?)===\s*(.*?)\s*===END DOCUMENT:\s*\1==='
+        pattern = r"===START DOCUMENT:\s*(.+?)===\s*(.*?)\s*===END DOCUMENT:\s*\1==="
         matches = re.findall(pattern, response_text, re.DOTALL | re.IGNORECASE)
 
         for doc_name, content in matches:
@@ -1194,11 +1287,13 @@ Format each document with clear headers:
 
         # If no documents parsed, return raw response
         if not documents:
-            documents['Combined_Output'] = response_text.strip()
+            documents["Combined_Output"] = response_text.strip()
 
         return documents
 
-    def _get_5day_knockout_next_steps(self, phase: int, police_case_number: Optional[str]) -> List[str]:
+    def _get_5day_knockout_next_steps(
+        self, phase: int, police_case_number: Optional[str]
+    ) -> List[str]:
         """Get next steps based on current phase"""
         if phase == 1:
             return [
@@ -1223,15 +1318,12 @@ Format each document with clear headers:
 
     def get_special_strategies_info(self) -> List[Dict[str, Any]]:
         """Get information about all special strategies"""
-        return [
-            {'key': key, **info}
-            for key, info in self.SPECIAL_STRATEGIES.items()
-        ]
+        return [{"key": key, **info} for key, info in self.SPECIAL_STRATEGIES.items()]
 
     def get_strategy_info(self, strategy_key: str) -> Optional[Dict[str, Any]]:
         """Get information about a specific special strategy"""
         if strategy_key in self.SPECIAL_STRATEGIES:
-            return {'key': strategy_key, **self.SPECIAL_STRATEGIES[strategy_key]}
+            return {"key": strategy_key, **self.SPECIAL_STRATEGIES[strategy_key]}
         return None
 
     # =========================================================================
@@ -1262,13 +1354,15 @@ Format each document with clear headers:
         Returns:
             Dict with packets per bureau, ready for SendCertifiedMail
         """
-        from services.pdf_service import FCRAPDFGenerator
         from io import BytesIO
+
         from pypdf import PdfReader, PdfWriter
+
+        from services.pdf_service import FCRAPDFGenerator
 
         client = self.db.query(Client).filter(Client.id == client_id).first()
         if not client:
-            return {'error': 'Client not found'}
+            return {"error": "Client not found"}
 
         pdf_gen = FCRAPDFGenerator()
         packets = {}
@@ -1278,10 +1372,10 @@ Format each document with clear headers:
 
         # Documents that go in ALL bureau packets (supporting docs)
         common_doc_names = [
-            'FTC Identity Theft Report',
-            'Police Report Copy',
-            'Identity Declaration',
-            'Certified mail tracking sheet',
+            "FTC Identity Theft Report",
+            "Police Report Copy",
+            "Identity Declaration",
+            "Certified mail tracking sheet",
         ]
 
         for bureau in self.BUREAUS:
@@ -1292,7 +1386,7 @@ Format each document with clear headers:
             # Find the 605B letter for this bureau
             bureau_letter_key = None
             for key in documents.keys():
-                if bureau.lower() in key.lower() and '605b' in key.lower():
+                if bureau.lower() in key.lower() and "605b" in key.lower():
                     bureau_letter_key = key
                     break
 
@@ -1306,7 +1400,7 @@ Format each document with clear headers:
             # Build document list for this packet
             packet_docs = []
             if bureau_letter_key:
-                packet_docs.append(f'§605B Dispute Letter - {bureau}')
+                packet_docs.append(f"§605B Dispute Letter - {bureau}")
 
             # Add common supporting documents
             for doc_name in common_doc_names:
@@ -1316,10 +1410,12 @@ Format each document with clear headers:
                         break
 
             # Always add required attachments
-            packet_docs.extend([
-                'Copy of Government-Issued ID',
-                'Proof of Address (Utility Bill)',
-            ])
+            packet_docs.extend(
+                [
+                    "Copy of Government-Issued ID",
+                    "Proof of Address (Utility Bill)",
+                ]
+            )
 
             # Generate cover sheet
             cover_sheet_pdf = pdf_gen.generate_envelope_cover_sheet(
@@ -1334,33 +1430,41 @@ Format each document with clear headers:
 
             # Create packet info
             packets[bureau] = {
-                'bureau': bureau,
-                'fraud_address': bureau_address,
-                'formatted_address': {
-                    'recipient': f'{bureau} Fraud Department',
-                    'street': bureau_address.split(',')[0].strip(),
-                    'city': bureau_address.split(',')[1].strip() if ',' in bureau_address else '',
-                    'state': bureau_address.split(',')[2].strip().split()[0] if bureau_address.count(',') >= 2 else '',
-                    'zip': bureau_address.split()[-1] if bureau_address else '',
+                "bureau": bureau,
+                "fraud_address": bureau_address,
+                "formatted_address": {
+                    "recipient": f"{bureau} Fraud Department",
+                    "street": bureau_address.split(",")[0].strip(),
+                    "city": (
+                        bureau_address.split(",")[1].strip()
+                        if "," in bureau_address
+                        else ""
+                    ),
+                    "state": (
+                        bureau_address.split(",")[2].strip().split()[0]
+                        if bureau_address.count(",") >= 2
+                        else ""
+                    ),
+                    "zip": bureau_address.split()[-1] if bureau_address else "",
                 },
-                'cover_sheet_pdf': cover_sheet_pdf,
-                'letter_content': documents.get(bureau_letter_key, ''),
-                'documents_included': packet_docs,
-                'police_case_number': police_case_number,
-                'ftc_reference_number': ftc_reference_number,
-                'client_name': client.name,
-                'client_address': client_address,
-                'mail_class': 'certified_return_receipt',  # Required for legal disputes
+                "cover_sheet_pdf": cover_sheet_pdf,
+                "letter_content": documents.get(bureau_letter_key, ""),
+                "documents_included": packet_docs,
+                "police_case_number": police_case_number,
+                "ftc_reference_number": ftc_reference_number,
+                "client_name": client.name,
+                "client_address": client_address,
+                "mail_class": "certified_return_receipt",  # Required for legal disputes
             }
 
         return {
-            'success': True,
-            'client_id': client_id,
-            'client_name': client.name,
-            'packets': packets,
-            'total_packets': len(packets),
-            'estimated_cost': len(packets) * 8.50,  # ~$8.50 per certified letter
-            'created_at': datetime.utcnow().isoformat(),
+            "success": True,
+            "client_id": client_id,
+            "client_name": client.name,
+            "packets": packets,
+            "total_packets": len(packets),
+            "estimated_cost": len(packets) * 8.50,  # ~$8.50 per certified letter
+            "created_at": datetime.utcnow().isoformat(),
         }
 
     def _format_client_address(self, client: Client) -> str:
@@ -1373,7 +1477,7 @@ Format each document with clear headers:
             if client.address_zip:
                 city_state_zip += f" {client.address_zip}"
             parts.append(city_state_zip)
-        return ', '.join(parts) if parts else ''
+        return ", ".join(parts) if parts else ""
 
     def queue_packets_to_sendcertified(
         self,
@@ -1390,15 +1494,15 @@ Format each document with clear headers:
         Returns:
             Dict with queue results per bureau
         """
-        from services.sendcertified_service import get_sendcertified_service
         from services.pdf_service import FCRAPDFGenerator
+        from services.sendcertified_service import get_sendcertified_service
 
         sendcertified = get_sendcertified_service()
 
         if not sendcertified.is_configured():
             return {
-                'success': False,
-                'error': 'SendCertified is not configured. Please set up API credentials.',
+                "success": False,
+                "error": "SendCertified is not configured. Please set up API credentials.",
             }
 
         results = {}
@@ -1409,19 +1513,20 @@ Format each document with clear headers:
             try:
                 # Convert letter content to PDF
                 letter_pdf = self._text_to_pdf(
-                    packet['letter_content'],
+                    packet["letter_content"],
                     title=f"FCRA §605B Identity Theft Dispute - {bureau}",
-                    client_name=packet['client_name'],
+                    client_name=packet["client_name"],
                 )
 
                 # Combine cover sheet + letter into single PDF
-                from pypdf import PdfReader, PdfWriter
                 from io import BytesIO
+
+                from pypdf import PdfReader, PdfWriter
 
                 writer = PdfWriter()
 
                 # Add cover sheet first
-                cover_sheet_stream = BytesIO(packet['cover_sheet_pdf'])
+                cover_sheet_stream = BytesIO(packet["cover_sheet_pdf"])
                 cover_reader = PdfReader(cover_sheet_stream)
                 for page in cover_reader.pages:
                     writer.add_page(page)
@@ -1440,55 +1545,61 @@ Format each document with clear headers:
 
                 # Queue to SendCertified
                 result = sendcertified.create_mailing(
-                    recipient=packet['formatted_address']['recipient'],
-                    address=packet['formatted_address'],
+                    recipient=packet["formatted_address"]["recipient"],
+                    address=packet["formatted_address"],
                     document_content=document_bytes,
-                    mail_class=packet['mail_class'],
+                    mail_class=packet["mail_class"],
                     client_id=client_id,
-                    letter_type='5day_knockout_605b',
+                    letter_type="5day_knockout_605b",
                     bureau=bureau,
                 )
 
                 results[bureau] = result
-                if result.get('success'):
+                if result.get("success"):
                     queued_count += 1
-                    total_cost += result.get('cost', 0)
+                    total_cost += result.get("cost", 0)
 
             except Exception as e:
                 results[bureau] = {
-                    'success': False,
-                    'error': str(e),
+                    "success": False,
+                    "error": str(e),
                 }
 
         return {
-            'success': queued_count > 0,
-            'client_id': client_id,
-            'results': results,
-            'queued_count': queued_count,
-            'total_count': len(packets),
-            'total_cost': total_cost,
-            'queued_at': datetime.utcnow().isoformat(),
+            "success": queued_count > 0,
+            "client_id": client_id,
+            "results": results,
+            "queued_count": queued_count,
+            "total_count": len(packets),
+            "total_cost": total_cost,
+            "queued_at": datetime.utcnow().isoformat(),
         }
 
-    def _text_to_pdf(self, text: str, title: str = '', client_name: str = '') -> bytes:
+    def _text_to_pdf(self, text: str, title: str = "", client_name: str = "") -> bytes:
         """Convert text content to PDF bytes using WeasyPrint"""
-        from weasyprint import HTML
-        from io import BytesIO
         from datetime import datetime
+        from io import BytesIO
+
+        from weasyprint import HTML
 
         # Escape HTML special characters
         def escape_html(s):
-            return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+            return (
+                s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace('"', "&quot;")
+            )
 
         # Convert text to HTML with basic formatting
         escaped_text = escape_html(text)
         html_lines = []
-        for line in escaped_text.split('\n'):
+        for line in escaped_text.split("\n"):
             if line.strip():
-                html_lines.append(f'<p>{line}</p>')
+                html_lines.append(f"<p>{line}</p>")
             else:
-                html_lines.append('<br/>')
-        html_body = '\n'.join(html_lines)
+                html_lines.append("<br/>")
+        html_body = "\n".join(html_lines)
 
         html_content = f"""<!DOCTYPE html>
 <html>

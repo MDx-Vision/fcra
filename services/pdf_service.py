@@ -1202,8 +1202,8 @@ class FCRAPDFGenerator:
         Returns:
             PDF bytes
         """
-        from io import BytesIO
         from datetime import datetime
+        from io import BytesIO
 
         html_content = f"""<!DOCTYPE html>
 <html>

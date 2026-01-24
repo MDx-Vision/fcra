@@ -119,7 +119,10 @@ class AuditService:
         return context
 
     def _detect_phi_access(
-        self, details: Optional[Dict[str, Any]] = None, old_values: Optional[Dict[str, Any]] = None, new_values: Optional[Dict[str, Any]] = None
+        self,
+        details: Optional[Dict[str, Any]] = None,
+        old_values: Optional[Dict[str, Any]] = None,
+        new_values: Optional[Dict[str, Any]] = None,
     ) -> Tuple[bool, List[str]]:
         """Detect if PHI fields were accessed"""
         phi_accessed = []
@@ -264,7 +267,11 @@ class AuditService:
         )
 
     def log_logout(
-        self, user_id: int, user_type: str, email: Optional[str] = None, name: Optional[str] = None
+        self,
+        user_id: int,
+        user_type: str,
+        email: Optional[str] = None,
+        name: Optional[str] = None,
     ) -> Optional[AuditLog]:
         """Log logout event"""
         return self.log_event(

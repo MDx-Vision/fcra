@@ -245,6 +245,7 @@ COMPLEX QUESTIONS:
 - Technical questions about credit scoring
 """
 
+
 # Full Knowledge Base Combined
 def get_full_knowledge_base() -> str:
     """Returns the complete knowledge base as a single string"""
@@ -302,19 +303,19 @@ ESCALATE TO HUMAN IF:
 
     if client_context:
         client_info = "\n\nCLIENT CONTEXT:"
-        if client_context.get('client_name'):
+        if client_context.get("client_name"):
             client_info += f"\n- Name: {client_context['client_name']}"
-        if client_context.get('case_status'):
+        if client_context.get("case_status"):
             client_info += f"\n- Case Status: {client_context['case_status']}"
-        if client_context.get('client_stage'):
+        if client_context.get("client_stage"):
             client_info += f"\n- Account Stage: {client_context['client_stage']}"
-        if client_context.get('dispute_round'):
+        if client_context.get("dispute_round"):
             client_info += f"\n- Current Round: Round {client_context['dispute_round']}"
-        if client_context.get('days_active'):
+        if client_context.get("days_active"):
             client_info += f"\n- Days Active: {client_context['days_active']}"
-        if client_context.get('violations_count'):
+        if client_context.get("violations_count"):
             client_info += f"\n- Violations Found: {client_context['violations_count']}"
-        if client_context.get('items_removed'):
+        if client_context.get("items_removed"):
             client_info += f"\n- Items Removed: {client_context['items_removed']}"
 
         base_prompt += client_info
@@ -335,49 +336,82 @@ def check_escalation_needed(message: str) -> dict:
     message_lower = message.lower()
 
     # Payment/billing triggers
-    payment_keywords = ['refund', 'cancel', 'money back', 'overcharged',
-                       'payment problem', 'billing issue', 'charge disputed']
+    payment_keywords = [
+        "refund",
+        "cancel",
+        "money back",
+        "overcharged",
+        "payment problem",
+        "billing issue",
+        "charge disputed",
+    ]
     for keyword in payment_keywords:
         if keyword in message_lower:
             return {
-                'should_escalate': True,
-                'reason': 'payment_billing',
-                'message': "I understand you have a question about payments or billing. Let me connect you with our support team who can better assist you with this."
+                "should_escalate": True,
+                "reason": "payment_billing",
+                "message": "I understand you have a question about payments or billing. Let me connect you with our support team who can better assist you with this.",
             }
 
     # Dissatisfaction triggers
-    dissatisfaction_keywords = ['angry', 'frustrated', 'upset', 'disappointed',
-                                'not working', 'waste of time', 'scam', 'rip off',
-                                'terrible', 'horrible', 'worst']
+    dissatisfaction_keywords = [
+        "angry",
+        "frustrated",
+        "upset",
+        "disappointed",
+        "not working",
+        "waste of time",
+        "scam",
+        "rip off",
+        "terrible",
+        "horrible",
+        "worst",
+    ]
     for keyword in dissatisfaction_keywords:
         if keyword in message_lower:
             return {
-                'should_escalate': True,
-                'reason': 'dissatisfaction',
-                'message': "I'm sorry to hear you're frustrated. Let me connect you with a team member who can address your concerns directly."
+                "should_escalate": True,
+                "reason": "dissatisfaction",
+                "message": "I'm sorry to hear you're frustrated. Let me connect you with a team member who can address your concerns directly.",
             }
 
     # Legal triggers
-    legal_keywords = ['lawyer', 'attorney', 'legal action', 'sue', 'lawsuit',
-                     'court', 'arbitration', 'legal advice']
+    legal_keywords = [
+        "lawyer",
+        "attorney",
+        "legal action",
+        "sue",
+        "lawsuit",
+        "court",
+        "arbitration",
+        "legal advice",
+    ]
     for keyword in legal_keywords:
         if keyword in message_lower:
             return {
-                'should_escalate': True,
-                'reason': 'legal',
-                'message': "For questions involving legal matters, I'd recommend speaking with our team. I can connect you with a staff member who can provide more guidance."
+                "should_escalate": True,
+                "reason": "legal",
+                "message": "For questions involving legal matters, I'd recommend speaking with our team. I can connect you with a staff member who can provide more guidance.",
             }
 
     # Explicit human request
-    human_keywords = ['speak to a human', 'talk to a person', 'real person',
-                     'live agent', 'speak to someone', 'talk to someone',
-                     'human please', 'actual person', 'speak with someone']
+    human_keywords = [
+        "speak to a human",
+        "talk to a person",
+        "real person",
+        "live agent",
+        "speak to someone",
+        "talk to someone",
+        "human please",
+        "actual person",
+        "speak with someone",
+    ]
     for keyword in human_keywords:
         if keyword in message_lower:
             return {
-                'should_escalate': True,
-                'reason': 'explicit_request',
-                'message': "Of course! I'll connect you with a team member right away."
+                "should_escalate": True,
+                "reason": "explicit_request",
+                "message": "Of course! I'll connect you with a team member right away.",
             }
 
-    return {'should_escalate': False, 'reason': None}
+    return {"should_escalate": False, "reason": None}

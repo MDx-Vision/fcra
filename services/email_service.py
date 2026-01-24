@@ -102,6 +102,7 @@ def send_email(
         # Auto-generate plain text from HTML if not provided
         if plain_content is None:
             import re
+
             plain_content = re.sub(r"<[^>]+>", "", html_content)
 
         # Create message
@@ -137,13 +138,13 @@ def send_email(
                     try:
                         file_data = base64.b64decode(content)
                     except Exception:
-                        file_data = content.encode() if isinstance(content, str) else content
+                        file_data = (
+                            content.encode() if isinstance(content, str) else content
+                        )
 
                     attachment = MIMEApplication(file_data)
                     attachment.add_header(
-                        "Content-Disposition",
-                        "attachment",
-                        filename=filename
+                        "Content-Disposition", "attachment", filename=filename
                     )
                     attachment.add_header("Content-Type", file_type)
                     msg_with_attachments.attach(attachment)
@@ -159,11 +160,13 @@ def send_email(
 
         # Generate a pseudo message ID (Gmail doesn't return one via SMTP)
         import uuid
+
         message_id = f"gmail-{uuid.uuid4().hex[:16]}"
 
         # Log successful email
         try:
             from services.activity_logger import log_email_sent
+
             log_email_sent(to_email, subject)
         except:
             pass
@@ -179,6 +182,7 @@ def send_email(
         # Log failed email
         try:
             from services.activity_logger import log_email_failed
+
             log_email_failed(to_email, f"Auth failed: {str(e)}")
         except:
             pass
@@ -190,6 +194,7 @@ def send_email(
     except smtplib.SMTPException as e:
         try:
             from services.activity_logger import log_email_failed
+
             log_email_failed(to_email, f"SMTP error: {str(e)}")
         except:
             pass
@@ -201,6 +206,7 @@ def send_email(
     except Exception as e:
         try:
             from services.activity_logger import log_email_failed
+
             log_email_failed(to_email, str(e))
         except:
             pass
@@ -295,14 +301,19 @@ def get_sendgrid_api_key():
 
 def get_sendgrid_client():
     """Legacy function - raises error (no longer used)."""
-    raise NotImplementedError("SendGrid has been replaced with Gmail SMTP. Use send_email() directly.")
+    raise NotImplementedError(
+        "SendGrid has been replaced with Gmail SMTP. Use send_email() directly."
+    )
 
 
 # =============================================================================
 # Partner Portal Emails
 # =============================================================================
 
-def send_partner_password_reset_email(email: str, reset_url: str, tenant_name: str = None):
+
+def send_partner_password_reset_email(
+    email: str, reset_url: str, tenant_name: str = None
+):
     """
     Send password reset email to partner portal admin.
 
@@ -357,11 +368,17 @@ def send_partner_password_reset_email(email: str, reset_url: str, tenant_name: s
     return send_email(
         to_email=email,
         subject="Password Reset Request - Partner Portal",
-        html_content=html_content
+        html_content=html_content,
     )
 
 
-def send_partner_team_invitation_email(email: str, login_url: str, tenant_name: str, inviter_name: str = None, role: str = None):
+def send_partner_team_invitation_email(
+    email: str,
+    login_url: str,
+    tenant_name: str,
+    inviter_name: str = None,
+    role: str = None,
+):
     """
     Send team invitation email to new partner portal team member.
 
@@ -372,7 +389,7 @@ def send_partner_team_invitation_email(email: str, login_url: str, tenant_name: 
         inviter_name: Name of person who sent the invitation
         role: Role being assigned (e.g., 'admin', 'member')
     """
-    role_display = role.replace('_', ' ').title() if role else "Team Member"
+    role_display = role.replace("_", " ").title() if role else "Team Member"
     inviter_text = f"by {inviter_name}" if inviter_name else ""
 
     html_content = f"""
@@ -425,7 +442,7 @@ def send_partner_team_invitation_email(email: str, login_url: str, tenant_name: 
     return send_email(
         to_email=email,
         subject=f"You've been invited to join {tenant_name} - Partner Portal",
-        html_content=html_content
+        html_content=html_content,
     )
 
 
@@ -433,7 +450,13 @@ def send_partner_team_invitation_email(email: str, login_url: str, tenant_name: 
 # Payment Notification Emails
 # =============================================================================
 
-def send_payment_failed_email(client_email: str, client_name: str, error_message: str = None, portal_url: str = None):
+
+def send_payment_failed_email(
+    client_email: str,
+    client_name: str,
+    error_message: str = None,
+    portal_url: str = None,
+):
     """
     Send notification when a payment fails.
 
@@ -444,7 +467,11 @@ def send_payment_failed_email(client_email: str, client_name: str, error_message
         portal_url: URL to client portal for updating payment
     """
     first_name = client_name.split()[0] if client_name else "there"
-    error_text = f"<p style='color: #dc2626; font-size: 14px;'>Error: {error_message}</p>" if error_message else ""
+    error_text = (
+        f"<p style='color: #dc2626; font-size: 14px;'>Error: {error_message}</p>"
+        if error_message
+        else ""
+    )
     portal_link = portal_url or "https://portal.brightpathascendgroup.com"
 
     html_content = f"""
@@ -499,11 +526,17 @@ def send_payment_failed_email(client_email: str, client_name: str, error_message
     return send_email(
         to_email=client_email,
         subject="Action Required: Payment Issue - Brightpath Ascend Group",
-        html_content=html_content
+        html_content=html_content,
     )
 
 
-def send_payment_reminder_email(client_email: str, client_name: str, amount_due: float = None, due_date: str = None, portal_url: str = None):
+def send_payment_reminder_email(
+    client_email: str,
+    client_name: str,
+    amount_due: float = None,
+    due_date: str = None,
+    portal_url: str = None,
+):
     """
     Send reminder for upcoming payment.
 
@@ -568,11 +601,16 @@ def send_payment_reminder_email(client_email: str, client_name: str, amount_due:
     return send_email(
         to_email=client_email,
         subject="Payment Reminder - Brightpath Ascend Group",
-        html_content=html_content
+        html_content=html_content,
     )
 
 
-def send_subscription_past_due_email(client_email: str, client_name: str, amount_due: float = None, portal_url: str = None):
+def send_subscription_past_due_email(
+    client_email: str,
+    client_name: str,
+    amount_due: float = None,
+    portal_url: str = None,
+):
     """
     Send dunning email for past-due subscription.
 
@@ -633,5 +671,5 @@ def send_subscription_past_due_email(client_email: str, client_name: str, amount
     return send_email(
         to_email=client_email,
         subject="Action Required: Subscription Past Due - Brightpath Ascend Group",
-        html_content=html_content
+        html_content=html_content,
     )

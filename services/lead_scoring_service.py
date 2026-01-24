@@ -52,11 +52,9 @@ class LeadScoringService:
         "bankruptcy": 10,  # Lower because harder to dispute
         "medical_debt": 12,
         "student_loan": 8,
-
         # Violations (litigation potential)
         "violation": 10,
         "willful_violation": 15,
-
         # Credit score ranges (bonus points)
         "score_below_500": 25,
         "score_500_549": 20,
@@ -64,7 +62,6 @@ class LeadScoringService:
         "score_600_649": 10,
         "score_650_699": 5,
         "score_700_plus": 0,
-
         # Engagement indicators
         "has_report": 10,
         "has_analysis": 5,
@@ -75,7 +72,9 @@ class LeadScoringService:
     MAX_SCORE = 100
 
     @staticmethod
-    def calculate_score(client_id: int, session: Optional[Session] = None) -> Dict[str, Any]:
+    def calculate_score(
+        client_id: int, session: Optional[Session] = None
+    ) -> Dict[str, Any]:
         """
         Calculate lead score for a client based on their credit report data.
 
@@ -121,8 +120,9 @@ class LeadScoringService:
             violation_counts = LeadScoringService._count_violations(session, client_id)
             if violation_counts["total"] > 0:
                 violation_points = min(
-                    violation_counts["total"] * LeadScoringService.SCORING_WEIGHTS["violation"],
-                    30
+                    violation_counts["total"]
+                    * LeadScoringService.SCORING_WEIGHTS["violation"],
+                    30,
                 )
                 factors["violations"] = {
                     "count": violation_counts["total"],
@@ -167,7 +167,9 @@ class LeadScoringService:
                 total_score += LeadScoringService.SCORING_WEIGHTS["has_analysis"]
 
             # Factor 6: Multiple bureaus affected
-            bureau_count = LeadScoringService._count_bureaus_affected(session, client_id)
+            bureau_count = LeadScoringService._count_bureaus_affected(
+                session, client_id
+            )
             if bureau_count > 1:
                 multi_bureau_bonus = min((bureau_count - 1) * 5, 10)
                 factors["multiple_bureaus"] = {
@@ -271,9 +273,7 @@ class LeadScoringService:
     def _has_analysis(session: Session, client_id: int) -> bool:
         """Check if client has a completed analysis"""
         return (
-            session.query(Analysis.id)
-            .filter(Analysis.client_id == client_id)
-            .first()
+            session.query(Analysis.id).filter(Analysis.client_id == client_id).first()
             is not None
         )
 
@@ -313,7 +313,9 @@ class LeadScoringService:
             return "LOW"
 
     @staticmethod
-    def update_client_score(client_id: int, session: Optional[Session] = None) -> Dict[str, Any]:
+    def update_client_score(
+        client_id: int, session: Optional[Session] = None
+    ) -> Dict[str, Any]:
         """
         Calculate and save the lead score for a client.
 
@@ -416,7 +418,9 @@ class LeadScoringService:
             session.close()
 
     @staticmethod
-    def get_top_leads(limit: int = 10, session: Optional[Session] = None) -> List[Dict[str, Any]]:
+    def get_top_leads(
+        limit: int = 10, session: Optional[Session] = None
+    ) -> List[Dict[str, Any]]:
         """
         Get the top leads by score.
 
@@ -448,9 +452,13 @@ class LeadScoringService:
                     "email": c.email,
                     "phone": c.phone,
                     "score": c.lead_score,
-                    "priority": LeadScoringService._get_priority_label(c.lead_score or 0),
+                    "priority": LeadScoringService._get_priority_label(
+                        c.lead_score or 0
+                    ),
                     "status": c.dispute_status,
-                    "scored_at": c.lead_scored_at.isoformat() if c.lead_scored_at else None,
+                    "scored_at": (
+                        c.lead_scored_at.isoformat() if c.lead_scored_at else None
+                    ),
                 }
                 for c in clients
             ]

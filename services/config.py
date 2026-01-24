@@ -149,7 +149,9 @@ class Config:
     @property
     def EMAIL_FROM_ADDRESS(self) -> str:
         """Default sender email address."""
-        return os.environ.get("EMAIL_FROM_ADDRESS", self.GMAIL_USER or "noreply@fcra-platform.com")
+        return os.environ.get(
+            "EMAIL_FROM_ADDRESS", self.GMAIL_USER or "noreply@fcra-platform.com"
+        )
 
     @property
     def EMAIL_FROM_NAME(self) -> str:
@@ -362,7 +364,9 @@ class Config:
             "anthropic": lambda: bool(self.ANTHROPIC_API_KEY),
             "gmail": lambda: all([self.GMAIL_USER, self.GMAIL_APP_PASSWORD]),
             "email": lambda: all([self.GMAIL_USER, self.GMAIL_APP_PASSWORD]),  # Alias
-            "sendgrid": lambda: all([self.GMAIL_USER, self.GMAIL_APP_PASSWORD]),  # Legacy - now checks Gmail
+            "sendgrid": lambda: all(
+                [self.GMAIL_USER, self.GMAIL_APP_PASSWORD]
+            ),  # Legacy - now checks Gmail
             "twilio": lambda: all(
                 [
                     self.TWILIO_ACCOUNT_SID,

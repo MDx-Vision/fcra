@@ -198,8 +198,12 @@ def cached(ttl: int = 300, key_prefix: Optional[str] = None) -> Callable:
             app_cache.set(cache_key, result, ttl)
             return result
 
-        setattr(wrapper, 'cache_key_prefix', key_prefix or f.__name__)
-        setattr(wrapper, 'invalidate', lambda: app_cache.clear(f"{key_prefix or f.__name__}:*"))
+        setattr(wrapper, "cache_key_prefix", key_prefix or f.__name__)
+        setattr(
+            wrapper,
+            "invalidate",
+            lambda: app_cache.clear(f"{key_prefix or f.__name__}:*"),
+        )
         return wrapper
 
     return decorator
@@ -251,7 +255,9 @@ class PerformanceService:
                 }
             )
 
-    def get_endpoint_metrics(self, endpoint: Optional[str] = None, method: Optional[str] = None) -> Dict:
+    def get_endpoint_metrics(
+        self, endpoint: Optional[str] = None, method: Optional[str] = None
+    ) -> Dict:
         """Get performance metrics for an endpoint"""
         with _metrics_lock:
             if endpoint and method:
@@ -497,8 +503,12 @@ class PerformanceService:
 
             pool_stats = {
                 "pool_size": pool.size() if hasattr(pool, "size") else 0,
-                "checked_out_connections": pool.checkedout() if hasattr(pool, "checkedout") else 0,
-                "checked_in_connections": pool.checkedin() if hasattr(pool, "checkedin") else 0,
+                "checked_out_connections": (
+                    pool.checkedout() if hasattr(pool, "checkedout") else 0
+                ),
+                "checked_in_connections": (
+                    pool.checkedin() if hasattr(pool, "checkedin") else 0
+                ),
                 "overflow": pool.overflow() if hasattr(pool, "overflow") else 0,
                 "invalid_connections": (
                     pool.invalidatedcount() if hasattr(pool, "invalidatedcount") else 0
@@ -519,14 +529,12 @@ class PerformanceService:
                     pass
 
                 try:
-                    result = self.db.execute(
-                        """
+                    result = self.db.execute("""
                         SELECT state, count(*) as count 
                         FROM pg_stat_activity 
                         WHERE datname = current_database() 
                         GROUP BY state
-                    """
-                    ).fetchall()
+                    """).fetchall()
                     db_stats["connection_states"] = {
                         row[0] or "null": row[1] for row in result
                     }
@@ -534,8 +542,7 @@ class PerformanceService:
                     pass
 
                 try:
-                    result = self.db.execute(
-                        """
+                    result = self.db.execute("""
                         SELECT 
                             relname as table_name,
                             n_live_tup as row_count,
@@ -545,8 +552,7 @@ class PerformanceService:
                         FROM pg_stat_user_tables
                         ORDER BY n_live_tup DESC
                         LIMIT 10
-                    """
-                    ).fetchall()
+                    """).fetchall()
                     db_stats["top_tables"] = [
                         {
                             "table": row[0],
@@ -618,8 +624,7 @@ class PerformanceService:
 
         if self.db:
             try:
-                result = self.db.execute(
-                    """
+                result = self.db.execute("""
                     SELECT 
                         schemaname,
                         tablename,
@@ -627,8 +632,7 @@ class PerformanceService:
                         indexdef
                     FROM pg_indexes
                     WHERE schemaname = 'public'
-                """
-                ).fetchall()
+                """).fetchall()
 
                 existing_indices = set()
                 for row in result:

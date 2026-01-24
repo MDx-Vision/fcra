@@ -12,14 +12,13 @@ import os
 import secrets
 import time
 from datetime import datetime, timedelta
-from typing import Optional, Tuple, List, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 import pyotp
 import qrcode
 from qrcode.image.pure import PyPNGImage
 
-from services.encryption import encrypt_value, decrypt_value
-
+from services.encryption import decrypt_value, encrypt_value
 
 # Constants
 BACKUP_CODE_COUNT = 10
@@ -140,10 +139,7 @@ class TwoFactorService:
             otpauth:// URI string
         """
         totp = self.get_totp(secret)
-        return totp.provisioning_uri(
-            name=email,
-            issuer_name=issuer or ISSUER_NAME
-        )
+        return totp.provisioning_uri(name=email, issuer_name=issuer or ISSUER_NAME)
 
     def generate_qr_code(self, secret: str, email: str, issuer: str = None) -> str:
         """
@@ -174,7 +170,7 @@ class TwoFactorService:
 
         # Convert to base64
         buffer = io.BytesIO()
-        img.save(buffer, format='PNG')
+        img.save(buffer, format="PNG")
         buffer.seek(0)
 
         return base64.b64encode(buffer.getvalue()).decode()
@@ -183,7 +179,9 @@ class TwoFactorService:
     # Backup Codes
     # =========================================================================
 
-    def generate_backup_codes(self, count: int = BACKUP_CODE_COUNT) -> Tuple[List[str], List[str]]:
+    def generate_backup_codes(
+        self, count: int = BACKUP_CODE_COUNT
+    ) -> Tuple[List[str], List[str]]:
         """
         Generate backup codes for account recovery.
 
@@ -209,7 +207,9 @@ class TwoFactorService:
     def _generate_backup_code(self) -> str:
         """Generate a single backup code."""
         # Generate 8 random alphanumeric characters
-        chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # Exclude confusing chars (0, O, 1, I)
+        chars = (
+            "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # Exclude confusing chars (0, O, 1, I)
+        )
         code = "".join(secrets.choice(chars) for _ in range(BACKUP_CODE_LENGTH))
         # Format as XXXX-XXXX
         return f"{code[:4]}-{code[4:]}"
@@ -220,7 +220,9 @@ class TwoFactorService:
         normalized = code.upper().replace("-", "").replace(" ", "")
         return hashlib.sha256(normalized.encode()).hexdigest()
 
-    def verify_backup_code(self, code: str, hashed_codes: List[str]) -> Tuple[bool, int]:
+    def verify_backup_code(
+        self, code: str, hashed_codes: List[str]
+    ) -> Tuple[bool, int]:
         """
         Verify a backup code and return which one was used.
 
@@ -290,8 +292,10 @@ class TwoFactorService:
             "user_agent": user_agent[:500] if user_agent else "",
             "ip_address": ip_address,
             "created_at": datetime.utcnow().isoformat(),
-            "expires_at": (datetime.utcnow() + timedelta(days=DEVICE_TRUST_DAYS)).isoformat(),
-            "last_used": datetime.utcnow().isoformat()
+            "expires_at": (
+                datetime.utcnow() + timedelta(days=DEVICE_TRUST_DAYS)
+            ).isoformat(),
+            "last_used": datetime.utcnow().isoformat(),
         }
 
     def is_device_trusted(self, device_token: str, trusted_devices: List[Dict]) -> bool:
@@ -312,13 +316,17 @@ class TwoFactorService:
 
         for device in trusted_devices:
             if device.get("token") == device_token:
-                expires_at = datetime.fromisoformat(device.get("expires_at", "1970-01-01"))
+                expires_at = datetime.fromisoformat(
+                    device.get("expires_at", "1970-01-01")
+                )
                 if expires_at > now:
                     return True
 
         return False
 
-    def update_device_last_used(self, device_token: str, trusted_devices: List[Dict]) -> List[Dict]:
+    def update_device_last_used(
+        self, device_token: str, trusted_devices: List[Dict]
+    ) -> List[Dict]:
         """Update the last_used timestamp for a trusted device."""
         for device in trusted_devices:
             if device.get("token") == device_token:
@@ -333,11 +341,14 @@ class TwoFactorService:
 
         now = datetime.utcnow()
         return [
-            device for device in trusted_devices
+            device
+            for device in trusted_devices
             if datetime.fromisoformat(device.get("expires_at", "1970-01-01")) > now
         ]
 
-    def revoke_device(self, device_token: str, trusted_devices: List[Dict]) -> List[Dict]:
+    def revoke_device(
+        self, device_token: str, trusted_devices: List[Dict]
+    ) -> List[Dict]:
         """Revoke a specific trusted device."""
         if not trusted_devices:
             return []
@@ -351,7 +362,7 @@ class TwoFactorService:
     # Staff 2FA Management
     # =========================================================================
 
-    def setup_2fa_for_staff(self, staff, method: str = 'totp') -> Dict[str, Any]:
+    def setup_2fa_for_staff(self, staff, method: str = "totp") -> Dict[str, Any]:
         """
         Initialize 2FA setup for a staff member.
 
@@ -372,7 +383,7 @@ class TwoFactorService:
         # Generate QR code for TOTP
         qr_code = None
         provisioning_uri = None
-        if method == 'totp':
+        if method == "totp":
             qr_code = self.generate_qr_code(secret, staff.email)
             provisioning_uri = self.get_provisioning_uri(secret, staff.email)
 
@@ -390,7 +401,7 @@ class TwoFactorService:
             "qr_code": qr_code,  # Base64 PNG
             "provisioning_uri": provisioning_uri,
             "backup_codes": plain_codes,  # Show once, never again
-            "method": method
+            "method": method,
         }
 
     def verify_and_enable_2fa(self, staff, code: str) -> Tuple[bool, str]:
@@ -423,7 +434,9 @@ class TwoFactorService:
 
         return True, "Two-factor authentication enabled successfully."
 
-    def disable_2fa(self, staff, code: str = None, use_backup: bool = False) -> Tuple[bool, str]:
+    def disable_2fa(
+        self, staff, code: str = None, use_backup: bool = False
+    ) -> Tuple[bool, str]:
         """
         Disable 2FA for a staff member.
 
@@ -440,7 +453,9 @@ class TwoFactorService:
 
         # Verify the code
         if use_backup:
-            valid, index = self.verify_backup_code(code, staff.two_factor_backup_codes or [])
+            valid, index = self.verify_backup_code(
+                code, staff.two_factor_backup_codes or []
+            )
             if not valid:
                 return False, "Invalid backup code."
         else:
@@ -461,9 +476,15 @@ class TwoFactorService:
 
         return True, "Two-factor authentication disabled successfully."
 
-    def verify_2fa_login(self, staff, code: str, device_token: str = None,
-                         user_agent: str = None, ip_address: str = None,
-                         trust_device: bool = False) -> Tuple[bool, str, Optional[str]]:
+    def verify_2fa_login(
+        self,
+        staff,
+        code: str,
+        device_token: str = None,
+        user_agent: str = None,
+        ip_address: str = None,
+        trust_device: bool = False,
+    ) -> Tuple[bool, str, Optional[str]]:
         """
         Verify 2FA during login.
 
@@ -485,7 +506,9 @@ class TwoFactorService:
         trusted_devices = staff.trusted_devices or []
         if device_token and self.is_device_trusted(device_token, trusted_devices):
             # Update last used
-            staff.trusted_devices = self.update_device_last_used(device_token, trusted_devices)
+            staff.trusted_devices = self.update_device_last_used(
+                device_token, trusted_devices
+            )
             staff.two_factor_last_used = datetime.utcnow()
             if self.db:
                 self.db.commit()
@@ -511,7 +534,9 @@ class TwoFactorService:
             return True, "Verification successful.", new_token
 
         # Try backup code
-        valid, index = self.verify_backup_code(code, staff.two_factor_backup_codes or [])
+        valid, index = self.verify_backup_code(
+            code, staff.two_factor_backup_codes or []
+        )
         if valid:
             # Invalidate used backup code
             staff.two_factor_backup_codes = self.invalidate_backup_code(
@@ -531,7 +556,11 @@ class TwoFactorService:
                 self.db.commit()
 
             remaining = self.count_remaining_codes(staff.two_factor_backup_codes)
-            return True, f"Backup code accepted. {remaining} codes remaining.", new_token
+            return (
+                True,
+                f"Backup code accepted. {remaining} codes remaining.",
+                new_token,
+            )
 
         return False, "Invalid verification code.", None
 
@@ -578,18 +607,26 @@ class TwoFactorService:
 
         return {
             "enabled": staff.two_factor_enabled or False,
-            "method": staff.two_factor_method or 'totp',
-            "verified_at": staff.two_factor_verified_at.isoformat() if staff.two_factor_verified_at else None,
-            "last_used": staff.two_factor_last_used.isoformat() if staff.two_factor_last_used else None,
+            "method": staff.two_factor_method or "totp",
+            "verified_at": (
+                staff.two_factor_verified_at.isoformat()
+                if staff.two_factor_verified_at
+                else None
+            ),
+            "last_used": (
+                staff.two_factor_last_used.isoformat()
+                if staff.two_factor_last_used
+                else None
+            ),
             "backup_codes_remaining": self.count_remaining_codes(backup_codes),
-            "trusted_devices_count": len(self.remove_expired_devices(trusted_devices))
+            "trusted_devices_count": len(self.remove_expired_devices(trusted_devices)),
         }
 
     # =========================================================================
     # Partner Portal 2FA (WhiteLabelTenant)
     # =========================================================================
 
-    def setup_2fa_for_partner(self, tenant, method: str = 'totp') -> Dict[str, Any]:
+    def setup_2fa_for_partner(self, tenant, method: str = "totp") -> Dict[str, Any]:
         """Initialize 2FA setup for a partner portal admin."""
         secret = self.generate_secret()
         encrypted_secret = self.encrypt_secret(secret)
@@ -597,10 +634,16 @@ class TwoFactorService:
 
         qr_code = None
         provisioning_uri = None
-        if method == 'totp':
-            email = tenant.admin_email or tenant.company_email or f"{tenant.slug}@partner.local"
+        if method == "totp":
+            email = (
+                tenant.admin_email
+                or tenant.company_email
+                or f"{tenant.slug}@partner.local"
+            )
             qr_code = self.generate_qr_code(secret, email, f"{ISSUER_NAME} Partner")
-            provisioning_uri = self.get_provisioning_uri(secret, email, f"{ISSUER_NAME} Partner")
+            provisioning_uri = self.get_provisioning_uri(
+                secret, email, f"{ISSUER_NAME} Partner"
+            )
 
         tenant.two_factor_secret = encrypted_secret
         tenant.two_factor_method = method
@@ -614,7 +657,7 @@ class TwoFactorService:
             "qr_code": qr_code,
             "provisioning_uri": provisioning_uri,
             "backup_codes": plain_codes,
-            "method": method
+            "method": method,
         }
 
     def verify_and_enable_2fa_partner(self, tenant, code: str) -> Tuple[bool, str]:
@@ -644,7 +687,9 @@ class TwoFactorService:
             return True, "Verification successful."
 
         # Try backup code
-        valid, index = self.verify_backup_code(code, tenant.two_factor_backup_codes or [])
+        valid, index = self.verify_backup_code(
+            code, tenant.two_factor_backup_codes or []
+        )
         if valid:
             tenant.two_factor_backup_codes = self.invalidate_backup_code(
                 tenant.two_factor_backup_codes, index

@@ -35,7 +35,10 @@ class SendCertifiedService:
     """
 
     def __init__(
-        self, api_key: Optional[str] = None, api_secret: Optional[str] = None, sandbox: bool = True
+        self,
+        api_key: Optional[str] = None,
+        api_secret: Optional[str] = None,
+        sandbox: bool = True,
     ):
         """
         Initialize SendCertified service.
@@ -196,7 +199,9 @@ class SendCertifiedService:
             self._update_connection_status("error", error_msg[:200])
             return False
 
-    def _update_connection_status(self, status: str, error: Optional[str] = None) -> None:
+    def _update_connection_status(
+        self, status: str, error: Optional[str] = None
+    ) -> None:
         """Update connection status in IntegrationConnection table."""
         session = SessionLocal()
         try:

@@ -7,10 +7,9 @@ Allows staff to create, edit, and manage SMS templates used for client communica
 
 import re
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from database import SessionLocal, SMSTemplate
-
 
 # Template categories
 SMS_CATEGORIES = {
@@ -24,11 +23,27 @@ SMS_CATEGORIES = {
 
 # Common template variables that can be used
 SMS_VARIABLES = [
-    {"name": "client_name", "description": "Client's full name", "example": "John Smith"},
+    {
+        "name": "client_name",
+        "description": "Client's full name",
+        "example": "John Smith",
+    },
     {"name": "first_name", "description": "Client's first name", "example": "John"},
-    {"name": "company_name", "description": "Company name", "example": "Brightpath Ascend"},
-    {"name": "portal_url", "description": "Link to client portal", "example": "https://portal.example.com"},
-    {"name": "phone", "description": "Support phone number", "example": "(555) 123-4567"},
+    {
+        "name": "company_name",
+        "description": "Company name",
+        "example": "Brightpath Ascend",
+    },
+    {
+        "name": "portal_url",
+        "description": "Link to client portal",
+        "example": "https://portal.example.com",
+    },
+    {
+        "name": "phone",
+        "description": "Support phone number",
+        "example": "(555) 123-4567",
+    },
     {"name": "status", "description": "Current case status", "example": "Active"},
     {"name": "bureau", "description": "Credit bureau name", "example": "Equifax"},
     {"name": "date", "description": "Relevant date", "example": "Jan 15, 2026"},
@@ -87,9 +102,11 @@ class SMSTemplateService:
 
         try:
             # Check if template_type already exists
-            existing = session.query(SMSTemplate).filter(
-                SMSTemplate.template_type == template_type
-            ).first()
+            existing = (
+                session.query(SMSTemplate)
+                .filter(SMSTemplate.template_type == template_type)
+                .first()
+            )
             if existing:
                 return {
                     "success": False,
@@ -98,7 +115,11 @@ class SMSTemplateService:
 
             # Warn if message is too long
             char_count = len(message)
-            segments = 1 if char_count <= SMS_CHAR_LIMIT else (char_count // SMS_CHAR_LIMIT) + 1
+            segments = (
+                1
+                if char_count <= SMS_CHAR_LIMIT
+                else (char_count // SMS_CHAR_LIMIT) + 1
+            )
 
             # Create new template
             template = SMSTemplate(
@@ -155,9 +176,9 @@ class SMSTemplateService:
             close_session = True
 
         try:
-            template = session.query(SMSTemplate).filter(
-                SMSTemplate.id == template_id
-            ).first()
+            template = (
+                session.query(SMSTemplate).filter(SMSTemplate.id == template_id).first()
+            )
 
             if not template:
                 return {"success": False, "error": "Template not found"}
@@ -204,9 +225,9 @@ class SMSTemplateService:
             close_session = True
 
         try:
-            template = session.query(SMSTemplate).filter(
-                SMSTemplate.id == template_id
-            ).first()
+            template = (
+                session.query(SMSTemplate).filter(SMSTemplate.id == template_id).first()
+            )
 
             if not template:
                 return {"success": False, "error": "Template not found"}
@@ -231,7 +252,9 @@ class SMSTemplateService:
                 session.close()
 
     @staticmethod
-    def get_template(template_id: int = None, template_type: str = None, session=None) -> Optional[Dict[str, Any]]:
+    def get_template(
+        template_id: int = None, template_type: str = None, session=None
+    ) -> Optional[Dict[str, Any]]:
         """
         Get a template by ID or type.
 
@@ -249,7 +272,9 @@ class SMSTemplateService:
             if template_id:
                 template = query.filter(SMSTemplate.id == template_id).first()
             elif template_type:
-                template = query.filter(SMSTemplate.template_type == template_type).first()
+                template = query.filter(
+                    SMSTemplate.template_type == template_type
+                ).first()
             else:
                 return None
 
@@ -257,14 +282,20 @@ class SMSTemplateService:
                 return None
 
             char_count = len(template.message) if template.message else 0
-            segments = 1 if char_count <= SMS_CHAR_LIMIT else (char_count // SMS_CHAR_LIMIT) + 1
+            segments = (
+                1
+                if char_count <= SMS_CHAR_LIMIT
+                else (char_count // SMS_CHAR_LIMIT) + 1
+            )
 
             return {
                 "id": template.id,
                 "template_type": template.template_type,
                 "name": template.name,
                 "category": template.category,
-                "category_label": SMS_CATEGORIES.get(template.category, template.category),
+                "category_label": SMS_CATEGORIES.get(
+                    template.category, template.category
+                ),
                 "description": template.description,
                 "message": template.message,
                 "variables": template.variables or [],
@@ -272,8 +303,12 @@ class SMSTemplateService:
                 "is_active": template.is_active,
                 "char_count": char_count,
                 "segments": segments,
-                "created_at": template.created_at.isoformat() if template.created_at else None,
-                "updated_at": template.updated_at.isoformat() if template.updated_at else None,
+                "created_at": (
+                    template.created_at.isoformat() if template.created_at else None
+                ),
+                "updated_at": (
+                    template.updated_at.isoformat() if template.updated_at else None
+                ),
             }
 
         finally:
@@ -317,8 +352,8 @@ class SMSTemplateService:
             if search:
                 search_pattern = f"%{search}%"
                 query = query.filter(
-                    (SMSTemplate.name.ilike(search_pattern)) |
-                    (SMSTemplate.description.ilike(search_pattern))
+                    (SMSTemplate.name.ilike(search_pattern))
+                    | (SMSTemplate.description.ilike(search_pattern))
                 )
 
             templates = query.order_by(SMSTemplate.category, SMSTemplate.name).all()
@@ -385,7 +420,9 @@ class SMSTemplateService:
             message = message.replace(f"{{{key}}}", str(value))
 
         char_count = len(message)
-        segments = 1 if char_count <= SMS_CHAR_LIMIT else (char_count // SMS_CHAR_LIMIT) + 1
+        segments = (
+            1 if char_count <= SMS_CHAR_LIMIT else (char_count // SMS_CHAR_LIMIT) + 1
+        )
 
         return {
             "success": True,
@@ -414,7 +451,9 @@ class SMSTemplateService:
         Returns:
             Dict with new template info
         """
-        template = SMSTemplateService.get_template(template_id=template_id, session=session)
+        template = SMSTemplateService.get_template(
+            template_id=template_id, session=session
+        )
 
         if not template:
             return {"success": False, "error": "Template not found"}
@@ -449,16 +488,26 @@ class SMSTemplateService:
 
         try:
             total = session.query(SMSTemplate).count()
-            active = session.query(SMSTemplate).filter(SMSTemplate.is_active == True).count()
-            custom = session.query(SMSTemplate).filter(SMSTemplate.is_custom == True).count()
-            system = session.query(SMSTemplate).filter(SMSTemplate.is_custom == False).count()
+            active = (
+                session.query(SMSTemplate).filter(SMSTemplate.is_active == True).count()
+            )
+            custom = (
+                session.query(SMSTemplate).filter(SMSTemplate.is_custom == True).count()
+            )
+            system = (
+                session.query(SMSTemplate)
+                .filter(SMSTemplate.is_custom == False)
+                .count()
+            )
 
             # Count by category
             by_category = {}
             for category_key in SMS_CATEGORIES:
-                count = session.query(SMSTemplate).filter(
-                    SMSTemplate.category == category_key
-                ).count()
+                count = (
+                    session.query(SMSTemplate)
+                    .filter(SMSTemplate.category == category_key)
+                    .count()
+                )
                 if count > 0:
                     by_category[category_key] = count
 
@@ -617,9 +666,11 @@ def seed_default_sms_templates(session=None) -> Dict[str, Any]:
     try:
         for template_data in DEFAULT_SMS_TEMPLATES:
             # Check if already exists
-            existing = session.query(SMSTemplate).filter(
-                SMSTemplate.template_type == template_data["template_type"]
-            ).first()
+            existing = (
+                session.query(SMSTemplate)
+                .filter(SMSTemplate.template_type == template_data["template_type"])
+                .first()
+            )
 
             if existing:
                 skipped += 1
@@ -665,7 +716,9 @@ def get_sms_template(template_type: str) -> Optional[Dict]:
 
 def render_sms(template_type: str, variables: Dict[str, str] = None) -> Dict[str, Any]:
     """Render an SMS template with variables"""
-    return SMSTemplateService.render_template(template_type=template_type, variables=variables)
+    return SMSTemplateService.render_template(
+        template_type=template_type, variables=variables
+    )
 
 
 def list_all_sms_templates() -> List[Dict]:

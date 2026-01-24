@@ -10,38 +10,37 @@ after Meta/WhatsApp approval.
 """
 
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from .sms_service import (
+    format_whatsapp_number,
     get_twilio_client,
     get_whatsapp_number,
-    format_whatsapp_number,
     is_whatsapp_configured,
     send_whatsapp,
     send_whatsapp_template,
 )
 
-
 # Template SIDs - Replace with your approved Twilio Content Template SIDs
 # See: https://www.twilio.com/docs/content
 WHATSAPP_TEMPLATES = {
-    'document_request': 'HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',  # TODO: Replace after approval
-    'status_update': 'HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    'letters_ready': 'HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    'document_received': 'HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    'verification_code': 'HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    'welcome': 'HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    "document_request": "HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  # TODO: Replace after approval
+    "status_update": "HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "letters_ready": "HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "document_received": "HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "verification_code": "HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "welcome": "HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 }
 
 # Document type display names
 DOCUMENT_TYPES = {
-    'drivers_license': "Driver's License",
-    'ssn_card': 'Social Security Card',
-    'utility_bill': 'Utility Bill',
-    'credit_report': 'Credit Report',
-    'cra_response': 'CRA Response Letter',
-    'id_document': 'Government ID',
-    'other': 'Document',
+    "drivers_license": "Driver's License",
+    "ssn_card": "Social Security Card",
+    "utility_bill": "Utility Bill",
+    "credit_report": "Credit Report",
+    "cra_response": "CRA Response Letter",
+    "id_document": "Government ID",
+    "other": "Document",
 }
 
 
@@ -57,9 +56,9 @@ def check_whatsapp_opt_in(client) -> bool:
     if not client:
         return False
     return bool(
-        getattr(client, 'whatsapp_opt_in', False) and
-        getattr(client, 'whatsapp_verified', False) and
-        getattr(client, 'whatsapp_number', None)
+        getattr(client, "whatsapp_opt_in", False)
+        and getattr(client, "whatsapp_verified", False)
+        and getattr(client, "whatsapp_number", None)
     )
 
 
@@ -70,21 +69,23 @@ def get_whatsapp_settings(db) -> Dict[str, Any]:
     from database import SignupSettings
 
     defaults = {
-        'whatsapp_enabled': False,
-        'document_request_enabled': True,
-        'status_update_enabled': True,
-        'letters_ready_enabled': True,
+        "whatsapp_enabled": False,
+        "document_request_enabled": True,
+        "status_update_enabled": True,
+        "letters_ready_enabled": True,
     }
 
     settings = {}
     for key, default in defaults.items():
         try:
-            setting = db.query(SignupSettings).filter_by(
-                setting_key=f'whatsapp_{key}'
-            ).first()
+            setting = (
+                db.query(SignupSettings)
+                .filter_by(setting_key=f"whatsapp_{key}")
+                .first()
+            )
             if setting:
                 if isinstance(default, bool):
-                    settings[key] = setting.setting_value.lower() == 'true'
+                    settings[key] = setting.setting_value.lower() == "true"
                 else:
                     settings[key] = setting.setting_value
             else:
@@ -104,8 +105,8 @@ def log_whatsapp_message(
     template_name: str = None,
     template_variables: dict = None,
     twilio_sid: str = None,
-    status: str = 'sent',
-    error: str = None
+    status: str = "sent",
+    error: str = None,
 ) -> Optional[int]:
     """
     Log a WhatsApp message to the database.
@@ -115,20 +116,20 @@ def log_whatsapp_message(
     from database import WhatsAppMessage
 
     try:
-        from_number = get_whatsapp_number() if direction == 'outbound' else to_number
+        from_number = get_whatsapp_number() if direction == "outbound" else to_number
 
         message = WhatsAppMessage(
             client_id=client_id,
             twilio_sid=twilio_sid,
             direction=direction,
-            from_number=from_number if direction == 'outbound' else to_number,
-            to_number=to_number if direction == 'outbound' else from_number,
-            body=body[:2000] if body else '',
+            from_number=from_number if direction == "outbound" else to_number,
+            to_number=to_number if direction == "outbound" else from_number,
+            body=body[:2000] if body else "",
             template_name=template_name,
             template_variables=template_variables,
             status=status,
             error_message=error,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
         db.add(message)
         db.commit()
@@ -155,10 +156,7 @@ def get_client_whatsapp_number(db, client_id: int) -> Optional[str]:
 
 
 def trigger_whatsapp_document_request(
-    db,
-    client_id: int,
-    document_type: str,
-    custom_message: str = ''
+    db, client_id: int, document_type: str, custom_message: str = ""
 ) -> Dict[str, Any]:
     """
     Send a document request via WhatsApp.
@@ -176,84 +174,89 @@ def trigger_whatsapp_document_request(
 
     # Check configuration
     if not is_whatsapp_configured():
-        return {'success': False, 'sent': False, 'reason': 'WhatsApp not configured'}
+        return {"success": False, "sent": False, "reason": "WhatsApp not configured"}
 
     # Get settings
     settings = get_whatsapp_settings(db)
-    if not settings.get('whatsapp_enabled'):
-        return {'success': False, 'sent': False, 'reason': 'WhatsApp automation disabled'}
+    if not settings.get("whatsapp_enabled"):
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "WhatsApp automation disabled",
+        }
 
-    if not settings.get('document_request_enabled'):
-        return {'success': False, 'sent': False, 'reason': 'Document request notifications disabled'}
+    if not settings.get("document_request_enabled"):
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "Document request notifications disabled",
+        }
 
     # Get client
     client = db.query(Client).filter(Client.id == client_id).first()
     if not client:
-        return {'success': False, 'sent': False, 'reason': 'Client not found'}
+        return {"success": False, "sent": False, "reason": "Client not found"}
 
     # Check opt-in
     if not check_whatsapp_opt_in(client):
-        return {'success': False, 'sent': False, 'reason': 'Client not opted in for WhatsApp'}
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "Client not opted in for WhatsApp",
+        }
 
     # Get client name
-    first_name = client.first_name or (client.name.split()[0] if client.name else 'there')
+    first_name = client.first_name or (
+        client.name.split()[0] if client.name else "there"
+    )
 
     # Get document type display name
     doc_display = DOCUMENT_TYPES.get(document_type, document_type)
 
     # Build message (using template or plain text for 24hr window)
-    template_sid = WHATSAPP_TEMPLATES.get('document_request')
+    template_sid = WHATSAPP_TEMPLATES.get("document_request")
     template_vars = None
 
-    if template_sid and not template_sid.startswith('HXx'):  # Template configured
-        template_vars = {'1': first_name, '2': doc_display}
+    if template_sid and not template_sid.startswith("HXx"):  # Template configured
+        template_vars = {"1": first_name, "2": doc_display}
         result = send_whatsapp_template(
             to_number=client.whatsapp_number,
             template_sid=template_sid,
-            template_variables=template_vars
+            template_variables=template_vars,
         )
     else:
         # Fall back to plain message (only works within 24hr reply window)
         message = f"Hi {first_name}, we need your {doc_display} to continue processing your case.\n\nPlease reply with a photo. Questions? Reply HELP."
         if custom_message:
             message += f"\n\n{custom_message}"
-        result = send_whatsapp(
-            to_number=client.whatsapp_number,
-            message=message
-        )
+        result = send_whatsapp(to_number=client.whatsapp_number, message=message)
 
     # Log the message
     log_whatsapp_message(
         db=db,
         client_id=client_id,
-        direction='outbound',
+        direction="outbound",
         to_number=client.whatsapp_number,
         body=f"Document request: {doc_display}",
-        template_name='document_request',
+        template_name="document_request",
         template_variables=template_vars,
-        twilio_sid=result.get('message_sid'),
-        status='sent' if result.get('success') else 'failed',
-        error=result.get('error')
+        twilio_sid=result.get("message_sid"),
+        status="sent" if result.get("success") else "failed",
+        error=result.get("error"),
     )
 
-    if result.get('success'):
-        return {
-            'success': True,
-            'sent': True,
-            'message_sid': result.get('message_sid')
-        }
+    if result.get("success"):
+        return {"success": True, "sent": True, "message_sid": result.get("message_sid")}
     else:
         return {
-            'success': False,
-            'sent': False,
-            'reason': result.get('error', 'Failed to send WhatsApp message')
+            "success": False,
+            "sent": False,
+            "reason": result.get("error", "Failed to send WhatsApp message"),
         }
 
 
 def trigger_whatsapp_status_update(
-    db,
-    client_id: int,
-    status_message: str
+    db, client_id: int, status_message: str
 ) -> Dict[str, Any]:
     """
     Send a status update via WhatsApp.
@@ -269,64 +272,73 @@ def trigger_whatsapp_status_update(
     from database import Client
 
     if not is_whatsapp_configured():
-        return {'success': False, 'sent': False, 'reason': 'WhatsApp not configured'}
+        return {"success": False, "sent": False, "reason": "WhatsApp not configured"}
 
     settings = get_whatsapp_settings(db)
-    if not settings.get('whatsapp_enabled'):
-        return {'success': False, 'sent': False, 'reason': 'WhatsApp automation disabled'}
+    if not settings.get("whatsapp_enabled"):
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "WhatsApp automation disabled",
+        }
 
-    if not settings.get('status_update_enabled'):
-        return {'success': False, 'sent': False, 'reason': 'Status update notifications disabled'}
+    if not settings.get("status_update_enabled"):
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "Status update notifications disabled",
+        }
 
     client = db.query(Client).filter(Client.id == client_id).first()
     if not client:
-        return {'success': False, 'sent': False, 'reason': 'Client not found'}
+        return {"success": False, "sent": False, "reason": "Client not found"}
 
     if not check_whatsapp_opt_in(client):
-        return {'success': False, 'sent': False, 'reason': 'Client not opted in for WhatsApp'}
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "Client not opted in for WhatsApp",
+        }
 
-    first_name = client.first_name or (client.name.split()[0] if client.name else 'there')
+    first_name = client.first_name or (
+        client.name.split()[0] if client.name else "there"
+    )
 
-    template_sid = WHATSAPP_TEMPLATES.get('status_update')
+    template_sid = WHATSAPP_TEMPLATES.get("status_update")
     template_vars = None
 
-    if template_sid and not template_sid.startswith('HXx'):
-        template_vars = {'1': first_name, '2': status_message}
+    if template_sid and not template_sid.startswith("HXx"):
+        template_vars = {"1": first_name, "2": status_message}
         result = send_whatsapp_template(
             to_number=client.whatsapp_number,
             template_sid=template_sid,
-            template_variables=template_vars
+            template_variables=template_vars,
         )
     else:
         message = f"Hi {first_name}, your credit repair case update: {status_message}\n\nLog in to your portal for details."
-        result = send_whatsapp(
-            to_number=client.whatsapp_number,
-            message=message
-        )
+        result = send_whatsapp(to_number=client.whatsapp_number, message=message)
 
     log_whatsapp_message(
         db=db,
         client_id=client_id,
-        direction='outbound',
+        direction="outbound",
         to_number=client.whatsapp_number,
         body=f"Status update: {status_message}",
-        template_name='status_update',
+        template_name="status_update",
         template_variables=template_vars,
-        twilio_sid=result.get('message_sid'),
-        status='sent' if result.get('success') else 'failed',
-        error=result.get('error')
+        twilio_sid=result.get("message_sid"),
+        status="sent" if result.get("success") else "failed",
+        error=result.get("error"),
     )
 
-    if result.get('success'):
-        return {'success': True, 'sent': True, 'message_sid': result.get('message_sid')}
+    if result.get("success"):
+        return {"success": True, "sent": True, "message_sid": result.get("message_sid")}
     else:
-        return {'success': False, 'sent': False, 'reason': result.get('error')}
+        return {"success": False, "sent": False, "reason": result.get("error")}
 
 
 def trigger_whatsapp_letters_ready(
-    db,
-    client_id: int,
-    letter_count: int
+    db, client_id: int, letter_count: int
 ) -> Dict[str, Any]:
     """
     Notify client that dispute letters are ready.
@@ -342,65 +354,74 @@ def trigger_whatsapp_letters_ready(
     from database import Client
 
     if not is_whatsapp_configured():
-        return {'success': False, 'sent': False, 'reason': 'WhatsApp not configured'}
+        return {"success": False, "sent": False, "reason": "WhatsApp not configured"}
 
     settings = get_whatsapp_settings(db)
-    if not settings.get('whatsapp_enabled'):
-        return {'success': False, 'sent': False, 'reason': 'WhatsApp automation disabled'}
+    if not settings.get("whatsapp_enabled"):
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "WhatsApp automation disabled",
+        }
 
-    if not settings.get('letters_ready_enabled'):
-        return {'success': False, 'sent': False, 'reason': 'Letters ready notifications disabled'}
+    if not settings.get("letters_ready_enabled"):
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "Letters ready notifications disabled",
+        }
 
     client = db.query(Client).filter(Client.id == client_id).first()
     if not client:
-        return {'success': False, 'sent': False, 'reason': 'Client not found'}
+        return {"success": False, "sent": False, "reason": "Client not found"}
 
     if not check_whatsapp_opt_in(client):
-        return {'success': False, 'sent': False, 'reason': 'Client not opted in for WhatsApp'}
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "Client not opted in for WhatsApp",
+        }
 
-    first_name = client.first_name or (client.name.split()[0] if client.name else 'there')
+    first_name = client.first_name or (
+        client.name.split()[0] if client.name else "there"
+    )
     count_str = str(letter_count)
 
-    template_sid = WHATSAPP_TEMPLATES.get('letters_ready')
+    template_sid = WHATSAPP_TEMPLATES.get("letters_ready")
     template_vars = None
 
-    if template_sid and not template_sid.startswith('HXx'):
-        template_vars = {'1': first_name, '2': count_str}
+    if template_sid and not template_sid.startswith("HXx"):
+        template_vars = {"1": first_name, "2": count_str}
         result = send_whatsapp_template(
             to_number=client.whatsapp_number,
             template_sid=template_sid,
-            template_variables=template_vars
+            template_variables=template_vars,
         )
     else:
         message = f"Hi {first_name}, great news! {letter_count} dispute letters are ready.\n\nCheck your portal to review and approve."
-        result = send_whatsapp(
-            to_number=client.whatsapp_number,
-            message=message
-        )
+        result = send_whatsapp(to_number=client.whatsapp_number, message=message)
 
     log_whatsapp_message(
         db=db,
         client_id=client_id,
-        direction='outbound',
+        direction="outbound",
         to_number=client.whatsapp_number,
         body=f"Letters ready: {letter_count} dispute letters",
-        template_name='letters_ready',
+        template_name="letters_ready",
         template_variables=template_vars,
-        twilio_sid=result.get('message_sid'),
-        status='sent' if result.get('success') else 'failed',
-        error=result.get('error')
+        twilio_sid=result.get("message_sid"),
+        status="sent" if result.get("success") else "failed",
+        error=result.get("error"),
     )
 
-    if result.get('success'):
-        return {'success': True, 'sent': True, 'message_sid': result.get('message_sid')}
+    if result.get("success"):
+        return {"success": True, "sent": True, "message_sid": result.get("message_sid")}
     else:
-        return {'success': False, 'sent': False, 'reason': result.get('error')}
+        return {"success": False, "sent": False, "reason": result.get("error")}
 
 
 def trigger_whatsapp_document_received(
-    db,
-    client_id: int,
-    document_type: str = None
+    db, client_id: int, document_type: str = None
 ) -> Dict[str, Any]:
     """
     Confirm document receipt via WhatsApp.
@@ -416,62 +437,65 @@ def trigger_whatsapp_document_received(
     from database import Client
 
     if not is_whatsapp_configured():
-        return {'success': False, 'sent': False, 'reason': 'WhatsApp not configured'}
+        return {"success": False, "sent": False, "reason": "WhatsApp not configured"}
 
     settings = get_whatsapp_settings(db)
-    if not settings.get('whatsapp_enabled'):
-        return {'success': False, 'sent': False, 'reason': 'WhatsApp automation disabled'}
+    if not settings.get("whatsapp_enabled"):
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "WhatsApp automation disabled",
+        }
 
     client = db.query(Client).filter(Client.id == client_id).first()
     if not client:
-        return {'success': False, 'sent': False, 'reason': 'Client not found'}
+        return {"success": False, "sent": False, "reason": "Client not found"}
 
     if not check_whatsapp_opt_in(client):
-        return {'success': False, 'sent': False, 'reason': 'Client not opted in for WhatsApp'}
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "Client not opted in for WhatsApp",
+        }
 
-    first_name = client.first_name or (client.name.split()[0] if client.name else 'there')
+    first_name = client.first_name or (
+        client.name.split()[0] if client.name else "there"
+    )
 
-    template_sid = WHATSAPP_TEMPLATES.get('document_received')
+    template_sid = WHATSAPP_TEMPLATES.get("document_received")
     template_vars = None
 
-    if template_sid and not template_sid.startswith('HXx'):
-        template_vars = {'1': first_name}
+    if template_sid and not template_sid.startswith("HXx"):
+        template_vars = {"1": first_name}
         result = send_whatsapp_template(
             to_number=client.whatsapp_number,
             template_sid=template_sid,
-            template_variables=template_vars
+            template_variables=template_vars,
         )
     else:
         message = f"Hi {first_name}, we received your document.\n\nOur team will review it shortly."
-        result = send_whatsapp(
-            to_number=client.whatsapp_number,
-            message=message
-        )
+        result = send_whatsapp(to_number=client.whatsapp_number, message=message)
 
     log_whatsapp_message(
         db=db,
         client_id=client_id,
-        direction='outbound',
+        direction="outbound",
         to_number=client.whatsapp_number,
         body=f"Document received confirmation",
-        template_name='document_received',
+        template_name="document_received",
         template_variables=template_vars,
-        twilio_sid=result.get('message_sid'),
-        status='sent' if result.get('success') else 'failed',
-        error=result.get('error')
+        twilio_sid=result.get("message_sid"),
+        status="sent" if result.get("success") else "failed",
+        error=result.get("error"),
     )
 
-    if result.get('success'):
-        return {'success': True, 'sent': True, 'message_sid': result.get('message_sid')}
+    if result.get("success"):
+        return {"success": True, "sent": True, "message_sid": result.get("message_sid")}
     else:
-        return {'success': False, 'sent': False, 'reason': result.get('error')}
+        return {"success": False, "sent": False, "reason": result.get("error")}
 
 
-def send_custom_whatsapp(
-    db,
-    client_id: int,
-    message_text: str
-) -> Dict[str, Any]:
+def send_custom_whatsapp(db, client_id: int, message_text: str) -> Dict[str, Any]:
     """
     Send a custom WhatsApp message to a client.
 
@@ -488,33 +512,34 @@ def send_custom_whatsapp(
     from database import Client
 
     if not is_whatsapp_configured():
-        return {'success': False, 'sent': False, 'reason': 'WhatsApp not configured'}
+        return {"success": False, "sent": False, "reason": "WhatsApp not configured"}
 
     client = db.query(Client).filter(Client.id == client_id).first()
     if not client:
-        return {'success': False, 'sent': False, 'reason': 'Client not found'}
+        return {"success": False, "sent": False, "reason": "Client not found"}
 
     if not check_whatsapp_opt_in(client):
-        return {'success': False, 'sent': False, 'reason': 'Client not opted in for WhatsApp'}
+        return {
+            "success": False,
+            "sent": False,
+            "reason": "Client not opted in for WhatsApp",
+        }
 
-    result = send_whatsapp(
-        to_number=client.whatsapp_number,
-        message=message_text
-    )
+    result = send_whatsapp(to_number=client.whatsapp_number, message=message_text)
 
     log_whatsapp_message(
         db=db,
         client_id=client_id,
-        direction='outbound',
+        direction="outbound",
         to_number=client.whatsapp_number,
         body=message_text,
-        template_name='custom',
-        twilio_sid=result.get('message_sid'),
-        status='sent' if result.get('success') else 'failed',
-        error=result.get('error')
+        template_name="custom",
+        twilio_sid=result.get("message_sid"),
+        status="sent" if result.get("success") else "failed",
+        error=result.get("error"),
     )
 
-    if result.get('success'):
-        return {'success': True, 'sent': True, 'message_sid': result.get('message_sid')}
+    if result.get("success"):
+        return {"success": True, "sent": True, "message_sid": result.get("message_sid")}
     else:
-        return {'success': False, 'sent': False, 'reason': result.get('error')}
+        return {"success": False, "sent": False, "reason": result.get("error")}

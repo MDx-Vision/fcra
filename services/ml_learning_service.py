@@ -156,7 +156,10 @@ class MLLearningService:
         db.commit()
 
     def get_similar_cases(
-        self, violation_types: Optional[list[Any]] = None, furnisher_id: Optional[int] = None, limit: int = 10
+        self,
+        violation_types: Optional[list[Any]] = None,
+        furnisher_id: Optional[int] = None,
+        limit: int = 10,
     ) -> list[Any]:
         """
         Find similar historical cases for comparison.
@@ -198,7 +201,9 @@ class MLLearningService:
         finally:
             db.close()
 
-    def calculate_success_rate(self, filters: Optional[dict[Any, Any]] = None) -> dict[str, Any]:
+    def calculate_success_rate(
+        self, filters: Optional[dict[Any, Any]] = None
+    ) -> dict[str, Any]:
         """
         Calculate success rates by various dimensions.
 
@@ -304,7 +309,9 @@ class MLLearningService:
         finally:
             db.close()
 
-    def get_average_settlement(self, filters: Optional[dict[Any, Any]] = None) -> dict[str, Any]:
+    def get_average_settlement(
+        self, filters: Optional[dict[Any, Any]] = None
+    ) -> dict[str, Any]:
         """
         Calculate average settlement amounts with statistical breakdown.
         """
@@ -340,7 +347,9 @@ class MLLearningService:
                     "by_violation_type": {},
                 }
 
-            amounts: list[float] = sorted([float(o.settlement_amount) for o in outcomes])
+            amounts: list[float] = sorted(
+                [float(o.settlement_amount) for o in outcomes]
+            )
             n = len(amounts)
 
             avg = sum(amounts) / n
@@ -388,7 +397,9 @@ class MLLearningService:
         finally:
             db.close()
 
-    def get_resolution_time_estimate(self, violation_types: Optional[list[Any]] = None) -> dict[str, Any]:
+    def get_resolution_time_estimate(
+        self, violation_types: Optional[list[Any]] = None
+    ) -> dict[str, Any]:
         """
         Estimate time to resolution based on historical data.
         """
@@ -748,9 +759,7 @@ class MLLearningService:
                 )
                 errors_list = data["errors"]
                 if errors_list:
-                    data["mean_error"] = round(
-                        sum(errors_list) / len(errors_list), 2
-                    )
+                    data["mean_error"] = round(sum(errors_list) / len(errors_list), 2)
                 else:
                     data["mean_error"] = None
                 del data["errors"]
@@ -870,7 +879,9 @@ def record_outcome(client_id: int, outcome_data: dict[str, Any]) -> dict[str, An
 
 
 def get_similar_cases(
-    violation_types: Optional[list[Any]] = None, furnisher_id: Optional[int] = None, limit: int = 10
+    violation_types: Optional[list[Any]] = None,
+    furnisher_id: Optional[int] = None,
+    limit: int = 10,
 ) -> list[Any]:
     """Convenience function to find similar cases."""
     service = MLLearningService()

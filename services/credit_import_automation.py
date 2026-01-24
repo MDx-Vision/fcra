@@ -14,7 +14,11 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 logger = logging.getLogger(__name__)
 
 # Activity logging for human-readable debugging
-from services.activity_logger import log_activity, log_credit_import, log_credit_import_failed
+from services.activity_logger import (
+    log_activity,
+    log_credit_import,
+    log_credit_import_failed,
+)
 
 REPORTS_DIR = Path("uploads/credit_reports")
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -200,8 +204,12 @@ class CreditImportAutomation:
 
         if service_name not in SERVICE_CONFIGS:
             result["error"] = f"Unsupported service: {service_name}"
-            log_activity("Credit Import", f"Unsupported service: {service_name}",
-                        client_id=client_id, status="error")
+            log_activity(
+                "Credit Import",
+                f"Unsupported service: {service_name}",
+                client_id=client_id,
+                status="error",
+            )
             return result
 
         config = SERVICE_CONFIGS[service_name]
@@ -210,35 +218,65 @@ class CreditImportAutomation:
         )  # Set flow for extraction
 
         try:
-            log_activity("Credit Import Started", f"{client_name} | {service_name}",
-                        client_id=client_id, status="info")
+            log_activity(
+                "Credit Import Started",
+                f"{client_name} | {service_name}",
+                client_id=client_id,
+                status="info",
+            )
 
-            log_activity("Initialize Browser", "Launching Playwright browser...",
-                        client_id=client_id, status="info")
+            log_activity(
+                "Initialize Browser",
+                "Launching Playwright browser...",
+                client_id=client_id,
+                status="info",
+            )
             if not await self._init_browser():
                 result["error"] = "Failed to initialize browser"
-                log_activity("Browser Init Failed", "Could not launch browser",
-                            client_id=client_id, status="error")
+                log_activity(
+                    "Browser Init Failed",
+                    "Could not launch browser",
+                    client_id=client_id,
+                    status="error",
+                )
                 return result
 
-            log_activity("Browser Ready", "Navigating to login page...",
-                        client_id=client_id, status="success")
+            log_activity(
+                "Browser Ready",
+                "Navigating to login page...",
+                client_id=client_id,
+                status="success",
+            )
             logger.info(f"Starting import for {client_name} from {service_name}")
 
-            log_activity("Login Attempt", f"Logging into {service_name}...",
-                        client_id=client_id, status="info")
+            log_activity(
+                "Login Attempt",
+                f"Logging into {service_name}...",
+                client_id=client_id,
+                status="info",
+            )
             login_success = await self._login(config, username, password, ssn_last4)
             if not login_success:
                 result["error"] = "Login failed - check credentials"
-                log_credit_import_failed(client_id, service_name, "Login failed - invalid credentials")
+                log_credit_import_failed(
+                    client_id, service_name, "Login failed - invalid credentials"
+                )
                 return result
 
-            log_activity("Login Success", f"Authenticated to {service_name}",
-                        client_id=client_id, status="success")
+            log_activity(
+                "Login Success",
+                f"Authenticated to {service_name}",
+                client_id=client_id,
+                status="success",
+            )
             await asyncio.sleep(3)
 
-            log_activity("Download Report", "Navigating to credit report...",
-                        client_id=client_id, status="info")
+            log_activity(
+                "Download Report",
+                "Navigating to credit report...",
+                client_id=client_id,
+                status="info",
+            )
             report_data = await self._download_report(config, client_id, client_name)
             if report_data:
                 result["success"] = True
@@ -251,7 +289,9 @@ class CreditImportAutomation:
                 log_credit_import(client_id, service_name, result["scores"])
             else:
                 result["error"] = "Failed to download credit report"
-                log_credit_import_failed(client_id, service_name, "Failed to download report")
+                log_credit_import_failed(
+                    client_id, service_name, "Failed to download report"
+                )
 
         except Exception as e:
             logger.error(f"Import failed for {client_name}: {e}")
@@ -606,8 +646,7 @@ class CreditImportAutomation:
                 max_attempts = 15
                 for attempt in range(max_attempts):
                     try:
-                        score_count = await self.page.evaluate(
-                            """() => {
+                        score_count = await self.page.evaluate("""() => {
                             const tds = document.querySelectorAll('td.info.ng-binding');
                             let count = 0;
                             tds.forEach(td => {
@@ -617,8 +656,7 @@ class CreditImportAutomation:
                                 }
                             });
                             return count;
-                        }"""
-                        )
+                        }""")
                         logger.info(
                             f"Attempt {attempt + 1}: Found {score_count} score values"
                         )
@@ -675,13 +713,21 @@ class CreditImportAutomation:
                             logger.info(f"Found 3B report element: {selector}")
                             await link.click()
                             await asyncio.sleep(3)
-                            await self.page.wait_for_load_state("networkidle", timeout=30000)
+                            await self.page.wait_for_load_state(
+                                "networkidle", timeout=30000
+                            )
 
                             # Check if we're on the 3B report page now
                             current_url = self.page.url.lower()
                             page_title = await self.page.title()
-                            if "3b" in current_url or "3b" in page_title.lower() or "bureau" in page_title.lower():
-                                logger.info(f"Successfully navigated to 3B Report page: {page_title}")
+                            if (
+                                "3b" in current_url
+                                or "3b" in page_title.lower()
+                                or "bureau" in page_title.lower()
+                            ):
+                                logger.info(
+                                    f"Successfully navigated to 3B Report page: {page_title}"
+                                )
                                 report_found = True
                                 break
                     except Exception as e:
@@ -690,7 +736,9 @@ class CreditImportAutomation:
 
                 # If clicking didn't work, try direct URL navigation
                 if not report_found:
-                    logger.warning("Could not find 3B report link, trying direct URL...")
+                    logger.warning(
+                        "Could not find 3B report link, trying direct URL..."
+                    )
                     direct_urls = [
                         "https://member.myfreescorenow.com/member/credit-report/3b",
                         "https://member.myfreescorenow.com/credit-report/3b",
@@ -700,7 +748,9 @@ class CreditImportAutomation:
                     for url in direct_urls:
                         try:
                             logger.info(f"Trying direct navigation to: {url}")
-                            await self.page.goto(url, wait_until="networkidle", timeout=30000)
+                            await self.page.goto(
+                                url, wait_until="networkidle", timeout=30000
+                            )
                             page_title = await self.page.title()
                             if "not found" not in page_title.lower():
                                 logger.info(f"Found report page at: {url}")
@@ -720,7 +770,7 @@ class CreditImportAutomation:
                     ".account-container",  # Account cards
                     ".bureau-score",  # Score display
                     ".report-header",  # Report header section
-                    '[data-test-account-name]',  # Account names
+                    "[data-test-account-name]",  # Account names
                     ".credit-score-container",  # Score containers
                     ".account-section",  # Account sections
                 ]
@@ -730,8 +780,7 @@ class CreditImportAutomation:
                 for attempt in range(max_vue_attempts):
                     try:
                         # Check if Vue has rendered content inside #smartcredit-app
-                        has_content = await self.page.evaluate(
-                            """() => {
+                        has_content = await self.page.evaluate("""() => {
                             const app = document.querySelector('#smartcredit-app');
                             if (!app) return false;
 
@@ -745,22 +794,27 @@ class CreditImportAutomation:
                             const hasReportData = app.querySelectorAll('[data-test-account-name]').length > 0;
 
                             return hasAccounts || hasScores || hasReportData || innerContent.length > 500;
-                        }"""
-                        )
+                        }""")
 
                         if has_content:
-                            logger.info(f"Vue.js content detected after {attempt + 1} attempts")
+                            logger.info(
+                                f"Vue.js content detected after {attempt + 1} attempts"
+                            )
                             vue_rendered = True
                             break
                         else:
-                            logger.info(f"Vue attempt {attempt + 1}: Waiting for content to render...")
+                            logger.info(
+                                f"Vue attempt {attempt + 1}: Waiting for content to render..."
+                            )
                     except Exception as e:
                         logger.warning(f"Vue check attempt {attempt + 1} failed: {e}")
 
                     await asyncio.sleep(3)
 
                 if not vue_rendered:
-                    logger.warning("Vue.js may not have fully rendered - proceeding anyway...")
+                    logger.warning(
+                        "Vue.js may not have fully rendered - proceeding anyway..."
+                    )
 
                 # Additional wait for any lazy-loaded content
                 await asyncio.sleep(3)
@@ -799,8 +853,7 @@ class CreditImportAutomation:
                 max_attempts = 15
                 for attempt in range(max_attempts):
                     try:
-                        score_count = await self.page.evaluate(
-                            """() => {
+                        score_count = await self.page.evaluate("""() => {
                             // Try multiple patterns to find scores
                             const allText = document.body.innerText;
                             const scorePattern = /\\b([3-8]\\d{2})\\b/g;
@@ -811,8 +864,7 @@ class CreditImportAutomation:
                                 return num >= 300 && num <= 850;
                             });
                             return validScores.length >= 3 ? 3 : validScores.length;
-                        }"""
-                        )
+                        }""")
                         logger.info(
                             f"Attempt {attempt + 1}: Found {score_count} score values"
                         )
@@ -902,12 +954,16 @@ class CreditImportAutomation:
 
             # Expand all "View all details" sections to capture full account data
             # IMPORTANT: Must click each button sequentially with waits so Vue.js can render each modal
-            logger.info("Expanding all account details (clicking each sequentially with Playwright)...")
+            logger.info(
+                "Expanding all account details (clicking each sequentially with Playwright)..."
+            )
             try:
                 # Get all view-more-link elements using Playwright locator
                 view_more_links = await self.page.locator(".view-more-link").all()
                 view_details_count = len(view_more_links)
-                logger.info(f"Found {view_details_count} 'View all details' links to click")
+                logger.info(
+                    f"Found {view_details_count} 'View all details' links to click"
+                )
 
                 # Click each one sequentially using Playwright's native click() method
                 expanded_count = 0
@@ -925,34 +981,36 @@ class CreditImportAutomation:
                         # Check if payment history appeared in this modal
                         # MyFreeScoreNow modals might load content dynamically
                         for wait_attempt in range(3):
-                            modal_count = await self.page.evaluate(
-                                """() => {
+                            modal_count = await self.page.evaluate("""() => {
                                 const modals = document.querySelectorAll('.account-modal .payment-history');
                                 return modals.length;
-                            }"""
-                            )
+                            }""")
                             if modal_count >= i + 1:
                                 break
                             await asyncio.sleep(0.5)
 
                         if (i + 1) % 10 == 0:
-                            logger.info(f"Expanded {i + 1}/{view_details_count} account details...")
+                            logger.info(
+                                f"Expanded {i + 1}/{view_details_count} account details..."
+                            )
                     except Exception as e:
                         logger.debug(f"Failed to click link {i}: {e}")
                         continue
 
                 if expanded_count > 0:
-                    logger.info(f"Clicked {expanded_count}/{view_details_count} 'View all details' links")
+                    logger.info(
+                        f"Clicked {expanded_count}/{view_details_count} 'View all details' links"
+                    )
                     # Final wait for all content to settle
                     await asyncio.sleep(3)
 
                     # Verify payment history sections were loaded
-                    payment_history_count = await self.page.evaluate(
-                        """() => {
+                    payment_history_count = await self.page.evaluate("""() => {
                         return document.querySelectorAll('.account-modal .payment-history').length;
-                    }"""
+                    }""")
+                    logger.info(
+                        f"Found {payment_history_count} payment history sections in modals after expansion"
                     )
-                    logger.info(f"Found {payment_history_count} payment history sections in modals after expansion")
             except Exception as e:
                 logger.warning(f"Failed to expand account details: {e}")
 
@@ -963,8 +1021,7 @@ class CreditImportAutomation:
             # Final verification: Check that we have rendered content before capturing
             logger.info("Verifying page content before capture...")
             try:
-                content_check = await self.page.evaluate(
-                    """() => {
+                content_check = await self.page.evaluate("""() => {
                     const result = {
                         hasSmartCreditApp: false,
                         appContentLength: 0,
@@ -983,20 +1040,26 @@ class CreditImportAutomation:
                     }
 
                     return result;
-                }"""
-                )
+                }""")
                 logger.info(f"Content verification: {content_check}")
 
                 # If #smartcredit-app exists but has minimal content, wait more
-                if content_check.get('hasSmartCreditApp') and content_check.get('appContentLength', 0) < 1000:
-                    logger.warning("Vue app exists but content is minimal - waiting longer...")
+                if (
+                    content_check.get("hasSmartCreditApp")
+                    and content_check.get("appContentLength", 0) < 1000
+                ):
+                    logger.warning(
+                        "Vue app exists but content is minimal - waiting longer..."
+                    )
                     await asyncio.sleep(10)  # Extra wait for slow rendering
 
             except Exception as e:
                 logger.warning(f"Content verification failed: {e}")
 
             # Take a debug screenshot
-            debug_screenshot = REPORTS_DIR / f"debug_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.png"
+            debug_screenshot = (
+                REPORTS_DIR / f"debug_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.png"
+            )
             await self.page.screenshot(path=str(debug_screenshot), full_page=True)
             logger.info(f"Saved debug screenshot to {debug_screenshot}")
 
@@ -1064,8 +1127,7 @@ class CreditImportAutomation:
             if self.current_flow == "myfreescorenow":
                 logger.info("Using MyFreeScoreNow extraction method")
                 try:
-                    js_scores = await self.page.evaluate(
-                        """() => {
+                    js_scores = await self.page.evaluate("""() => {
                         // Extract all 3-digit numbers from page that look like credit scores
                         const allText = document.body.innerText;
                         const scorePattern = /\\b([3-8]\\d{2})\\b/g;
@@ -1087,8 +1149,7 @@ class CreditImportAutomation:
                             scores.equifax = uniqueScores[2];
                         }
                         return scores;
-                    }"""
-                    )
+                    }""")
                     if js_scores and len(js_scores) > 0:
                         scores.update(js_scores)
                         logger.info(f"MyFreeScoreNow extraction successful: {scores}")
@@ -1102,8 +1163,7 @@ class CreditImportAutomation:
             # Fallback to MyScoreIQ-specific JavaScript
             if not scores:
                 try:
-                    js_scores = await self.page.evaluate(
-                        """() => {
+                    js_scores = await self.page.evaluate("""() => {
                         const scores = {};
                         const infoTds = document.querySelectorAll('td.info.ng-binding');
                         const scoreValues = [];
@@ -1120,8 +1180,7 @@ class CreditImportAutomation:
                             scores.equifax = scoreValues[2];
                         }
                         return scores;
-                    }"""
-                    )
+                    }""")
                     if js_scores:
                         scores.update(js_scores)
                 except Exception as e:
@@ -1185,7 +1244,9 @@ class CreditImportAutomation:
 
         return scores
 
-    def _extract_accounts_from_xhr(self, responses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_accounts_from_xhr(
+        self, responses: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Extract accounts from captured XHR responses."""
         accounts = []
 
@@ -1325,8 +1386,7 @@ class CreditImportAutomation:
         accounts = []
 
         try:
-            js_accounts = await self.page.evaluate(
-                """() => {
+            js_accounts = await self.page.evaluate("""() => {
                 const accounts = [];
                 
                 // MyScoreIQ uses Angular with sub_header divs for account names
@@ -1436,8 +1496,7 @@ class CreditImportAutomation:
                 });
                 
                 return accounts;
-            }"""
-            )
+            }""")
 
             if js_accounts:
                 logger.info(f"Extracted {len(js_accounts)} accounts from DOM")
@@ -1449,8 +1508,7 @@ class CreditImportAutomation:
         # If no accounts found, try MyFreeScoreNow 3B Report structure
         if not accounts:
             try:
-                mfsn_accounts = await self.page.evaluate(
-                    """() => {
+                mfsn_accounts = await self.page.evaluate("""() => {
                     const accounts = [];
 
                     // MyFreeScoreNow 3B Report uses .account-container divs
@@ -1555,11 +1613,12 @@ class CreditImportAutomation:
                     });
 
                     return accounts;
-                }"""
-                )
+                }""")
 
                 if mfsn_accounts:
-                    logger.info(f"Extracted {len(mfsn_accounts)} accounts from MyFreeScoreNow DOM")
+                    logger.info(
+                        f"Extracted {len(mfsn_accounts)} accounts from MyFreeScoreNow DOM"
+                    )
                     accounts.extend(mfsn_accounts)
 
             except Exception as e:

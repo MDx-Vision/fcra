@@ -16,7 +16,15 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests  # type: ignore[import-untyped]
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from database import API_SCOPES, WEBHOOK_EVENTS, APIKey, APIRequest, APIWebhook, Staff, get_db
+from database import (
+    API_SCOPES,
+    WEBHOOK_EVENTS,
+    APIKey,
+    APIRequest,
+    APIWebhook,
+    Staff,
+    get_db,
+)
 
 
 class RateLimiter:

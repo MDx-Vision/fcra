@@ -106,12 +106,14 @@ class DeadlineCheckerService:
                         session=session,
                         client_id=client_id,
                         deadline_type="secondary_bureau_overdue",
-                        deadline_date=freeze.freeze_requested_at + timedelta(days=config["expected_days"]),
+                        deadline_date=freeze.freeze_requested_at
+                        + timedelta(days=config["expected_days"]),
                         days_remaining=config["expected_days"] - days_since_request,
                         extra_data={
                             "bureau_name": freeze.bureau_name,
-                            "days_overdue": days_since_request - config["expected_days"],
-                        }
+                            "days_overdue": days_since_request
+                            - config["expected_days"],
+                        },
                     )
                     overdue_alerts += 1
                     clients_notified.add(client_id)
@@ -122,11 +124,12 @@ class DeadlineCheckerService:
                         session=session,
                         client_id=client_id,
                         deadline_type="secondary_bureau_due_soon",
-                        deadline_date=freeze.freeze_requested_at + timedelta(days=config["expected_days"]),
+                        deadline_date=freeze.freeze_requested_at
+                        + timedelta(days=config["expected_days"]),
                         days_remaining=config["expected_days"] - days_since_request,
                         extra_data={
                             "bureau_name": freeze.bureau_name,
-                        }
+                        },
                     )
                     warnings_sent += 1
                     clients_notified.add(client_id)
@@ -160,7 +163,9 @@ class DeadlineCheckerService:
                 session.query(CaseDeadline)
                 .filter(
                     and_(
-                        CaseDeadline.deadline_type.in_(["cra_response", "response_check"]),
+                        CaseDeadline.deadline_type.in_(
+                            ["cra_response", "response_check"]
+                        ),
                         CaseDeadline.status == "pending",
                     )
                 )
@@ -182,7 +187,7 @@ class DeadlineCheckerService:
                         extra_data={
                             "description": deadline.description,
                             "days_overdue": abs(days_until),
-                        }
+                        },
                     )
                     overdue_alerts += 1
                     clients_notified.add(client_id)
@@ -197,7 +202,7 @@ class DeadlineCheckerService:
                         days_remaining=days_until,
                         extra_data={
                             "description": deadline.description,
-                        }
+                        },
                     )
                     warnings_sent += 1
                     clients_notified.add(client_id)
@@ -254,7 +259,7 @@ class DeadlineCheckerService:
                     extra_data={
                         "description": deadline.description,
                         "urgent": days_until <= 7,
-                    }
+                    },
                 )
                 warnings_sent += 1
                 clients_notified.add(client_id)
@@ -274,7 +279,7 @@ class DeadlineCheckerService:
         deadline_type: str,
         deadline_date,
         days_remaining: int,
-        extra_data: Dict[str, Any] = None
+        extra_data: Dict[str, Any] = None,
     ) -> bool:
         """
         Fire the deadline_approaching workflow trigger for a specific deadline.
@@ -292,7 +297,11 @@ class DeadlineCheckerService:
                 "client_email": client.email,
                 "client_phone": client.phone,
                 "deadline_type": deadline_type,
-                "deadline_date": deadline_date.isoformat() if hasattr(deadline_date, 'isoformat') else str(deadline_date),
+                "deadline_date": (
+                    deadline_date.isoformat()
+                    if hasattr(deadline_date, "isoformat")
+                    else str(deadline_date)
+                ),
                 "days_remaining": days_remaining,
             }
 
@@ -301,7 +310,10 @@ class DeadlineCheckerService:
 
             # Fire the workflow trigger
             from services.workflow_triggers_service import WorkflowTriggersService
-            results = WorkflowTriggersService.evaluate_triggers("deadline_approaching", event_data)
+
+            results = WorkflowTriggersService.evaluate_triggers(
+                "deadline_approaching", event_data
+            )
 
             return len(results) > 0
 
@@ -331,14 +343,16 @@ class DeadlineCheckerService:
                 if freeze.freeze_requested_at:
                     days_since = (today - freeze.freeze_requested_at).days
                     expected_date = freeze.freeze_requested_at + timedelta(days=30)
-                    secondary_bureaus.append({
-                        "bureau_name": freeze.bureau_name,
-                        "status": freeze.status,
-                        "requested_at": freeze.freeze_requested_at.isoformat(),
-                        "expected_by": expected_date.isoformat(),
-                        "days_remaining": 30 - days_since,
-                        "is_overdue": days_since > 30,
-                    })
+                    secondary_bureaus.append(
+                        {
+                            "bureau_name": freeze.bureau_name,
+                            "status": freeze.status,
+                            "requested_at": freeze.freeze_requested_at.isoformat(),
+                            "expected_by": expected_date.isoformat(),
+                            "days_remaining": 30 - days_since,
+                            "is_overdue": days_since > 30,
+                        }
+                    )
 
             # Get case deadlines
             deadlines = (
@@ -350,20 +364,24 @@ class DeadlineCheckerService:
             case_deadlines = []
             for deadline in deadlines:
                 days_until = (deadline.deadline_date - today.date()).days
-                case_deadlines.append({
-                    "type": deadline.deadline_type,
-                    "description": deadline.description,
-                    "deadline_date": deadline.deadline_date.isoformat(),
-                    "days_remaining": days_until,
-                    "status": deadline.status,
-                    "is_overdue": days_until < 0 and deadline.status == "pending",
-                })
+                case_deadlines.append(
+                    {
+                        "type": deadline.deadline_type,
+                        "description": deadline.description,
+                        "deadline_date": deadline.deadline_date.isoformat(),
+                        "days_remaining": days_until,
+                        "status": deadline.status,
+                        "is_overdue": days_until < 0 and deadline.status == "pending",
+                    }
+                )
 
             return {
                 "client_id": client_id,
                 "secondary_bureaus": secondary_bureaus,
                 "case_deadlines": case_deadlines,
-                "total_pending": sum(1 for d in case_deadlines if d["status"] == "pending"),
+                "total_pending": sum(
+                    1 for d in case_deadlines if d["status"] == "pending"
+                ),
                 "total_overdue": sum(1 for d in case_deadlines if d["is_overdue"]),
             }
         finally:

@@ -5,9 +5,10 @@ Manages phone call logging for client interactions.
 Tracks inbound/outbound calls, notes, outcomes, and follow-ups.
 """
 
-from datetime import datetime, date, timedelta
-from typing import Optional, List, Dict, Any, Tuple
-from sqlalchemy import func, and_, or_, desc
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
+
+from sqlalchemy import and_, desc, func, or_
 from sqlalchemy.orm import Session
 
 
@@ -15,30 +16,30 @@ class CallLogService:
     """Service for managing call logs"""
 
     # Valid call directions
-    DIRECTIONS = ['inbound', 'outbound']
+    DIRECTIONS = ["inbound", "outbound"]
 
     # Valid call statuses
     STATUSES = [
-        'completed',      # Call was completed successfully
-        'missed',         # Inbound call that was missed
-        'voicemail',      # Left voicemail or received voicemail
-        'no_answer',      # Outbound call with no answer
-        'busy',           # Line was busy
-        'cancelled',      # Call was cancelled before connecting
+        "completed",  # Call was completed successfully
+        "missed",  # Inbound call that was missed
+        "voicemail",  # Left voicemail or received voicemail
+        "no_answer",  # Outbound call with no answer
+        "busy",  # Line was busy
+        "cancelled",  # Call was cancelled before connecting
     ]
 
     # Common call outcomes
     OUTCOMES = [
-        'scheduled_appointment',   # Scheduled a follow-up appointment
-        'left_message',            # Left a message
-        'follow_up_needed',        # Requires follow-up
-        'resolved',                # Issue was resolved
-        'information_provided',    # Provided information to client
-        'document_requested',      # Requested documents from client
-        'payment_discussed',       # Discussed payment
-        'case_update',             # Provided case update
-        'complaint',               # Client complaint
-        'other',                   # Other outcome
+        "scheduled_appointment",  # Scheduled a follow-up appointment
+        "left_message",  # Left a message
+        "follow_up_needed",  # Requires follow-up
+        "resolved",  # Issue was resolved
+        "information_provided",  # Provided information to client
+        "document_requested",  # Requested documents from client
+        "payment_discussed",  # Discussed payment
+        "case_update",  # Provided case update
+        "complaint",  # Client complaint
+        "other",  # Other outcome
     ]
 
     def __init__(self, db: Session):
@@ -53,7 +54,7 @@ class CallLogService:
         phone_number: Optional[str] = None,
         call_ended_at: Optional[datetime] = None,
         duration_seconds: Optional[int] = None,
-        status: str = 'completed',
+        status: str = "completed",
         outcome: Optional[str] = None,
         subject: Optional[str] = None,
         notes: Optional[str] = None,
@@ -61,7 +62,7 @@ class CallLogService:
         follow_up_date: Optional[date] = None,
         follow_up_notes: Optional[str] = None,
         recording_url: Optional[str] = None,
-        recording_duration: Optional[int] = None
+        recording_duration: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Create a new call log entry.
@@ -87,15 +88,21 @@ class CallLogService:
         Returns:
             Dict with success status and call log data
         """
-        from database import CallLog, Staff, Client
+        from database import CallLog, Client, Staff
 
         # Validate direction
         if direction not in self.DIRECTIONS:
-            return {"success": False, "error": f"Invalid direction. Must be one of: {self.DIRECTIONS}"}
+            return {
+                "success": False,
+                "error": f"Invalid direction. Must be one of: {self.DIRECTIONS}",
+            }
 
         # Validate status
         if status not in self.STATUSES:
-            return {"success": False, "error": f"Invalid status. Must be one of: {self.STATUSES}"}
+            return {
+                "success": False,
+                "error": f"Invalid status. Must be one of: {self.STATUSES}",
+            }
 
         # Validate staff exists
         staff = self.db.query(Staff).filter_by(id=staff_id).first()
@@ -129,7 +136,7 @@ class CallLogService:
                 follow_up_date=follow_up_date,
                 follow_up_notes=follow_up_notes,
                 recording_url=recording_url,
-                recording_duration=recording_duration
+                recording_duration=recording_duration,
             )
 
             self.db.add(call_log)
@@ -139,18 +146,14 @@ class CallLogService:
             return {
                 "success": True,
                 "call_log_id": call_log.id,
-                "call_log": self._serialize_call_log(call_log)
+                "call_log": self._serialize_call_log(call_log),
             }
 
         except Exception as e:
             self.db.rollback()
             return {"success": False, "error": str(e)}
 
-    def update_call_log(
-        self,
-        call_log_id: int,
-        **kwargs
-    ) -> Dict[str, Any]:
+    def update_call_log(self, call_log_id: int, **kwargs) -> Dict[str, Any]:
         """
         Update an existing call log.
 
@@ -169,9 +172,19 @@ class CallLogService:
 
         # Allowed fields to update
         allowed_fields = [
-            'client_id', 'phone_number', 'call_ended_at', 'duration_seconds',
-            'status', 'outcome', 'subject', 'notes', 'follow_up_required',
-            'follow_up_date', 'follow_up_notes', 'recording_url', 'recording_duration'
+            "client_id",
+            "phone_number",
+            "call_ended_at",
+            "duration_seconds",
+            "status",
+            "outcome",
+            "subject",
+            "notes",
+            "follow_up_required",
+            "follow_up_date",
+            "follow_up_notes",
+            "recording_url",
+            "recording_duration",
         ]
 
         try:
@@ -180,7 +193,7 @@ class CallLogService:
                     setattr(call_log, field, value)
 
             # Recalculate duration if end time changed
-            if 'call_ended_at' in kwargs and kwargs['call_ended_at']:
+            if "call_ended_at" in kwargs and kwargs["call_ended_at"]:
                 call_log.duration_seconds = int(
                     (call_log.call_ended_at - call_log.call_started_at).total_seconds()
                 )
@@ -189,10 +202,7 @@ class CallLogService:
             self.db.commit()
             self.db.refresh(call_log)
 
-            return {
-                "success": True,
-                "call_log": self._serialize_call_log(call_log)
-            }
+            return {"success": True, "call_log": self._serialize_call_log(call_log)}
 
         except Exception as e:
             self.db.rollback()
@@ -235,7 +245,7 @@ class CallLogService:
         date_to: Optional[date] = None,
         search: Optional[str] = None,
         limit: int = 50,
-        offset: int = 0
+        offset: int = 0,
     ) -> Dict[str, Any]:
         """
         Get call logs with filtering options.
@@ -283,7 +293,7 @@ class CallLogService:
                 or_(
                     CallLog.subject.ilike(search_term),
                     CallLog.notes.ilike(search_term),
-                    CallLog.phone_number.ilike(search_term)
+                    CallLog.phone_number.ilike(search_term),
                 )
             )
 
@@ -291,28 +301,34 @@ class CallLogService:
         total = query.count()
 
         # Apply pagination and ordering
-        call_logs = query.order_by(desc(CallLog.call_started_at))\
-            .offset(offset)\
-            .limit(limit)\
+        call_logs = (
+            query.order_by(desc(CallLog.call_started_at))
+            .offset(offset)
+            .limit(limit)
             .all()
+        )
 
         return {
             "call_logs": [self._serialize_call_log(cl) for cl in call_logs],
             "total": total,
             "limit": limit,
             "offset": offset,
-            "has_more": total > offset + limit
+            "has_more": total > offset + limit,
         }
 
-    def get_client_call_history(self, client_id: int, limit: int = 20) -> List[Dict[str, Any]]:
+    def get_client_call_history(
+        self, client_id: int, limit: int = 20
+    ) -> List[Dict[str, Any]]:
         """Get call history for a specific client."""
         from database import CallLog
 
-        call_logs = self.db.query(CallLog)\
-            .filter(CallLog.client_id == client_id)\
-            .order_by(desc(CallLog.call_started_at))\
-            .limit(limit)\
+        call_logs = (
+            self.db.query(CallLog)
+            .filter(CallLog.client_id == client_id)
+            .order_by(desc(CallLog.call_started_at))
+            .limit(limit)
             .all()
+        )
 
         return [self._serialize_call_log(cl) for cl in call_logs]
 
@@ -320,7 +336,7 @@ class CallLogService:
         self,
         staff_id: int,
         date_from: Optional[date] = None,
-        date_to: Optional[date] = None
+        date_to: Optional[date] = None,
     ) -> Dict[str, Any]:
         """Get call activity statistics for a staff member."""
         from database import CallLog
@@ -333,16 +349,16 @@ class CallLogService:
         query = self.db.query(CallLog).filter(
             CallLog.staff_id == staff_id,
             func.date(CallLog.call_started_at) >= date_from,
-            func.date(CallLog.call_started_at) <= date_to
+            func.date(CallLog.call_started_at) <= date_to,
         )
 
         call_logs = query.all()
 
         # Calculate statistics
         total_calls = len(call_logs)
-        inbound = sum(1 for cl in call_logs if cl.direction == 'inbound')
-        outbound = sum(1 for cl in call_logs if cl.direction == 'outbound')
-        completed = sum(1 for cl in call_logs if cl.status == 'completed')
+        inbound = sum(1 for cl in call_logs if cl.direction == "inbound")
+        outbound = sum(1 for cl in call_logs if cl.direction == "outbound")
+        completed = sum(1 for cl in call_logs if cl.status == "completed")
         total_duration = sum(cl.duration_seconds or 0 for cl in call_logs)
         avg_duration = total_duration / total_calls if total_calls > 0 else 0
 
@@ -354,10 +370,7 @@ class CallLogService:
 
         return {
             "staff_id": staff_id,
-            "period": {
-                "from": date_from.isoformat(),
-                "to": date_to.isoformat()
-            },
+            "period": {"from": date_from.isoformat(), "to": date_to.isoformat()},
             "total_calls": total_calls,
             "inbound": inbound,
             "outbound": outbound,
@@ -366,20 +379,16 @@ class CallLogService:
             "total_duration_formatted": self._format_duration(total_duration),
             "avg_duration_seconds": round(avg_duration),
             "avg_duration_formatted": self._format_duration(int(avg_duration)),
-            "outcomes": outcome_counts
+            "outcomes": outcome_counts,
         }
 
     def get_pending_follow_ups(
-        self,
-        staff_id: Optional[int] = None,
-        include_overdue: bool = True
+        self, staff_id: Optional[int] = None, include_overdue: bool = True
     ) -> List[Dict[str, Any]]:
         """Get call logs that require follow-up."""
         from database import CallLog
 
-        query = self.db.query(CallLog).filter(
-            CallLog.follow_up_required == True
-        )
+        query = self.db.query(CallLog).filter(CallLog.follow_up_required == True)
 
         if staff_id:
             query = query.filter(CallLog.staff_id == staff_id)
@@ -388,7 +397,7 @@ class CallLogService:
             query = query.filter(
                 or_(
                     CallLog.follow_up_date.is_(None),
-                    CallLog.follow_up_date >= date.today()
+                    CallLog.follow_up_date >= date.today(),
                 )
             )
 
@@ -398,11 +407,11 @@ class CallLogService:
         for cl in call_logs:
             data = self._serialize_call_log(cl)
             if cl.follow_up_date:
-                data['is_overdue'] = cl.follow_up_date < date.today()
-                data['days_until_due'] = (cl.follow_up_date - date.today()).days
+                data["is_overdue"] = cl.follow_up_date < date.today()
+                data["days_until_due"] = (cl.follow_up_date - date.today()).days
             else:
-                data['is_overdue'] = False
-                data['days_until_due'] = None
+                data["is_overdue"] = False
+                data["days_until_due"] = None
             result.append(data)
 
         return result
@@ -422,9 +431,7 @@ class CallLogService:
         return {"success": True, "message": "Follow-up marked as complete"}
 
     def get_call_statistics(
-        self,
-        date_from: Optional[date] = None,
-        date_to: Optional[date] = None
+        self, date_from: Optional[date] = None, date_to: Optional[date] = None
     ) -> Dict[str, Any]:
         """Get overall call statistics."""
         from database import CallLog
@@ -436,15 +443,15 @@ class CallLogService:
 
         query = self.db.query(CallLog).filter(
             func.date(CallLog.call_started_at) >= date_from,
-            func.date(CallLog.call_started_at) <= date_to
+            func.date(CallLog.call_started_at) <= date_to,
         )
 
         call_logs = query.all()
 
         # Basic stats
         total_calls = len(call_logs)
-        inbound = sum(1 for cl in call_logs if cl.direction == 'inbound')
-        outbound = sum(1 for cl in call_logs if cl.direction == 'outbound')
+        inbound = sum(1 for cl in call_logs if cl.direction == "inbound")
+        outbound = sum(1 for cl in call_logs if cl.direction == "outbound")
 
         # Status breakdown
         status_counts = {}
@@ -452,7 +459,9 @@ class CallLogService:
             status_counts[status] = sum(1 for cl in call_logs if cl.status == status)
 
         # Duration stats
-        completed_calls = [cl for cl in call_logs if cl.status == 'completed' and cl.duration_seconds]
+        completed_calls = [
+            cl for cl in call_logs if cl.status == "completed" and cl.duration_seconds
+        ]
         total_duration = sum(cl.duration_seconds for cl in completed_calls)
         avg_duration = total_duration / len(completed_calls) if completed_calls else 0
 
@@ -463,10 +472,7 @@ class CallLogService:
             calls_by_day[day] = calls_by_day.get(day, 0) + 1
 
         return {
-            "period": {
-                "from": date_from.isoformat(),
-                "to": date_to.isoformat()
-            },
+            "period": {"from": date_from.isoformat(), "to": date_to.isoformat()},
             "total_calls": total_calls,
             "inbound": inbound,
             "outbound": outbound,
@@ -476,7 +482,7 @@ class CallLogService:
             "avg_duration_seconds": round(avg_duration),
             "avg_duration_formatted": self._format_duration(int(avg_duration)),
             "calls_by_day": calls_by_day,
-            "pending_follow_ups": sum(1 for cl in call_logs if cl.follow_up_required)
+            "pending_follow_ups": sum(1 for cl in call_logs if cl.follow_up_required),
         }
 
     def _serialize_call_log(self, call_log) -> Dict[str, Any]:
@@ -484,26 +490,46 @@ class CallLogService:
         return {
             "id": call_log.id,
             "client_id": call_log.client_id,
-            "client_name": f"{call_log.client.first_name} {call_log.client.last_name}" if call_log.client else None,
+            "client_name": (
+                f"{call_log.client.first_name} {call_log.client.last_name}"
+                if call_log.client
+                else None
+            ),
             "staff_id": call_log.staff_id,
             "staff_name": call_log.staff.name if call_log.staff else None,
             "direction": call_log.direction,
             "phone_number": call_log.phone_number,
-            "call_started_at": call_log.call_started_at.isoformat() if call_log.call_started_at else None,
-            "call_ended_at": call_log.call_ended_at.isoformat() if call_log.call_ended_at else None,
+            "call_started_at": (
+                call_log.call_started_at.isoformat()
+                if call_log.call_started_at
+                else None
+            ),
+            "call_ended_at": (
+                call_log.call_ended_at.isoformat() if call_log.call_ended_at else None
+            ),
             "duration_seconds": call_log.duration_seconds,
-            "duration_formatted": self._format_duration(call_log.duration_seconds) if call_log.duration_seconds else "0:00",
+            "duration_formatted": (
+                self._format_duration(call_log.duration_seconds)
+                if call_log.duration_seconds
+                else "0:00"
+            ),
             "status": call_log.status,
             "outcome": call_log.outcome,
             "subject": call_log.subject,
             "notes": call_log.notes,
             "follow_up_required": call_log.follow_up_required,
-            "follow_up_date": call_log.follow_up_date.isoformat() if call_log.follow_up_date else None,
+            "follow_up_date": (
+                call_log.follow_up_date.isoformat() if call_log.follow_up_date else None
+            ),
             "follow_up_notes": call_log.follow_up_notes,
             "recording_url": call_log.recording_url,
             "recording_duration": call_log.recording_duration,
-            "created_at": call_log.created_at.isoformat() if call_log.created_at else None,
-            "updated_at": call_log.updated_at.isoformat() if call_log.updated_at else None,
+            "created_at": (
+                call_log.created_at.isoformat() if call_log.created_at else None
+            ),
+            "updated_at": (
+                call_log.updated_at.isoformat() if call_log.updated_at else None
+            ),
         }
 
     def _format_duration(self, seconds: int) -> str:

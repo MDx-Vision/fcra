@@ -6,20 +6,19 @@ Handles campaign CRUD, enrollment, and scheduled email sending.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from database import (
-    SessionLocal,
-    DripCampaign,
-    DripStep,
-    DripEnrollment,
-    DripEmailLog,
-    EmailTemplate,
     Client,
+    DripCampaign,
+    DripEmailLog,
+    DripEnrollment,
+    DripStep,
+    EmailTemplate,
+    SessionLocal,
 )
 from services.email_service import send_email
 from services.email_template_service import EmailTemplateService
-
 
 # Trigger types for campaigns
 TRIGGER_TYPES = {
@@ -94,7 +93,10 @@ class DripCampaignService:
 
         try:
             if trigger_type not in TRIGGER_TYPES:
-                return {"success": False, "error": f"Invalid trigger type: {trigger_type}"}
+                return {
+                    "success": False,
+                    "error": f"Invalid trigger type: {trigger_type}",
+                }
 
             campaign = DripCampaign(
                 name=name,
@@ -165,9 +167,11 @@ class DripCampaignService:
             close_session = True
 
         try:
-            campaign = session.query(DripCampaign).filter(
-                DripCampaign.id == campaign_id
-            ).first()
+            campaign = (
+                session.query(DripCampaign)
+                .filter(DripCampaign.id == campaign_id)
+                .first()
+            )
 
             if not campaign:
                 return {"success": False, "error": "Campaign not found"}
@@ -178,7 +182,10 @@ class DripCampaignService:
                 campaign.description = description
             if trigger_type is not None:
                 if trigger_type not in TRIGGER_TYPES:
-                    return {"success": False, "error": f"Invalid trigger type: {trigger_type}"}
+                    return {
+                        "success": False,
+                        "error": f"Invalid trigger type: {trigger_type}",
+                    }
                 campaign.trigger_type = trigger_type
             if trigger_value is not None:
                 campaign.trigger_value = trigger_value
@@ -212,9 +219,11 @@ class DripCampaignService:
             close_session = True
 
         try:
-            campaign = session.query(DripCampaign).filter(
-                DripCampaign.id == campaign_id
-            ).first()
+            campaign = (
+                session.query(DripCampaign)
+                .filter(DripCampaign.id == campaign_id)
+                .first()
+            )
 
             if not campaign:
                 return {"success": False, "error": "Campaign not found"}
@@ -233,7 +242,9 @@ class DripCampaignService:
                 session.close()
 
     @staticmethod
-    def get_campaign(campaign_id: int, include_steps: bool = True, session=None) -> Optional[Dict[str, Any]]:
+    def get_campaign(
+        campaign_id: int, include_steps: bool = True, session=None
+    ) -> Optional[Dict[str, Any]]:
         """Get a campaign by ID"""
         close_session = False
         if session is None:
@@ -241,9 +252,11 @@ class DripCampaignService:
             close_session = True
 
         try:
-            campaign = session.query(DripCampaign).filter(
-                DripCampaign.id == campaign_id
-            ).first()
+            campaign = (
+                session.query(DripCampaign)
+                .filter(DripCampaign.id == campaign_id)
+                .first()
+            )
 
             if not campaign:
                 return None
@@ -253,7 +266,9 @@ class DripCampaignService:
                 "name": campaign.name,
                 "description": campaign.description,
                 "trigger_type": campaign.trigger_type,
-                "trigger_type_label": TRIGGER_TYPES.get(campaign.trigger_type, campaign.trigger_type),
+                "trigger_type_label": TRIGGER_TYPES.get(
+                    campaign.trigger_type, campaign.trigger_type
+                ),
                 "trigger_value": campaign.trigger_value,
                 "is_active": campaign.is_active,
                 "send_window_start": campaign.send_window_start,
@@ -262,8 +277,12 @@ class DripCampaignService:
                 "total_enrolled": campaign.total_enrolled,
                 "total_completed": campaign.total_completed,
                 "created_by_id": campaign.created_by_id,
-                "created_at": campaign.created_at.isoformat() if campaign.created_at else None,
-                "updated_at": campaign.updated_at.isoformat() if campaign.updated_at else None,
+                "created_at": (
+                    campaign.created_at.isoformat() if campaign.created_at else None
+                ),
+                "updated_at": (
+                    campaign.updated_at.isoformat() if campaign.updated_at else None
+                ),
             }
 
             if include_steps:
@@ -319,7 +338,9 @@ class DripCampaignService:
                     "name": c.name,
                     "description": c.description,
                     "trigger_type": c.trigger_type,
-                    "trigger_type_label": TRIGGER_TYPES.get(c.trigger_type, c.trigger_type),
+                    "trigger_type_label": TRIGGER_TYPES.get(
+                        c.trigger_type, c.trigger_type
+                    ),
                     "trigger_value": c.trigger_value,
                     "is_active": c.is_active,
                     "step_count": len(c.steps),
@@ -356,17 +377,21 @@ class DripCampaignService:
             close_session = True
 
         try:
-            campaign = session.query(DripCampaign).filter(
-                DripCampaign.id == campaign_id
-            ).first()
+            campaign = (
+                session.query(DripCampaign)
+                .filter(DripCampaign.id == campaign_id)
+                .first()
+            )
 
             if not campaign:
                 return {"success": False, "error": "Campaign not found"}
 
             # Get next step order
-            max_order = session.query(DripStep).filter(
-                DripStep.campaign_id == campaign_id
-            ).count()
+            max_order = (
+                session.query(DripStep)
+                .filter(DripStep.campaign_id == campaign_id)
+                .count()
+            )
 
             step = DripStep(
                 campaign_id=campaign_id,
@@ -477,17 +502,24 @@ class DripCampaignService:
             session.delete(step)
 
             # Reorder remaining steps
-            remaining_steps = session.query(DripStep).filter(
-                DripStep.campaign_id == campaign_id,
-                DripStep.step_order > deleted_order
-            ).all()
+            remaining_steps = (
+                session.query(DripStep)
+                .filter(
+                    DripStep.campaign_id == campaign_id,
+                    DripStep.step_order > deleted_order,
+                )
+                .all()
+            )
 
             for s in remaining_steps:
                 s.step_order -= 1
 
             session.commit()
 
-            return {"success": True, "message": "Step deleted and remaining steps reordered"}
+            return {
+                "success": True,
+                "message": "Step deleted and remaining steps reordered",
+            }
 
         except Exception as e:
             session.rollback()
@@ -497,7 +529,9 @@ class DripCampaignService:
                 session.close()
 
     @staticmethod
-    def reorder_steps(campaign_id: int, step_ids: List[int], session=None) -> Dict[str, Any]:
+    def reorder_steps(
+        campaign_id: int, step_ids: List[int], session=None
+    ) -> Dict[str, Any]:
         """Reorder steps in a campaign"""
         close_session = False
         if session is None:
@@ -506,10 +540,11 @@ class DripCampaignService:
 
         try:
             for i, step_id in enumerate(step_ids):
-                step = session.query(DripStep).filter(
-                    DripStep.id == step_id,
-                    DripStep.campaign_id == campaign_id
-                ).first()
+                step = (
+                    session.query(DripStep)
+                    .filter(DripStep.id == step_id, DripStep.campaign_id == campaign_id)
+                    .first()
+                )
                 if step:
                     step.step_order = i + 1
 
@@ -539,10 +574,11 @@ class DripCampaignService:
 
         try:
             # Check campaign exists and is active
-            campaign = session.query(DripCampaign).filter(
-                DripCampaign.id == campaign_id,
-                DripCampaign.is_active == True
-            ).first()
+            campaign = (
+                session.query(DripCampaign)
+                .filter(DripCampaign.id == campaign_id, DripCampaign.is_active == True)
+                .first()
+            )
 
             if not campaign:
                 return {"success": False, "error": "Campaign not found or inactive"}
@@ -553,33 +589,41 @@ class DripCampaignService:
                 return {"success": False, "error": "Client not found"}
 
             # Check if already enrolled
-            existing = session.query(DripEnrollment).filter(
-                DripEnrollment.campaign_id == campaign_id,
-                DripEnrollment.client_id == client_id,
-                DripEnrollment.status.in_(['active', 'paused'])
-            ).first()
+            existing = (
+                session.query(DripEnrollment)
+                .filter(
+                    DripEnrollment.campaign_id == campaign_id,
+                    DripEnrollment.client_id == client_id,
+                    DripEnrollment.status.in_(["active", "paused"]),
+                )
+                .first()
+            )
 
             if existing:
-                return {"success": False, "error": "Client already enrolled in this campaign"}
+                return {
+                    "success": False,
+                    "error": "Client already enrolled in this campaign",
+                }
 
             # Get first step to calculate next send time
-            first_step = session.query(DripStep).filter(
-                DripStep.campaign_id == campaign_id,
-                DripStep.is_active == True
-            ).order_by(DripStep.step_order).first()
+            first_step = (
+                session.query(DripStep)
+                .filter(DripStep.campaign_id == campaign_id, DripStep.is_active == True)
+                .order_by(DripStep.step_order)
+                .first()
+            )
 
             next_send_at = None
             if first_step:
                 next_send_at = datetime.utcnow() + timedelta(
-                    days=first_step.delay_days,
-                    hours=first_step.delay_hours
+                    days=first_step.delay_days, hours=first_step.delay_hours
                 )
 
             enrollment = DripEnrollment(
                 campaign_id=campaign_id,
                 client_id=client_id,
                 current_step=0,
-                status='active',
+                status="active",
                 next_send_at=next_send_at,
             )
 
@@ -606,7 +650,9 @@ class DripCampaignService:
                 session.close()
 
     @staticmethod
-    def pause_enrollment(enrollment_id: int, reason: str = None, session=None) -> Dict[str, Any]:
+    def pause_enrollment(
+        enrollment_id: int, reason: str = None, session=None
+    ) -> Dict[str, Any]:
         """Pause an enrollment"""
         close_session = False
         if session is None:
@@ -614,14 +660,16 @@ class DripCampaignService:
             close_session = True
 
         try:
-            enrollment = session.query(DripEnrollment).filter(
-                DripEnrollment.id == enrollment_id
-            ).first()
+            enrollment = (
+                session.query(DripEnrollment)
+                .filter(DripEnrollment.id == enrollment_id)
+                .first()
+            )
 
             if not enrollment:
                 return {"success": False, "error": "Enrollment not found"}
 
-            enrollment.status = 'paused'
+            enrollment.status = "paused"
             enrollment.paused_reason = reason
             enrollment.updated_at = datetime.utcnow()
             session.commit()
@@ -644,30 +692,35 @@ class DripCampaignService:
             close_session = True
 
         try:
-            enrollment = session.query(DripEnrollment).filter(
-                DripEnrollment.id == enrollment_id
-            ).first()
+            enrollment = (
+                session.query(DripEnrollment)
+                .filter(DripEnrollment.id == enrollment_id)
+                .first()
+            )
 
             if not enrollment:
                 return {"success": False, "error": "Enrollment not found"}
 
-            if enrollment.status != 'paused':
+            if enrollment.status != "paused":
                 return {"success": False, "error": "Enrollment is not paused"}
 
             # Calculate next send time from now
-            next_step = session.query(DripStep).filter(
-                DripStep.campaign_id == enrollment.campaign_id,
-                DripStep.step_order == enrollment.current_step + 1,
-                DripStep.is_active == True
-            ).first()
+            next_step = (
+                session.query(DripStep)
+                .filter(
+                    DripStep.campaign_id == enrollment.campaign_id,
+                    DripStep.step_order == enrollment.current_step + 1,
+                    DripStep.is_active == True,
+                )
+                .first()
+            )
 
             if next_step:
                 enrollment.next_send_at = datetime.utcnow() + timedelta(
-                    days=next_step.delay_days,
-                    hours=next_step.delay_hours
+                    days=next_step.delay_days, hours=next_step.delay_hours
                 )
 
-            enrollment.status = 'active'
+            enrollment.status = "active"
             enrollment.paused_reason = None
             enrollment.updated_at = datetime.utcnow()
             session.commit()
@@ -682,7 +735,9 @@ class DripCampaignService:
                 session.close()
 
     @staticmethod
-    def cancel_enrollment(enrollment_id: int, reason: str = None, session=None) -> Dict[str, Any]:
+    def cancel_enrollment(
+        enrollment_id: int, reason: str = None, session=None
+    ) -> Dict[str, Any]:
         """Cancel an enrollment"""
         close_session = False
         if session is None:
@@ -690,14 +745,16 @@ class DripCampaignService:
             close_session = True
 
         try:
-            enrollment = session.query(DripEnrollment).filter(
-                DripEnrollment.id == enrollment_id
-            ).first()
+            enrollment = (
+                session.query(DripEnrollment)
+                .filter(DripEnrollment.id == enrollment_id)
+                .first()
+            )
 
             if not enrollment:
                 return {"success": False, "error": "Enrollment not found"}
 
-            enrollment.status = 'cancelled'
+            enrollment.status = "cancelled"
             enrollment.cancelled_reason = reason
             enrollment.updated_at = datetime.utcnow()
             session.commit()
@@ -720,9 +777,11 @@ class DripCampaignService:
             close_session = True
 
         try:
-            enrollment = session.query(DripEnrollment).filter(
-                DripEnrollment.id == enrollment_id
-            ).first()
+            enrollment = (
+                session.query(DripEnrollment)
+                .filter(DripEnrollment.id == enrollment_id)
+                .first()
+            )
 
             if not enrollment:
                 return None
@@ -730,17 +789,37 @@ class DripCampaignService:
             return {
                 "id": enrollment.id,
                 "campaign_id": enrollment.campaign_id,
-                "campaign_name": enrollment.campaign.name if enrollment.campaign else None,
+                "campaign_name": (
+                    enrollment.campaign.name if enrollment.campaign else None
+                ),
                 "client_id": enrollment.client_id,
                 "client_name": enrollment.client.name if enrollment.client else None,
                 "client_email": enrollment.client.email if enrollment.client else None,
                 "current_step": enrollment.current_step,
                 "status": enrollment.status,
-                "status_label": ENROLLMENT_STATUSES.get(enrollment.status, enrollment.status),
-                "enrolled_at": enrollment.enrolled_at.isoformat() if enrollment.enrolled_at else None,
-                "next_send_at": enrollment.next_send_at.isoformat() if enrollment.next_send_at else None,
-                "last_sent_at": enrollment.last_sent_at.isoformat() if enrollment.last_sent_at else None,
-                "completed_at": enrollment.completed_at.isoformat() if enrollment.completed_at else None,
+                "status_label": ENROLLMENT_STATUSES.get(
+                    enrollment.status, enrollment.status
+                ),
+                "enrolled_at": (
+                    enrollment.enrolled_at.isoformat()
+                    if enrollment.enrolled_at
+                    else None
+                ),
+                "next_send_at": (
+                    enrollment.next_send_at.isoformat()
+                    if enrollment.next_send_at
+                    else None
+                ),
+                "last_sent_at": (
+                    enrollment.last_sent_at.isoformat()
+                    if enrollment.last_sent_at
+                    else None
+                ),
+                "completed_at": (
+                    enrollment.completed_at.isoformat()
+                    if enrollment.completed_at
+                    else None
+                ),
                 "emails_sent": enrollment.emails_sent,
                 "emails_opened": enrollment.emails_opened,
                 "emails_clicked": enrollment.emails_clicked,
@@ -787,7 +866,9 @@ class DripCampaignService:
                     "current_step": e.current_step,
                     "status": e.status,
                     "enrolled_at": e.enrolled_at.isoformat() if e.enrolled_at else None,
-                    "next_send_at": e.next_send_at.isoformat() if e.next_send_at else None,
+                    "next_send_at": (
+                        e.next_send_at.isoformat() if e.next_send_at else None
+                    ),
                     "emails_sent": e.emails_sent,
                 }
                 for e in enrollments
@@ -818,10 +899,14 @@ class DripCampaignService:
 
         try:
             # Get all active enrollments with due emails
-            due_enrollments = session.query(DripEnrollment).filter(
-                DripEnrollment.status == 'active',
-                DripEnrollment.next_send_at <= now
-            ).all()
+            due_enrollments = (
+                session.query(DripEnrollment)
+                .filter(
+                    DripEnrollment.status == "active",
+                    DripEnrollment.next_send_at <= now,
+                )
+                .all()
+            )
 
             for enrollment in due_enrollments:
                 try:
@@ -833,7 +918,11 @@ class DripCampaignService:
                         continue
 
                     # Check send window
-                    if not (campaign.send_window_start <= current_hour < campaign.send_window_end):
+                    if not (
+                        campaign.send_window_start
+                        <= current_hour
+                        < campaign.send_window_end
+                    ):
                         skipped += 1
                         continue
 
@@ -843,20 +932,24 @@ class DripCampaignService:
                         continue
 
                     # Check email opt-in
-                    if hasattr(client, 'email_opt_in') and not client.email_opt_in:
+                    if hasattr(client, "email_opt_in") and not client.email_opt_in:
                         skipped += 1
                         continue
 
                     # Get next step
-                    next_step = session.query(DripStep).filter(
-                        DripStep.campaign_id == campaign.id,
-                        DripStep.step_order == enrollment.current_step + 1,
-                        DripStep.is_active == True
-                    ).first()
+                    next_step = (
+                        session.query(DripStep)
+                        .filter(
+                            DripStep.campaign_id == campaign.id,
+                            DripStep.step_order == enrollment.current_step + 1,
+                            DripStep.is_active == True,
+                        )
+                        .first()
+                    )
 
                     if not next_step:
                         # Campaign complete
-                        enrollment.status = 'completed'
+                        enrollment.status = "completed"
                         enrollment.completed_at = now
                         campaign.total_completed += 1
                         session.commit()
@@ -872,7 +965,9 @@ class DripCampaignService:
                             template_id=next_step.email_template_id,
                             variables={
                                 "client_name": client.name,
-                                "first_name": client.name.split()[0] if client.name else "",
+                                "first_name": (
+                                    client.name.split()[0] if client.name else ""
+                                ),
                                 "email": client.email,
                             },
                             session=session,
@@ -882,7 +977,9 @@ class DripCampaignService:
                             html_content = template_result.get("html", html_content)
 
                     if not subject or not html_content:
-                        errors.append(f"Step {next_step.id}: Missing subject or content")
+                        errors.append(
+                            f"Step {next_step.id}: Missing subject or content"
+                        )
                         continue
 
                     # Send email
@@ -897,7 +994,7 @@ class DripCampaignService:
                         enrollment_id=enrollment.id,
                         step_id=next_step.id,
                         subject=subject,
-                        status='sent' if email_result else 'failed',
+                        status="sent" if email_result else "failed",
                         error_message=None if email_result else "Send failed",
                     )
                     session.add(log)
@@ -909,20 +1006,24 @@ class DripCampaignService:
                         enrollment.emails_sent += 1
 
                         # Calculate next send time
-                        following_step = session.query(DripStep).filter(
-                            DripStep.campaign_id == campaign.id,
-                            DripStep.step_order == next_step.step_order + 1,
-                            DripStep.is_active == True
-                        ).first()
+                        following_step = (
+                            session.query(DripStep)
+                            .filter(
+                                DripStep.campaign_id == campaign.id,
+                                DripStep.step_order == next_step.step_order + 1,
+                                DripStep.is_active == True,
+                            )
+                            .first()
+                        )
 
                         if following_step:
                             enrollment.next_send_at = now + timedelta(
                                 days=following_step.delay_days,
-                                hours=following_step.delay_hours
+                                hours=following_step.delay_hours,
                             )
                         else:
                             # No more steps
-                            enrollment.status = 'completed'
+                            enrollment.status = "completed"
                             enrollment.completed_at = now
                             campaign.total_completed += 1
 
@@ -959,42 +1060,64 @@ class DripCampaignService:
             close_session = True
 
         try:
-            campaign = session.query(DripCampaign).filter(
-                DripCampaign.id == campaign_id
-            ).first()
+            campaign = (
+                session.query(DripCampaign)
+                .filter(DripCampaign.id == campaign_id)
+                .first()
+            )
 
             if not campaign:
                 return {"success": False, "error": "Campaign not found"}
 
-            active = session.query(DripEnrollment).filter(
-                DripEnrollment.campaign_id == campaign_id,
-                DripEnrollment.status == 'active'
-            ).count()
+            active = (
+                session.query(DripEnrollment)
+                .filter(
+                    DripEnrollment.campaign_id == campaign_id,
+                    DripEnrollment.status == "active",
+                )
+                .count()
+            )
 
-            paused = session.query(DripEnrollment).filter(
-                DripEnrollment.campaign_id == campaign_id,
-                DripEnrollment.status == 'paused'
-            ).count()
+            paused = (
+                session.query(DripEnrollment)
+                .filter(
+                    DripEnrollment.campaign_id == campaign_id,
+                    DripEnrollment.status == "paused",
+                )
+                .count()
+            )
 
-            completed = session.query(DripEnrollment).filter(
-                DripEnrollment.campaign_id == campaign_id,
-                DripEnrollment.status == 'completed'
-            ).count()
+            completed = (
+                session.query(DripEnrollment)
+                .filter(
+                    DripEnrollment.campaign_id == campaign_id,
+                    DripEnrollment.status == "completed",
+                )
+                .count()
+            )
 
-            cancelled = session.query(DripEnrollment).filter(
-                DripEnrollment.campaign_id == campaign_id,
-                DripEnrollment.status == 'cancelled'
-            ).count()
+            cancelled = (
+                session.query(DripEnrollment)
+                .filter(
+                    DripEnrollment.campaign_id == campaign_id,
+                    DripEnrollment.status == "cancelled",
+                )
+                .count()
+            )
 
             # Get email stats from logs
             from sqlalchemy import func
-            email_stats = session.query(
-                func.count(DripEmailLog.id).label('total_sent'),
-                func.count(DripEmailLog.opened_at).label('total_opened'),
-                func.count(DripEmailLog.clicked_at).label('total_clicked'),
-            ).join(DripEnrollment).filter(
-                DripEnrollment.campaign_id == campaign_id
-            ).first()
+
+            email_stats = (
+                session.query(
+                    func.count(DripEmailLog.id).label("total_sent"),
+                    func.count(DripEmailLog.opened_at).label("total_opened"),
+                    func.count(DripEmailLog.clicked_at).label("total_clicked"),
+                )
+                .join(DripEnrollment)
+                .filter(DripEnrollment.campaign_id == campaign_id)
+                .first()
+            )
 
             return {
                 "success": True,
@@ -1011,8 +1134,21 @@ class DripCampaignService:
                     "sent": email_stats.total_sent if email_stats else 0,
                     "opened": email_stats.total_opened if email_stats else 0,
                     "clicked": email_stats.total_clicked if email_stats else 0,
-                    "open_rate": round((email_stats.total_opened / email_stats.total_sent * 100), 1) if email_stats and email_stats.total_sent > 0 else 0,
-                    "click_rate": round((email_stats.total_clicked / email_stats.total_sent * 100), 1) if email_stats and email_stats.total_sent > 0 else 0,
+                    "open_rate": (
+                        round(
+                            (email_stats.total_opened / email_stats.total_sent * 100), 1
+                        )
+                        if email_stats and email_stats.total_sent > 0
+                        else 0
+                    ),
+                    "click_rate": (
+                        round(
+                            (email_stats.total_clicked / email_stats.total_sent * 100),
+                            1,
+                        )
+                        if email_stats and email_stats.total_sent > 0
+                        else 0
+                    ),
                 },
                 "step_count": len(campaign.steps),
             }
@@ -1024,7 +1160,10 @@ class DripCampaignService:
 
 # ==================== TRIGGER INTEGRATION ====================
 
-def check_drip_triggers(trigger_type: str, client_id: int, trigger_value: str = None, session=None):
+
+def check_drip_triggers(
+    trigger_type: str, client_id: int, trigger_value: str = None, session=None
+):
     """
     Check if any drip campaigns should be triggered for a client.
     Called from workflow triggers or status change hooks.
@@ -1037,14 +1176,13 @@ def check_drip_triggers(trigger_type: str, client_id: int, trigger_value: str = 
     try:
         # Find matching active campaigns
         query = session.query(DripCampaign).filter(
-            DripCampaign.is_active == True,
-            DripCampaign.trigger_type == trigger_type
+            DripCampaign.is_active == True, DripCampaign.trigger_type == trigger_type
         )
 
         if trigger_value:
             query = query.filter(
-                (DripCampaign.trigger_value == trigger_value) |
-                (DripCampaign.trigger_value == None)
+                (DripCampaign.trigger_value == trigger_value)
+                | (DripCampaign.trigger_value == None)
             )
 
         campaigns = query.all()
@@ -1085,6 +1223,7 @@ try:
     def handle_process_drip_emails(payload: Dict[str, Any]) -> Dict[str, Any]:
         """Task handler for processing due drip emails"""
         return DripCampaignService.process_due_emails()
+
 except ImportError:
     # Task queue not available, handlers will be registered elsewhere
     pass

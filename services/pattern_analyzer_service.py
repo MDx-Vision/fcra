@@ -185,7 +185,9 @@ class PatternAnalyzerService:
 
             violation_success: Dict[str, Dict[str, int]] = {}
             for outcome in outcomes:
-                violation_types_list = outcome.violation_types if outcome.violation_types else []
+                violation_types_list = (
+                    outcome.violation_types if outcome.violation_types else []
+                )
                 for vtype in violation_types_list:
                     if vtype not in violation_success:
                         violation_success[vtype] = {"total": 0, "success": 0}
@@ -343,12 +345,18 @@ class PatternAnalyzerService:
                     mdata["total"] = cast(int, mdata["total"]) + 1
                     if outcome.final_outcome in ["won", "settled"]:
                         mdata["success"] = cast(int, mdata["success"]) + 1
-                    settlement_amt = float(outcome.settlement_amount) if outcome.settlement_amount else 0
+                    settlement_amt = (
+                        float(outcome.settlement_amount)
+                        if outcome.settlement_amount
+                        else 0
+                    )
                     if settlement_amt > 0:
-                        cast(List[float], mdata["settlements"]).append(
-                            settlement_amt
-                        )
-                    resolution_days = int(outcome.time_to_resolution_days) if outcome.time_to_resolution_days else 0
+                        cast(List[float], mdata["settlements"]).append(settlement_amt)
+                    resolution_days = (
+                        int(outcome.time_to_resolution_days)
+                        if outcome.time_to_resolution_days
+                        else 0
+                    )
                     if resolution_days > 0:
                         cast(List[int], mdata["resolution_days"]).append(
                             resolution_days
@@ -365,17 +373,12 @@ class PatternAnalyzerService:
                         "cases": total,
                         "success_rate": round(success / total, 3),
                         "avg_settlement": (
-                            round(
-                                sum(settlements) / len(settlements), 2
-                            )
+                            round(sum(settlements) / len(settlements), 2)
                             if settlements
                             else 0
                         ),
                         "avg_resolution": (
-                            round(
-                                sum(resolution_days_list)
-                                / len(resolution_days_list)
-                            )
+                            round(sum(resolution_days_list) / len(resolution_days_list))
                             if resolution_days_list
                             else 0
                         ),
@@ -483,7 +486,9 @@ class PatternAnalyzerService:
         finally:
             db.close()
 
-    def identify_winning_strategies(self, violation_type: Optional[str] = None) -> Dict[str, Any]:
+    def identify_winning_strategies(
+        self, violation_type: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Identify strategies that lead to successful outcomes.
 
@@ -518,7 +523,9 @@ class PatternAnalyzerService:
 
             success_by_violation: Dict[str, Dict[str, Any]] = {}
             for outcome in outcomes:
-                violation_types_list = outcome.violation_types if outcome.violation_types else []
+                violation_types_list = (
+                    outcome.violation_types if outcome.violation_types else []
+                )
                 for vtype in violation_types_list:
                     if vtype not in success_by_violation:
                         success_by_violation[vtype] = {
@@ -530,7 +537,11 @@ class PatternAnalyzerService:
                     vdata["total"] = cast(int, vdata["total"]) + 1
                     if outcome.final_outcome in ["won", "settled"]:
                         vdata["success"] = cast(int, vdata["success"]) + 1
-                        settlement_amt = float(outcome.settlement_amount) if outcome.settlement_amount else 0
+                        settlement_amt = (
+                            float(outcome.settlement_amount)
+                            if outcome.settlement_amount
+                            else 0
+                        )
                         if settlement_amt > 0:
                             cast(List[float], vdata["settlements"]).append(
                                 settlement_amt
@@ -543,9 +554,7 @@ class PatternAnalyzerService:
                     settlements = cast(List[float], data["settlements"])
                     rate = success / total
                     avg_settlement = (
-                        sum(settlements) / len(settlements)
-                        if settlements
-                        else 0
+                        sum(settlements) / len(settlements) if settlements else 0
                     )
                     strategies.append(
                         {
@@ -605,10 +614,15 @@ class PatternAnalyzerService:
             for outcome in successful:
                 rounds = int(outcome.dispute_rounds_completed or 0)
                 if rounds not in rounds_data:
-                    rounds_data[rounds] = {"count": 0, "settlements": cast(List[float], [])}
+                    rounds_data[rounds] = {
+                        "count": 0,
+                        "settlements": cast(List[float], []),
+                    }
                 rdata = rounds_data[rounds]
                 rdata["count"] = cast(int, rdata["count"]) + 1
-                settlement_amt = float(outcome.settlement_amount) if outcome.settlement_amount else 0
+                settlement_amt = (
+                    float(outcome.settlement_amount) if outcome.settlement_amount else 0
+                )
                 if settlement_amt > 0:
                     cast(List[float], rdata["settlements"]).append(settlement_amt)
 
@@ -622,7 +636,9 @@ class PatternAnalyzerService:
                         else 0
                     ),
                 )
-                best_round_settlements = cast(List[float], rounds_data[best_round]["settlements"])
+                best_round_settlements = cast(
+                    List[float], rounds_data[best_round]["settlements"]
+                )
                 if best_round_settlements:
                     strategies.append(
                         {
@@ -692,16 +708,26 @@ class PatternAnalyzerService:
                 if outcome.final_outcome in ["won", "settled"]:
                     adata["success"] = cast(int, adata["success"]) + 1
 
-                settlement_amt = float(outcome.settlement_amount) if outcome.settlement_amount else 0
+                settlement_amt = (
+                    float(outcome.settlement_amount) if outcome.settlement_amount else 0
+                )
                 if settlement_amt > 0:
                     cast(List[float], adata["settlements"]).append(settlement_amt)
 
-                resolution_days = int(outcome.time_to_resolution_days) if outcome.time_to_resolution_days else 0
+                resolution_days = (
+                    int(outcome.time_to_resolution_days)
+                    if outcome.time_to_resolution_days
+                    else 0
+                )
                 if resolution_days > 0:
                     cast(List[int], adata["resolution_times"]).append(resolution_days)
 
-                violation_types = cast(Dict[str, Dict[str, int]], adata["violation_types"])
-                violation_types_list = outcome.violation_types if outcome.violation_types else []
+                violation_types = cast(
+                    Dict[str, Dict[str, int]], adata["violation_types"]
+                )
+                violation_types_list = (
+                    outcome.violation_types if outcome.violation_types else []
+                )
                 for vtype in violation_types_list:
                     if vtype not in violation_types:
                         violation_types[vtype] = {"total": 0, "success": 0}
@@ -718,13 +744,13 @@ class PatternAnalyzerService:
                 success = cast(int, data["success"])
                 settlements = cast(List[float], data["settlements"])
                 resolution_times = cast(List[int], data["resolution_times"])
-                violation_types = cast(Dict[str, Dict[str, int]], data["violation_types"])
+                violation_types = cast(
+                    Dict[str, Dict[str, int]], data["violation_types"]
+                )
 
                 success_rate = success / max(total, 1)
                 avg_settlement = (
-                    sum(settlements) / len(settlements)
-                    if settlements
-                    else 0
+                    sum(settlements) / len(settlements) if settlements else 0
                 )
                 avg_resolution = (
                     sum(resolution_times) / len(resolution_times)
@@ -791,7 +817,9 @@ class PatternAnalyzerService:
         if resolution_times and sum(resolution_times) / len(resolution_times) < 60:
             strengths.append("Fast case resolution")
 
-        violation_types = cast(Dict[str, Dict[str, int]], data.get("violation_types", {}))
+        violation_types = cast(
+            Dict[str, Dict[str, int]], data.get("violation_types", {})
+        )
         for vtype, vdata in violation_types.items():
             if vdata["total"] >= 3:
                 rate = vdata["success"] / vdata["total"]
@@ -828,7 +856,9 @@ class PatternAnalyzerService:
 
         return insights
 
-    def get_pattern_insights(self, filters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def get_pattern_insights(
+        self, filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Get actionable insights based on identified patterns.
 
@@ -900,8 +930,14 @@ class PatternAnalyzerService:
 
             for pattern in patterns:
                 if pattern.confidence >= 0.6:
-                    pattern_data_raw = pattern.pattern_data if pattern.pattern_data else {}
-                    data: Dict[str, Any] = dict(pattern_data_raw) if isinstance(pattern_data_raw, dict) else {}
+                    pattern_data_raw = (
+                        pattern.pattern_data if pattern.pattern_data else {}
+                    )
+                    data: Dict[str, Any] = (
+                        dict(pattern_data_raw)
+                        if isinstance(pattern_data_raw, dict)
+                        else {}
+                    )
                     if data.get("settlement_rate", 0) >= 0.7:
                         recommendations.append(
                             {

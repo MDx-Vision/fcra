@@ -474,7 +474,9 @@ class NotarizeService:
             }
             normalized_status = status_mapping.get(api_status, api_status)
 
-            events: List[Any] = list(transaction.webhook_events) if transaction.webhook_events else []
+            events: List[Any] = (
+                list(transaction.webhook_events) if transaction.webhook_events else []
+            )
             if normalized_status != transaction.status:
                 events.append(
                     {
@@ -797,7 +799,9 @@ class NotarizeService:
             event_lower = str(event_type).lower() if event_type else ""
             new_status = status_mapping.get(event_lower, transaction.status)
 
-            events: List[Any] = list(transaction.webhook_events) if transaction.webhook_events else []
+            events: List[Any] = (
+                list(transaction.webhook_events) if transaction.webhook_events else []
+            )
             events.append(
                 {
                     "event": event_type,

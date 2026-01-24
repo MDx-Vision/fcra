@@ -225,7 +225,9 @@ class SchedulerService:
                         payload=schedule["payload"],
                         cron_expression=schedule["cron_expression"],
                         is_active=True,
-                        next_run=CronParser.get_next_run(str(schedule["cron_expression"])),
+                        next_run=CronParser.get_next_run(
+                            str(schedule["cron_expression"])
+                        ),
                     )
                     session.add(job)
                     created.append(job)
