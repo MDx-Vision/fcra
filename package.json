@@ -20,7 +20,7 @@
   "author": "Brightpath Ascend",
   "license": "ISC",
   "devDependencies": {
-    "cypress": "^13.17.0",
+    "cypress": "^15.9.0",
     "puppeteer": "^24.34.0"
   }
 }
