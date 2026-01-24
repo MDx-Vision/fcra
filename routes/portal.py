@@ -3,6 +3,8 @@ from functools import wraps
 from datetime import datetime, timedelta
 import os
 
+from services.activity_logger import log_document_uploaded as activity_log_document, log_login, log_login_failed
+
 portal = Blueprint('portal', __name__, url_prefix='/portal')
 
 # =============================================================================
@@ -454,6 +456,7 @@ def upload_document():
 
             if files_uploaded > 0:
                 db.commit()
+                activity_log_document(client.id, "id_proof", f"{files_uploaded} ID document(s)")
 
                 # Fire document_uploaded trigger for ID/proof uploads
                 try:
@@ -499,6 +502,7 @@ def upload_document():
                 )
                 db.add(doc)
                 db.commit()
+                activity_log_document(client.id, doc_type, filename)
 
                 # Fire response_received trigger for CRA responses
                 if doc_type == 'cra_response' and bureau_str:

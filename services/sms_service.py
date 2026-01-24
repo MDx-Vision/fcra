@@ -11,6 +11,8 @@ import os
 
 from twilio.rest import Client as TwilioClient
 
+from services.activity_logger import log_sms_sent, log_sms_failed
+
 _twilio_client = None
 
 
@@ -133,6 +135,7 @@ def send_sms(to_number, message, from_number=None):
             sms = client.messages.create(body=message, from_=from_number, to=formatted_to)
             sender = from_number
 
+        log_sms_sent(formatted_to)
         return {
             "success": True,
             "message_sid": sms.sid,
@@ -143,6 +146,7 @@ def send_sms(to_number, message, from_number=None):
         }
 
     except Exception as e:
+        log_sms_failed(to_number, str(e))
         return {"success": False, "message_sid": None, "error": str(e)}
 
 

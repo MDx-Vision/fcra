@@ -48,6 +48,14 @@ from services.input_validator import (
 # Rate limiting
 from services.rate_limiter import RATE_LIMITS, init_rate_limiter
 
+# Human-readable activity logging
+from services.activity_logger import (
+    log_login,
+    log_login_failed,
+    log_client_created,
+    log_activity,
+)
+
 # API Configuration (using centralized config)
 ANTHROPIC_API_KEY = config.ANTHROPIC_API_KEY
 if (
@@ -1109,6 +1117,7 @@ def api_staff_login():
                 email=email,
                 failure_reason="User not found",
             )
+            log_login_failed(email, "User not found")
             return jsonify({"success": False, "error": "Invalid credentials"}), 401
 
         if not staff.is_active:
@@ -1121,6 +1130,7 @@ def api_staff_login():
                 name=staff.full_name,
                 failure_reason="Account disabled",
             )
+            log_login_failed(email, "Account disabled")
             return jsonify({"success": False, "error": "Account disabled"}), 403
 
         if not check_password_hash(staff.password_hash, password):
@@ -1133,6 +1143,7 @@ def api_staff_login():
                 name=staff.full_name,
                 failure_reason="Invalid password",
             )
+            log_login_failed(email, "Invalid password")
             return jsonify({"success": False, "error": "Invalid credentials"}), 401
 
         # Check if 2FA is enabled
@@ -1175,6 +1186,7 @@ def api_staff_login():
                         name=staff.full_name,
                         failure_reason="Invalid 2FA code",
                     )
+                    log_login_failed(email, "Invalid 2FA code")
                     return jsonify({"success": False, "error": message}), 401
 
         staff.last_login = datetime.utcnow()
@@ -1195,6 +1207,7 @@ def api_staff_login():
             email=staff.email,
             name=staff.full_name,
         )
+        log_login(staff.email, "staff")
 
         response_data = {
             "success": True,
@@ -8435,12 +8448,14 @@ def portal_login():
 
         if not client:
             record_login_attempt(email, success=False)
+            log_login_failed(email, "Client not found")
             return render_template(
                 "portal_login.html", error="Invalid email or password"
             )
 
         if not client.portal_password_hash:
             record_login_attempt(email, success=False)
+            log_login_failed(email, "No password set")
             return render_template(
                 "portal_login.html",
                 error="No password set. Please use your portal access link or contact support.",
@@ -8448,11 +8463,13 @@ def portal_login():
 
         if not check_password_hash(client.portal_password_hash, password):
             record_login_attempt(email, success=False)
+            log_login_failed(email, "Invalid password")
             return render_template(
                 "portal_login.html", error="Invalid email or password"
             )
 
         record_login_attempt(email, success=True)
+        log_login(email, "client portal")
 
         session.permanent = True
         session["client_id"] = client.id
@@ -8868,6 +8885,7 @@ def api_client_signup():
 
         db.add(client)
         db.flush()
+        log_client_created(client.id, client.name, user=session.get("staff_email"))
 
         case_number = generate_case_number()
         case = Case(
@@ -13798,6 +13816,7 @@ def api_create_client():
             client_id=client.id,
             details={"name": client.name, "email": client.email},
         )
+        log_client_created(client.id, client.name, user=session.get("staff_email"))
 
         try:
             WorkflowTriggersService.evaluate_triggers(
@@ -36217,6 +36236,10 @@ def api_leads_capture():
 
         db.commit()
         db.refresh(client)
+
+        # Log new client creation (not updates to existing)
+        if not existing:
+            log_client_created(client.id, client.name)
 
         # Try to pull credit report if credentials provided
         preview_data = None

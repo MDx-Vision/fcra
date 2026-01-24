@@ -12,10 +12,13 @@ Features:
 """
 
 import os
+import time
 import requests
 from typing import Optional, Dict, Any, Tuple
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+
+from services.activity_logger import log_api_call
 
 
 # USPS API Configuration (New OAuth2 API)
@@ -66,6 +69,7 @@ class AddressValidationService:
 
         # Request new token
         try:
+            start_time = time.time()
             response = requests.post(
                 USPS_OAUTH_URL,
                 data={
@@ -78,6 +82,8 @@ class AddressValidationService:
                 },
                 timeout=10
             )
+            duration_ms = (time.time() - start_time) * 1000
+            log_api_call("USPS", "/oauth2/v3/token", response.status_code, duration_ms)
             response.raise_for_status()
             data = response.json()
 
@@ -175,6 +181,7 @@ class AddressValidationService:
             params["ZIPPlus4"] = zip4
 
         try:
+            start_time = time.time()
             response = requests.get(
                 USPS_ADDRESS_URL,
                 params=params,
@@ -184,6 +191,8 @@ class AddressValidationService:
                 },
                 timeout=10
             )
+            duration_ms = (time.time() - start_time) * 1000
+            log_api_call("USPS", "/addresses/v3/address", response.status_code, duration_ms)
 
             if response.status_code == 404:
                 return ValidatedAddress(
