@@ -1,196 +1,434 @@
-{% extends "includes/dashboard_base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Logs - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
 
-{% block title %}Activity Logs{% endblock %}
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
 
-{% block content %}
-<div class="main-content" data-testid="logs-page">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Activity Logs</h1>
-            <p class="text-gray-600">See exactly what's happening in real-time</p>
-        </div>
-        <div class="flex gap-2">
-            <button onclick="refreshLogs()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                <i class="fas fa-sync-alt mr-2"></i>Refresh
-            </button>
-            <button onclick="toggleAutoRefresh()" id="autoRefreshBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
-                <i class="fas fa-play mr-2"></i>Auto-Refresh
-            </button>
-        </div>
-    </div>
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
 
-    <!-- Filters -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
-        <div class="flex gap-4 flex-wrap">
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #22c55e;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #16a34a;
+        }
+        .btn-secondary {
+            background: #64748b;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        .btn-secondary.active {
+            background: #22c55e;
+        }
+
+        .filters {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+        .filter-group select,
+        .filter-group input {
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 150px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .stat-card .stat-label {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .stat-card.success { border-left: 4px solid #22c55e; }
+        .stat-card.success .stat-value { color: #22c55e; }
+        .stat-card.error { border-left: 4px solid #ef4444; }
+        .stat-card.error .stat-value { color: #ef4444; }
+        .stat-card.warning { border-left: 4px solid #f59e0b; }
+        .stat-card.warning .stat-value { color: #f59e0b; }
+        .stat-card.total { border-left: 4px solid #3b82f6; }
+        .stat-card.total .stat-value { color: #3b82f6; }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .log-entries {
+            max-height: 600px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+        }
+
+        .log-entry {
+            padding: 12px 24px;
+            border-bottom: 1px solid #f0f2f5;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: background 0.15s;
+        }
+        .log-entry:hover {
+            background: #f8fafc;
+        }
+
+        .log-entry.success { background: #f0fdf4; }
+        .log-entry.error { background: #fef2f2; }
+        .log-entry.warning { background: #fffbeb; }
+        .log-entry.info { background: #eff6ff; }
+
+        .log-icon {
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .log-icon.success { color: #22c55e; }
+        .log-icon.error { color: #ef4444; }
+        .log-icon.warning { color: #f59e0b; }
+        .log-icon.info { color: #3b82f6; }
+
+        .log-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .log-action {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .log-details {
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .log-meta {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        .log-error {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .log-time {
+            font-size: 12px;
+            color: #94a3b8;
+            flex-shrink: 0;
+        }
+
+        .log-raw {
+            padding: 12px 24px;
+            border-bottom: 1px solid #f0f2f5;
+            color: #374151;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .log-raw.error { background: #fef2f2; }
+        .log-raw.warning { background: #fffbeb; }
+
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <div class="main-content" data-testid="logs-page">
+        <!-- Header -->
+        <div class="header">
             <div>
-                <label class="text-sm text-gray-600">Filter by Status</label>
-                <select id="statusFilter" onchange="refreshLogs()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                <h1>Activity Logs</h1>
+                <p class="header-subtitle">See exactly what's happening in real-time</p>
+            </div>
+            <div class="header-actions">
+                <button onclick="refreshLogs()" class="btn btn-primary">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button onclick="toggleAutoRefresh()" id="autoRefreshBtn" class="btn btn-secondary">
+                    <i class="fas fa-play"></i> Auto-Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <label>Filter by Status</label>
+                <select id="statusFilter" onchange="refreshLogs()">
                     <option value="">All</option>
                     <option value="success">Success</option>
                     <option value="error">Errors</option>
                     <option value="warning">Warnings</option>
                 </select>
             </div>
-            <div>
-                <label class="text-sm text-gray-600">Search</label>
-                <input type="text" id="searchFilter" onkeyup="debounceRefresh()" placeholder="Search logs..."
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+            <div class="filter-group">
+                <label>Search</label>
+                <input type="text" id="searchFilter" onkeyup="debounceRefresh()" placeholder="Search logs...">
             </div>
-            <div>
-                <label class="text-sm text-gray-600">Log Type</label>
-                <select id="logType" onchange="refreshLogs()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+            <div class="filter-group">
+                <label>Log Type</label>
+                <select id="logType" onchange="refreshLogs()">
                     <option value="activity">Activity Log</option>
                     <option value="errors">Error Log</option>
                     <option value="app">App Log</option>
                 </select>
             </div>
         </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card success">
+                <div class="stat-value" id="successCount">0</div>
+                <div class="stat-label">Successful</div>
+            </div>
+            <div class="stat-card error">
+                <div class="stat-value" id="errorCount">0</div>
+                <div class="stat-label">Errors</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-value" id="warningCount">0</div>
+                <div class="stat-label">Warnings</div>
+            </div>
+            <div class="stat-card total">
+                <div class="stat-value" id="totalCount">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+        </div>
+
+        <!-- Log Entries -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Recent Activity</h2>
+            </div>
+            <div id="logEntries" class="log-entries">
+                <div class="empty-state">Loading logs...</div>
+            </div>
+        </div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-4 gap-4 mb-6" id="statsCards">
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="text-2xl font-bold text-green-600" id="successCount">0</div>
-            <div class="text-sm text-gray-600">Successful</div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="text-2xl font-bold text-red-600" id="errorCount">0</div>
-            <div class="text-sm text-gray-600">Errors</div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="text-2xl font-bold text-yellow-600" id="warningCount">0</div>
-            <div class="text-sm text-gray-600">Warnings</div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="text-2xl font-bold text-blue-600" id="totalCount">0</div>
-            <div class="text-sm text-gray-600">Total</div>
-        </div>
-    </div>
+    <script>
+        let autoRefreshInterval = null;
+        let debounceTimer = null;
 
-    <!-- Log Entries -->
-    <div class="bg-white rounded-lg shadow">
-        <div class="p-4 border-b">
-            <h2 class="font-semibold">Recent Activity</h2>
-        </div>
-        <div id="logEntries" class="divide-y max-h-[600px] overflow-y-auto font-mono text-sm">
-            <div class="p-4 text-gray-500">Loading logs...</div>
-        </div>
-    </div>
-</div>
+        function refreshLogs() {
+            const status = document.getElementById('statusFilter').value;
+            const search = document.getElementById('searchFilter').value;
+            const logType = document.getElementById('logType').value;
 
-<script>
-let autoRefreshInterval = null;
-let debounceTimer = null;
-
-function refreshLogs() {
-    const status = document.getElementById('statusFilter').value;
-    const search = document.getElementById('searchFilter').value;
-    const logType = document.getElementById('logType').value;
-
-    fetch(`/api/logs?status=${status}&search=${encodeURIComponent(search)}&type=${logType}`)
-        .then(r => r.json())
-        .then(data => {
-            renderLogs(data.logs);
-            updateStats(data.stats);
-        })
-        .catch(err => {
-            document.getElementById('logEntries').innerHTML =
-                '<div class="p-4 text-red-500">Error loading logs: ' + err + '</div>';
-        });
-}
-
-function renderLogs(logs) {
-    const container = document.getElementById('logEntries');
-
-    if (!logs || logs.length === 0) {
-        container.innerHTML = '<div class="p-4 text-gray-500">No logs found</div>';
-        return;
-    }
-
-    container.innerHTML = logs.map(log => {
-        if (log.raw) {
-            // Raw log line from file
-            const isError = log.raw.includes('ERROR') || log.raw.includes('✗');
-            const isWarning = log.raw.includes('WARNING') || log.raw.includes('⚠');
-            const bgClass = isError ? 'bg-red-50' : (isWarning ? 'bg-yellow-50' : '');
-            return `<div class="p-3 ${bgClass} hover:bg-gray-50">${escapeHtml(log.raw)}</div>`;
+            fetch(`/api/logs?status=${status}&search=${encodeURIComponent(search)}&type=${logType}`)
+                .then(r => r.json())
+                .then(data => {
+                    renderLogs(data.logs);
+                    updateStats(data.stats);
+                })
+                .catch(err => {
+                    document.getElementById('logEntries').innerHTML =
+                        '<div class="empty-state" style="color: #ef4444;">Error loading logs: ' + err + '</div>';
+                });
         }
 
-        // Structured activity log
-        const statusColors = {
-            success: 'text-green-600 bg-green-50',
-            error: 'text-red-600 bg-red-50',
-            warning: 'text-yellow-600 bg-yellow-50',
-            info: 'text-blue-600 bg-blue-50'
-        };
-        const statusIcons = {
-            success: 'fa-check-circle',
-            error: 'fa-times-circle',
-            warning: 'fa-exclamation-triangle',
-            info: 'fa-info-circle'
-        };
+        function renderLogs(logs) {
+            const container = document.getElementById('logEntries');
 
-        const color = statusColors[log.status] || '';
-        const icon = statusIcons[log.status] || 'fa-circle';
+            if (!logs || logs.length === 0) {
+                container.innerHTML = '<div class="empty-state">No logs found</div>';
+                return;
+            }
 
-        return `
-            <div class="p-3 ${color} hover:bg-gray-50 flex items-start gap-3">
-                <i class="fas ${icon} mt-1"></i>
-                <div class="flex-1">
-                    <div class="flex justify-between">
-                        <span class="font-semibold">${escapeHtml(log.action)}</span>
-                        <span class="text-gray-500 text-xs">${log.time}</span>
+            container.innerHTML = logs.map(log => {
+                if (log.raw) {
+                    // Raw log line from file
+                    const isError = log.raw.includes('ERROR') || log.raw.includes('✗');
+                    const isWarning = log.raw.includes('WARNING') || log.raw.includes('⚠');
+                    const bgClass = isError ? 'error' : (isWarning ? 'warning' : '');
+                    return `<div class="log-raw ${bgClass}">${escapeHtml(log.raw)}</div>`;
+                }
+
+                // Structured activity log
+                const statusIcons = {
+                    success: 'fa-check-circle',
+                    error: 'fa-times-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+
+                const icon = statusIcons[log.status] || 'fa-circle';
+
+                return `
+                    <div class="log-entry ${log.status || ''}">
+                        <div class="log-icon ${log.status || ''}">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                        <div class="log-content">
+                            <div class="log-action">${escapeHtml(log.action)}</div>
+                            ${log.details ? `<div class="log-details">${escapeHtml(log.details)}</div>` : ''}
+                            ${log.error ? `<div class="log-error">Error: ${escapeHtml(log.error)}</div>` : ''}
+                            <div class="log-meta">
+                                ${log.user ? `User: ${escapeHtml(log.user)}` : ''}
+                                ${log.client_id ? ` | Client: ${log.client_id}` : ''}
+                            </div>
+                        </div>
+                        <div class="log-time">${log.time}</div>
                     </div>
-                    ${log.details ? `<div class="text-gray-600">${escapeHtml(log.details)}</div>` : ''}
-                    ${log.error ? `<div class="text-red-600 text-sm mt-1">Error: ${escapeHtml(log.error)}</div>` : ''}
-                    <div class="text-xs text-gray-400 mt-1">
-                        ${log.user ? `User: ${escapeHtml(log.user)}` : ''}
-                        ${log.client_id ? ` | Client: ${log.client_id}` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
+                `;
+            }).join('');
+        }
 
-function updateStats(stats) {
-    if (!stats) return;
-    document.getElementById('successCount').textContent = stats.success || 0;
-    document.getElementById('errorCount').textContent = stats.error || 0;
-    document.getElementById('warningCount').textContent = stats.warning || 0;
-    document.getElementById('totalCount').textContent = stats.total || 0;
-}
+        function updateStats(stats) {
+            if (!stats) return;
+            document.getElementById('successCount').textContent = stats.success || 0;
+            document.getElementById('errorCount').textContent = stats.error || 0;
+            document.getElementById('warningCount').textContent = stats.warning || 0;
+            document.getElementById('totalCount').textContent = stats.total || 0;
+        }
 
-function toggleAutoRefresh() {
-    const btn = document.getElementById('autoRefreshBtn');
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
-        autoRefreshInterval = null;
-        btn.innerHTML = '<i class="fas fa-play mr-2"></i>Auto-Refresh';
-        btn.classList.remove('bg-green-600');
-        btn.classList.add('bg-gray-600');
-    } else {
-        autoRefreshInterval = setInterval(refreshLogs, 3000);
-        btn.innerHTML = '<i class="fas fa-pause mr-2"></i>Stop';
-        btn.classList.remove('bg-gray-600');
-        btn.classList.add('bg-green-600');
-    }
-}
+        function toggleAutoRefresh() {
+            const btn = document.getElementById('autoRefreshBtn');
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                btn.innerHTML = '<i class="fas fa-play"></i> Auto-Refresh';
+                btn.classList.remove('active');
+            } else {
+                autoRefreshInterval = setInterval(refreshLogs, 3000);
+                btn.innerHTML = '<i class="fas fa-pause"></i> Stop';
+                btn.classList.add('active');
+            }
+        }
 
-function debounceRefresh() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(refreshLogs, 300);
-}
+        function debounceRefresh() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(refreshLogs, 300);
+        }
 
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-// Initial load
-refreshLogs();
-</script>
-{% endblock %}
+        // Initial load
+        refreshLogs();
+    </script>
+</body>
+</html>

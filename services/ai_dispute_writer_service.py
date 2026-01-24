@@ -19,7 +19,7 @@ from database import (
     Client, Analysis, Violation, DisputeItem, CRAResponse,
     DisputeLetter, CreditScoreSnapshot
 )
-from prompt_loader import PromptLoader
+from services.prompt_loader import PromptLoader
 
 
 class AIDisputeWriterService:

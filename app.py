@@ -64,7 +64,7 @@ if (
 
 from anthropic import Anthropic
 
-from prompt_loader import get_prompt_loader
+from services.prompt_loader import get_prompt_loader
 
 client: Anthropic | None = None
 try:
@@ -196,15 +196,15 @@ from database import (
     get_db,
     init_db,
 )
-from document_generators import (
+from services.document_generators import (
     generate_client_email_html,
     generate_client_report_html,
     generate_internal_analysis_html,
     html_to_pdf,
 )
-from jwt_utils import create_token, require_jwt
-from litigation_tools import assess_willfulness, calculate_case_score, calculate_damages
-from pdf_generator import (
+from services.jwt_utils import create_token, require_jwt
+from services.litigation_tools import assess_willfulness, calculate_case_score, calculate_damages
+from services.pdf_generator import (
     CreditAnalysisPDFGenerator,
     LetterPDFGenerator,
     SectionPDFGenerator,
