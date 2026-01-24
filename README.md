@@ -1,175 +1,390 @@
-# FCRA Credit Repair Application
+# FCRA Litigation Platform
 
-[![CI](https://github.com/mdxvision/fcra/actions/workflows/ci.yml/badge.svg)](https://github.com/mdxvision/fcra/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/mdxvision/fcra/graph/badge.svg)](https://codecov.io/gh/mdxvision/fcra)
+**AI-Powered Credit Repair & FCRA Litigation Management System**
 
-A comprehensive credit repair management system built with Flask.
+Comprehensive platform for credit restoration, dispute management, and FCRA litigation with AI-generated letters, automated workflows, and multi-portal architecture.
 
-## Features
+[![CI](https://github.com/MDx-Vision/fcra/actions/workflows/ci.yml/badge.svg)](https://github.com/MDx-Vision/fcra/actions/workflows/ci.yml)
 
-### Core Platform
-- Client management and onboarding
-- Credit report analysis and dispute tracking
-- Document generation (letters, reports)
-- E-signature integration (CROA compliance)
-- Attorney case management
-- Affiliate portal
-- White-label partner portal
+## Current Status (Jan 2025)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Staff Dashboard | Working | Full case management, analytics, ML insights |
+| Client Portal | Working | PWA, onboarding, document upload, camera capture |
+| Affiliate Portal | Working | Lead tracking, commission management |
+| Partner Portal | Working | White-label branding, team management |
+| AI Dispute Letters | Working | Claude AI, 4 dispute rounds, 210+ case citations |
+| 5-Day Knock-Out | Working | §605B identity theft block (Online + Mail) |
+| Credit Import | Working | IdentityIQ, MyScoreIQ, SmartCredit, MyFreeScoreNow |
+| Email (Gmail SMTP) | Working | Transactional emails, portal invites |
+| SMS (Twilio) | Working | A2P 10DLC compliant, templates |
+| Payments (Stripe) | Working | Subscriptions, prepay packages, ACH |
+| Certified Mail | Ready | SendCertifiedMail.com integration (awaiting credentials) |
+| Calendar Sync | Working | Google Calendar, Outlook integration |
+| 2FA Authentication | Working | TOTP, backup codes, trusted devices |
+
+## Key Features
+
+### AI-Powered Dispute Generation
+
+**4-Round Dispute Strategy**
+- **Round 1**: Initial FCRA §611 disputes with factual basis challenges
+- **Round 2**: Method of Verification (MOV) demands under §611(a)(6)
+- **Round 3**: Regulatory complaints (CFPB, State AG, FTC)
+- **Round 4**: Pre-arbitration demands with 210+ case citations
+
+**5-Day Knock-Out (§605B)** *(NEW)*
+- Identity theft block requiring 4 business day response
+- Online submission via bureau portals (fastest method)
+- Certified mail to fraud departments (paper trail)
+- FTC affidavit generation + police report instructions
+- Third-party freeze guidance (LexisNexis, Teletrack, Innovis)
+- Phone follow-up scripts with call navigation
+
+**AI Features**
+- Claude AI integration for letter generation
+- 36K word litigation framework with 210+ FCRA cases
+- Auto-detection of FCRA violations
+- Medical coding: ICD-10 (90+) & CPT (100+) violation codes
+- Specialty templates for different dispute types
 
 ### Client Portal (PWA)
-- Mobile-first responsive design
-- Installable on iOS/Android/Desktop
-- Live chat support
-- Document upload and tracking
-- Freeze status monitoring
-- Journey timeline
-- Booking system for calls
 
-### Automation
-- Workflow triggers and actions
-- Drip campaigns
-- Voicemail drops (multi-provider)
-- Email/SMS automation
-- Scheduled jobs
+**Onboarding Wizard**
+- Personal information with USPS address validation
+- ID verification with camera capture (mobile + desktop)
+- SSN card upload with preview
+- Proof of address document upload
+- Credit monitoring credential capture
+- E-signature for CROA documents (7 required)
 
-### Business Intelligence
-- Revenue dashboard
-- Staff performance metrics
-- Lead scoring
-- ROI calculator
-- Bureau response tracking
+**Camera Capture** *(NEW)*
+- Mobile: Opens native camera app directly
+- Desktop: getUserMedia with fallback to file upload
+- Image preview before submission
+- Supports ID front/back, SSN card, utility bills
+
+**Portal Features**
+- Real-time case status tracking
+- Document upload/download
+- Secure messaging with staff
+- Appointment booking system
+- Journey timeline visualization
+- Secondary bureau freeze tracking
+- Payment management (Stripe + Affirm)
+
+### Staff Dashboard
+
+**Case Management**
+- Client intake and onboarding
+- Credit report analysis and parsing
+- Dispute letter generation and tracking
+- Settlement calculator (30% fee)
+- Bureau response monitoring
+
+**Analytics & Reporting**
+- Revenue dashboard (MRR, ARR, LTV, churn)
+- Staff performance leaderboards
+- ML insights and predictive analytics
+- Violation pattern detection
+- ROI calculator per client
+
+**Automation**
+- Workflow triggers (20+ event types)
+- Drip email/SMS campaigns
+- Voicemail drops (Slybroadcast, Drop Cowboy, Twilio)
+- Scheduled jobs (payment capture, reminders)
+- Task assignment and tracking
+
+### Multi-Portal Architecture
+
+**Staff Portal** (`/dashboard`)
+- Full admin capabilities
+- Client management
+- Letter generation
+- Analytics
+
+**Client Portal** (`/portal`)
+- Self-service onboarding
+- Document uploads
+- Case tracking
+- Messaging
+
+**Affiliate Portal** (`/affiliate`)
+- Lead submission
+- Commission tracking
+- Performance metrics
+
+**Partner Portal** (`/partner`)
+- White-label branding
+- Team management
+- Client filtering
+- Custom domains
+
+### Payment System
+
+**Pricing Structure**
+- Free teaser analysis (upload PDF)
+- Full analysis: $199 (credited toward Round 1)
+- Round 1: $497 ($298 after credit)
+- Round 2+: $297/round
+- Settlement fee: 30%
+
+**Prepay Packages**
+- Starter: $749 (Rounds 1-2)
+- Standard: $1,295 (Rounds 1-3)
+- Complete: $1,795 (Rounds 1-4)
+- Unlimited: $2,000 (All rounds)
+
+**Payment Methods**
+- Credit/Debit (2.9% + $0.30)
+- ACH Bank Transfer (0.8%, max $5)
+- Apple Pay / Google Pay
+- Affirm (12-month financing)
+
+### Compliance & Security
+
+**CROA Compliance**
+- 7 required disclosure documents
+- 3 business day cancellation period
+- Sequential signing enforcement
+- Signature capture (drawn/typed)
+- IP address and timestamp logging
+
+**Security**
+- Two-factor authentication (TOTP)
+- Encrypted credential storage (AES-256)
+- Rate limiting on all endpoints
+- HIPAA-ready audit logging
+- Session management with trusted devices
 
 ### Integrations
-- Gmail SMTP for email
-- Twilio for SMS/WhatsApp
-- Stripe for payments
-- Multiple credit monitoring services
 
-## Requirements
+| Service | Purpose | Status |
+|---------|---------|--------|
+| Gmail SMTP | Transactional email | Working |
+| Twilio | SMS/WhatsApp | Working |
+| Stripe | Payments | Working |
+| SendCertifiedMail | Certified mail | Ready |
+| USPS | Address validation | Working |
+| Google Calendar | Appointment sync | Working |
+| Outlook | Appointment sync | Working |
+| IdentityIQ | Credit reports | Working |
+| MyScoreIQ | Credit reports | Working |
+| SmartCredit | Credit reports | Working |
+| MyFreeScoreNow | Credit reports | Working |
 
-- Python 3.11+
-- PostgreSQL 15+
-- Node.js 18+ (for Cypress tests)
+## Architecture
+
+```
+fcra/
+├── app.py                  # Main Flask application (26K+ lines)
+├── database.py             # SQLAlchemy models (50+ tables)
+├── routes/
+│   ├── portal.py           # Client portal routes
+│   ├── affiliate.py        # Affiliate portal routes
+│   └── partner.py          # Partner portal routes
+├── services/               # Business logic (86 services)
+│   ├── ai_dispute_writer_service.py
+│   ├── credit_report_parser.py
+│   ├── email_service.py
+│   ├── sms_service.py
+│   ├── stripe_client.py
+│   └── ...
+├── templates/              # Jinja2 HTML templates
+│   ├── portal/             # Client portal templates
+│   ├── includes/           # Shared components
+│   └── ...
+├── static/                 # CSS, JS, images
+├── knowledge/              # AI prompts (17 prompt files)
+├── tests/                  # Unit tests (98 files, 5,936 tests)
+├── cypress/                # E2E tests (88 specs)
+└── docs/                   # Documentation
+```
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Backend | Python 3.11, Flask 3.x, SQLAlchemy 2.x |
+| Database | PostgreSQL 16 |
+| AI | Anthropic Claude API |
+| Frontend | Jinja2, Tailwind CSS, vanilla JS |
+| PWA | Service Worker, Web App Manifest |
+| Email | Gmail SMTP (smtplib) |
+| SMS | Twilio SDK |
+| Payments | Stripe SDK |
+| Testing | pytest, Cypress |
+| CI/CD | GitHub Actions |
 
 ## Quick Start
 
-### Docker (Recommended)
+### Prerequisites
 
-```bash
-# Start with Docker Compose (includes PostgreSQL)
-docker-compose up
-
-# Or build and run manually
-docker build -t fcra-platform .
-docker run -p 5000:5000 --env-file .env fcra-platform
-```
+- Python 3.11+
+- PostgreSQL 16+
+- Node.js 18+ (for Cypress tests)
 
 ### Local Development
 
 ```bash
-# Install Python dependencies
+# Clone repository
+git clone https://github.com/MDx-Vision/fcra.git
+cd fcra
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 
-# Set environment variables
-export DATABASE_URL="postgresql://user:pass@localhost:5432/fcra"
-export SECRET_KEY="your-secret-key"
+# Create .env file
+cat > .env << EOF
+DATABASE_URL=postgresql://localhost/fcra?sslmode=disable
+FCRA_ENCRYPTION_KEY=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=your-app-password
+PORT=5001
+EOF
 
-# Run the application
+# Source environment
+set -a && source .env && set +a
+
+# Run database migrations
+python -c "from database import init_db; init_db()"
+
+# Start server (port 5001 - macOS uses 5000 for AirPlay)
 python app.py
+
+# Dashboard: http://localhost:5001/dashboard
+# Portal: http://localhost:5001/portal/login
 ```
 
-## Development
-
-### Code Formatting
+### Docker
 
 ```bash
-# Format code
-black app.py services/
-isort app.py services/ --profile black
+docker-compose up
 ```
 
-### Running Tests
+## API Endpoints
 
+### Authentication
 ```bash
-# Unit tests with coverage
-pytest tests/ -v --cov=. --cov-report=term-missing
-
-# Cypress E2E tests
-npm ci
-npx cypress run
+POST /api/staff/login           # Staff login
+POST /portal/api/login          # Client portal login
+POST /affiliate/api/login       # Affiliate login
+POST /partner/api/login         # Partner login
 ```
 
-### Database Migrations
-
+### Clients
 ```bash
-# Create a new migration (after modifying models)
-alembic revision --autogenerate -m "Description of changes"
-
-# Apply all pending migrations
-alembic upgrade head
-
-# Rollback one migration
-alembic downgrade -1
-
-# Show current revision
-alembic current
+GET  /api/clients               # List all clients
+POST /api/clients               # Create client
+GET  /api/clients/{id}          # Get client
+PUT  /api/clients/{id}          # Update client
+POST /api/clients/{id}/analyze  # Analyze credit report
 ```
 
-### Security Scanning
-
+### Disputes
 ```bash
-# Python security scan
-pip install bandit
-bandit -r app.py services/ --severity-level high
-
-# JavaScript vulnerability scan
-npm audit
+POST /api/disputes/generate     # Generate dispute letters
+GET  /api/disputes/{id}         # Get dispute
+POST /api/disputes/{id}/send    # Send to bureaus
 ```
 
-## API Documentation
+### 5-Day Knock-Out
+```bash
+GET  /api/5day-knockout/strategies           # List strategies
+GET  /api/5day-knockout/client/{id}/items    # Get disputable items
+POST /api/5day-knockout/generate             # Generate documents
+POST /api/5day-knockout/create-packets       # Create mail packets
+POST /api/5day-knockout/queue-packets        # Queue to SendCertified
+```
 
-Interactive API documentation is available at `/api/docs/` when the app is running.
+### Portal Onboarding
+```bash
+GET  /portal/api/onboarding/progress         # Get progress
+POST /portal/api/onboarding/save-personal-info  # Save personal info
+POST /portal/api/onboarding/complete-step    # Mark step complete
+POST /portal/api/onboarding/upload           # Upload documents
+```
 
-- **Swagger UI**: `/api/docs/`
-- **OpenAPI Spec**: `/api/docs/apispec.json`
-- **Static Spec**: `docs/openapi.yaml`
+### Payments
+```bash
+POST /api/clients/{id}/payment/round         # Create round payment
+POST /api/clients/{id}/payment/prepay        # Create prepay checkout
+POST /api/webhooks/stripe                    # Stripe webhooks
+```
 
 ## Test Status
 
-- **Unit Tests**: 5,341 passing (82 test files)
-- **Cypress E2E**: 88 specs passing (100%)
-- **Exhaustive Tests**: 51 files (46 dashboard + 5 portal)
-- **Service Coverage**: 66/66 services tested (100%)
+| Test Type | Count | Status |
+|-----------|-------|--------|
+| Unit Tests | 5,936 | Passing |
+| Cypress E2E | 88 | Passing |
+| Exhaustive Tests | 51 files | Passing |
+| Integration Tests | 2 files | Passing |
+| Service Coverage | 88/88 | 100% |
 
-## CI/CD
+### Run Tests
 
-All PRs run through:
-- Unit tests with coverage threshold (20% minimum)
-- Cypress E2E tests (88 specs)
-- Linting (flake8)
-- Security scanning (bandit, npm audit)
-- Code formatting checks (black, isort)
+```bash
+# Unit tests
+python -m pytest --tb=short -q
+
+# Single test file
+python -m pytest tests/test_email_service.py -v
+
+# Cypress E2E
+CI=true npx cypress run
+
+# Single Cypress spec
+CI=true npx cypress run --spec "cypress/e2e/login.cy.js"
+```
+
+## Test Credentials
+
+| Portal | URL | Email | Password |
+|--------|-----|-------|----------|
+| Staff Dashboard | /staff/login | test@example.com | testpass123 |
+| Client Portal | /portal/login | testclient@example.com | test123 |
 
 ## Documentation
 
-### Core Docs
-- `CLAUDE.md` - Development context and instructions
-- `ARCHITECTURE.md` - Tech stack and project structure
-- `FEATURE_BACKLOG.md` - Feature priorities and status (P1-P28 complete)
-- `README.md` - This file
+| Document | Description |
+|----------|-------------|
+| CLAUDE.md | Development context and current work |
+| ARCHITECTURE.md | Tech stack and project structure |
+| FEATURE_BACKLOG.md | Feature priorities (P1-P35 complete) |
+| PRICING_STRUCTURE.md | Pricing and payment flow |
+| CLIENT_PORTAL_SOP.md | Client portal user guide |
+| ADMIN_USER_GUIDE.md | Staff dashboard guide |
+| API_REFERENCE.md | REST API documentation |
 
-### Guides
-- `ADMIN_USER_GUIDE.md` - Staff dashboard usage guide
-- `CLIENT_PORTAL_SOP.md` - Client portal step-by-step guide
-- `CLIENT_ONBOARDING_GUIDE.md` - Client onboarding walkthrough
-- `API_REFERENCE.md` - REST API documentation
-- `CONTRIBUTING.md` - Contribution guidelines
+## Feature Phases
 
-### References
-- `TEST_CREDENTIALS.md` - Test login credentials
-- `PRICING_STRUCTURE.md` - Pricing and payment flow
-- `SENDCERTIFIED_SETUP.md` - Certified mail setup
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Core Platform | Complete |
+| Phase 2 | Litigation Features | Complete |
+| Phase 3 | AI Integration | Complete |
+| Phase 4 | Certified Mail | Ready (awaiting credentials) |
+| Phase 5 | Client Portal | Complete |
+| Phase 6 | Business Intelligence | Complete |
+| Phase 7 | Credit Monitoring Import | Complete |
+| Phase 8 | BAG CRM Feature Parity | Complete |
+| Phase 9 | 5-Day Knock-Out (§605B) | Complete |
+
+## Compliance
+
+- **FCRA**: Full compliance with Fair Credit Reporting Act
+- **CROA**: Credit Repair Organizations Act compliant
+- **A2P 10DLC**: SMS messaging compliance
+- **PCI DSS**: Stripe handles card data
+- **HIPAA**: Audit logging ready
 
 ## License
 
-Proprietary - All rights reserved.
+Proprietary - Bright Path Ascend Group. All rights reserved.
