@@ -6581,6 +6581,72 @@ class BadgeDefinition(Base):
         }
 
 
+class AIUsageLog(Base):
+    """Track Claude API usage and costs for monitoring and billing"""
+    __tablename__ = 'ai_usage_logs'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Who made the call
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True, index=True)
+
+    # What type of call
+    service = Column(String(50), nullable=False)  # dispute_writer, chat_support, analysis, etc.
+    operation = Column(String(100), nullable=False)  # generate_letters, revise_letter, chat_message, etc.
+    model = Column(String(50), nullable=False)  # claude-sonnet-4-20250514, etc.
+
+    # Token counts
+    input_tokens = Column(Integer, default=0)
+    output_tokens = Column(Integer, default=0)
+    total_tokens = Column(Integer, default=0)
+
+    # Cost calculation (in cents to avoid float issues)
+    input_cost_cents = Column(Integer, default=0)  # Cost for input tokens
+    output_cost_cents = Column(Integer, default=0)  # Cost for output tokens
+    total_cost_cents = Column(Integer, default=0)  # Total cost
+
+    # Timing
+    duration_ms = Column(Integer, default=0)  # How long the API call took
+
+    # Context
+    dispute_round = Column(Integer, nullable=True)
+    letter_type = Column(String(50), nullable=True)
+
+    # Metadata
+    success = Column(Boolean, default=True)
+    error_message = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    # Relationships
+    client = relationship("Client", foreign_keys=[client_id])
+    staff = relationship("Staff", foreign_keys=[staff_id])
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'staff_id': self.staff_id,
+            'service': self.service,
+            'operation': self.operation,
+            'model': self.model,
+            'input_tokens': self.input_tokens,
+            'output_tokens': self.output_tokens,
+            'total_tokens': self.total_tokens,
+            'input_cost_cents': self.input_cost_cents,
+            'output_cost_cents': self.output_cost_cents,
+            'total_cost_cents': self.total_cost_cents,
+            'cost_dollars': self.total_cost_cents / 100 if self.total_cost_cents else 0,
+            'duration_ms': self.duration_ms,
+            'dispute_round': self.dispute_round,
+            'letter_type': self.letter_type,
+            'success': self.success,
+            'error_message': self.error_message,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -8068,6 +8134,24 @@ def init_db():
         ("task_comments", "staff_id", "INTEGER REFERENCES staff(id) NOT NULL"),
         ("task_comments", "comment", "TEXT NOT NULL"),
         ("task_comments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # AI Usage Logs
+        ("ai_usage_logs", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("ai_usage_logs", "staff_id", "INTEGER REFERENCES staff(id)"),
+        ("ai_usage_logs", "service", "VARCHAR(50) NOT NULL"),
+        ("ai_usage_logs", "operation", "VARCHAR(100) NOT NULL"),
+        ("ai_usage_logs", "model", "VARCHAR(50) NOT NULL"),
+        ("ai_usage_logs", "input_tokens", "INTEGER DEFAULT 0"),
+        ("ai_usage_logs", "output_tokens", "INTEGER DEFAULT 0"),
+        ("ai_usage_logs", "total_tokens", "INTEGER DEFAULT 0"),
+        ("ai_usage_logs", "input_cost_cents", "INTEGER DEFAULT 0"),
+        ("ai_usage_logs", "output_cost_cents", "INTEGER DEFAULT 0"),
+        ("ai_usage_logs", "total_cost_cents", "INTEGER DEFAULT 0"),
+        ("ai_usage_logs", "duration_ms", "INTEGER DEFAULT 0"),
+        ("ai_usage_logs", "dispute_round", "INTEGER"),
+        ("ai_usage_logs", "letter_type", "VARCHAR(50)"),
+        ("ai_usage_logs", "success", "BOOLEAN DEFAULT TRUE"),
+        ("ai_usage_logs", "error_message", "TEXT"),
+        ("ai_usage_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()

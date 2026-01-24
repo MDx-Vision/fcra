@@ -33393,6 +33393,128 @@ def api_get_logs():
         return jsonify({"logs": [{"raw": f"Error: {e}"}], "stats": stats})
 
 
+# =============================================================================
+# AI USAGE TRACKING
+# =============================================================================
+
+@app.route("/dashboard/ai-usage")
+@require_staff(roles=["admin"])
+def dashboard_ai_usage():
+    """AI usage and cost tracking dashboard"""
+    from services.ai_usage_service import (
+        get_usage_summary,
+        get_usage_by_client,
+        get_recent_logs
+    )
+
+    days = request.args.get("days", 30, type=int)
+
+    summary = get_usage_summary(days=days)
+    top_clients = get_usage_by_client(days=days, limit=10)
+    recent_logs = get_recent_logs(limit=20)
+
+    return render_template(
+        "ai_usage_dashboard.html",
+        summary=summary,
+        top_clients=top_clients,
+        recent_logs=recent_logs
+    )
+
+
+@app.route("/api/ai-usage/summary", methods=["GET"])
+@require_staff(roles=["admin"])
+def api_ai_usage_summary():
+    """Get AI usage summary statistics"""
+    from services.ai_usage_service import get_usage_summary
+
+    days = request.args.get("days", 30, type=int)
+    client_id = request.args.get("client_id", type=int)
+
+    summary = get_usage_summary(days=days, client_id=client_id)
+    return jsonify(summary)
+
+
+@app.route("/api/ai-usage/by-client", methods=["GET"])
+@require_staff(roles=["admin"])
+def api_ai_usage_by_client():
+    """Get AI usage breakdown by client"""
+    from services.ai_usage_service import get_usage_by_client
+
+    days = request.args.get("days", 30, type=int)
+    limit = request.args.get("limit", 20, type=int)
+
+    clients = get_usage_by_client(days=days, limit=limit)
+    return jsonify({"clients": clients})
+
+
+@app.route("/api/ai-usage/recent", methods=["GET"])
+@require_staff(roles=["admin"])
+def api_ai_usage_recent():
+    """Get recent AI API calls"""
+    from services.ai_usage_service import get_recent_logs
+
+    limit = request.args.get("limit", 50, type=int)
+
+    logs = get_recent_logs(limit=limit)
+    return jsonify({"logs": logs})
+
+
+@app.route("/api/ai-usage/monthly", methods=["GET"])
+@require_staff(roles=["admin"])
+def api_ai_usage_monthly():
+    """Get monthly AI usage report"""
+    from services.ai_usage_service import get_monthly_report
+
+    year = request.args.get("year", type=int)
+    month = request.args.get("month", type=int)
+
+    report = get_monthly_report(year=year, month=month)
+    return jsonify(report)
+
+
+@app.route("/api/ai-usage/export", methods=["GET"])
+@require_staff(roles=["admin"])
+def api_ai_usage_export():
+    """Export AI usage data as CSV"""
+    from services.ai_usage_service import get_recent_logs
+    import csv
+    from io import StringIO
+
+    limit = request.args.get("limit", 1000, type=int)
+    logs = get_recent_logs(limit=limit)
+
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Date", "Service", "Operation", "Model",
+        "Input Tokens", "Output Tokens", "Total Tokens",
+        "Cost ($)", "Duration (ms)", "Client ID", "Success"
+    ])
+
+    for log in logs:
+        writer.writerow([
+            log.get("created_at", ""),
+            log.get("service", ""),
+            log.get("operation", ""),
+            log.get("model", ""),
+            log.get("input_tokens", 0),
+            log.get("output_tokens", 0),
+            log.get("total_tokens", 0),
+            log.get("cost_dollars", 0),
+            log.get("duration_ms", 0),
+            log.get("client_id", ""),
+            log.get("success", True)
+        ])
+
+    output.seek(0)
+    return send_file(
+        io.BytesIO(output.getvalue().encode()),
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name=f"ai_usage_export_{datetime.utcnow().strftime('%Y%m%d')}.csv"
+    )
+
+
 # ============================================================
 # PERFORMANCE MONITORING ROUTES
 # ============================================================

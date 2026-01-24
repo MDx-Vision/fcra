@@ -23,6 +23,7 @@ from database import (
 from services.chat_knowledge_base import (
     get_system_prompt, check_escalation_needed
 )
+from services.ai_usage_service import log_ai_usage
 
 
 class ChatService:
@@ -637,6 +638,8 @@ class ChatService:
 
         # Call Claude API
         try:
+            import time
+            start_time = time.time()
             response = self.anthropic_client.messages.create(
                 model=self.AI_MODEL,
                 max_tokens=self.MAX_RESPONSE_TOKENS,
@@ -644,9 +647,21 @@ class ChatService:
                 system=system_prompt or get_system_prompt(conversation.client_context),
                 messages=api_messages
             )
+            duration_ms = int((time.time() - start_time) * 1000)
 
             response_text = response.content[0].text
             tokens_used = response.usage.input_tokens + response.usage.output_tokens
+
+            # Log AI usage
+            log_ai_usage(
+                service="chat_support",
+                operation="chat_message",
+                model=response.model,
+                input_tokens=response.usage.input_tokens,
+                output_tokens=response.usage.output_tokens,
+                duration_ms=duration_ms,
+                client_id=conversation.client_id
+            )
 
             return {
                 'success': True,

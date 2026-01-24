@@ -21,6 +21,7 @@ from database import (
 )
 from services.prompt_loader import PromptLoader
 from services.activity_logger import log_activity, log_dispute_generated
+from services.ai_usage_service import log_ai_usage
 
 
 class AIDisputeWriterService:
@@ -485,6 +486,8 @@ Generate all letters now:
             system_prompt = system_prompt[:50000] + "\n\n[Truncated for length]"
 
         # Call Claude
+        import time
+        start_time = time.time()
         response = self.anthropic_client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=8000,
@@ -493,6 +496,19 @@ Generate all letters now:
             messages=[
                 {"role": "user", "content": prompt}
             ]
+        )
+        duration_ms = int((time.time() - start_time) * 1000)
+
+        # Log AI usage
+        log_ai_usage(
+            service="dispute_writer",
+            operation="generate_letters",
+            model=response.model,
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            duration_ms=duration_ms,
+            client_id=client.id if client else None,
+            dispute_round=round_number
         )
 
         # Extract text from response
@@ -577,12 +593,27 @@ Include a 30-day response deadline.
             if len(system_prompt) > 30000:
                 system_prompt = system_prompt[:30000]
 
+            import time
+            start_time = time.time()
             response = self.anthropic_client.messages.create(
                 model="claude-sonnet-4-20250514",
                 max_tokens=3000,
                 temperature=0.3,
                 system=system_prompt,
                 messages=[{"role": "user", "content": prompt}]
+            )
+            duration_ms = int((time.time() - start_time) * 1000)
+
+            # Log AI usage
+            log_ai_usage(
+                service="dispute_writer",
+                operation="generate_single_letter",
+                model=response.model,
+                input_tokens=response.usage.input_tokens,
+                output_tokens=response.usage.output_tokens,
+                duration_ms=duration_ms,
+                client_id=client_id,
+                letter_type=bureau
             )
 
             letter_content = response.content[0].text
@@ -768,11 +799,27 @@ Generate the revised letter:
 """
 
         try:
+            import time
+            start_time = time.time()
             response = self.anthropic_client.messages.create(
                 model="claude-sonnet-4-20250514",
                 max_tokens=4000,
                 temperature=0.3,
                 messages=[{"role": "user", "content": prompt}]
+            )
+            duration_ms = int((time.time() - start_time) * 1000)
+
+            # Log AI usage
+            log_ai_usage(
+                service="dispute_writer",
+                operation="revise_letter",
+                model=response.model,
+                input_tokens=response.usage.input_tokens,
+                output_tokens=response.usage.output_tokens,
+                duration_ms=duration_ms,
+                client_id=client_id,
+                dispute_round=round_number,
+                letter_type=bureau
             )
 
             revised_letter = response.content[0].text
@@ -1113,12 +1160,26 @@ Format each document with clear headers:
         if len(system_prompt) > 80000:
             system_prompt = system_prompt[:80000] + "\n\n[Truncated for length]"
 
+        import time
+        start_time = time.time()
         response = self.anthropic_client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=16000,  # Larger for multiple documents
             temperature=0.2,
             system=system_prompt,
             messages=[{"role": "user", "content": prompt}]
+        )
+        duration_ms = int((time.time() - start_time) * 1000)
+
+        # Log AI usage
+        log_ai_usage(
+            service="dispute_writer",
+            operation=f"5day_knockout_phase{phase}",
+            model=response.model,
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            duration_ms=duration_ms,
+            letter_type="5day_knockout"
         )
 
         response_text = response.content[0].text
