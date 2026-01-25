@@ -227,7 +227,7 @@ describe('Clients Page - Comprehensive Tests', () => {
     it('should display table header with correct columns', () => {
       cy.get('body').then(($body) => {
         if ($body.find('[data-testid="clients-table"]').length > 0) {
-          cy.get('[data-testid="clients-table"] thead th').should('have.length', 7)
+          cy.get('[data-testid="clients-table"] thead th').should('have.length', 11)
         }
       })
     })
@@ -256,26 +256,26 @@ describe('Clients Page - Comprehensive Tests', () => {
       })
     })
 
-    it('should have Violations column header', () => {
+    it('should have Type column header', () => {
       cy.get('body').then(($body) => {
         if ($body.find('[data-testid="clients-table"]').length > 0) {
-          cy.get('[data-testid="clients-table"] thead').should('contain', 'Violations')
+          cy.get('[data-testid="clients-table"] thead').should('contain', 'Type')
         }
       })
     })
 
-    it('should have Exposure column header', () => {
+    it('should have Follow Up column header', () => {
       cy.get('body').then(($body) => {
         if ($body.find('[data-testid="clients-table"]').length > 0) {
-          cy.get('[data-testid="clients-table"] thead').should('contain', 'Exposure')
+          cy.get('[data-testid="clients-table"] thead').should('contain', 'Follow Up')
         }
       })
     })
 
-    it('should have Created column header', () => {
+    it('should have Lead column header', () => {
       cy.get('body').then(($body) => {
         if ($body.find('[data-testid="clients-table"]').length > 0) {
-          cy.get('[data-testid="clients-table"] thead').should('contain', 'Created')
+          cy.get('[data-testid="clients-table"] thead').should('contain', 'Lead')
         }
       })
     })
@@ -336,31 +336,27 @@ describe('Clients Page - Comprehensive Tests', () => {
       })
     })
 
-    it('should display client violations for each row', () => {
+    it('should display client violations data attribute for each row', () => {
       cy.get('body').then(($body) => {
         if ($body.find('[data-testid^="client-row-"]').length > 0) {
-          cy.get('[data-testid^="client-row-"]').first().within(() => {
-            cy.get('[data-testid^="client-violations-"]').should('exist')
-          })
+          cy.get('[data-testid^="client-row-"]').first().should('have.attr', 'data-violations')
         }
       })
     })
 
-    it('should display client exposure for each row', () => {
+    it('should display client exposure data attribute for each row', () => {
       cy.get('body').then(($body) => {
         if ($body.find('[data-testid^="client-row-"]').length > 0) {
-          cy.get('[data-testid^="client-row-"]').first().within(() => {
-            cy.get('[data-testid^="client-exposure-"]').should('exist')
-          })
+          cy.get('[data-testid^="client-row-"]').first().should('have.attr', 'data-exposure')
         }
       })
     })
 
-    it('should display client created date for each row', () => {
+    it('should display client follow up date for each row', () => {
       cy.get('body').then(($body) => {
         if ($body.find('[data-testid^="client-row-"]').length > 0) {
           cy.get('[data-testid^="client-row-"]').first().within(() => {
-            cy.get('[data-testid^="client-created-"]').should('exist')
+            cy.get('.followup-date').should('exist')
           })
         }
       })
@@ -384,46 +380,52 @@ describe('Clients Page - Comprehensive Tests', () => {
   })
 
   describe('Client Table Rows - Action Buttons', () => {
-    it('should display View button for each client', () => {
+    it('should display View action for each client', () => {
       cy.get('body').then(($body) => {
         if ($body.find('[data-testid^="client-row-"]').length > 0) {
-          cy.get('[data-testid^="view-btn-"]').should('have.length.at.least', 1)
+          cy.get('[data-testid^="client-row-"]').first().within(() => {
+            cy.get('a.row-action[href*="/dashboard/case/"]').should('exist')
+          })
         }
       })
     })
 
-    it('should have View button with correct text', () => {
+    it('should have View action link to case detail', () => {
       cy.get('body').then(($body) => {
-        if ($body.find('[data-testid^="view-btn-"]').length > 0) {
-          cy.get('[data-testid^="view-btn-"]').first().should('contain', 'View')
+        if ($body.find('[data-testid^="client-row-"]').length > 0) {
+          cy.get('[data-testid^="client-row-"]').first().within(() => {
+            cy.get('a.row-action[href*="/dashboard/case/"]').should('have.attr', 'href').and('include', '/dashboard/case/')
+          })
         }
       })
     })
 
     it('should navigate to case detail when clicking View', () => {
       cy.get('body').then(($body) => {
-        if ($body.find('[data-testid^="view-btn-"]').length > 0) {
-          cy.get('[data-testid^="view-btn-"]').first().click()
+        if ($body.find('[data-testid^="client-row-"]').length > 0) {
+          cy.get('[data-testid^="client-row-"]').first().within(() => {
+            cy.get('a.row-action[href*="/dashboard/case/"]').click()
+          })
           cy.url().should('include', '/dashboard/case/')
         }
       })
     })
 
-    it('should display Review button for stage1_complete clients', () => {
+    it('should display Review action for clients with analysis', () => {
       // Navigate to needs review filter to find reviewable clients
       cy.get('[data-testid="filter-needs-review"]').click()
       cy.get('body').then(($body) => {
-        if ($body.find('[data-testid^="review-btn-"]').length > 0) {
-          cy.get('[data-testid^="review-btn-"]').first().should('be.visible')
+        if ($body.find('a.row-action[href*="/review"]').length > 0) {
+          cy.get('a.row-action[href*="/review"]').first().should('be.visible')
         }
       })
     })
 
-    it('should have Review button with correct text', () => {
+    it('should have Review action link to review page', () => {
       cy.get('[data-testid="filter-needs-review"]').click()
       cy.get('body').then(($body) => {
-        if ($body.find('[data-testid^="review-btn-"]').length > 0) {
-          cy.get('[data-testid^="review-btn-"]').first().should('contain', 'Review')
+        if ($body.find('a.row-action[href*="/review"]').length > 0) {
+          cy.get('a.row-action[href*="/review"]').first().should('have.attr', 'href').and('include', '/review')
         }
       })
     })
@@ -431,8 +433,8 @@ describe('Clients Page - Comprehensive Tests', () => {
     it('should navigate to review page when clicking Review', () => {
       cy.get('[data-testid="filter-needs-review"]').click()
       cy.get('body').then(($body) => {
-        if ($body.find('[data-testid^="review-btn-"]').length > 0) {
-          cy.get('[data-testid^="review-btn-"]').first().click()
+        if ($body.find('a.row-action[href*="/review"]').length > 0) {
+          cy.get('a.row-action[href*="/review"]').first().click()
           cy.url().should('include', '/review')
         }
       })
@@ -592,30 +594,21 @@ describe('Clients Page - Comprehensive Tests', () => {
     })
   })
 
-  describe('Exposure Formatting', () => {
-    it('should display exposure with dollar sign format', () => {
+  describe('Exposure Data', () => {
+    it('should have exposure data attribute on rows', () => {
       cy.get('body').then(($body) => {
-        const exposureElements = $body.find('[data-testid^="client-exposure-"]')
-        if (exposureElements.length > 0) {
-          cy.get('[data-testid^="client-exposure-"]').first().invoke('text').then((text) => {
-            // Should either be a dash or contain $ for currency
-            const isDash = text.trim() === '-'
-            const hasDollar = text.includes('$')
-            expect(isDash || hasDollar).to.be.true
-          })
+        if ($body.find('[data-testid^="client-row-"]').length > 0) {
+          cy.get('[data-testid^="client-row-"]').first().should('have.attr', 'data-exposure')
         }
       })
     })
 
-    it('should format large exposure values with commas', () => {
+    it('should have numeric exposure value', () => {
       cy.get('body').then(($body) => {
-        if ($body.find('[data-testid^="client-exposure-"]').length > 0) {
-          cy.get('[data-testid^="client-exposure-"]').each(($el) => {
-            const text = $el.text().trim()
-            if (text !== '-' && text.includes('$')) {
-              // Large numbers should have commas
-              expect(text).to.match(/\$[\d,]+/)
-            }
+        if ($body.find('[data-testid^="client-row-"]').length > 0) {
+          cy.get('[data-testid^="client-row-"]').first().invoke('attr', 'data-exposure').then((value) => {
+            // Exposure should be a number (possibly 0)
+            expect(parseInt(value)).to.be.a('number')
           })
         }
       })

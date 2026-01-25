@@ -4,7 +4,7 @@ const path = require('path')
 
 module.exports = defineConfig({
   e2e: {
-    baseUrl: 'http://localhost:5001',
+    baseUrl: 'http://localhost:5002',
     supportFile: 'cypress/support/e2e.js',
     specPattern: 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}',
     viewportWidth: 1280,

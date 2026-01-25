@@ -4,7 +4,15 @@ Cypress.Commands.add('login', (email = 'test@example.com', password = 'testpass1
     cy.get('[data-testid="email-input"]').type(email);
     cy.get('[data-testid="password-input"]').type(password);
     cy.get('[data-testid="login-button"]').click();
-    cy.url().should('include', '/staff');
+    cy.url().should('include', '/dashboard');
+    // Verify we're actually logged in by checking for dashboard content
+    cy.get('body').should('not.contain', 'Sign In');
+  }, {
+    validate() {
+      // Validate the session is still valid
+      cy.visit('/dashboard');
+      cy.url().should('include', '/dashboard');
+    }
   });
 });
 

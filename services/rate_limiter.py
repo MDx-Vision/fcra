@@ -12,7 +12,15 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 # Check if running in CI/test mode - disable rate limiting for tests
-IS_CI = os.environ.get("CI", "").lower() == "true"
+def is_testing_mode():
+    """Check if running in CI/test mode at runtime."""
+    return (
+        os.environ.get("CI", "").lower() == "true" or
+        os.environ.get("CYPRESS_TEST", "").lower() == "true" or
+        os.environ.get("TESTING", "").lower() == "true"
+    )
+
+IS_CI = is_testing_mode()
 
 # Get rate limit settings from environment or use defaults
 DEFAULT_RATE = os.environ.get("RATE_LIMIT_DEFAULT", "200 per minute")
@@ -43,7 +51,7 @@ def init_rate_limiter(app):
         storage_uri="memory://",  # Use Redis in production: "redis://localhost:6379"
         strategy="fixed-window",
         headers_enabled=True,  # Adds X-RateLimit headers to responses
-        enabled=not IS_CI,  # Disable rate limiting in CI/test mode
+        enabled=not is_testing_mode(),  # Disable rate limiting in CI/test mode
     )
 
     # Custom error handler for rate limit exceeded
