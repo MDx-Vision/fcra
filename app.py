@@ -1799,9 +1799,11 @@ def readiness_check():
     try:
         import time
 
+        from sqlalchemy import text
+
         start = time.time()
         db = get_db()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db.close()
         latency = (time.time() - start) * 1000
         checks["database"] = {"status": "connected", "latency_ms": round(latency, 2)}
@@ -1853,6 +1855,100 @@ def liveness_check():
               example: OK
     """
     return "OK", 200
+
+
+@app.route("/metrics")
+def prometheus_metrics():
+    """
+    Prometheus-compatible metrics endpoint
+    Returns metrics in Prometheus text format for monitoring systems
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Prometheus metrics
+        content:
+          text/plain:
+            schema:
+              type: string
+    """
+    import os
+
+    import psutil
+
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+
+    # Get database connection pool stats if available
+    db_pool_size = 0
+    db_pool_checked_out = 0
+    try:
+        from database import engine
+
+        if hasattr(engine, "pool"):
+            db_pool_size = engine.pool.size()
+            db_pool_checked_out = engine.pool.checkedout()
+    except Exception:
+        pass
+
+    # Get request count from app if tracked
+    request_count = app.config.get("REQUEST_COUNT", 0)
+    error_count = app.config.get("ERROR_COUNT", 0)
+
+    # Calculate uptime
+    start_time = app.config.get("START_TIME", datetime.now())
+    uptime_seconds = (datetime.now() - start_time).total_seconds()
+
+    # Build Prometheus format output
+    metrics = []
+
+    # Process metrics
+    metrics.append("# HELP process_resident_memory_bytes Resident memory size in bytes")
+    metrics.append("# TYPE process_resident_memory_bytes gauge")
+    metrics.append(f"process_resident_memory_bytes {memory_info.rss}")
+
+    metrics.append("# HELP process_virtual_memory_bytes Virtual memory size in bytes")
+    metrics.append("# TYPE process_virtual_memory_bytes gauge")
+    metrics.append(f"process_virtual_memory_bytes {memory_info.vms}")
+
+    metrics.append("# HELP process_cpu_percent CPU usage percentage")
+    metrics.append("# TYPE process_cpu_percent gauge")
+    metrics.append(f"process_cpu_percent {process.cpu_percent()}")
+
+    metrics.append("# HELP process_open_fds Number of open file descriptors")
+    metrics.append("# TYPE process_open_fds gauge")
+    try:
+        metrics.append(f"process_open_fds {process.num_fds()}")
+    except Exception:
+        metrics.append("process_open_fds 0")
+
+    # Application metrics
+    metrics.append("# HELP app_uptime_seconds Application uptime in seconds")
+    metrics.append("# TYPE app_uptime_seconds counter")
+    metrics.append(f"app_uptime_seconds {uptime_seconds:.2f}")
+
+    metrics.append("# HELP app_requests_total Total number of requests")
+    metrics.append("# TYPE app_requests_total counter")
+    metrics.append(f"app_requests_total {request_count}")
+
+    metrics.append("# HELP app_errors_total Total number of errors")
+    metrics.append("# TYPE app_errors_total counter")
+    metrics.append(f"app_errors_total {error_count}")
+
+    # Database pool metrics
+    metrics.append("# HELP db_pool_size Database connection pool size")
+    metrics.append("# TYPE db_pool_size gauge")
+    metrics.append(f"db_pool_size {db_pool_size}")
+
+    metrics.append("# HELP db_pool_checked_out Database connections currently in use")
+    metrics.append("# TYPE db_pool_checked_out gauge")
+    metrics.append(f"db_pool_checked_out {db_pool_checked_out}")
+
+    # Build response
+    response = make_response("\n".join(metrics) + "\n")
+    response.headers["Content-Type"] = "text/plain; version=0.0.4; charset=utf-8"
+    return response
 
 
 # =============================================================================
@@ -44120,4 +44216,4 @@ if __name__ == "__main__":
     print("🚀" * 30)
     print(f"\n📡 Listening on port {port}")
     print("✅ Ready to receive credit reports!\n")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
