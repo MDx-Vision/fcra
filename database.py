@@ -6713,6 +6713,113 @@ class FeatureFlag(Base):
         return datetime.utcnow() > self.expires_at
 
 
+class ScheduledReport(Base):
+    """Scheduled reports that are automatically emailed"""
+    __tablename__ = 'scheduled_reports'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Report configuration
+    name = Column(String(255), nullable=False)
+    report_type = Column(String(50), nullable=False)  # revenue, clients, analytics, etc.
+    description = Column(Text, nullable=True)
+
+    # Schedule configuration
+    schedule_type = Column(String(20), nullable=False)  # daily, weekly, monthly
+    schedule_time = Column(String(5), default='08:00')  # HH:MM format
+    schedule_day = Column(Integer, nullable=True)  # Day of week (0-6) or day of month (1-31)
+    timezone = Column(String(50), default='America/New_York')
+
+    # Recipients
+    recipients = Column(JSON, nullable=False)  # List of email addresses
+
+    # Filters/parameters for the report
+    report_params = Column(JSON, nullable=True)  # e.g., {"date_range": "last_30_days"}
+
+    # Status
+    is_active = Column(Boolean, default=True, nullable=False)
+    last_run_at = Column(DateTime, nullable=True)
+    last_run_status = Column(String(20), nullable=True)  # success, failed, pending
+    last_run_error = Column(Text, nullable=True)
+    run_count = Column(Integer, default=0)
+
+    # Lifecycle
+    created_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    updated_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    created_by = relationship("Staff", foreign_keys=[created_by_id])
+    updated_by = relationship("Staff", foreign_keys=[updated_by_id])
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'report_type': self.report_type,
+            'description': self.description,
+            'schedule_type': self.schedule_type,
+            'schedule_time': self.schedule_time,
+            'schedule_day': self.schedule_day,
+            'timezone': self.timezone,
+            'recipients': self.recipients,
+            'report_params': self.report_params,
+            'is_active': self.is_active,
+            'last_run_at': self.last_run_at.isoformat() if self.last_run_at else None,
+            'last_run_status': self.last_run_status,
+            'last_run_error': self.last_run_error,
+            'run_count': self.run_count,
+            'created_by_id': self.created_by_id,
+            'updated_by_id': self.updated_by_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def get_next_run_time(self):
+        """Calculate the next scheduled run time."""
+        from datetime import datetime, timedelta
+        import pytz
+
+        tz = pytz.timezone(self.timezone or 'America/New_York')
+        now = datetime.now(tz)
+
+        # Parse schedule time
+        hour, minute = map(int, (self.schedule_time or '08:00').split(':'))
+
+        if self.schedule_type == 'daily':
+            next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            if next_run <= now:
+                next_run += timedelta(days=1)
+
+        elif self.schedule_type == 'weekly':
+            # schedule_day is 0-6 (Monday-Sunday)
+            target_day = self.schedule_day or 0
+            days_ahead = target_day - now.weekday()
+            if days_ahead < 0:
+                days_ahead += 7
+            next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            next_run += timedelta(days=days_ahead)
+            if next_run <= now:
+                next_run += timedelta(weeks=1)
+
+        elif self.schedule_type == 'monthly':
+            # schedule_day is 1-31
+            target_day = min(self.schedule_day or 1, 28)  # Cap at 28 for safety
+            next_run = now.replace(day=target_day, hour=hour, minute=minute, second=0, microsecond=0)
+            if next_run <= now:
+                # Move to next month
+                if now.month == 12:
+                    next_run = next_run.replace(year=now.year + 1, month=1)
+                else:
+                    next_run = next_run.replace(month=now.month + 1)
+
+        else:
+            return None
+
+        return next_run
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -8234,6 +8341,26 @@ def init_db():
         ("feature_flags", "expires_at", "TIMESTAMP"),
         ("feature_flags", "last_evaluated_at", "TIMESTAMP"),
         ("feature_flags", "evaluation_count", "INTEGER DEFAULT 0"),
+        # Scheduled reports table
+        ("scheduled_reports", "id", "SERIAL PRIMARY KEY"),
+        ("scheduled_reports", "name", "VARCHAR(255) NOT NULL"),
+        ("scheduled_reports", "report_type", "VARCHAR(50) NOT NULL"),
+        ("scheduled_reports", "description", "TEXT"),
+        ("scheduled_reports", "schedule_type", "VARCHAR(20) NOT NULL"),
+        ("scheduled_reports", "schedule_time", "VARCHAR(5) DEFAULT '08:00'"),
+        ("scheduled_reports", "schedule_day", "INTEGER"),
+        ("scheduled_reports", "timezone", "VARCHAR(50) DEFAULT 'America/New_York'"),
+        ("scheduled_reports", "recipients", "JSON NOT NULL"),
+        ("scheduled_reports", "report_params", "JSON"),
+        ("scheduled_reports", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("scheduled_reports", "last_run_at", "TIMESTAMP"),
+        ("scheduled_reports", "last_run_status", "VARCHAR(20)"),
+        ("scheduled_reports", "last_run_error", "TEXT"),
+        ("scheduled_reports", "run_count", "INTEGER DEFAULT 0"),
+        ("scheduled_reports", "created_by_id", "INTEGER REFERENCES staff(id)"),
+        ("scheduled_reports", "updated_by_id", "INTEGER REFERENCES staff(id)"),
+        ("scheduled_reports", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("scheduled_reports", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()
