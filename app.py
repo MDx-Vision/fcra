@@ -16909,6 +16909,173 @@ def api_remove_client_tag(client_id, tag_id):
         db.close()
 
 
+@app.route("/api/tags/stats", methods=["GET"])
+@require_staff()
+def api_get_tag_stats():
+    """Get tag usage statistics"""
+    from services.client_tag_service import ClientTagService
+
+    service = ClientTagService()
+    try:
+        stats = service.get_stats()
+        return jsonify({"success": True, **stats})
+    finally:
+        service.close()
+
+
+@app.route("/api/tags/colors", methods=["GET"])
+@require_staff()
+def api_get_tag_colors():
+    """Get available tag colors"""
+    from services.client_tag_service import get_available_colors
+
+    return jsonify({"success": True, "colors": get_available_colors()})
+
+
+@app.route("/api/tags/seed", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_seed_default_tags():
+    """Seed database with default tags (admin only)"""
+    from services.client_tag_service import ClientTagService
+
+    service = ClientTagService()
+    try:
+        result = service.seed_default_tags()
+        return jsonify(result)
+    finally:
+        service.close()
+
+
+@app.route("/api/tags/<int:tag_id>/clients", methods=["GET"])
+@require_staff()
+def api_get_clients_by_tag(tag_id):
+    """Get clients with a specific tag"""
+    from services.client_tag_service import ClientTagService
+
+    limit = request.args.get("limit", 100, type=int)
+    offset = request.args.get("offset", 0, type=int)
+
+    service = ClientTagService()
+    try:
+        result = service.get_clients_by_tag(tag_id, limit=limit, offset=offset)
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 404
+    finally:
+        service.close()
+
+
+@app.route("/api/tags/filter-clients", methods=["POST"])
+@require_staff()
+def api_filter_clients_by_tags():
+    """Filter clients by multiple tags"""
+    from services.client_tag_service import ClientTagService
+
+    data = request.json or {}
+    tag_ids = data.get("tag_ids", [])
+    match_all = data.get("match_all", False)
+    limit = data.get("limit", 100)
+    offset = data.get("offset", 0)
+
+    if not tag_ids:
+        return jsonify({"success": False, "error": "tag_ids required"}), 400
+
+    service = ClientTagService()
+    try:
+        result = service.get_clients_by_tags(
+            tag_ids=tag_ids,
+            match_all=match_all,
+            limit=limit,
+            offset=offset,
+        )
+        return jsonify(result)
+    finally:
+        service.close()
+
+
+@app.route("/api/tags/bulk-assign", methods=["POST"])
+@require_staff()
+def api_bulk_assign_tag():
+    """Assign a tag to multiple clients"""
+    from services.client_tag_service import ClientTagService
+
+    data = request.json or {}
+    client_ids = data.get("client_ids", [])
+    tag_id = data.get("tag_id")
+
+    if not client_ids or not tag_id:
+        return jsonify({"success": False, "error": "client_ids and tag_id required"}), 400
+
+    service = ClientTagService()
+    try:
+        result = service.bulk_assign_tag(client_ids=client_ids, tag_id=tag_id)
+        return jsonify(result)
+    finally:
+        service.close()
+
+
+@app.route("/api/tags/bulk-remove", methods=["POST"])
+@require_staff()
+def api_bulk_remove_tag():
+    """Remove a tag from multiple clients"""
+    from services.client_tag_service import ClientTagService
+
+    data = request.json or {}
+    client_ids = data.get("client_ids", [])
+    tag_id = data.get("tag_id")
+
+    if not client_ids or not tag_id:
+        return jsonify({"success": False, "error": "client_ids and tag_id required"}), 400
+
+    service = ClientTagService()
+    try:
+        result = service.bulk_remove_tag(client_ids=client_ids, tag_id=tag_id)
+        return jsonify(result)
+    finally:
+        service.close()
+
+
+@app.route("/api/clients/<int:client_id>/tags/set", methods=["POST"])
+@require_staff()
+def api_set_client_tags(client_id):
+    """Set all tags for a client (replaces existing)"""
+    from services.client_tag_service import ClientTagService
+
+    data = request.json or {}
+    tag_ids = data.get("tag_ids", [])
+
+    service = ClientTagService()
+    try:
+        result = service.set_client_tags(client_id=client_id, tag_ids=tag_ids)
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+    finally:
+        service.close()
+
+
+@app.route("/dashboard/client-tags")
+@require_staff()
+def dashboard_client_tags():
+    """Client tags management dashboard"""
+    from services.client_tag_service import ClientTagService, get_available_colors
+
+    service = ClientTagService()
+    try:
+        tags = service.get_all_tags()
+        stats = service.get_stats()
+        colors = get_available_colors()
+
+        return render_template(
+            "client_tags.html",
+            tags=tags,
+            stats=stats,
+            colors=colors,
+        )
+    finally:
+        service.close()
+
+
 # ============================================================
 # LEAD SCORING ENDPOINTS
 # ============================================================
