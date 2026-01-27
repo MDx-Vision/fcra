@@ -318,6 +318,15 @@ try:
 except Exception as e:
     app_logger.warning(f"Could not initialize pool monitoring: {e}")
 
+# Initialize rate limit monitoring
+from services.rate_limit_monitor_service import init_rate_limit_monitoring
+
+try:
+    rate_limit_monitor = init_rate_limit_monitoring()
+    app_logger.info("Rate limit monitoring initialized")
+except Exception as e:
+    app_logger.warning(f"Could not initialize rate limit monitoring: {e}")
+
 # Initialize memory cleanup service (prevents memory leaks)
 from services.memory_cleanup_service import register_cleanup_hook
 
@@ -2102,6 +2111,39 @@ def prometheus_metrics():
         metrics.append("# TYPE db_pool_checked_out gauge")
         metrics.append(f"db_pool_checked_out {db_pool_checked_out}")
 
+    # Rate limit monitoring metrics
+    try:
+        from services.rate_limit_monitor_service import get_rate_limit_monitor
+
+        rl_monitor = get_rate_limit_monitor()
+        if rl_monitor:
+            rl_stats = rl_monitor.get_stats()
+            metrics.append("# HELP rate_limit_violations_total Total rate limit violations")
+            metrics.append("# TYPE rate_limit_violations_total counter")
+            metrics.append(f"rate_limit_violations_total {rl_stats['total_violations']}")
+
+            metrics.append("# HELP rate_limit_violations_window Violations in current window")
+            metrics.append("# TYPE rate_limit_violations_window gauge")
+            metrics.append(f"rate_limit_violations_window {rl_stats['violations_in_window']}")
+
+            metrics.append("# HELP rate_limit_blocked_ips Currently blocked IPs")
+            metrics.append("# TYPE rate_limit_blocked_ips gauge")
+            metrics.append(f"rate_limit_blocked_ips {rl_stats['active_blocks']}")
+
+            metrics.append("# HELP rate_limit_blocks_total Total IPs blocked")
+            metrics.append("# TYPE rate_limit_blocks_total counter")
+            metrics.append(f"rate_limit_blocks_total {rl_stats['total_blocks']}")
+
+            metrics.append("# HELP rate_limit_alerts_total Total alerts triggered")
+            metrics.append("# TYPE rate_limit_alerts_total counter")
+            metrics.append(f"rate_limit_alerts_total {rl_stats['total_alerts']}")
+
+            metrics.append("# HELP rate_limit_unique_ips Unique IPs with violations")
+            metrics.append("# TYPE rate_limit_unique_ips gauge")
+            metrics.append(f"rate_limit_unique_ips {rl_stats['unique_ips']}")
+    except Exception:
+        pass
+
     # Cache metrics
     try:
         from services.performance_service import app_cache
@@ -2133,6 +2175,63 @@ def prometheus_metrics():
     response = make_response("\n".join(metrics) + "\n")
     response.headers["Content-Type"] = "text/plain; version=0.0.4; charset=utf-8"
     return response
+
+
+@app.route("/health/ratelimit")
+def health_ratelimit():
+    """
+    Rate limit monitoring health and metrics
+    Returns violation statistics, blocked IPs, and alert status
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Rate limit health status
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                total_violations:
+                  type: integer
+                active_blocks:
+                  type: integer
+    """
+    from services.rate_limit_monitor_service import get_rate_limit_monitor
+
+    monitor = get_rate_limit_monitor()
+    if monitor is None:
+        return jsonify({
+            "status": "unavailable",
+            "error": "Rate limit monitoring not initialized"
+        }), 503
+
+    stats = monitor.get_stats()
+    blocked_ips = monitor.get_blocked_ips()
+    top_offenders = monitor.get_top_offenders(limit=5)
+    recent_violations = monitor.get_recent_violations(limit=10)
+
+    # Determine health status based on violation rate
+    if stats["active_blocks"] >= 10:
+        status = "critical"
+        status_code = 503
+    elif stats["violations_in_window"] >= stats["alert_threshold"]:
+        status = "warning"
+        status_code = 200
+    else:
+        status = "healthy"
+        status_code = 200
+
+    return jsonify({
+        "status": status,
+        "stats": stats,
+        "blocked_ips": blocked_ips,
+        "top_offenders": top_offenders,
+        "recent_violations": recent_violations,
+    }), status_code
 
 
 # =============================================================================

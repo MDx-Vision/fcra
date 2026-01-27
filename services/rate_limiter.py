@@ -58,10 +58,28 @@ def init_rate_limiter(app):
     @app.errorhandler(429)
     def ratelimit_handler(e):
         from services.logging_config import api_logger
+        from services.rate_limit_monitor_service import get_rate_limit_monitor, is_ip_blocked
+
+        ip_address = get_remote_address()
+        endpoint = request.path
+        user_agent = request.headers.get("User-Agent", "")
 
         api_logger.warning(
-            f"Rate limit exceeded: {get_rate_limit_key()} - {request.path}"
+            f"Rate limit exceeded: {get_rate_limit_key()} - {endpoint}"
         )
+
+        # Record violation in monitor
+        monitor = get_rate_limit_monitor()
+        if monitor:
+            was_blocked = monitor.record_violation(
+                ip_address=ip_address,
+                endpoint=endpoint,
+                user_agent=user_agent,
+                key=get_rate_limit_key(),
+            )
+            if was_blocked:
+                api_logger.error(f"IP blocked due to repeated violations: {ip_address}")
+
         return (
             jsonify(
                 {
