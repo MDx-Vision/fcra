@@ -166,8 +166,17 @@ def log_error_server_side(
         category: Error category
         context: Additional context
     """
+    # Get request ID for correlation
+    request_id = None
+    try:
+        from services.request_id_service import get_request_id
+        request_id = get_request_id()
+    except ImportError:
+        pass
+
     log_data = {
         "error_id": error_id,
+        "request_id": request_id,
         "category": category,
         "error_type": type(error).__name__,
         "error_message": str(error),
@@ -236,6 +245,15 @@ def sanitize_error(
 
     if include_error_id:
         result["error_id"] = error_id
+
+    # Add request ID for correlation
+    try:
+        from services.request_id_service import get_request_id
+        request_id = get_request_id()
+        if request_id:
+            result["request_id"] = request_id
+    except ImportError:
+        pass
 
     return result
 

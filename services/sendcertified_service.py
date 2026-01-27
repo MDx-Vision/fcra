@@ -86,12 +86,19 @@ class SendCertifiedService:
 
     def _get_headers(self) -> Dict[str, str]:
         """Get authorization headers for API requests."""
-        return {
+        headers = {
             "Authorization": f"Bearer {self.api_key or ''}",
             "X-API-Secret": self.api_secret or "",
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
+        # Add request ID for distributed tracing
+        try:
+            from services.request_id_service import with_request_id_headers
+            headers = with_request_id_headers(headers)
+        except ImportError:
+            pass
+        return headers
 
     def _log_event(
         self,

@@ -97,11 +97,18 @@ class SmartCreditAdapter(BaseCreditAdapter):
 
     def _get_headers(self) -> Dict[str, str]:
         """Get headers for API requests."""
-        return {
+        headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
+        # Add request ID for distributed tracing
+        try:
+            from services.request_id_service import with_request_id_headers
+            headers = with_request_id_headers(headers)
+        except ImportError:
+            pass
+        return headers
 
     def test_connection(self) -> bool:
         """Test SmartCredit API connection."""
@@ -368,12 +375,19 @@ class IdentityIQAdapter(BaseCreditAdapter):
 
     def _get_headers(self) -> Dict[str, str]:
         """Get headers for API requests."""
-        return {
+        headers = {
             "X-Api-Key": self.api_key or "",
             "X-Api-Secret": self.api_secret or "",
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
+        # Add request ID for distributed tracing
+        try:
+            from services.request_id_service import with_request_id_headers
+            headers = with_request_id_headers(headers)
+        except ImportError:
+            pass
+        return headers
 
     def test_connection(self) -> bool:
         """Test IdentityIQ API connection."""
@@ -644,11 +658,18 @@ class ExperianConnectAdapter(BaseCreditAdapter):
     def _get_headers(self) -> Dict[str, str]:
         """Get headers for API requests."""
         token = self._get_access_token()
-        return {
+        headers = {
             "Authorization": f"Bearer {token}" if token else "",
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
+        # Add request ID for distributed tracing
+        try:
+            from services.request_id_service import with_request_id_headers
+            headers = with_request_id_headers(headers)
+        except ImportError:
+            pass
+        return headers
 
     @property
     def is_configured(self) -> bool:
