@@ -48,3 +48,4 @@ sentry-sdk[flask]>=2.0.0
 alembic>=1.13.0
 flasgger>=0.9.7
 tenacity>=8.2.0
+pytz

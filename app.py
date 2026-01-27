@@ -2680,6 +2680,397 @@ def api_initialize_feature_flags():
 
 
 # =============================================================================
+# SCHEDULED REPORTS
+# =============================================================================
+
+
+@app.route("/dashboard/scheduled-reports")
+@require_staff(roles=["admin"])
+def scheduled_reports_dashboard():
+    """
+    Scheduled reports management dashboard.
+    Admin-only access.
+    """
+    from services.scheduled_reports_service import (
+        get_scheduled_reports_service,
+        REPORT_TYPES,
+        SCHEDULE_TYPES,
+        DAYS_OF_WEEK,
+        TIMEZONES,
+    )
+
+    service = get_scheduled_reports_service()
+    reports = service.get_all_reports()
+    stats = service.get_stats()
+
+    return render_template(
+        "scheduled_reports.html",
+        reports=reports,
+        stats=stats,
+        report_types=REPORT_TYPES,
+        schedule_types=SCHEDULE_TYPES,
+        days_of_week=DAYS_OF_WEEK,
+        timezones=TIMEZONES,
+    )
+
+
+@app.route("/api/scheduled-reports")
+@require_staff()
+def api_get_scheduled_reports():
+    """
+    Get all scheduled reports.
+    ---
+    tags:
+      - Scheduled Reports
+    parameters:
+      - name: is_active
+        in: query
+        type: boolean
+        required: false
+      - name: report_type
+        in: query
+        type: string
+        required: false
+    responses:
+      200:
+        description: List of scheduled reports
+    """
+    from services.scheduled_reports_service import get_scheduled_reports_service
+
+    is_active = request.args.get("is_active")
+    if is_active is not None:
+        is_active = is_active.lower() == "true"
+
+    report_type = request.args.get("report_type")
+
+    service = get_scheduled_reports_service()
+    reports = service.get_all_reports(is_active=is_active, report_type=report_type)
+
+    return jsonify({
+        "success": True,
+        "reports": reports,
+        "count": len(reports),
+    })
+
+
+@app.route("/api/scheduled-reports/<int:report_id>")
+@require_staff()
+def api_get_scheduled_report(report_id):
+    """
+    Get a specific scheduled report.
+    ---
+    tags:
+      - Scheduled Reports
+    parameters:
+      - name: report_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Scheduled report details
+      404:
+        description: Report not found
+    """
+    from services.scheduled_reports_service import get_scheduled_reports_service
+
+    service = get_scheduled_reports_service()
+    report = service.get_report(report_id)
+
+    if not report:
+        return jsonify({"success": False, "error": "Report not found"}), 404
+
+    return jsonify({"success": True, "report": report})
+
+
+@app.route("/api/scheduled-reports", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_create_scheduled_report():
+    """
+    Create a new scheduled report.
+    ---
+    tags:
+      - Scheduled Reports
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - name
+            - report_type
+            - schedule_type
+            - recipients
+    responses:
+      201:
+        description: Report created
+      400:
+        description: Invalid input
+    """
+    from services.scheduled_reports_service import get_scheduled_reports_service
+
+    data = request.get_json()
+
+    if not data.get("name"):
+        return jsonify({"success": False, "error": "Name is required"}), 400
+    if not data.get("report_type"):
+        return jsonify({"success": False, "error": "Report type is required"}), 400
+    if not data.get("schedule_type"):
+        return jsonify({"success": False, "error": "Schedule type is required"}), 400
+    if not data.get("recipients"):
+        return jsonify({"success": False, "error": "At least one recipient is required"}), 400
+
+    service = get_scheduled_reports_service()
+
+    try:
+        report = service.create_report(
+            name=data["name"],
+            report_type=data["report_type"],
+            description=data.get("description"),
+            schedule_type=data["schedule_type"],
+            schedule_time=data.get("schedule_time", "08:00"),
+            schedule_day=data.get("schedule_day"),
+            timezone=data.get("timezone", "America/New_York"),
+            recipients=data["recipients"],
+            report_params=data.get("report_params"),
+            created_by_id=session.get("staff_id"),
+        )
+
+        return jsonify({"success": True, "report": report}), 201
+
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+@app.route("/api/scheduled-reports/<int:report_id>", methods=["PUT"])
+@require_staff(roles=["admin"])
+def api_update_scheduled_report(report_id):
+    """
+    Update a scheduled report.
+    ---
+    tags:
+      - Scheduled Reports
+    parameters:
+      - name: report_id
+        in: path
+        type: integer
+        required: true
+      - name: body
+        in: body
+        required: true
+    responses:
+      200:
+        description: Report updated
+      404:
+        description: Report not found
+    """
+    from services.scheduled_reports_service import get_scheduled_reports_service
+
+    data = request.get_json()
+    service = get_scheduled_reports_service()
+
+    try:
+        report = service.update_report(
+            report_id=report_id,
+            name=data.get("name"),
+            description=data.get("description"),
+            schedule_type=data.get("schedule_type"),
+            schedule_time=data.get("schedule_time"),
+            schedule_day=data.get("schedule_day"),
+            timezone=data.get("timezone"),
+            recipients=data.get("recipients"),
+            report_params=data.get("report_params"),
+            is_active=data.get("is_active"),
+            updated_by_id=session.get("staff_id"),
+        )
+
+        if not report:
+            return jsonify({"success": False, "error": "Report not found"}), 404
+
+        return jsonify({"success": True, "report": report})
+
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+@app.route("/api/scheduled-reports/<int:report_id>", methods=["DELETE"])
+@require_staff(roles=["admin"])
+def api_delete_scheduled_report(report_id):
+    """
+    Delete a scheduled report.
+    ---
+    tags:
+      - Scheduled Reports
+    responses:
+      200:
+        description: Report deleted
+      404:
+        description: Report not found
+    """
+    from services.scheduled_reports_service import get_scheduled_reports_service
+
+    service = get_scheduled_reports_service()
+    deleted = service.delete_report(report_id)
+
+    if not deleted:
+        return jsonify({"success": False, "error": "Report not found"}), 404
+
+    return jsonify({"success": True, "message": "Report deleted"})
+
+
+@app.route("/api/scheduled-reports/<int:report_id>/toggle", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_toggle_scheduled_report(report_id):
+    """
+    Toggle a scheduled report's active status.
+    ---
+    tags:
+      - Scheduled Reports
+    responses:
+      200:
+        description: Report toggled
+      404:
+        description: Report not found
+    """
+    from services.scheduled_reports_service import get_scheduled_reports_service
+
+    service = get_scheduled_reports_service()
+    new_status = service.toggle_report(report_id)
+
+    if new_status is None:
+        return jsonify({"success": False, "error": "Report not found"}), 404
+
+    return jsonify({
+        "success": True,
+        "is_active": new_status,
+        "message": f"Report {'activated' if new_status else 'deactivated'}",
+    })
+
+
+@app.route("/api/scheduled-reports/<int:report_id>/run", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_run_scheduled_report(report_id):
+    """
+    Manually run a scheduled report now.
+    ---
+    tags:
+      - Scheduled Reports
+    responses:
+      200:
+        description: Report run result
+      404:
+        description: Report not found
+    """
+    from services.scheduled_reports_service import get_scheduled_reports_service
+
+    service = get_scheduled_reports_service()
+    result = service.run_report(report_id)
+
+    if not result.get("success"):
+        status_code = 404 if "not found" in result.get("error", "").lower() else 500
+        return jsonify(result), status_code
+
+    return jsonify(result)
+
+
+@app.route("/api/scheduled-reports/run-due", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_run_due_scheduled_reports():
+    """
+    Run all scheduled reports that are due.
+    ---
+    tags:
+      - Scheduled Reports
+    responses:
+      200:
+        description: Run results
+    """
+    from services.scheduled_reports_service import get_scheduled_reports_service
+
+    service = get_scheduled_reports_service()
+    results = service.run_due_reports()
+
+    return jsonify({
+        "success": True,
+        **results,
+    })
+
+
+@app.route("/api/scheduled-reports/stats")
+@require_staff()
+def api_get_scheduled_reports_stats():
+    """
+    Get scheduled reports statistics.
+    ---
+    tags:
+      - Scheduled Reports
+    responses:
+      200:
+        description: Statistics
+    """
+    from services.scheduled_reports_service import get_scheduled_reports_service
+
+    service = get_scheduled_reports_service()
+    stats = service.get_stats()
+
+    return jsonify({"success": True, **stats})
+
+
+@app.route("/api/scheduled-reports/types")
+@require_staff()
+def api_get_scheduled_report_types():
+    """
+    Get available report types.
+    ---
+    tags:
+      - Scheduled Reports
+    responses:
+      200:
+        description: Report types
+    """
+    from services.scheduled_reports_service import (
+        REPORT_TYPES,
+        SCHEDULE_TYPES,
+        DAYS_OF_WEEK,
+        TIMEZONES,
+    )
+
+    return jsonify({
+        "success": True,
+        "report_types": REPORT_TYPES,
+        "schedule_types": SCHEDULE_TYPES,
+        "days_of_week": DAYS_OF_WEEK,
+        "timezones": TIMEZONES,
+    })
+
+
+@app.route("/api/cron/scheduled-reports", methods=["GET", "POST"])
+def cron_run_scheduled_reports():
+    """
+    Cron endpoint to run due scheduled reports.
+    Secured by CRON_SECRET environment variable.
+    """
+    import os
+
+    cron_secret = os.environ.get("CRON_SECRET")
+    provided_secret = request.args.get("secret") or request.headers.get("X-Cron-Secret")
+
+    if cron_secret and provided_secret != cron_secret:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    from services.scheduled_reports_service import get_scheduled_reports_service
+
+    service = get_scheduled_reports_service()
+    results = service.run_due_reports()
+
+    return jsonify({
+        "success": True,
+        **results,
+    })
+
+
+# =============================================================================
 # LEGAL PAGES (Privacy Policy, Terms of Service)
 # =============================================================================
 
