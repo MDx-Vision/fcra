@@ -309,6 +309,15 @@ from services.graceful_shutdown_service import init_graceful_shutdown
 shutdown_manager = init_graceful_shutdown(app)
 app_logger.info("Graceful shutdown handling initialized")
 
+# Initialize database pool monitoring
+try:
+    from database import engine
+    from services.database_pool_service import init_pool_monitoring
+    pool_monitor = init_pool_monitoring(engine, start_background=True)
+    app_logger.info("Database pool monitoring initialized")
+except Exception as e:
+    app_logger.warning(f"Could not initialize pool monitoring: {e}")
+
 # Initialize memory cleanup service (prevents memory leaks)
 from services.memory_cleanup_service import register_cleanup_hook
 
@@ -1905,6 +1914,63 @@ def shutdown_status():
     return jsonify(status), status_code
 
 
+@app.route("/health/pool")
+def health_pool():
+    """
+    Database connection pool health and metrics
+    Returns detailed pool statistics for monitoring
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Pool health status
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pool_size:
+                  type: integer
+                checked_out:
+                  type: integer
+                usage_percent:
+                  type: number
+    """
+    from services.database_pool_service import get_pool_monitor
+
+    monitor = get_pool_monitor()
+    if monitor is None:
+        return jsonify({
+            "status": "unavailable",
+            "error": "Pool monitoring not initialized"
+        }), 503
+
+    metrics = monitor.get_metrics()
+    history = monitor.get_history(limit=10)
+
+    # Determine health status
+    if metrics.usage_percent >= 90:
+        status = "critical"
+        status_code = 503
+    elif metrics.usage_percent >= 80:
+        status = "warning"
+        status_code = 200
+    else:
+        status = "healthy"
+        status_code = 200
+
+    return jsonify({
+        "status": status,
+        "metrics": metrics.to_dict(),
+        "history": history,
+        "thresholds": {
+            "warning": 80,
+            "critical": 90
+        }
+    }), status_code
+
+
 @app.route("/metrics")
 def prometheus_metrics():
     """
@@ -1984,14 +2050,57 @@ def prometheus_metrics():
     metrics.append("# TYPE app_errors_total counter")
     metrics.append(f"app_errors_total {error_count}")
 
-    # Database pool metrics
-    metrics.append("# HELP db_pool_size Database connection pool size")
-    metrics.append("# TYPE db_pool_size gauge")
-    metrics.append(f"db_pool_size {db_pool_size}")
+    # Database pool metrics (enhanced)
+    try:
+        from services.database_pool_service import get_pool_monitor
+        pool_monitor = get_pool_monitor()
+        if pool_monitor:
+            pool_metrics = pool_monitor.get_metrics()
+            metrics.append("# HELP db_pool_size Database connection pool size")
+            metrics.append("# TYPE db_pool_size gauge")
+            metrics.append(f"db_pool_size {pool_metrics.pool_size}")
 
-    metrics.append("# HELP db_pool_checked_out Database connections currently in use")
-    metrics.append("# TYPE db_pool_checked_out gauge")
-    metrics.append(f"db_pool_checked_out {db_pool_checked_out}")
+            metrics.append("# HELP db_pool_checked_out Database connections currently in use")
+            metrics.append("# TYPE db_pool_checked_out gauge")
+            metrics.append(f"db_pool_checked_out {pool_metrics.checked_out}")
+
+            metrics.append("# HELP db_pool_overflow Database overflow connections")
+            metrics.append("# TYPE db_pool_overflow gauge")
+            metrics.append(f"db_pool_overflow {pool_metrics.overflow}")
+
+            metrics.append("# HELP db_pool_usage_percent Database pool usage percentage")
+            metrics.append("# TYPE db_pool_usage_percent gauge")
+            metrics.append(f"db_pool_usage_percent {pool_metrics.usage_percent:.2f}")
+
+            metrics.append("# HELP db_pool_checkouts_total Total connection checkouts")
+            metrics.append("# TYPE db_pool_checkouts_total counter")
+            metrics.append(f"db_pool_checkouts_total {pool_metrics.total_checkouts}")
+
+            metrics.append("# HELP db_pool_invalidations_total Total connection invalidations")
+            metrics.append("# TYPE db_pool_invalidations_total counter")
+            metrics.append(f"db_pool_invalidations_total {pool_metrics.total_invalidations}")
+
+            metrics.append("# HELP db_pool_timeouts_total Total pool timeout errors")
+            metrics.append("# TYPE db_pool_timeouts_total counter")
+            metrics.append(f"db_pool_timeouts_total {pool_metrics.total_timeouts}")
+        else:
+            # Fallback to basic metrics
+            metrics.append("# HELP db_pool_size Database connection pool size")
+            metrics.append("# TYPE db_pool_size gauge")
+            metrics.append(f"db_pool_size {db_pool_size}")
+
+            metrics.append("# HELP db_pool_checked_out Database connections currently in use")
+            metrics.append("# TYPE db_pool_checked_out gauge")
+            metrics.append(f"db_pool_checked_out {db_pool_checked_out}")
+    except Exception:
+        # Fallback to basic metrics
+        metrics.append("# HELP db_pool_size Database connection pool size")
+        metrics.append("# TYPE db_pool_size gauge")
+        metrics.append(f"db_pool_size {db_pool_size}")
+
+        metrics.append("# HELP db_pool_checked_out Database connections currently in use")
+        metrics.append("# TYPE db_pool_checked_out gauge")
+        metrics.append(f"db_pool_checked_out {db_pool_checked_out}")
 
     # Cache metrics
     try:
