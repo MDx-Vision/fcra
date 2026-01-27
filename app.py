@@ -303,6 +303,12 @@ from services.security_headers import init_security_headers
 init_security_headers(app)
 app_logger.info("Security headers initialized")
 
+# Initialize graceful shutdown handling
+from services.graceful_shutdown_service import init_graceful_shutdown
+
+shutdown_manager = init_graceful_shutdown(app)
+app_logger.info("Graceful shutdown handling initialized")
+
 # Secret key for session management (using centralized config)
 app.secret_key = config.SECRET_KEY
 
@@ -1855,6 +1861,39 @@ def liveness_check():
               example: OK
     """
     return "OK", 200
+
+
+@app.route("/health/shutdown")
+def shutdown_status():
+    """
+    Shutdown status check
+    Returns current shutdown manager status for monitoring
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Shutdown status information
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shutdown_in_progress:
+                  type: boolean
+                active_requests:
+                  type: integer
+                registered_handlers:
+                  type: array
+    """
+    from services.graceful_shutdown_service import get_shutdown_manager
+
+    manager = get_shutdown_manager()
+    status = manager.get_status()
+
+    # Return 503 if shutdown is in progress
+    status_code = 503 if status["shutdown_in_progress"] else 200
+    return jsonify(status), status_code
 
 
 @app.route("/metrics")
