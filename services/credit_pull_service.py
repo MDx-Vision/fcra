@@ -2,6 +2,8 @@
 Credit Pull Integration Service
 Provider-agnostic abstraction for pulling credit reports from various providers.
 Supports SmartCredit, IdentityIQ, and Experian Connect APIs.
+
+Includes retry logic for transient API failures.
 """
 
 import logging
@@ -22,6 +24,7 @@ from database import (
     IntegrationEvent,
     SessionLocal,
 )
+from services.retry_service import get_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +43,12 @@ class BaseCreditAdapter(ABC):
         self.api_key = api_key
         self.sandbox = sandbox
         self.base_url = self.SANDBOX_BASE_URL if sandbox else self.PRODUCTION_BASE_URL
+        # Initialize retry-enabled HTTP client for this provider
+        self._http_client = get_http_client(
+            service_name=f"credit_pull_{self.PROVIDER_NAME}",
+            max_attempts=3,
+            timeout=60,  # Credit pulls can be slow
+        )
 
     @property
     def is_configured(self) -> bool:

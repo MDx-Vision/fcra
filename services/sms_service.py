@@ -5,13 +5,19 @@ Uses environment variables for Twilio credentials
 Supports:
 - SMS via Twilio (A2P 10DLC compliant)
 - WhatsApp via Twilio WhatsApp Business API
+
+Includes retry logic for transient failures.
 """
 
+import logging
 import os
 
 from twilio.rest import Client as TwilioClient
 
 from services.activity_logger import log_sms_failed, log_sms_sent
+from services.retry_service import retry_twilio
+
+logger = logging.getLogger(__name__)
 
 _twilio_client = None
 
@@ -85,6 +91,30 @@ def format_phone_number(phone):
     return None
 
 
+@retry_twilio(max_attempts=3)
+def _send_sms_with_retry(client, to_number, message, messaging_service_sid=None, from_number=None):
+    """
+    Internal function to send SMS with retry logic.
+    Separated to allow retry on transient Twilio failures.
+    """
+    if messaging_service_sid:
+        sms = client.messages.create(
+            body=message,
+            messaging_service_sid=messaging_service_sid,
+            to=to_number,
+        )
+        sender = f"MessagingService:{messaging_service_sid}"
+    else:
+        sms = client.messages.create(
+            body=message,
+            from_=from_number,
+            to=to_number,
+        )
+        sender = from_number
+
+    return sms, sender
+
+
 def send_sms(to_number, message, from_number=None):
     """
     Send a single SMS message.
@@ -97,6 +127,8 @@ def send_sms(to_number, message, from_number=None):
 
     Returns:
         dict with 'success', 'message_sid', 'error' keys
+
+    Note: Includes automatic retry for transient Twilio API failures.
     """
     try:
         formatted_to = format_phone_number(to_number)
@@ -112,15 +144,7 @@ def send_sms(to_number, message, from_number=None):
         # Prefer Messaging Service for A2P 10DLC compliance
         messaging_service_sid = get_messaging_service_sid()
 
-        if messaging_service_sid:
-            # Use Messaging Service (A2P 10DLC compliant)
-            sms = client.messages.create(
-                body=message,
-                messaging_service_sid=messaging_service_sid,
-                to=formatted_to,
-            )
-            sender = f"MessagingService:{messaging_service_sid}"
-        else:
+        if not messaging_service_sid:
             # Fall back to direct phone number
             if from_number is None:
                 from_number = get_twilio_phone_number()
@@ -132,12 +156,16 @@ def send_sms(to_number, message, from_number=None):
                     "error": "No Twilio phone number or Messaging Service configured",
                 }
 
-            sms = client.messages.create(
-                body=message, from_=from_number, to=formatted_to
-            )
-            sender = from_number
+        # Use retry-enabled helper for the actual API call
+        logger.debug(f"Sending SMS to {formatted_to}")
+        sms, sender = _send_sms_with_retry(
+            client, formatted_to, message,
+            messaging_service_sid=messaging_service_sid,
+            from_number=from_number
+        )
 
         log_sms_sent(formatted_to)
+        logger.info(f"SMS sent successfully to {formatted_to}, SID: {sms.sid}")
         return {
             "success": True,
             "message_sid": sms.sid,
@@ -259,6 +287,14 @@ def format_whatsapp_number(phone):
     return None
 
 
+@retry_twilio(max_attempts=3)
+def _send_whatsapp_with_retry(client, to_number, message, from_number):
+    """
+    Internal function to send WhatsApp with retry logic.
+    """
+    return client.messages.create(body=message, from_=from_number, to=to_number)
+
+
 def send_whatsapp(to_number, message, from_number=None):
     """
     Send a WhatsApp message via Twilio.
@@ -273,6 +309,7 @@ def send_whatsapp(to_number, message, from_number=None):
 
     Note: For template messages (required for business-initiated conversations),
     use send_whatsapp_template() instead.
+    Includes automatic retry for transient Twilio API failures.
     """
     try:
         formatted_to = format_whatsapp_number(to_number)
@@ -299,7 +336,9 @@ def send_whatsapp(to_number, message, from_number=None):
 
         client = get_twilio_client()
 
-        msg = client.messages.create(body=message, from_=from_number, to=formatted_to)
+        logger.debug(f"Sending WhatsApp message to {formatted_to}")
+        msg = _send_whatsapp_with_retry(client, formatted_to, message, from_number)
+        logger.info(f"WhatsApp sent successfully to {formatted_to}, SID: {msg.sid}")
 
         return {
             "success": True,

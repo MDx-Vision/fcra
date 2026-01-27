@@ -1,15 +1,22 @@
 """
 Gmail SMTP Email Service for Brightpath Ascend FCRA Platform
 Uses Gmail SMTP for transactional emails (replaces SendGrid)
+
+Includes retry logic for transient SMTP failures.
 """
 
 import base64
+import logging
 import os
 import smtplib
 import ssl
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+from services.retry_service import retry_email
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_FROM_EMAIL = "support@brightpathascendgroup.com"
 DEFAULT_FROM_NAME = "Brightpath Ascend Group"
@@ -51,6 +58,19 @@ def is_email_configured():
 def is_sendgrid_configured():
     """Legacy alias - checks if email is configured."""
     return is_email_configured()
+
+
+@retry_email(max_attempts=3)
+def _smtp_send_with_retry(gmail_user, gmail_password, from_email, to_email, msg_string):
+    """
+    Internal function to send email via SMTP with retry logic.
+    Separated to allow retry on transient SMTP failures.
+    """
+    context = ssl.create_default_context()
+    with smtplib.SMTP(GMAIL_SMTP_HOST, GMAIL_SMTP_PORT) as server:
+        server.starttls(context=context)
+        server.login(gmail_user, gmail_password)
+        server.sendmail(from_email, to_email, msg_string)
 
 
 def send_email(
@@ -151,12 +171,10 @@ def send_email(
 
             msg = msg_with_attachments
 
-        # Send via Gmail SMTP
-        context = ssl.create_default_context()
-        with smtplib.SMTP(GMAIL_SMTP_HOST, GMAIL_SMTP_PORT) as server:
-            server.starttls(context=context)
-            server.login(gmail_user, gmail_password)
-            server.sendmail(from_email, to_email, msg.as_string())
+        # Send via Gmail SMTP with retry logic
+        logger.debug(f"Sending email to {to_email}: {subject}")
+        _smtp_send_with_retry(gmail_user, gmail_password, from_email, to_email, msg.as_string())
+        logger.info(f"Email sent successfully to {to_email}")
 
         # Generate a pseudo message ID (Gmail doesn't return one via SMTP)
         import uuid
