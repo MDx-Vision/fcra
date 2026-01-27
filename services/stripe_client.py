@@ -1,16 +1,24 @@
 """
 Stripe Client for Replit Integration
 Fetches Stripe credentials from Replit's connector API
+
+Includes retry logic for transient failures.
 """
 
+import logging
 import os
 
 import requests  # type: ignore[import-untyped]
 import stripe
 
+from services.retry_service import retry_http, retry_stripe, with_retry
+
+logger = logging.getLogger(__name__)
+
 _connection_settings = None
 
 
+@retry_http(max_attempts=3, service_name="replit_connector")
 def get_stripe_credentials():
     """
     Fetch Stripe credentials from Replit's connector API.
@@ -168,6 +176,7 @@ PRICING_TIERS = {
 }
 
 
+@retry_stripe(max_attempts=3)
 def create_checkout_session(
     draft_id, tier_key, success_url, cancel_url, customer_email=None
 ):
@@ -183,6 +192,8 @@ def create_checkout_session(
 
     Returns:
         Stripe Checkout Session object
+
+    Note: Includes automatic retry for transient Stripe API failures.
     """
     stripe_client = get_stripe_client()
 
@@ -225,7 +236,9 @@ def create_checkout_session(
     if customer_email:
         session_params["customer_email"] = customer_email
 
+    logger.debug(f"Creating Stripe checkout session for draft {draft_id}")
     session = stripe_client.checkout.Session.create(**session_params)
+    logger.info(f"Created Stripe checkout session {session.id}")
     return session
 
 
@@ -262,7 +275,13 @@ def verify_webhook_signature(payload, sig_header, webhook_secret=None):
     return event
 
 
+@retry_stripe(max_attempts=3)
 def retrieve_checkout_session(session_id):
-    """Retrieve a Checkout Session by ID."""
+    """
+    Retrieve a Checkout Session by ID.
+
+    Note: Includes automatic retry for transient Stripe API failures.
+    """
     stripe_client = get_stripe_client()
+    logger.debug(f"Retrieving Stripe checkout session {session_id}")
     return stripe_client.checkout.Session.retrieve(session_id)

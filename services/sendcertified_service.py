@@ -2,6 +2,8 @@
 SendCertified Integration Service
 Provides certified mail with return receipt tracking through SendCertified API.
 Supports both sandbox and production environments.
+
+Includes retry logic for transient API failures.
 """
 
 import logging
@@ -19,6 +21,7 @@ from database import (
     IntegrationEvent,
     SessionLocal,
 )
+from services.retry_service import get_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +56,12 @@ class SendCertifiedService:
         self.sandbox = sandbox
         self.base_url = SANDBOX_BASE_URL if sandbox else PRODUCTION_BASE_URL
         self._integration_id = None
+        # Initialize retry-enabled HTTP client
+        self._http_client = get_http_client(
+            service_name="sendcertified",
+            max_attempts=3,
+            timeout=30,
+        )
 
         if not api_key or not api_secret:
             self._load_credentials_from_db()
