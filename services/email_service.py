@@ -15,6 +15,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from services.retry_service import retry_email
+from services.circuit_breaker_service import circuit_protected, CircuitBreakerError
 
 logger = logging.getLogger(__name__)
 
@@ -60,10 +61,11 @@ def is_sendgrid_configured():
     return is_email_configured()
 
 
+@circuit_protected("email")
 @retry_email(max_attempts=3)
 def _smtp_send_with_retry(gmail_user, gmail_password, from_email, to_email, msg_string):
     """
-    Internal function to send email via SMTP with retry logic.
+    Internal function to send email via SMTP with circuit breaker and retry logic.
     Separated to allow retry on transient SMTP failures.
     """
     context = ssl.create_default_context()

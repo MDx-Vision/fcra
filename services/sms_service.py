@@ -16,6 +16,7 @@ from twilio.rest import Client as TwilioClient
 
 from services.activity_logger import log_sms_failed, log_sms_sent
 from services.retry_service import retry_twilio
+from services.circuit_breaker_service import circuit_protected, CircuitBreakerError
 
 logger = logging.getLogger(__name__)
 
@@ -91,10 +92,11 @@ def format_phone_number(phone):
     return None
 
 
+@circuit_protected("twilio")
 @retry_twilio(max_attempts=3)
 def _send_sms_with_retry(client, to_number, message, messaging_service_sid=None, from_number=None):
     """
-    Internal function to send SMS with retry logic.
+    Internal function to send SMS with circuit breaker and retry logic.
     Separated to allow retry on transient Twilio failures.
     """
     if messaging_service_sid:
@@ -287,10 +289,11 @@ def format_whatsapp_number(phone):
     return None
 
 
+@circuit_protected("twilio")
 @retry_twilio(max_attempts=3)
 def _send_whatsapp_with_retry(client, to_number, message, from_number):
     """
-    Internal function to send WhatsApp with retry logic.
+    Internal function to send WhatsApp with circuit breaker and retry logic.
     """
     return client.messages.create(body=message, from_=from_number, to=to_number)
 
