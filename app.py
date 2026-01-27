@@ -309,6 +309,9 @@ from services.graceful_shutdown_service import init_graceful_shutdown
 shutdown_manager = init_graceful_shutdown(app)
 app_logger.info("Graceful shutdown handling initialized")
 
+# Initialize memory cleanup service (prevents memory leaks)
+from services.memory_cleanup_service import register_cleanup_hook
+
 # Secret key for session management (using centralized config)
 app.secret_key = config.SECRET_KEY
 
@@ -455,6 +458,12 @@ credit_reports = []
 
 # Track which analyses have been marked as delivered (in-memory flag)
 delivered_cases = set()
+
+# Register memory cleanup hook to prevent memory leaks
+# Cleans up: login_attempts (1hr TTL), credit_reports (24hr TTL),
+# delivered_cases (7day TTL), scan_sessions (24hr TTL)
+register_cleanup_hook(app, login_attempts, credit_reports, delivered_cases)
+app_logger.info("Memory cleanup hook registered")
 
 # Initialize PDF generators
 pdf_gen = LetterPDFGenerator()
