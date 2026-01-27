@@ -1945,6 +1945,33 @@ def prometheus_metrics():
     metrics.append("# TYPE db_pool_checked_out gauge")
     metrics.append(f"db_pool_checked_out {db_pool_checked_out}")
 
+    # Cache metrics
+    try:
+        from services.performance_service import app_cache
+
+        cache_stats = app_cache.get_stats()
+        metrics.append("# HELP cache_entries_total Total entries in application cache")
+        metrics.append("# TYPE cache_entries_total gauge")
+        metrics.append(f"cache_entries_total {cache_stats.get('total_entries', 0)}")
+
+        metrics.append("# HELP cache_hits_total Total cache hits")
+        metrics.append("# TYPE cache_hits_total counter")
+        metrics.append(f"cache_hits_total {cache_stats.get('hit_count', 0)}")
+
+        metrics.append("# HELP cache_misses_total Total cache misses")
+        metrics.append("# TYPE cache_misses_total counter")
+        metrics.append(f"cache_misses_total {cache_stats.get('miss_count', 0)}")
+
+        metrics.append("# HELP cache_expired_total Total expired entries cleaned up")
+        metrics.append("# TYPE cache_expired_total counter")
+        metrics.append(f"cache_expired_total {cache_stats.get('expired_count', 0)}")
+
+        metrics.append("# HELP cache_memory_bytes Estimated cache memory usage in bytes")
+        metrics.append("# TYPE cache_memory_bytes gauge")
+        metrics.append(f"cache_memory_bytes {int(cache_stats.get('memory_estimate_kb', 0) * 1024)}")
+    except Exception:
+        pass
+
     # Build response
     response = make_response("\n".join(metrics) + "\n")
     response.headers["Content-Type"] = "text/plain; version=0.0.4; charset=utf-8"

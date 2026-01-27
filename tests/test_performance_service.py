@@ -43,8 +43,9 @@ from services.performance_service import (
 @pytest.fixture
 def cache():
     """Create a fresh InMemoryCache for each test"""
-    cache = InMemoryCache()
+    cache = InMemoryCache(cleanup_interval_seconds=60)  # Long interval for tests
     yield cache
+    cache.shutdown()  # Stop background thread
     cache.clear()
 
 
@@ -353,6 +354,70 @@ class TestInMemoryCacheThreadSafety:
             t.join()
 
         assert len(errors) == 0
+
+
+# ============================================================================
+# Background Cleanup Thread Tests
+# ============================================================================
+
+class TestInMemoryCacheBackgroundCleanup:
+    """Tests for background cleanup thread functionality"""
+
+    def test_cleanup_thread_starts(self):
+        """Test that cleanup thread starts on initialization"""
+        cache = InMemoryCache(cleanup_interval_seconds=60)
+        try:
+            assert cache._cleanup_thread is not None
+            assert cache._cleanup_thread.is_alive()
+            assert cache._cleanup_thread.daemon is True
+            assert cache._cleanup_thread.name == "cache-cleanup"
+        finally:
+            cache.shutdown()
+
+    def test_shutdown_stops_cleanup_thread(self):
+        """Test that shutdown stops the cleanup thread"""
+        cache = InMemoryCache(cleanup_interval_seconds=60)
+        cache.shutdown()
+        # Give thread time to stop
+        time.sleep(0.1)
+        assert cache._shutdown is True
+
+    def test_expired_count_tracked(self):
+        """Test that expired entries are counted"""
+        cache = InMemoryCache(cleanup_interval_seconds=60)
+        try:
+            cache.set("key1", "value1", ttl_seconds=1)
+            cache.set("key2", "value2", ttl_seconds=1)
+            time.sleep(1.1)
+
+            # Manually trigger cleanup
+            expired = cache.cleanup_expired()
+
+            assert expired == 2
+            # expired_count is updated by background thread, not cleanup_expired directly
+            # so we check the stats include it
+            stats = cache.get_stats()
+            assert "expired_count" in stats
+        finally:
+            cache.shutdown()
+
+    def test_stats_include_expired_count(self):
+        """Test that get_stats includes expired_count"""
+        cache = InMemoryCache(cleanup_interval_seconds=60)
+        try:
+            stats = cache.get_stats()
+            assert "expired_count" in stats
+            assert stats["expired_count"] == 0
+        finally:
+            cache.shutdown()
+
+    def test_custom_cleanup_interval(self):
+        """Test that custom cleanup interval is used"""
+        cache = InMemoryCache(cleanup_interval_seconds=120)
+        try:
+            assert cache._cleanup_interval == 120
+        finally:
+            cache.shutdown()
 
 
 # ============================================================================

@@ -49,17 +49,40 @@ class MLLearningService:
         self._cache = {}
         self._cache_expiry = {}
         self._cache_duration = timedelta(minutes=15)
+        self._cleanup_counter = 0
+        self._cleanup_frequency = 10  # Cleanup every 10 cache sets
 
     def _get_cache(self, key):
         if key in self._cache and datetime.utcnow() < self._cache_expiry.get(
             key, datetime.min
         ):
             return self._cache[key]
+        # Remove expired entry on read
+        if key in self._cache:
+            del self._cache[key]
+            del self._cache_expiry[key]
         return None
 
     def _set_cache(self, key, value):
         self._cache[key] = value
         self._cache_expiry[key] = datetime.utcnow() + self._cache_duration
+        # Periodically cleanup expired entries
+        self._cleanup_counter += 1
+        if self._cleanup_counter >= self._cleanup_frequency:
+            self._cleanup_expired()
+            self._cleanup_counter = 0
+
+    def _cleanup_expired(self) -> int:
+        """Remove all expired cache entries"""
+        now = datetime.utcnow()
+        expired_keys = [
+            k for k, exp in self._cache_expiry.items()
+            if now > exp
+        ]
+        for key in expired_keys:
+            self._cache.pop(key, None)
+            self._cache_expiry.pop(key, None)
+        return len(expired_keys)
 
     def record_outcome(self, client_id: int, outcome_data: dict) -> dict:
         """

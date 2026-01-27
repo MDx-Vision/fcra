@@ -31,14 +31,42 @@ _MAX_METRICS_PER_ENDPOINT = 1000
 
 
 class InMemoryCache:
-    """Thread-safe in-memory cache with TTL support"""
+    """Thread-safe in-memory cache with TTL support and automatic cleanup"""
 
-    def __init__(self):
+    def __init__(self, cleanup_interval_seconds: int = 60):
         self._store: Dict[str, Dict] = {}
         self._lock = threading.RLock()
         self._hit_count = 0
         self._miss_count = 0
+        self._expired_count = 0  # Track total expired entries cleaned up
         self._stats: Dict[str, Dict] = defaultdict(lambda: {"hits": 0, "misses": 0})
+        self._cleanup_interval = cleanup_interval_seconds
+        self._shutdown = False
+        self._cleanup_thread: Optional[threading.Thread] = None
+        self._start_cleanup_thread()
+
+    def _start_cleanup_thread(self) -> None:
+        """Start background thread for periodic cache cleanup"""
+        def cleanup_loop():
+            while not self._shutdown:
+                time.sleep(self._cleanup_interval)
+                if not self._shutdown:
+                    expired = self.cleanup_expired()
+                    if expired > 0:
+                        self._expired_count += expired
+
+        self._cleanup_thread = threading.Thread(
+            target=cleanup_loop,
+            name="cache-cleanup",
+            daemon=True  # Thread will stop when main program exits
+        )
+        self._cleanup_thread.start()
+
+    def shutdown(self) -> None:
+        """Stop the cleanup thread gracefully"""
+        self._shutdown = True
+        if self._cleanup_thread and self._cleanup_thread.is_alive():
+            self._cleanup_thread.join(timeout=2)
 
     def get(self, key: str) -> Tuple[Any, bool]:
         """Get value from cache. Returns (value, hit) tuple."""
@@ -146,6 +174,7 @@ class InMemoryCache:
                 "total_entries": len(self._store),
                 "hit_count": self._hit_count,
                 "miss_count": self._miss_count,
+                "expired_count": self._expired_count,
                 "hit_rate": round(hit_rate, 2),
                 "entries": entries[:50],
                 "memory_estimate_kb": sum(
@@ -162,7 +191,11 @@ class InMemoryCache:
             self._stats.clear()
 
 
-app_cache = InMemoryCache()
+import os
+
+# Cache cleanup interval from environment (default: 60 seconds)
+_CACHE_CLEANUP_INTERVAL = int(os.environ.get("CACHE_CLEANUP_INTERVAL_SECONDS", "60"))
+app_cache = InMemoryCache(cleanup_interval_seconds=_CACHE_CLEANUP_INTERVAL)
 
 
 def generate_cache_key(*args, **kwargs) -> str:

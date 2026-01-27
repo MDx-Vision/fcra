@@ -38,17 +38,40 @@ class PatternAnalyzerService:
         self._cache: Dict[str, Any] = {}
         self._cache_expiry: Dict[str, datetime] = {}
         self._cache_duration = timedelta(minutes=30)
+        self._cleanup_counter = 0
+        self._cleanup_frequency = 10  # Cleanup every 10 cache sets
 
     def _get_cache(self, key: str) -> Optional[Any]:
         if key in self._cache and datetime.utcnow() < self._cache_expiry.get(
             key, datetime.min
         ):
             return self._cache[key]
+        # Remove expired entry on read
+        if key in self._cache:
+            del self._cache[key]
+            del self._cache_expiry[key]
         return None
 
     def _set_cache(self, key: str, value: Any) -> None:
         self._cache[key] = value
         self._cache_expiry[key] = datetime.utcnow() + self._cache_duration
+        # Periodically cleanup expired entries
+        self._cleanup_counter += 1
+        if self._cleanup_counter >= self._cleanup_frequency:
+            self._cleanup_expired()
+            self._cleanup_counter = 0
+
+    def _cleanup_expired(self) -> int:
+        """Remove all expired cache entries"""
+        now = datetime.utcnow()
+        expired_keys = [
+            k for k, exp in self._cache_expiry.items()
+            if now > exp
+        ]
+        for key in expired_keys:
+            self._cache.pop(key, None)
+            self._cache_expiry.pop(key, None)
+        return len(expired_keys)
 
     def analyze_furnisher_behavior(
         self, furnisher_id: Optional[int] = None, furnisher_name: Optional[str] = None
