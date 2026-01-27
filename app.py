@@ -34401,20 +34401,9 @@ def api_performance_cleanup():
 # 🚨 GLOBAL ERROR HANDLER: Always return JSON, never HTML
 @app.errorhandler(500)
 def handle_500_error(error):
-    """Handle any unhandled server errors and return JSON"""
-    print(f"🚨 UNHANDLED 500 ERROR: {error}")
-    import traceback
-
-    traceback.print_exc()
-    return (
-        jsonify(
-            {
-                "success": False,
-                "error": "Internal server error (check server logs for details)",
-            }
-        ),
-        500,
-    )
+    """Handle any unhandled server errors and return sanitized JSON"""
+    from services.error_sanitizer_service import handle_exception
+    return handle_exception(error, status_code=500)
 
 
 # ============================================================
