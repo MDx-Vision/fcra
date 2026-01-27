@@ -12,6 +12,7 @@ import requests  # type: ignore[import-untyped]
 import stripe
 
 from services.retry_service import retry_http, retry_stripe, with_retry
+from services.circuit_breaker_service import circuit_protected, CircuitBreakerError
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +177,7 @@ PRICING_TIERS = {
 }
 
 
+@circuit_protected("stripe")
 @retry_stripe(max_attempts=3)
 def create_checkout_session(
     draft_id, tier_key, success_url, cancel_url, customer_email=None
@@ -193,7 +195,10 @@ def create_checkout_session(
     Returns:
         Stripe Checkout Session object
 
-    Note: Includes automatic retry for transient Stripe API failures.
+    Raises:
+        CircuitBreakerError: If Stripe circuit is open
+
+    Note: Includes circuit breaker protection and automatic retry.
     """
     stripe_client = get_stripe_client()
 
@@ -275,6 +280,7 @@ def verify_webhook_signature(payload, sig_header, webhook_secret=None):
     return event
 
 
+@circuit_protected("stripe")
 @retry_stripe(max_attempts=3)
 def retrieve_checkout_session(session_id):
     """

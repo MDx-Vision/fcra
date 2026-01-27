@@ -2241,6 +2241,115 @@ def health_ratelimit():
     }), status_code
 
 
+@app.route("/health/circuits")
+def health_circuits():
+    """
+    Circuit breaker health and status
+    Returns status of all circuit breakers for external services
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Circuit breaker health status
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                total_circuits:
+                  type: integer
+                open_circuits:
+                  type: array
+    """
+    from services.circuit_breaker_service import (
+        get_circuit_health_summary,
+        get_all_circuit_status,
+    )
+
+    summary = get_circuit_health_summary()
+    all_status = get_all_circuit_status()
+
+    # Determine health status
+    if summary["unhealthy_count"] > 0:
+        status = "degraded"
+        status_code = 503
+    elif summary["degraded_count"] > 0:
+        status = "recovering"
+        status_code = 200
+    else:
+        status = "healthy"
+        status_code = 200
+
+    return jsonify({
+        "status": status,
+        "summary": summary,
+        "circuits": all_status,
+    }), status_code
+
+
+@app.route("/api/circuits/<name>/reset", methods=["POST"])
+@require_staff()
+def reset_circuit_breaker(name):
+    """
+    Manually reset a circuit breaker to closed state.
+    Requires staff authentication.
+    ---
+    tags:
+      - Admin
+    parameters:
+      - name: name
+        in: path
+        type: string
+        required: true
+        description: Circuit breaker name (e.g., stripe, twilio, email)
+    responses:
+      200:
+        description: Circuit reset successfully
+      404:
+        description: Circuit not found
+    """
+    from services.circuit_breaker_service import reset_circuit, get_circuit_breaker
+
+    success = reset_circuit(name)
+    if success:
+        return jsonify({
+            "success": True,
+            "message": f"Circuit breaker '{name}' reset to closed state",
+            "status": get_circuit_breaker(name).get_status(),
+        })
+    else:
+        return jsonify({
+            "success": False,
+            "error": f"Circuit breaker '{name}' not found",
+        }), 404
+
+
+@app.route("/api/circuits/reset-all", methods=["POST"])
+@require_staff()
+def reset_all_circuit_breakers():
+    """
+    Reset all circuit breakers to closed state.
+    Requires staff authentication.
+    ---
+    tags:
+      - Admin
+    responses:
+      200:
+        description: All circuits reset successfully
+    """
+    from services.circuit_breaker_service import reset_all_circuits
+
+    count = reset_all_circuits()
+    return jsonify({
+        "success": True,
+        "message": f"Reset {count} circuit breaker(s) to closed state",
+        "count": count,
+    })
+
+
 # =============================================================================
 # LEGAL PAGES (Privacy Policy, Terms of Service)
 # =============================================================================
