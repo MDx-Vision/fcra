@@ -210,12 +210,91 @@ class TestMetricsEndpoint:
                         pytest.fail(f"Non-numeric value in metric line: {line}")
 
 
+class TestRateLimitHealthEndpoint:
+    """Tests for /health/ratelimit endpoint - rate limit monitoring health"""
+
+    def test_ratelimit_health_returns_200_or_503(self, client):
+        """Rate limit health endpoint should return 200 or 503"""
+        response = client.get("/health/ratelimit")
+        assert response.status_code in [200, 503]
+
+    def test_ratelimit_health_returns_json(self, client):
+        """Rate limit health endpoint should return JSON"""
+        response = client.get("/health/ratelimit")
+        assert response.content_type == "application/json"
+
+    def test_ratelimit_health_contains_status(self, client):
+        """Rate limit health response should contain status"""
+        response = client.get("/health/ratelimit")
+        data = response.get_json()
+        assert "status" in data
+        if response.status_code == 200:
+            assert data["status"] in ["healthy", "warning", "critical"]
+
+    def test_ratelimit_health_contains_stats(self, client):
+        """Rate limit health response should contain stats object"""
+        response = client.get("/health/ratelimit")
+        if response.status_code == 200:
+            data = response.get_json()
+            assert "stats" in data
+            stats = data["stats"]
+            assert "total_violations" in stats
+            assert "active_blocks" in stats
+            assert "violation_threshold" in stats
+
+    def test_ratelimit_health_contains_blocked_ips(self, client):
+        """Rate limit health response should contain blocked_ips list"""
+        response = client.get("/health/ratelimit")
+        if response.status_code == 200:
+            data = response.get_json()
+            assert "blocked_ips" in data
+            assert isinstance(data["blocked_ips"], list)
+
+    def test_ratelimit_health_contains_top_offenders(self, client):
+        """Rate limit health response should contain top_offenders list"""
+        response = client.get("/health/ratelimit")
+        if response.status_code == 200:
+            data = response.get_json()
+            assert "top_offenders" in data
+            assert isinstance(data["top_offenders"], list)
+
+    def test_ratelimit_health_contains_recent_violations(self, client):
+        """Rate limit health response should contain recent_violations list"""
+        response = client.get("/health/ratelimit")
+        if response.status_code == 200:
+            data = response.get_json()
+            assert "recent_violations" in data
+            assert isinstance(data["recent_violations"], list)
+
+
+class TestMetricsRateLimitSection:
+    """Tests for rate limit metrics in /metrics endpoint"""
+
+    def test_metrics_contains_rate_limit_violations(self, client):
+        """Metrics should include rate limit violation count"""
+        response = client.get("/metrics")
+        data = response.data.decode("utf-8")
+        assert "rate_limit_violations_total" in data
+
+    def test_metrics_contains_rate_limit_blocked_ips(self, client):
+        """Metrics should include blocked IPs count"""
+        response = client.get("/metrics")
+        data = response.data.decode("utf-8")
+        assert "rate_limit_blocked_ips" in data
+
+    def test_metrics_contains_rate_limit_alerts(self, client):
+        """Metrics should include alerts count"""
+        response = client.get("/metrics")
+        data = response.data.decode("utf-8")
+        assert "rate_limit_alerts_total" in data
+
+
 class TestHealthEndpointsIntegration:
     """Integration tests for health endpoints"""
 
     def test_all_health_endpoints_accessible(self, client):
         """All health endpoints should be accessible without auth"""
-        endpoints = ["/health", "/ready", "/health/live", "/metrics"]
+        endpoints = ["/health", "/ready", "/health/live", "/metrics", "/health/ratelimit"]
         for endpoint in endpoints:
             response = client.get(endpoint)
             assert response.status_code in [200, 503], f"{endpoint} returned {response.status_code}"
