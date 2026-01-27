@@ -2337,6 +2337,349 @@ def reset_all_circuit_breakers():
 
 
 # =============================================================================
+# FEATURE FLAGS
+# =============================================================================
+
+
+@app.route("/dashboard/feature-flags")
+@require_staff(roles=["admin"])
+def feature_flags_dashboard():
+    """
+    Feature flags management dashboard.
+    Admin-only access.
+    """
+    from services.feature_flag_service import get_feature_flag_service, FLAG_CATEGORIES
+
+    service = get_feature_flag_service()
+    flags = service.get_all_flags()
+    stats = service.get_stats()
+
+    return render_template(
+        "feature_flags.html",
+        flags=flags,
+        stats=stats,
+        categories=FLAG_CATEGORIES,
+        now=datetime.utcnow(),
+    )
+
+
+@app.route("/api/feature-flags")
+@require_staff()
+def api_get_feature_flags():
+    """
+    Get all feature flags.
+    ---
+    tags:
+      - Feature Flags
+    parameters:
+      - name: category
+        in: query
+        type: string
+        required: false
+        description: Filter by category
+    responses:
+      200:
+        description: List of feature flags
+    """
+    from services.feature_flag_service import get_feature_flag_service
+
+    category = request.args.get("category")
+    service = get_feature_flag_service()
+    flags = service.get_all_flags(category=category)
+
+    return jsonify({
+        "success": True,
+        "flags": flags,
+        "count": len(flags),
+    })
+
+
+@app.route("/api/feature-flags/<key>")
+@require_staff()
+def api_get_feature_flag(key):
+    """
+    Get a specific feature flag.
+    ---
+    tags:
+      - Feature Flags
+    parameters:
+      - name: key
+        in: path
+        type: string
+        required: true
+    responses:
+      200:
+        description: Feature flag details
+      404:
+        description: Flag not found
+    """
+    from services.feature_flag_service import get_feature_flag_service
+
+    service = get_feature_flag_service()
+    flag = service.get_flag(key)
+
+    if not flag:
+        return jsonify({"success": False, "error": "Flag not found"}), 404
+
+    return jsonify({"success": True, "flag": flag})
+
+
+@app.route("/api/feature-flags", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_create_feature_flag():
+    """
+    Create a new feature flag.
+    ---
+    tags:
+      - Feature Flags
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - key
+            - name
+          properties:
+            key:
+              type: string
+            name:
+              type: string
+            description:
+              type: string
+            enabled:
+              type: boolean
+            category:
+              type: string
+            targeting_rules:
+              type: object
+    responses:
+      201:
+        description: Flag created
+      400:
+        description: Invalid input
+    """
+    from services.feature_flag_service import get_feature_flag_service
+
+    data = request.get_json()
+
+    if not data.get("key") or not data.get("name"):
+        return jsonify({"success": False, "error": "Key and name are required"}), 400
+
+    service = get_feature_flag_service()
+
+    try:
+        flag = service.create_flag(
+            key=data["key"],
+            name=data["name"],
+            description=data.get("description"),
+            enabled=data.get("enabled", False),
+            category=data.get("category", "feature"),
+            targeting_rules=data.get("targeting_rules"),
+            owner=data.get("owner"),
+            created_by_id=session.get("staff_id"),
+        )
+
+        return jsonify({"success": True, "flag": flag}), 201
+
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+@app.route("/api/feature-flags/<key>", methods=["PUT"])
+@require_staff(roles=["admin"])
+def api_update_feature_flag(key):
+    """
+    Update a feature flag.
+    ---
+    tags:
+      - Feature Flags
+    parameters:
+      - name: key
+        in: path
+        type: string
+        required: true
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+    responses:
+      200:
+        description: Flag updated
+      404:
+        description: Flag not found
+    """
+    from services.feature_flag_service import get_feature_flag_service
+
+    data = request.get_json()
+    service = get_feature_flag_service()
+
+    flag = service.update_flag(
+        key=key,
+        enabled=data.get("enabled"),
+        name=data.get("name"),
+        description=data.get("description"),
+        targeting_rules=data.get("targeting_rules"),
+        category=data.get("category"),
+        owner=data.get("owner"),
+        updated_by_id=session.get("staff_id"),
+    )
+
+    if not flag:
+        return jsonify({"success": False, "error": "Flag not found"}), 404
+
+    return jsonify({"success": True, "flag": flag})
+
+
+@app.route("/api/feature-flags/<key>", methods=["DELETE"])
+@require_staff(roles=["admin"])
+def api_delete_feature_flag(key):
+    """
+    Delete a feature flag.
+    ---
+    tags:
+      - Feature Flags
+    parameters:
+      - name: key
+        in: path
+        type: string
+        required: true
+    responses:
+      200:
+        description: Flag deleted
+      404:
+        description: Flag not found
+    """
+    from services.feature_flag_service import get_feature_flag_service
+
+    service = get_feature_flag_service()
+    deleted = service.delete_flag(key)
+
+    if not deleted:
+        return jsonify({"success": False, "error": "Flag not found"}), 404
+
+    return jsonify({"success": True, "message": f"Flag '{key}' deleted"})
+
+
+@app.route("/api/feature-flags/<key>/toggle", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_toggle_feature_flag(key):
+    """
+    Toggle a feature flag's enabled state.
+    ---
+    tags:
+      - Feature Flags
+    parameters:
+      - name: key
+        in: path
+        type: string
+        required: true
+    responses:
+      200:
+        description: Flag toggled
+      404:
+        description: Flag not found
+    """
+    from services.feature_flag_service import get_feature_flag_service
+
+    service = get_feature_flag_service()
+    new_state = service.toggle_flag(key, updated_by_id=session.get("staff_id"))
+
+    if new_state is None:
+        return jsonify({"success": False, "error": "Flag not found"}), 404
+
+    return jsonify({
+        "success": True,
+        "key": key,
+        "enabled": new_state,
+        "message": f"Flag '{key}' is now {'enabled' if new_state else 'disabled'}",
+    })
+
+
+@app.route("/api/feature-flags/check/<key>")
+def api_check_feature_flag(key):
+    """
+    Check if a feature flag is enabled (public endpoint for client-side checks).
+    ---
+    tags:
+      - Feature Flags
+    parameters:
+      - name: key
+        in: path
+        type: string
+        required: true
+      - name: user_id
+        in: query
+        type: integer
+        required: false
+    responses:
+      200:
+        description: Flag status
+    """
+    from services.feature_flag_service import is_enabled
+
+    user_id = request.args.get("user_id", type=int)
+    user_role = session.get("staff_role")
+
+    # Get user_id from session if not provided
+    if not user_id:
+        user_id = session.get("staff_id") or session.get("client_id")
+
+    enabled = is_enabled(key, user_id=user_id, user_role=user_role, default=False)
+
+    return jsonify({
+        "key": key,
+        "enabled": enabled,
+    })
+
+
+@app.route("/api/feature-flags/stats")
+@require_staff()
+def api_feature_flags_stats():
+    """
+    Get feature flag statistics.
+    ---
+    tags:
+      - Feature Flags
+    responses:
+      200:
+        description: Feature flag statistics
+    """
+    from services.feature_flag_service import get_feature_flag_service
+
+    service = get_feature_flag_service()
+    stats = service.get_stats()
+
+    return jsonify({"success": True, "stats": stats})
+
+
+@app.route("/api/feature-flags/initialize", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_initialize_feature_flags():
+    """
+    Initialize default feature flags.
+    ---
+    tags:
+      - Feature Flags
+    responses:
+      200:
+        description: Flags initialized
+    """
+    from services.feature_flag_service import get_feature_flag_service
+
+    service = get_feature_flag_service()
+    count = service.initialize_default_flags()
+
+    return jsonify({
+        "success": True,
+        "message": f"Initialized {count} default feature flags",
+        "count": count,
+    })
+
+
+# =============================================================================
 # LEGAL PAGES (Privacy Policy, Terms of Service)
 # =============================================================================
 
