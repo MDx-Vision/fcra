@@ -32,7 +32,8 @@ else:
         pool_pre_ping=True,
         pool_size=10,
         max_overflow=20,
-        pool_recycle=1800,  # Recycle every 30 min instead of 1 hour
+        pool_timeout=30,  # Default timeout
+        pool_recycle=1800,  # Recycle every 30 min (original)
         connect_args={
             # Note: connect_timeout removed - not supported by all PostgreSQL providers
             # Timeouts are handled via statement_timeout in the event listener below
@@ -6647,6 +6648,71 @@ class AIUsageLog(Base):
         }
 
 
+class FeatureFlag(Base):
+    """Feature flags for safe feature rollouts and A/B testing"""
+    __tablename__ = 'feature_flags'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Flag identification
+    key = Column(String(100), unique=True, nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+
+    # Flag state
+    enabled = Column(Boolean, default=False, nullable=False)
+
+    # Targeting rules (JSON for flexible targeting)
+    # Can include: percentage rollout, user IDs, roles, etc.
+    targeting_rules = Column(JSON, nullable=True)
+
+    # Metadata
+    category = Column(String(50), default='feature')  # feature, experiment, ops, ui
+    owner = Column(String(100), nullable=True)  # Who owns this flag
+
+    # Lifecycle
+    created_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    updated_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Expiration (for temporary flags)
+    expires_at = Column(DateTime, nullable=True)
+
+    # Audit
+    last_evaluated_at = Column(DateTime, nullable=True)
+    evaluation_count = Column(Integer, default=0)
+
+    # Relationships
+    created_by = relationship("Staff", foreign_keys=[created_by_id])
+    updated_by = relationship("Staff", foreign_keys=[updated_by_id])
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'key': self.key,
+            'name': self.name,
+            'description': self.description,
+            'enabled': self.enabled,
+            'targeting_rules': self.targeting_rules,
+            'category': self.category,
+            'owner': self.owner,
+            'created_by_id': self.created_by_id,
+            'updated_by_id': self.updated_by_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'last_evaluated_at': self.last_evaluated_at.isoformat() if self.last_evaluated_at else None,
+            'evaluation_count': self.evaluation_count,
+        }
+
+    def is_expired(self):
+        """Check if the flag has expired."""
+        if self.expires_at is None:
+            return False
+        return datetime.utcnow() > self.expires_at
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -8152,6 +8218,22 @@ def init_db():
         ("ai_usage_logs", "success", "BOOLEAN DEFAULT TRUE"),
         ("ai_usage_logs", "error_message", "TEXT"),
         ("ai_usage_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Feature flags table
+        ("feature_flags", "id", "SERIAL PRIMARY KEY"),
+        ("feature_flags", "key", "VARCHAR(100) UNIQUE NOT NULL"),
+        ("feature_flags", "name", "VARCHAR(255) NOT NULL"),
+        ("feature_flags", "description", "TEXT"),
+        ("feature_flags", "enabled", "BOOLEAN DEFAULT FALSE"),
+        ("feature_flags", "targeting_rules", "JSON"),
+        ("feature_flags", "category", "VARCHAR(50) DEFAULT 'feature'"),
+        ("feature_flags", "owner", "VARCHAR(100)"),
+        ("feature_flags", "created_by_id", "INTEGER REFERENCES staff(id)"),
+        ("feature_flags", "updated_by_id", "INTEGER REFERENCES staff(id)"),
+        ("feature_flags", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("feature_flags", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("feature_flags", "expires_at", "TIMESTAMP"),
+        ("feature_flags", "last_evaluated_at", "TIMESTAMP"),
+        ("feature_flags", "evaluation_count", "INTEGER DEFAULT 0"),
     ]
 
     conn = engine.connect()

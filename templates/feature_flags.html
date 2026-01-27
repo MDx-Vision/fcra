@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Flags - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #22c55e 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #22c55e; }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .stat-change {
+            font-size: 12px;
+            color: #22c55e;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+        .stat-change.negative { color: #ef4444; }
+
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover { border-color: #22c55e; }
+        .filter-btn.active {
+            background: #22c55e;
+            color: white;
+            border-color: #22c55e;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            max-width: 400px;
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-box svg { color: #94a3b8; margin-right: 10px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        tr:hover { background: #f8fafc; }
+
+        .flag-name {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .flag-key {
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .flag-description {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        .category-feature { background: #dbeafe; color: #1e40af; }
+        .category-experiment { background: #fef3c7; color: #92400e; }
+        .category-ops { background: #fce7f3; color: #9d174d; }
+        .category-ui { background: #d1fae5; color: #065f46; }
+        .category-kill_switch { background: #fee2e2; color: #991b1b; }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            cursor: pointer;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            border-radius: 26px;
+            transition: 0.3s;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        input:checked + .toggle-slider {
+            background-color: #22c55e;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .action-btn:hover { background: #f8fafc; border-color: #22c55e; }
+        .action-btn.delete { color: #ef4444; }
+        .action-btn.delete:hover { border-color: #ef4444; }
+
+        .targeting-info {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .targeting-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-right: 4px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            width: 600px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #22c55e;
+        }
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .form-hint {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+
+        .expired-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            background: #fee2e2;
+            color: #991b1b;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content { margin-left: 0; padding: 20px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h1>Feature Flags</h1>
+                <p class="header-subtitle">Manage feature rollouts and experiments</p>
+            </div>
+            <button class="btn btn-primary" onclick="openCreateModal()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Create Flag
+            </button>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Flags</div>
+                <div class="stat-value">{{ stats.total_flags }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Enabled</div>
+                <div class="stat-value" style="color: #22c55e;">{{ stats.enabled_flags }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Disabled</div>
+                <div class="stat-value" style="color: #64748b;">{{ stats.disabled_flags }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Expired</div>
+                <div class="stat-value" style="color: #ef4444;">{{ stats.expired_flags }}</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="content-card">
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterFlags('all')">All</button>
+                {% for cat in categories %}
+                <button class="filter-btn" onclick="filterFlags('{{ cat }}')">{{ cat|replace('_', ' ')|title }}</button>
+                {% endfor %}
+            </div>
+
+            <div class="search-box">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search flags..." onkeyup="searchFlags()">
+            </div>
+
+            {% if flags %}
+            <table id="flagsTable">
+                <thead>
+                    <tr>
+                        <th>Flag</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Targeting</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for flag in flags %}
+                    <tr data-category="{{ flag.category }}" data-key="{{ flag.key }}" data-name="{{ flag.name }}">
+                        <td>
+                            <div class="flag-name">{{ flag.name }}</div>
+                            <span class="flag-key">{{ flag.key }}</span>
+                            {% if flag.description %}
+                            <div class="flag-description">{{ flag.description }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="category-badge category-{{ flag.category }}">{{ flag.category|replace('_', ' ') }}</span>
+                        </td>
+                        <td>
+                            <label class="toggle-switch">
+                                <input type="checkbox"
+                                       {% if flag.enabled %}checked{% endif %}
+                                       onchange="toggleFlag('{{ flag.key }}', this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            {% if flag.expires_at and flag.expires_at < now %}
+                            <span class="expired-badge">Expired</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="targeting-info">
+                                {% if flag.targeting_rules %}
+                                    {% if flag.targeting_rules.percentage is defined %}
+                                    <span class="targeting-badge">{{ flag.targeting_rules.percentage }}% rollout</span>
+                                    {% endif %}
+                                    {% if flag.targeting_rules.user_ids %}
+                                    <span class="targeting-badge">{{ flag.targeting_rules.user_ids|length }} users</span>
+                                    {% endif %}
+                                    {% if flag.targeting_rules.roles %}
+                                    <span class="targeting-badge">{{ flag.targeting_rules.roles|join(', ') }}</span>
+                                    {% endif %}
+                                {% else %}
+                                <span style="color: #94a3b8;">All users</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="editFlag('{{ flag.key }}')">Edit</button>
+                            <button class="action-btn delete" onclick="deleteFlag('{{ flag.key }}')">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/>
+                </svg>
+                <h3>No Feature Flags</h3>
+                <p>Create your first feature flag to start managing rollouts.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div class="modal-overlay" id="flagModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create Feature Flag</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="flagForm">
+                    <input type="hidden" id="editingKey" value="">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="flagKey">Key *</label>
+                            <input type="text" id="flagKey" name="key" required pattern="[a-z0-9_]+" placeholder="my_feature_flag">
+                            <div class="form-hint">Lowercase letters, numbers, and underscores only</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="flagName">Name *</label>
+                            <input type="text" id="flagName" name="name" required placeholder="My Feature Flag">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="flagDescription">Description</label>
+                        <textarea id="flagDescription" name="description" placeholder="What does this flag control?"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="flagCategory">Category</label>
+                            <select id="flagCategory" name="category">
+                                {% for cat in categories %}
+                                <option value="{{ cat }}">{{ cat|replace('_', ' ')|title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="flagOwner">Owner</label>
+                            <input type="text" id="flagOwner" name="owner" placeholder="team-name or email">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="flagPercentage">Rollout Percentage</label>
+                        <input type="number" id="flagPercentage" name="percentage" min="0" max="100" placeholder="100">
+                        <div class="form-hint">Leave empty or set to 100 for all users</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="flagRoles">Target Roles (comma-separated)</label>
+                        <input type="text" id="flagRoles" name="roles" placeholder="admin, attorney, paralegal">
+                        <div class="form-hint">Leave empty to target all roles</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="flagExpires">Expires At</label>
+                        <input type="datetime-local" id="flagExpires" name="expires_at">
+                        <div class="form-hint">Optional: Auto-disable the flag after this date</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveFlag()">Save Flag</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFilter = 'all';
+
+        function filterFlags(category) {
+            currentFilter = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const rows = document.querySelectorAll('#flagsTable tbody tr');
+            rows.forEach(row => {
+                if (category === 'all' || row.dataset.category === category) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function searchFlags() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#flagsTable tbody tr');
+
+            rows.forEach(row => {
+                const key = row.dataset.key.toLowerCase();
+                const name = row.dataset.name.toLowerCase();
+                const categoryMatch = currentFilter === 'all' || row.dataset.category === currentFilter;
+
+                if (categoryMatch && (key.includes(query) || name.includes(query))) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        async function toggleFlag(key, enabled) {
+            try {
+                const response = await fetch(`/api/feature-flags/${key}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to toggle flag');
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error toggling flag:', error);
+                alert('Error toggling flag');
+                location.reload();
+            }
+        }
+
+        function openCreateModal() {
+            document.getElementById('modalTitle').textContent = 'Create Feature Flag';
+            document.getElementById('editingKey').value = '';
+            document.getElementById('flagForm').reset();
+            document.getElementById('flagKey').disabled = false;
+            document.getElementById('flagModal').classList.add('active');
+        }
+
+        async function editFlag(key) {
+            try {
+                const response = await fetch(`/api/feature-flags/${key}`);
+                if (!response.ok) throw new Error('Failed to fetch flag');
+
+                const data = await response.json();
+                const flag = data.flag;
+
+                document.getElementById('modalTitle').textContent = 'Edit Feature Flag';
+                document.getElementById('editingKey').value = key;
+                document.getElementById('flagKey').value = flag.key;
+                document.getElementById('flagKey').disabled = true;
+                document.getElementById('flagName').value = flag.name;
+                document.getElementById('flagDescription').value = flag.description || '';
+                document.getElementById('flagCategory').value = flag.category;
+                document.getElementById('flagOwner').value = flag.owner || '';
+
+                if (flag.targeting_rules) {
+                    document.getElementById('flagPercentage').value = flag.targeting_rules.percentage || '';
+                    document.getElementById('flagRoles').value = (flag.targeting_rules.roles || []).join(', ');
+                }
+
+                if (flag.expires_at) {
+                    const date = new Date(flag.expires_at);
+                    document.getElementById('flagExpires').value = date.toISOString().slice(0, 16);
+                }
+
+                document.getElementById('flagModal').classList.add('active');
+            } catch (error) {
+                console.error('Error fetching flag:', error);
+                alert('Error loading flag details');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('flagModal').classList.remove('active');
+        }
+
+        async function saveFlag() {
+            const editingKey = document.getElementById('editingKey').value;
+            const isEditing = !!editingKey;
+
+            const data = {
+                key: document.getElementById('flagKey').value,
+                name: document.getElementById('flagName').value,
+                description: document.getElementById('flagDescription').value,
+                category: document.getElementById('flagCategory').value,
+                owner: document.getElementById('flagOwner').value,
+            };
+
+            // Build targeting rules
+            const percentage = document.getElementById('flagPercentage').value;
+            const roles = document.getElementById('flagRoles').value;
+
+            if (percentage || roles) {
+                data.targeting_rules = {};
+                if (percentage) data.targeting_rules.percentage = parseInt(percentage);
+                if (roles) data.targeting_rules.roles = roles.split(',').map(r => r.trim()).filter(r => r);
+            }
+
+            const expires = document.getElementById('flagExpires').value;
+            if (expires) data.expires_at = expires;
+
+            try {
+                const url = isEditing ? `/api/feature-flags/${editingKey}` : '/api/feature-flags';
+                const method = isEditing ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    const result = await response.json();
+                    alert(result.error || 'Failed to save flag');
+                }
+            } catch (error) {
+                console.error('Error saving flag:', error);
+                alert('Error saving flag');
+            }
+        }
+
+        async function deleteFlag(key) {
+            if (!confirm(`Are you sure you want to delete the flag "${key}"?`)) return;
+
+            try {
+                const response = await fetch(`/api/feature-flags/${key}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to delete flag');
+                }
+            } catch (error) {
+                console.error('Error deleting flag:', error);
+                alert('Error deleting flag');
+            }
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Close modal on overlay click
+        document.getElementById('flagModal').addEventListener('click', e => {
+            if (e.target.classList.contains('modal-overlay')) closeModal();
+        });
+    </script>
+</body>
+</html>
