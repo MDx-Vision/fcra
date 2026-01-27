@@ -327,6 +327,13 @@ try:
 except Exception as e:
     app_logger.warning(f"Could not initialize rate limit monitoring: {e}")
 
+# Initialize request ID tracking
+from services.request_id_service import init_request_id_middleware, configure_logging_with_request_id
+
+init_request_id_middleware(app)
+configure_logging_with_request_id()
+app_logger.info("Request ID tracking initialized")
+
 # Initialize memory cleanup service (prevents memory leaks)
 from services.memory_cleanup_service import register_cleanup_hook
 
