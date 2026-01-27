@@ -91,8 +91,7 @@ import uuid
 from datetime import datetime, timedelta
 from functools import wraps
 
-# Initialize Sentry for error tracking (if configured)
-import sentry_sdk
+# Sentry is initialized later via sentry_service
 from flask import (
     Flask,
     g,
@@ -106,8 +105,6 @@ from flask import (
     url_for,
 )
 from flask_cors import CORS
-from sentry_sdk.integrations.flask import FlaskIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
@@ -269,25 +266,14 @@ from services.workflow_triggers_service import (
     WorkflowTriggersService,
 )
 
-SENTRY_DSN = os.environ.get("SENTRY_DSN")
-if SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        integrations=[
-            FlaskIntegration(),
-            SqlalchemyIntegration(),
-        ],
-        traces_sample_rate=0.1,  # 10% of requests for performance monitoring
-        profiles_sample_rate=0.1,  # 10% for profiling
-        environment=os.environ.get("ENVIRONMENT", "development"),
-        release=os.environ.get("APP_VERSION", "1.0.0"),
-        send_default_pii=False,  # Don't send personally identifiable info
-    )
-    app_logger.info("Sentry error tracking initialized")
+app = Flask(__name__)
+
+# Initialize Sentry error tracking (with user context and Slack alerts)
+from services.sentry_service import init_sentry
+if init_sentry(app):
+    app_logger.info("Sentry error tracking initialized with user context")
 else:
     app_logger.info("Sentry not configured (set SENTRY_DSN to enable)")
-
-app = Flask(__name__)
 
 # Initialize request/response logging
 init_request_logging(app)
