@@ -42,6 +42,7 @@ python-dateutil
 python-dotenv>=1.0.0
 
 # Testing
+locust>=2.20.0
 playwright
 psutil>=5.9.0
 sentry-sdk[flask]>=2.0.0
