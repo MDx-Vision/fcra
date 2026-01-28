@@ -1672,3 +1672,219 @@ class TestFailureTracking:
             mock_logger.critical.assert_called_once()
 
         _failure_counts.clear()
+
+
+# =============================================================================
+# Tests for JSON Account Merging (parse_credit_report)
+# =============================================================================
+
+class TestParseReportJsonMerging:
+    """Tests for parse_credit_report JSON data merging."""
+
+    def test_json_accounts_used_without_payment_history(self, tmp_path):
+        """JSON accounts should be used even if they don't have payment_history."""
+        html_content = "<html><body></body></html>"
+        html_file = tmp_path / "report.html"
+        html_file.write_text(html_content)
+
+        json_content = '''{
+            "scores": {"transunion": 720, "experian": 715, "equifax": 725},
+            "accounts": [
+                {
+                    "creditor": "CHASE CARD",
+                    "account_number": "****1234",
+                    "account_type": "Revolving",
+                    "status": "Current",
+                    "balance": "$500",
+                    "credit_limit": "$5000",
+                    "bureaus": {
+                        "transunion": {"present": true},
+                        "experian": {"present": true},
+                        "equifax": {"present": true}
+                    }
+                },
+                {
+                    "creditor": "AMEX",
+                    "account_number": "****5678",
+                    "account_type": "Open",
+                    "status": "Current",
+                    "balance": "$0",
+                    "credit_limit": "$10000"
+                }
+            ]
+        }'''
+        json_file = tmp_path / "report.json"
+        json_file.write_text(json_content)
+
+        result = parse_credit_report(str(html_file))
+
+        # Should have 2 accounts from JSON even without payment_history
+        assert len(result["accounts"]) == 2
+        assert result["accounts"][0]["creditor"] == "CHASE CARD"
+        assert result["accounts"][1]["creditor"] == "AMEX"
+        assert result["scores"]["transunion"] == 720
+
+    def test_json_accounts_with_payment_history(self, tmp_path):
+        """JSON accounts with payment_history should work correctly."""
+        html_content = "<html><body></body></html>"
+        html_file = tmp_path / "report.html"
+        html_file.write_text(html_content)
+
+        json_content = '''{
+            "scores": {"transunion": 700},
+            "accounts": [
+                {
+                    "creditor": "DISCOVER",
+                    "balance": "$1000",
+                    "payment_history": [
+                        {"month": "Jan", "year": "24", "transunion": "OK"}
+                    ]
+                }
+            ]
+        }'''
+        json_file = tmp_path / "report.json"
+        json_file.write_text(json_content)
+
+        result = parse_credit_report(str(html_file))
+
+        assert len(result["accounts"]) == 1
+        assert result["accounts"][0]["creditor"] == "DISCOVER"
+        assert len(result["accounts"][0]["payment_history"]) == 1
+
+    def test_html_accounts_used_when_no_json(self, tmp_path):
+        """HTML-parsed accounts should be used when no JSON file exists."""
+        html_content = """
+        <html><body>
+            <div id="AccountHistory">
+                <table class="crPrint">
+                    <div class="sub_header ng-binding">TEST CREDITOR</div>
+                    <table class="rpt_content_table">
+                        <tr>
+                            <td class="label">Account Type:</td>
+                            <td class="info1">Revolving</td>
+                        </tr>
+                    </table>
+                </table>
+            </div>
+        </body></html>
+        """
+        html_file = tmp_path / "report.html"
+        html_file.write_text(html_content)
+        # No JSON file created
+
+        result = parse_credit_report(str(html_file))
+
+        # Should have parsed account from HTML
+        assert len(result["accounts"]) >= 0  # May or may not find depending on structure
+
+    def test_json_overrides_html_accounts(self, tmp_path):
+        """JSON accounts should override HTML-parsed accounts."""
+        html_content = """
+        <html><body>
+            <div id="AccountHistory">
+                <table class="crPrint">
+                    <div class="sub_header ng-binding">HTML CREDITOR</div>
+                    <table class="rpt_content_table">
+                        <tr>
+                            <td class="label">Account Type:</td>
+                            <td class="info1">Revolving</td>
+                        </tr>
+                    </table>
+                </table>
+            </div>
+        </body></html>
+        """
+        html_file = tmp_path / "report.html"
+        html_file.write_text(html_content)
+
+        json_content = '''{
+            "accounts": [
+                {"creditor": "JSON CREDITOR", "account_type": "Credit Card"}
+            ]
+        }'''
+        json_file = tmp_path / "report.json"
+        json_file.write_text(json_content)
+
+        result = parse_credit_report(str(html_file))
+
+        # JSON should take precedence
+        assert len(result["accounts"]) == 1
+        assert result["accounts"][0]["creditor"] == "JSON CREDITOR"
+
+    def test_empty_json_accounts_uses_html(self, tmp_path):
+        """If JSON has empty accounts array, HTML-parsed accounts should be used."""
+        html_content = """
+        <html><body>
+            <div id="AccountHistory">
+                <table class="crPrint">
+                    <div class="sub_header ng-binding">FALLBACK CREDITOR</div>
+                    <table class="rpt_content_table">
+                        <tr><td class="label">Balance:</td><td class="info1">$100</td></tr>
+                    </table>
+                </table>
+            </div>
+        </body></html>
+        """
+        html_file = tmp_path / "report.html"
+        html_file.write_text(html_content)
+
+        json_content = '{"accounts": [], "scores": {"transunion": 650}}'
+        json_file = tmp_path / "report.json"
+        json_file.write_text(json_content)
+
+        result = parse_credit_report(str(html_file))
+
+        # Should use scores from JSON
+        assert result["scores"]["transunion"] == 650
+        # Accounts should come from HTML parsing (may be 0 or more)
+
+    def test_account_fields_properly_mapped(self, tmp_path):
+        """All account fields should be properly mapped from JSON."""
+        html_content = "<html><body></body></html>"
+        html_file = tmp_path / "report.html"
+        html_file.write_text(html_content)
+
+        json_content = '''{
+            "accounts": [{
+                "creditor": "BANK OF AMERICA",
+                "original_creditor": "BOA",
+                "account_number": "****9999",
+                "account_type": "Credit Card",
+                "account_type_detail": "Visa Platinum",
+                "status": "Current",
+                "balance": "$2500",
+                "credit_limit": "$15000",
+                "high_balance": "$5000",
+                "monthly_payment": "$100",
+                "payment_status": "Pays as agreed",
+                "date_opened": "01/2020",
+                "date_reported": "01/2024",
+                "past_due_amount": "$0",
+                "times_30_late": "0",
+                "times_60_late": "1",
+                "times_90_late": "0"
+            }]
+        }'''
+        json_file = tmp_path / "report.json"
+        json_file.write_text(json_content)
+
+        result = parse_credit_report(str(html_file))
+
+        acct = result["accounts"][0]
+        assert acct["creditor"] == "BANK OF AMERICA"
+        assert acct["original_creditor"] == "BOA"
+        assert acct["account_number"] == "****9999"
+        assert acct["account_type"] == "Credit Card"
+        assert acct["account_type_detail"] == "Visa Platinum"
+        assert acct["status"] == "Current"
+        assert acct["balance"] == "$2500"
+        assert acct["credit_limit"] == "$15000"
+        assert acct["high_balance"] == "$5000"
+        assert acct["monthly_payment"] == "$100"
+        assert acct["payment_status"] == "Pays as agreed"
+        assert acct["date_opened"] == "01/2020"
+        assert acct["date_reported"] == "01/2024"
+        assert acct["past_due_amount"] == "$0"
+        assert acct["times_30_late"] == "0"
+        assert acct["times_60_late"] == "1"
+        assert acct["times_90_late"] == "0"

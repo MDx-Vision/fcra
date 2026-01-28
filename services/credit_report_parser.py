@@ -1729,45 +1729,41 @@ def parse_credit_report(html_path: str, service_name: str = "unknown") -> Dict:
                     if score:
                         parsed["scores"][bureau] = score
 
-            # Only use JSON accounts if they have payment_history, otherwise keep parsed accounts
+            # Use JSON accounts if available (JSON extraction is more reliable than HTML parsing)
+            # If JSON accounts are empty but HTML parsed some, keep the HTML-parsed ones
             if extracted_data.get("accounts") and len(extracted_data["accounts"]) > 0:
-                # Check if JSON has payment history
-                has_payment_history = any(
-                    acct.get("payment_history") for acct in extracted_data["accounts"]
-                )
-                if has_payment_history:
-                    parsed["accounts"] = []
-                    for acct in extracted_data["accounts"]:
-                        parsed["accounts"].append(
-                            {
-                                "creditor": acct.get("creditor", "Unknown"),
-                                "original_creditor": acct.get("original_creditor"),
-                                "account_number": acct.get("account_number", "N/A"),
-                                "account_type": acct.get("account_type", "Unknown"),
-                                "account_type_detail": acct.get("account_type_detail"),
-                                "status": acct.get("status", "Unknown"),
-                                "balance": acct.get("balance"),
-                                "credit_limit": acct.get("credit_limit"),
-                                "high_balance": acct.get("high_balance"),
-                                "monthly_payment": acct.get("monthly_payment"),
-                                "payment_status": acct.get("payment_status"),
-                                "date_opened": acct.get("date_opened"),
-                                "date_reported": acct.get("date_reported"),
-                                "past_due_amount": acct.get("past_due_amount"),
-                                "times_30_late": acct.get("times_30_late"),
-                                "times_60_late": acct.get("times_60_late"),
-                                "times_90_late": acct.get("times_90_late"),
-                                "payment_history": acct.get("payment_history", []),
-                                "bureaus": acct.get(
-                                    "bureaus",
-                                    {
-                                        "transunion": {"present": True},
-                                        "experian": {"present": True},
-                                        "equifax": {"present": True},
-                                    },
-                                ),
-                            }
-                        )
+                parsed["accounts"] = []
+                for acct in extracted_data["accounts"]:
+                    parsed["accounts"].append(
+                        {
+                            "creditor": acct.get("creditor", "Unknown"),
+                            "original_creditor": acct.get("original_creditor"),
+                            "account_number": acct.get("account_number", "N/A"),
+                            "account_type": acct.get("account_type", "Unknown"),
+                            "account_type_detail": acct.get("account_type_detail"),
+                            "status": acct.get("status", "Unknown"),
+                            "balance": acct.get("balance"),
+                            "credit_limit": acct.get("credit_limit"),
+                            "high_balance": acct.get("high_balance"),
+                            "monthly_payment": acct.get("monthly_payment"),
+                            "payment_status": acct.get("payment_status"),
+                            "date_opened": acct.get("date_opened"),
+                            "date_reported": acct.get("date_reported"),
+                            "past_due_amount": acct.get("past_due_amount"),
+                            "times_30_late": acct.get("times_30_late"),
+                            "times_60_late": acct.get("times_60_late"),
+                            "times_90_late": acct.get("times_90_late"),
+                            "payment_history": acct.get("payment_history", []),
+                            "bureaus": acct.get(
+                                "bureaus",
+                                {
+                                    "transunion": {"present": True},
+                                    "experian": {"present": True},
+                                    "equifax": {"present": True},
+                                },
+                            ),
+                        }
+                    )
 
             if extracted_data.get("inquiries") and len(extracted_data["inquiries"]) > 0:
                 parsed["inquiries"] = extracted_data["inquiries"]
