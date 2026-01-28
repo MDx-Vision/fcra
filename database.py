@@ -1185,7 +1185,7 @@ class WhatsAppMessage(Base):
 class EmailLog(Base):
     """Log all email send attempts for tracking and debugging"""
     __tablename__ = 'email_logs'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
     email_address = Column(String(255))
@@ -1195,8 +1195,28 @@ class EmailLog(Base):
     message_id = Column(String(100))
     sent_at = Column(DateTime, default=datetime.utcnow)
     error_message = Column(Text, nullable=True)
-    
+
+    # Open/Click Tracking
+    tracking_id = Column(String(64), unique=True, index=True, nullable=True)
+    opened_at = Column(DateTime, nullable=True)
+    open_count = Column(Integer, default=0)
+    clicked_at = Column(DateTime, nullable=True)
+    click_count = Column(Integer, default=0)
+
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class EmailClickLog(Base):
+    """Track individual link clicks in emails"""
+    __tablename__ = 'email_click_logs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    email_log_id = Column(Integer, ForeignKey('email_logs.id', ondelete='CASCADE'), nullable=False, index=True)
+    tracking_id = Column(String(64), nullable=False, index=True)
+    original_url = Column(String(2000), nullable=False)
+    clicked_at = Column(DateTime, default=datetime.utcnow)
+    user_agent = Column(String(500), nullable=True)
+    ip_address = Column(String(45), nullable=True)
 
 
 class EmailTemplate(Base):
@@ -8361,6 +8381,20 @@ def init_db():
         ("scheduled_reports", "updated_by_id", "INTEGER REFERENCES staff(id)"),
         ("scheduled_reports", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("scheduled_reports", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Email Open/Click Tracking
+        ("email_logs", "tracking_id", "VARCHAR(64) UNIQUE"),
+        ("email_logs", "opened_at", "TIMESTAMP"),
+        ("email_logs", "open_count", "INTEGER DEFAULT 0"),
+        ("email_logs", "clicked_at", "TIMESTAMP"),
+        ("email_logs", "click_count", "INTEGER DEFAULT 0"),
+        # EmailClickLog table
+        ("email_click_logs", "id", "SERIAL PRIMARY KEY"),
+        ("email_click_logs", "email_log_id", "INTEGER NOT NULL REFERENCES email_logs(id) ON DELETE CASCADE"),
+        ("email_click_logs", "tracking_id", "VARCHAR(64) NOT NULL"),
+        ("email_click_logs", "original_url", "VARCHAR(2000) NOT NULL"),
+        ("email_click_logs", "clicked_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("email_click_logs", "user_agent", "VARCHAR(500)"),
+        ("email_click_logs", "ip_address", "VARCHAR(45)"),
     ]
 
     conn = engine.connect()

@@ -127,6 +127,23 @@ def send_email(
 
             plain_content = re.sub(r"<[^>]+>", "", html_content)
 
+        # Inject email open/click tracking
+        try:
+            import os
+            base_url = os.environ.get("BASE_URL", os.environ.get("REPLIT_DEV_DOMAIN", ""))
+            if base_url and not base_url.startswith("http"):
+                base_url = f"https://{base_url}"
+            if base_url:
+                from services.email_tracking_service import EmailTrackingService, generate_tracking_id
+                _tracking_id = generate_tracking_id()
+                tracker = EmailTrackingService()
+                try:
+                    html_content = tracker.inject_tracking(html_content, _tracking_id, base_url)
+                finally:
+                    tracker.close()
+        except Exception:
+            _tracking_id = None
+
         # Create message
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
