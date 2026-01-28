@@ -1,0 +1,200 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}Email Tracking - Dashboard{% endblock %}
+
+{% block content %}
+<div class="main-content" data-testid="email-tracking-page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <h1 style="font-size:24px;font-weight:700;color:#f1f5f9;">Email Tracking</h1>
+        <select id="periodSelect" onchange="loadStats()" style="background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;padding:8px 12px;">
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+        </select>
+    </div>
+
+    <!-- Stats Cards -->
+    <div id="statsCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+        <div class="stat-card" style="background:#1e293b;border-radius:12px;padding:20px;">
+            <div style="color:#94a3b8;font-size:13px;">Total Sent</div>
+            <div id="statSent" style="color:#f1f5f9;font-size:28px;font-weight:700;">-</div>
+        </div>
+        <div class="stat-card" style="background:#1e293b;border-radius:12px;padding:20px;">
+            <div style="color:#94a3b8;font-size:13px;">Tracked</div>
+            <div id="statTracked" style="color:#f1f5f9;font-size:28px;font-weight:700;">-</div>
+        </div>
+        <div class="stat-card" style="background:#1e293b;border-radius:12px;padding:20px;">
+            <div style="color:#94a3b8;font-size:13px;">Opened</div>
+            <div id="statOpened" style="color:#22c55e;font-size:28px;font-weight:700;">-</div>
+            <div id="statOpenRate" style="color:#94a3b8;font-size:12px;"></div>
+        </div>
+        <div class="stat-card" style="background:#1e293b;border-radius:12px;padding:20px;">
+            <div style="color:#94a3b8;font-size:13px;">Clicked</div>
+            <div id="statClicked" style="color:#3b82f6;font-size:28px;font-weight:700;">-</div>
+            <div id="statClickRate" style="color:#94a3b8;font-size:12px;"></div>
+        </div>
+        <div class="stat-card" style="background:#1e293b;border-radius:12px;padding:20px;">
+            <div style="color:#94a3b8;font-size:13px;">Click-to-Open</div>
+            <div id="statCTO" style="color:#eab308;font-size:28px;font-weight:700;">-</div>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div style="background:#1e293b;border-radius:12px;padding:20px;margin-bottom:24px;">
+        <h3 style="color:#f1f5f9;margin-bottom:16px;">Daily Engagement</h3>
+        <canvas id="engagementChart" height="250"></canvas>
+    </div>
+
+    <!-- Top Templates -->
+    <div style="background:#1e293b;border-radius:12px;padding:20px;margin-bottom:24px;">
+        <h3 style="color:#f1f5f9;margin-bottom:16px;">Top Templates</h3>
+        <table style="width:100%;border-collapse:collapse;" data-testid="templates-table">
+            <thead>
+                <tr style="border-bottom:1px solid #334155;">
+                    <th style="text-align:left;padding:8px;color:#94a3b8;font-size:13px;">Template</th>
+                    <th style="text-align:right;padding:8px;color:#94a3b8;font-size:13px;">Sent</th>
+                    <th style="text-align:right;padding:8px;color:#94a3b8;font-size:13px;">Opened</th>
+                    <th style="text-align:right;padding:8px;color:#94a3b8;font-size:13px;">Clicked</th>
+                    <th style="text-align:right;padding:8px;color:#94a3b8;font-size:13px;">Open Rate</th>
+                </tr>
+            </thead>
+            <tbody id="templatesBody">
+                <tr><td colspan="5" style="padding:16px;color:#94a3b8;text-align:center;">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Recent Emails -->
+    <div style="background:#1e293b;border-radius:12px;padding:20px;">
+        <h3 style="color:#f1f5f9;margin-bottom:16px;">Recent Tracked Emails</h3>
+        <table style="width:100%;border-collapse:collapse;" data-testid="emails-table">
+            <thead>
+                <tr style="border-bottom:1px solid #334155;">
+                    <th style="text-align:left;padding:8px;color:#94a3b8;font-size:13px;">Recipient</th>
+                    <th style="text-align:left;padding:8px;color:#94a3b8;font-size:13px;">Subject</th>
+                    <th style="text-align:left;padding:8px;color:#94a3b8;font-size:13px;">Sent</th>
+                    <th style="text-align:center;padding:8px;color:#94a3b8;font-size:13px;">Opens</th>
+                    <th style="text-align:center;padding:8px;color:#94a3b8;font-size:13px;">Clicks</th>
+                </tr>
+            </thead>
+            <tbody id="emailsBody">
+                <tr><td colspan="5" style="padding:16px;color:#94a3b8;text-align:center;">Loading...</td></tr>
+            </tbody>
+        </table>
+        <div id="pagination" style="display:flex;justify-content:center;gap:8px;margin-top:16px;"></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let chart = null;
+let currentPage = 1;
+
+async function loadStats() {
+    const days = document.getElementById('periodSelect').value;
+    try {
+        const res = await fetch(`/api/email-tracking/stats?days=${days}`);
+        const data = await res.json();
+        if (!data.success) return;
+
+        document.getElementById('statSent').textContent = data.total_sent.toLocaleString();
+        document.getElementById('statTracked').textContent = data.total_tracked.toLocaleString();
+        document.getElementById('statOpened').textContent = data.total_opened.toLocaleString();
+        document.getElementById('statOpenRate').textContent = `${data.open_rate}% open rate`;
+        document.getElementById('statClicked').textContent = data.total_clicked.toLocaleString();
+        document.getElementById('statClickRate').textContent = `${data.click_rate}% click rate`;
+        document.getElementById('statCTO').textContent = `${data.click_to_open_rate}%`;
+
+        // Templates table
+        const tbody = document.getElementById('templatesBody');
+        if (data.top_templates.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:16px;color:#94a3b8;text-align:center;">No data yet</td></tr>';
+        } else {
+            tbody.innerHTML = data.top_templates.map(t => `
+                <tr style="border-bottom:1px solid #1e293b;">
+                    <td style="padding:8px;color:#f1f5f9;">${t.template_type || 'Unknown'}</td>
+                    <td style="text-align:right;padding:8px;color:#f1f5f9;">${t.sent}</td>
+                    <td style="text-align:right;padding:8px;color:#22c55e;">${t.opened}</td>
+                    <td style="text-align:right;padding:8px;color:#3b82f6;">${t.clicked}</td>
+                    <td style="text-align:right;padding:8px;color:#eab308;">${t.open_rate}%</td>
+                </tr>
+            `).join('');
+        }
+
+        // Chart
+        const labels = data.daily_stats.map(d => d.date);
+        const sentData = data.daily_stats.map(d => d.sent);
+        const openedData = data.daily_stats.map(d => d.opened);
+        const clickedData = data.daily_stats.map(d => d.clicked);
+
+        if (chart) chart.destroy();
+        const ctx = document.getElementById('engagementChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Sent', data: sentData, borderColor: '#94a3b8', tension: 0.3, fill: false },
+                    { label: 'Opened', data: openedData, borderColor: '#22c55e', tension: 0.3, fill: false },
+                    { label: 'Clicked', data: clickedData, borderColor: '#3b82f6', tension: 0.3, fill: false },
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { labels: { color: '#94a3b8' } } },
+                scales: {
+                    x: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
+                    y: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' }, beginAtZero: true }
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Failed to load stats:', e);
+    }
+}
+
+async function loadEmails(page = 1) {
+    currentPage = page;
+    try {
+        const res = await fetch(`/api/email-tracking/emails?page=${page}&per_page=20`);
+        const data = await res.json();
+        if (!data.success) return;
+
+        const tbody = document.getElementById('emailsBody');
+        if (data.emails.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:16px;color:#94a3b8;text-align:center;">No tracked emails yet</td></tr>';
+        } else {
+            tbody.innerHTML = data.emails.map(e => `
+                <tr style="border-bottom:1px solid #1e293b;">
+                    <td style="padding:8px;color:#f1f5f9;font-size:13px;">${e.email_address || '-'}</td>
+                    <td style="padding:8px;color:#f1f5f9;font-size:13px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.subject || '-'}</td>
+                    <td style="padding:8px;color:#94a3b8;font-size:13px;">${e.sent_at ? new Date(e.sent_at).toLocaleDateString() : '-'}</td>
+                    <td style="text-align:center;padding:8px;">
+                        ${e.open_count > 0 ? `<span style="color:#22c55e;font-weight:600;">${e.open_count}</span>` : '<span style="color:#64748b;">0</span>'}
+                    </td>
+                    <td style="text-align:center;padding:8px;">
+                        ${e.click_count > 0 ? `<span style="color:#3b82f6;font-weight:600;">${e.click_count}</span>` : '<span style="color:#64748b;">0</span>'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Pagination
+        const totalPages = Math.ceil(data.total / data.per_page);
+        const pag = document.getElementById('pagination');
+        if (totalPages <= 1) { pag.innerHTML = ''; return; }
+        let html = '';
+        for (let i = 1; i <= Math.min(totalPages, 10); i++) {
+            html += `<button onclick="loadEmails(${i})" style="padding:6px 12px;border-radius:6px;border:1px solid ${i===page?'#22c55e':'#334155'};background:${i===page?'#22c55e':'transparent'};color:${i===page?'#0f172a':'#94a3b8'};cursor:pointer;">${i}</button>`;
+        }
+        pag.innerHTML = html;
+    } catch (e) {
+        console.error('Failed to load emails:', e);
+    }
+}
+
+// Initial load
+loadStats();
+loadEmails();
+</script>
+{% endblock %}

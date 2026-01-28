@@ -150,6 +150,9 @@ def log_email(
     """Log an email send attempt to the database."""
     from database import EmailLog
 
+    from services.email_tracking_service import generate_tracking_id
+
+    tracking_id = generate_tracking_id()
     log_entry = EmailLog(
         client_id=client_id,
         email_address=email_address,
@@ -159,6 +162,7 @@ def log_email(
         error_message=error_message,
         message_id=message_id,
         sent_at=datetime.utcnow(),
+        tracking_id=tracking_id,
     )
     db.add(log_entry)
     db.commit()

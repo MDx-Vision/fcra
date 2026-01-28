@@ -17077,6 +17077,112 @@ def dashboard_client_tags():
 
 
 # ============================================================
+# EMAIL TRACKING ENDPOINTS
+# ============================================================
+
+
+@app.route("/api/email/track/open/<tracking_id>")
+def api_email_track_open(tracking_id):
+    """Tracking pixel endpoint - records email open."""
+    from services.email_tracking_service import EmailTrackingService, TRACKING_PIXEL
+
+    service = EmailTrackingService()
+    try:
+        service.record_open(
+            tracking_id=tracking_id,
+            user_agent=request.headers.get("User-Agent"),
+            ip_address=request.remote_addr,
+        )
+    except Exception:
+        pass
+    finally:
+        service.close()
+
+    response = make_response(TRACKING_PIXEL)
+    response.headers["Content-Type"] = "image/gif"
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    return response
+
+
+@app.route("/api/email/track/click/<tracking_id>")
+def api_email_track_click(tracking_id):
+    """Click redirect endpoint - records click then redirects."""
+    from services.email_tracking_service import EmailTrackingService
+    from urllib.parse import unquote
+
+    original_url = unquote(request.args.get("url", ""))
+    if not original_url:
+        return redirect("/")
+
+    service = EmailTrackingService()
+    try:
+        service.record_click(
+            tracking_id=tracking_id,
+            original_url=original_url,
+            user_agent=request.headers.get("User-Agent"),
+            ip_address=request.remote_addr,
+        )
+    except Exception:
+        pass
+    finally:
+        service.close()
+
+    return redirect(original_url)
+
+
+@app.route("/api/email-tracking/stats")
+@require_staff()
+def api_email_tracking_stats():
+    """Get overall email tracking statistics."""
+    from services.email_tracking_service import EmailTrackingService
+
+    days = request.args.get("days", 30, type=int)
+    service = EmailTrackingService()
+    try:
+        result = service.get_overall_stats(days=days)
+        return jsonify(result)
+    finally:
+        service.close()
+
+
+@app.route("/api/email-tracking/emails")
+@require_staff()
+def api_email_tracking_emails():
+    """Get recent tracked emails."""
+    from services.email_tracking_service import EmailTrackingService
+
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 50, type=int)
+    service = EmailTrackingService()
+    try:
+        result = service.get_recent_emails(page=page, per_page=per_page)
+        return jsonify(result)
+    finally:
+        service.close()
+
+
+@app.route("/api/email-tracking/emails/<int:email_id>")
+@require_staff()
+def api_email_tracking_detail(email_id):
+    """Get tracking details for a specific email."""
+    from services.email_tracking_service import EmailTrackingService
+
+    service = EmailTrackingService()
+    try:
+        result = service.get_email_stats(email_id)
+        return jsonify(result)
+    finally:
+        service.close()
+
+
+@app.route("/dashboard/email-tracking")
+@require_staff()
+def dashboard_email_tracking():
+    """Email tracking stats dashboard."""
+    return render_template("email_tracking.html")
+
+
+# ============================================================
 # LEAD SCORING ENDPOINTS
 # ============================================================
 
