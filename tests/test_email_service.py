@@ -32,6 +32,15 @@ from services.email_service import (
 # ============== Fixtures ==============
 
 
+@pytest.fixture(autouse=True)
+def reset_circuit_breakers():
+    """Reset circuit breakers before each test to prevent test pollution."""
+    from services.circuit_breaker_service import reset_all_circuits
+    reset_all_circuits()
+    yield
+    reset_all_circuits()
+
+
 @pytest.fixture
 def mock_smtp():
     """Create a mock SMTP connection."""

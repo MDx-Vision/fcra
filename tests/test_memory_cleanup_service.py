@@ -69,17 +69,19 @@ class TestCleanupCreditReports:
 
     def setup_method(self):
         """Clear timestamps before each test."""
-        _credit_report_timestamps.clear()
+        import services.memory_cleanup_service as mod
+        mod._credit_report_timestamps = {}
 
     def test_cleanup_old_reports(self):
         """Test that old credit reports are removed."""
+        import services.memory_cleanup_service as mod
         credit_reports = [{"id": 1}, {"id": 2}, {"id": 3}]
 
         # Set timestamps - first two are old, last is recent
         now = time.time()
-        _credit_report_timestamps[0] = now - (CREDIT_REPORTS_TTL_SECONDS + 1000)
-        _credit_report_timestamps[1] = now - (CREDIT_REPORTS_TTL_SECONDS + 500)
-        _credit_report_timestamps[2] = now - 100  # Recent
+        mod._credit_report_timestamps[0] = now - (CREDIT_REPORTS_TTL_SECONDS + 1000)
+        mod._credit_report_timestamps[1] = now - (CREDIT_REPORTS_TTL_SECONDS + 500)
+        mod._credit_report_timestamps[2] = now - 100  # Recent
 
         removed = cleanup_credit_reports(credit_reports)
 
@@ -95,12 +97,13 @@ class TestCleanupCreditReports:
 
     def test_new_reports_get_timestamps(self):
         """Test that new reports without timestamps get current time."""
+        import services.memory_cleanup_service as mod
         credit_reports = [{"id": 1}, {"id": 2}]
 
         cleanup_credit_reports(credit_reports)
 
-        assert 0 in _credit_report_timestamps
-        assert 1 in _credit_report_timestamps
+        assert 0 in mod._credit_report_timestamps
+        assert 1 in mod._credit_report_timestamps
 
 
 class TestCleanupDeliveredCases:
@@ -148,7 +151,7 @@ class TestCleanupScanSessions:
 
     def test_cleanup_calls_service(self):
         """Test that cleanup calls the document scanner service."""
-        with patch("services.memory_cleanup_service.cleanup_old_sessions") as mock_cleanup:
+        with patch("services.document_scanner_service.cleanup_old_sessions") as mock_cleanup:
             mock_cleanup.return_value = 5
 
             removed = cleanup_scan_sessions()
