@@ -28,7 +28,8 @@ class TestEnvironmentVariables:
 
     def test_is_ci_flag_when_ci_env_false(self):
         """Test IS_CI flag is False when CI environment variable is not 'true'."""
-        with patch.dict(os.environ, {"CI": "false"}, clear=False):
+        env_overrides = {"CI": "false", "CYPRESS_TEST": "", "TESTING": ""}
+        with patch.dict(os.environ, env_overrides, clear=False):
             import importlib
             from services import rate_limiter
             importlib.reload(rate_limiter)
@@ -38,6 +39,8 @@ class TestEnvironmentVariables:
         """Test IS_CI flag is False when CI environment variable is not set."""
         env_copy = os.environ.copy()
         env_copy.pop("CI", None)
+        env_copy.pop("CYPRESS_TEST", None)
+        env_copy.pop("TESTING", None)
         with patch.dict(os.environ, env_copy, clear=True):
             import importlib
             from services import rate_limiter
@@ -224,19 +227,20 @@ class TestInitRateLimiter:
                 with patch('services.rate_limiter.get_remote_address', return_value="127.0.0.1"):
                     with patch('services.rate_limiter.request') as mock_request:
                         mock_request.path = "/api/test"
+                        mock_request.headers = {"User-Agent": "test"}
 
-                        # Get the error handler and call it
-                        handler = app.error_handler_spec[None][429][TooManyRequests]
-                        response, status_code = handler(MockRateLimitError())
+                        with patch('services.rate_limit_monitor_service.get_rate_limit_monitor', return_value=None):
+                            # Get the error handler and call it
+                            handler = app.error_handler_spec[None][429][TooManyRequests]
+                            response, status_code = handler(MockRateLimitError())
 
-                        assert status_code == 429
-                        json_data = response.get_json()
-                        assert json_data["success"] is False
-                        assert json_data["error"] == "Rate limit exceeded"
-                        assert "Too many requests" in json_data["message"]
-                        assert json_data["retry_after"] == "60 seconds"
+                            assert status_code == 429
+                            json_data = response.get_json()
+                            assert json_data["success"] is False
+                            assert json_data["error"] == "Rate limit exceeded"
+                            assert "Too many requests" in json_data["message"]
+                            assert json_data["retry_after"] == "60 seconds"
 
-    @patch('services.rate_limiter.IS_CI', False)
     def test_init_rate_limiter_enabled_when_not_ci(self):
         """Test rate limiter is enabled when not in CI mode."""
         from flask import Flask
@@ -248,12 +252,13 @@ class TestInitRateLimiter:
             mock_limiter = Mock()
             MockLimiter.return_value = mock_limiter
 
-            from services.rate_limiter import init_rate_limiter
-            init_rate_limiter(app)
+            with patch('services.rate_limiter.is_testing_mode', return_value=False):
+                from services.rate_limiter import init_rate_limiter
+                init_rate_limiter(app)
 
-            # Check that enabled=True was passed (not IS_CI)
-            call_kwargs = MockLimiter.call_args[1]
-            assert call_kwargs.get('enabled') is True
+                # Check that enabled=True was passed (not is_testing_mode())
+                call_kwargs = MockLimiter.call_args[1]
+                assert call_kwargs.get('enabled') is True
 
     @patch('services.rate_limiter.IS_CI', True)
     def test_init_rate_limiter_disabled_when_ci(self):
@@ -706,16 +711,18 @@ class TestEdgeCases:
                 with patch('services.rate_limiter.get_remote_address', return_value="192.168.1.1"):
                     with patch('services.rate_limiter.request') as mock_request:
                         mock_request.path = "/api/sensitive"
+                        mock_request.headers = {"User-Agent": "test"}
 
                         with patch('services.logging_config.api_logger') as mock_logger:
-                            handler = app.error_handler_spec[None][429][TooManyRequests]
-                            handler(MockRateLimitError())
+                            with patch('services.rate_limit_monitor_service.get_rate_limit_monitor', return_value=None):
+                                handler = app.error_handler_spec[None][429][TooManyRequests]
+                                handler(MockRateLimitError())
 
-                            # Logger should have been called with warning
-                            mock_logger.warning.assert_called_once()
-                            call_args = mock_logger.warning.call_args[0][0]
-                            assert "192.168.1.1" in call_args
-                            assert "/api/sensitive" in call_args
+                                # Logger should have been called with warning
+                                mock_logger.warning.assert_called_once()
+                                call_args = mock_logger.warning.call_args[0][0]
+                                assert "192.168.1.1" in call_args
+                                assert "/api/sensitive" in call_args
 
     def test_multiple_flask_apps(self):
         """Test rate limiter can be initialized on multiple Flask apps."""
