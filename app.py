@@ -39599,6 +39599,78 @@ def cron_daily():
 
 
 # =============================================================================
+# DATABASE BACKUP ENDPOINTS
+# =============================================================================
+
+
+@app.route("/api/backups", methods=["GET"])
+@require_staff(roles=["admin"])
+def api_list_backups():
+    """List all database backups."""
+    from services.database_backup_service import DatabaseBackupService
+
+    service = DatabaseBackupService()
+    return jsonify(service.list_backups())
+
+
+@app.route("/api/backups/create", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_create_backup():
+    """Create a new database backup."""
+    from services.database_backup_service import DatabaseBackupService
+
+    service = DatabaseBackupService()
+    result = service.create_backup(compress=True)
+    return jsonify(result)
+
+
+@app.route("/api/backups/<filename>/verify", methods=["GET"])
+@require_staff(roles=["admin"])
+def api_verify_backup(filename):
+    """Verify a backup file integrity."""
+    from services.database_backup_service import DatabaseBackupService
+
+    service = DatabaseBackupService()
+    return jsonify(service.verify_backup(filename))
+
+
+@app.route("/api/backups/<filename>/restore", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_restore_backup(filename):
+    """Restore a database backup. USE WITH CAUTION."""
+    from services.database_backup_service import DatabaseBackupService
+
+    service = DatabaseBackupService()
+    result = service.restore_backup(filename)
+    return jsonify(result)
+
+
+@app.route("/api/backups/cleanup", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_cleanup_backups():
+    """Remove backups older than retention period."""
+    from services.database_backup_service import DatabaseBackupService
+
+    service = DatabaseBackupService()
+    return jsonify(service.cleanup_old_backups())
+
+
+@app.route("/api/cron/nightly-backup", methods=["POST", "GET"])
+def cron_nightly_backup():
+    """Nightly backup cron endpoint. Secured by CRON_SECRET."""
+    from services.database_backup_service import DatabaseBackupService
+
+    secret = request.args.get("secret") or request.headers.get("X-Cron-Secret")
+    expected = os.environ.get("CRON_SECRET", "")
+    if expected and secret != expected:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    service = DatabaseBackupService()
+    result = service.run_nightly_backup()
+    return jsonify(result)
+
+
+# =============================================================================
 # BOOKING SYSTEM - Q&A Call Scheduling
 # =============================================================================
 
