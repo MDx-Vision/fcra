@@ -6,11 +6,77 @@ Specifically optimized for MyScoreIQ Angular-rendered reports.
 
 import logging
 import re
+from collections import defaultdict
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
 
 from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
+
+# Track repeated parse failures for admin alerting
+_failure_counts: Dict[str, List[datetime]] = defaultdict(list)
+_FAILURE_ALERT_THRESHOLD = 5  # Alert after 5 failures
+_FAILURE_WINDOW_MINUTES = 60  # Within this time window
+
+
+def _record_parse_failure(service_name: str, errors: List[Dict]):
+    """Record a parse failure and trigger admin alert if threshold exceeded."""
+    now = datetime.utcnow()
+    cutoff = now - timedelta(minutes=_FAILURE_WINDOW_MINUTES)
+
+    # Prune old entries
+    _failure_counts[service_name] = [
+        t for t in _failure_counts[service_name] if t > cutoff
+    ]
+    _failure_counts[service_name].append(now)
+
+    count = len(_failure_counts[service_name])
+    if count >= _FAILURE_ALERT_THRESHOLD:
+        logger.critical(
+            "ADMIN ALERT: Credit report parser has failed %d times in %d minutes "
+            "for service '%s'. Latest errors: %s",
+            count,
+            _FAILURE_WINDOW_MINUTES,
+            service_name,
+            ", ".join(e["section"] + ": " + e["error"] for e in errors[:3]),
+        )
+        # Reset counter after alert
+        _failure_counts[service_name] = []
+
+        # Try to send admin notification
+        try:
+            from services.email_service import send_email
+            send_email(
+                to_email="admin@brightpathcredit.com",
+                subject=f"[ALERT] Credit Report Parser Failures - {service_name}",
+                html_content=(
+                    f"<h3>Repeated Parse Failures Detected</h3>"
+                    f"<p>The credit report parser for <strong>{service_name}</strong> "
+                    f"has failed {count} times in the last {_FAILURE_WINDOW_MINUTES} minutes.</p>"
+                    f"<p>Recent errors:</p><ul>"
+                    + "".join(f"<li>{e['section']}: {e['error']}</li>" for e in errors[:5])
+                    + "</ul>"
+                ),
+            )
+        except Exception:
+            pass  # Don't fail if alert email fails
+
+
+def get_parse_failure_stats() -> Dict:
+    """Get current parse failure statistics for monitoring."""
+    now = datetime.utcnow()
+    cutoff = now - timedelta(minutes=_FAILURE_WINDOW_MINUTES)
+    stats = {}
+    for service, timestamps in _failure_counts.items():
+        recent = [t for t in timestamps if t > cutoff]
+        if recent:
+            stats[service] = {
+                "count": len(recent),
+                "oldest": recent[0].isoformat(),
+                "newest": recent[-1].isoformat(),
+            }
+    return stats
 
 
 class CreditReportParser:
@@ -56,18 +122,27 @@ class CreditReportParser:
         self._summary_counts: Optional[Dict[str, Any]] = None
 
     def parse(self) -> Dict:
-        """Parse the credit report and return structured data."""
-        self._summary_counts = self._extract_summary_counts()
+        """Parse the credit report and return structured data.
+
+        Each section is parsed independently with error recovery.
+        If a section fails, it returns empty/default data and parsing continues.
+        """
+        self._parse_errors: List[Dict[str, str]] = []
+
+        self._summary_counts = self._safe_extract(
+            "_extract_summary_counts", default={}
+        )
 
         result = {
-            "scores": self._extract_scores(),
-            "personal_info": self._extract_personal_info(),
-            "accounts": self._extract_accounts(),
-            "inquiries": self._extract_inquiries(),
-            "public_records": self._extract_public_records(),
-            "collections": self._extract_collections(),
-            "creditor_contacts": self._extract_creditor_contacts(),
+            "scores": self._safe_extract("_extract_scores", default={}),
+            "personal_info": self._safe_extract("_extract_personal_info", default={}),
+            "accounts": self._safe_extract("_extract_accounts", default=[]),
+            "inquiries": self._safe_extract("_extract_inquiries", default=[]),
+            "public_records": self._safe_extract("_extract_public_records", default=[]),
+            "collections": self._safe_extract("_extract_collections", default=[]),
+            "creditor_contacts": self._safe_extract("_extract_creditor_contacts", default=[]),
             "summary": {},
+            "parse_errors": self._parse_errors,
         }
 
         result["summary"] = {
@@ -75,9 +150,38 @@ class CreditReportParser:
             "total_inquiries": len(result["inquiries"]),
             "total_collections": len(result["collections"]),
             "total_public_records": len(result["public_records"]),
+            "had_errors": len(self._parse_errors) > 0,
+            "error_count": len(self._parse_errors),
         }
 
+        if self._parse_errors:
+            logger.warning(
+                "Credit report parsed with %d error(s) [service=%s]: %s",
+                len(self._parse_errors),
+                self.service,
+                ", ".join(e["section"] for e in self._parse_errors),
+            )
+            _record_parse_failure(self.service, self._parse_errors)
+
         return result
+
+    def _safe_extract(self, method_name: str, default=None):
+        """Safely call an extraction method, returning default on failure."""
+        try:
+            return getattr(self, method_name)()
+        except Exception as e:
+            error_info = {
+                "section": method_name.replace("_extract_", ""),
+                "error": str(e),
+                "error_type": type(e).__name__,
+            }
+            self._parse_errors.append(error_info)
+            logger.error(
+                "Error parsing section '%s' [service=%s]: %s: %s",
+                method_name, self.service, type(e).__name__, e,
+                exc_info=True,
+            )
+            return default if default is not None else {}
 
     def _extract_summary_counts(self) -> Dict:
         """Extract summary counts from the report to determine if collections/public records exist."""

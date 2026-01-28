@@ -1513,7 +1513,162 @@ class TestIntegration:
         for account in result["accounts"]:
             assert isinstance(account, dict)
 
-        # Summary should be dict with int values
+        # Summary should be dict with int/bool values
         assert isinstance(result["summary"], dict)
         for key, value in result["summary"].items():
-            assert isinstance(value, int)
+            assert isinstance(value, (int, bool))
+
+
+# =============================================================================
+# Error Recovery Tests
+# =============================================================================
+
+
+class TestErrorRecovery:
+    """Tests for parser error recovery - partial data on section failures."""
+
+    def test_parse_returns_partial_data_on_section_failure(self):
+        """If one section fails, others should still return data."""
+        from unittest.mock import patch
+
+        parser = CreditReportParser("<html><body></body></html>")
+
+        # Make _extract_scores raise, everything else should still work
+        with patch.object(parser, "_extract_scores", side_effect=ValueError("bad score")):
+            result = parser.parse()
+
+        assert result["scores"] == {}
+        assert isinstance(result["accounts"], list)
+        assert isinstance(result["inquiries"], list)
+        assert result["summary"]["had_errors"] is True
+        assert result["summary"]["error_count"] >= 1
+        assert len(result["parse_errors"]) >= 1
+        assert result["parse_errors"][0]["section"] == "scores"
+
+    def test_parse_returns_all_defaults_on_total_failure(self):
+        """If all sections fail, result should have all defaults."""
+        from unittest.mock import patch
+
+        parser = CreditReportParser("<html><body></body></html>")
+
+        methods = [
+            "_extract_summary_counts",
+            "_extract_scores",
+            "_extract_personal_info",
+            "_extract_accounts",
+            "_extract_inquiries",
+            "_extract_public_records",
+            "_extract_collections",
+            "_extract_creditor_contacts",
+        ]
+        patches = {m: patch.object(parser, m, side_effect=Exception("fail")) for m in methods}
+
+        with patches["_extract_summary_counts"], patches["_extract_scores"], \
+             patches["_extract_personal_info"], patches["_extract_accounts"], \
+             patches["_extract_inquiries"], patches["_extract_public_records"], \
+             patches["_extract_collections"], patches["_extract_creditor_contacts"]:
+            result = parser.parse()
+
+        assert result["scores"] == {}
+        assert result["personal_info"] == {}
+        assert result["accounts"] == []
+        assert result["inquiries"] == []
+        assert result["public_records"] == []
+        assert result["collections"] == []
+        assert result["creditor_contacts"] == []
+        assert result["summary"]["had_errors"] is True
+        assert result["summary"]["error_count"] == 8
+
+    def test_parse_no_errors_on_valid_html(self):
+        """Normal parse with empty HTML should have no errors."""
+        parser = CreditReportParser("<html><body></body></html>")
+        result = parser.parse()
+
+        assert result["summary"]["had_errors"] is False
+        assert result["summary"]["error_count"] == 0
+        assert result["parse_errors"] == []
+
+    def test_safe_extract_logs_error(self):
+        """_safe_extract should log errors."""
+        from unittest.mock import patch
+        import logging
+
+        parser = CreditReportParser("<html></html>")
+        parser._parse_errors = []
+
+        with patch.object(parser, "_extract_scores", side_effect=TypeError("test error")):
+            with patch("services.credit_report_parser.logger") as mock_logger:
+                result = parser._safe_extract("_extract_scores", default={})
+
+        assert result == {}
+        mock_logger.error.assert_called_once()
+        assert len(parser._parse_errors) == 1
+        assert parser._parse_errors[0]["error_type"] == "TypeError"
+
+    def test_parse_errors_include_context(self):
+        """Parse errors should include section name, error message, and type."""
+        from unittest.mock import patch
+
+        parser = CreditReportParser("<html></html>")
+
+        with patch.object(parser, "_extract_accounts", side_effect=AttributeError("no attr")):
+            result = parser.parse()
+
+        errors = result["parse_errors"]
+        account_error = next(e for e in errors if e["section"] == "accounts")
+        assert account_error["error"] == "no attr"
+        assert account_error["error_type"] == "AttributeError"
+
+
+class TestFailureTracking:
+    """Tests for the failure tracking and admin alert system."""
+
+    def test_record_parse_failure_tracks_count(self):
+        """Failures should be tracked per service."""
+        from services.credit_report_parser import _record_parse_failure, _failure_counts
+
+        # Clear state
+        _failure_counts.clear()
+
+        _record_parse_failure("test_service", [{"section": "scores", "error": "test"}])
+
+        assert "test_service" in _failure_counts
+        assert len(_failure_counts["test_service"]) == 1
+
+        # Cleanup
+        _failure_counts.clear()
+
+    def test_get_parse_failure_stats(self):
+        """Stats should return current failure counts."""
+        from services.credit_report_parser import (
+            _record_parse_failure, get_parse_failure_stats, _failure_counts
+        )
+
+        _failure_counts.clear()
+
+        _record_parse_failure("svc_a", [{"section": "scores", "error": "fail"}])
+        _record_parse_failure("svc_a", [{"section": "accounts", "error": "fail"}])
+
+        stats = get_parse_failure_stats()
+        assert "svc_a" in stats
+        assert stats["svc_a"]["count"] == 2
+
+        _failure_counts.clear()
+
+    def test_alert_triggered_at_threshold(self):
+        """Admin alert should fire after threshold failures."""
+        from unittest.mock import patch
+        from services.credit_report_parser import (
+            _record_parse_failure, _failure_counts, _FAILURE_ALERT_THRESHOLD
+        )
+
+        _failure_counts.clear()
+
+        with patch("services.credit_report_parser.logger") as mock_logger:
+            for i in range(_FAILURE_ALERT_THRESHOLD):
+                _record_parse_failure("alert_test", [{"section": "scores", "error": f"fail {i}"}])
+
+            # Should have triggered critical log
+            mock_logger.critical.assert_called_once()
+
+        _failure_counts.clear()
