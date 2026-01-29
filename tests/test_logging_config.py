@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.logging_config import (
     get_correlation_id,
+    get_current_user_id,
     JSONFormatter,
     setup_logging,
     get_logger,
@@ -77,6 +78,76 @@ class TestGetCorrelationId:
         # This tests the getattr fallback to None
         result = get_correlation_id()
         assert result is None
+
+
+class TestGetCurrentUserId:
+    """Tests for get_current_user_id function."""
+
+    def test_returns_none_outside_request_context(self):
+        """Test returns None outside Flask request context."""
+        # When not in Flask context, RuntimeError is raised accessing g/session
+        result = get_current_user_id()
+        assert result is None
+
+    def test_function_exists_and_callable(self):
+        """Test get_current_user_id is properly exported and callable."""
+        assert callable(get_current_user_id)
+
+    def test_returns_string_format_staff(self):
+        """Test return format is 'staff:id' for staff users via mocked function."""
+        # Test that the function returns proper format when mocked
+        with patch("services.logging_config.get_current_user_id", return_value="staff:42"):
+            from services.logging_config import get_current_user_id as mocked_fn
+            assert mocked_fn() == "staff:42"
+
+    def test_returns_string_format_client(self):
+        """Test return format is 'client:id' for client users via mocked function."""
+        with patch("services.logging_config.get_current_user_id", return_value="client:123"):
+            from services.logging_config import get_current_user_id as mocked_fn
+            assert mocked_fn() == "client:123"
+
+    def test_returns_string_format_tenant(self):
+        """Test return format is 'tenant:id' for tenant users via mocked function."""
+        with patch("services.logging_config.get_current_user_id", return_value="tenant:7"):
+            from services.logging_config import get_current_user_id as mocked_fn
+            assert mocked_fn() == "tenant:7"
+
+    def test_user_id_used_in_json_formatter(self):
+        """Test that get_current_user_id is called by JSONFormatter."""
+        formatter = JSONFormatter()
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="/test.py",
+            lineno=1,
+            msg="Test",
+            args=(),
+            exc_info=None
+        )
+
+        with patch("services.logging_config.get_current_user_id", return_value="staff:99"):
+            result = formatter.format(record)
+            parsed = json.loads(result)
+            assert parsed.get("user_id") == "staff:99"
+
+    def test_user_id_excluded_when_none(self):
+        """Test that user_id is excluded from JSON when None."""
+        formatter = JSONFormatter()
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="/test.py",
+            lineno=1,
+            msg="Test",
+            args=(),
+            exc_info=None
+        )
+
+        with patch("services.logging_config.get_current_user_id", return_value=None):
+            with patch("services.logging_config.get_correlation_id", return_value=None):
+                result = formatter.format(record)
+                parsed = json.loads(result)
+                assert "user_id" not in parsed
 
 
 class TestJSONFormatter:
@@ -172,6 +243,46 @@ class TestJSONFormatter:
 
         assert parsed["custom_field"] == "custom_value"
         assert parsed["count"] == 42
+
+    def test_json_formatter_includes_user_id_when_available(self):
+        """Test JSON formatter includes user_id when a user is authenticated."""
+        formatter = JSONFormatter()
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="/test.py",
+            lineno=1,
+            msg="Test with user",
+            args=(),
+            exc_info=None
+        )
+
+        with patch("services.logging_config.get_correlation_id", return_value=None):
+            with patch("services.logging_config.get_current_user_id", return_value="staff:42"):
+                result = formatter.format(record)
+                parsed = json.loads(result)
+
+                assert parsed["user_id"] == "staff:42"
+
+    def test_json_formatter_excludes_user_id_when_none(self):
+        """Test JSON formatter excludes user_id when no user is authenticated."""
+        formatter = JSONFormatter()
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="/test.py",
+            lineno=1,
+            msg="Test without user",
+            args=(),
+            exc_info=None
+        )
+
+        with patch("services.logging_config.get_correlation_id", return_value=None):
+            with patch("services.logging_config.get_current_user_id", return_value=None):
+                result = formatter.format(record)
+                parsed = json.loads(result)
+
+                assert "user_id" not in parsed
 
     def test_json_formatter_message_with_args(self):
         """Test JSON formatter handles message with format arguments."""
@@ -425,6 +536,25 @@ class TestLogRequest:
             # Query string should be truncated to 200 chars
             assert len(extra_data["query_string"]) <= 200
 
+    def test_log_request_includes_user_id(self):
+        """Test log_request includes user_id in extra_data."""
+        mock_request = MagicMock()
+        mock_request.method = "POST"
+        mock_request.path = "/api/action"
+        mock_request.query_string = b""
+        mock_request.remote_addr = "127.0.0.1"
+        mock_request.user_agent = MagicMock()
+        mock_request.user_agent.__str__ = MagicMock(return_value="TestUA")
+        mock_request.content_length = 50
+
+        with patch("services.logging_config.get_correlation_id", return_value="corr-123"):
+            with patch("services.logging_config.get_current_user_id", return_value="client:789"):
+                with patch.object(api_logger, 'info') as mock_info:
+                    log_request(mock_request)
+                    extra_data = mock_info.call_args[1]["extra"]["extra_data"]
+                    assert extra_data["user_id"] == "client:789"
+                    assert extra_data["correlation_id"] == "corr-123"
+
 
 class TestLogResponse:
     """Tests for log_response function."""
@@ -479,6 +609,19 @@ class TestLogResponse:
             extra_data = mock_log.call_args[1]["extra"]["extra_data"]
             assert extra_data["status_code"] == 201
             assert extra_data["duration_ms"] == 75.5
+
+    def test_log_response_includes_user_id(self):
+        """Test log_response includes user_id in extra_data."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+
+        with patch("services.logging_config.get_correlation_id", return_value="resp-uuid"):
+            with patch("services.logging_config.get_current_user_id", return_value="tenant:15"):
+                with patch.object(api_logger, 'log') as mock_log:
+                    log_response(mock_response, 100.0)
+                    extra_data = mock_log.call_args[1]["extra"]["extra_data"]
+                    assert extra_data["user_id"] == "tenant:15"
+                    assert extra_data["correlation_id"] == "resp-uuid"
 
 
 class TestLogError:

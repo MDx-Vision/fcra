@@ -51,6 +51,36 @@ def get_correlation_id():
         return None
 
 
+def get_current_user_id():
+    """Get current user ID from Flask session or g."""
+    try:
+        from flask import g, session
+
+        # Check g.staff_id first (staff dashboard)
+        if hasattr(g, "staff_id") and g.staff_id:
+            return f"staff:{g.staff_id}"
+
+        # Check session for staff
+        if session.get("staff_id"):
+            return f"staff:{session['staff_id']}"
+
+        # Check g.client_id (client portal)
+        if hasattr(g, "client_id") and g.client_id:
+            return f"client:{g.client_id}"
+
+        # Check session for client
+        if session.get("client_id"):
+            return f"client:{session['client_id']}"
+
+        # Check g.tenant_id (partner portal)
+        if hasattr(g, "tenant_id") and g.tenant_id:
+            return f"tenant:{g.tenant_id}"
+
+        return None
+    except RuntimeError:
+        return None
+
+
 # JSON format for structured logging (production)
 class JSONFormatter(logging.Formatter):
     """JSON formatter for structured logging."""
@@ -72,6 +102,11 @@ class JSONFormatter(logging.Formatter):
         correlation_id = get_correlation_id()
         if correlation_id:
             log_data["correlation_id"] = correlation_id
+
+        # Add user ID if available
+        user_id = get_current_user_id()
+        if user_id:
+            log_data["user_id"] = user_id
 
         # Add exception info if present
         if record.exc_info:
@@ -156,6 +191,7 @@ perf_logger = get_logger("performance")
 def log_request(request):
     """Log incoming HTTP request."""
     correlation_id = get_correlation_id()
+    user_id = get_current_user_id()
     api_logger.info(
         f"REQUEST {request.method} {request.path}",
         extra={
@@ -172,6 +208,7 @@ def log_request(request):
                 "user_agent": str(request.user_agent)[:200],
                 "content_length": request.content_length,
                 "correlation_id": correlation_id,
+                "user_id": user_id,
             }
         },
     )
@@ -181,6 +218,7 @@ def log_response(response, duration_ms):
     """Log HTTP response."""
     level = logging.INFO if response.status_code < 400 else logging.WARNING
     correlation_id = get_correlation_id()
+    user_id = get_current_user_id()
     api_logger.log(
         level,
         f"RESPONSE {response.status_code} ({duration_ms:.0f}ms)",
@@ -190,6 +228,7 @@ def log_response(response, duration_ms):
                 "status_code": response.status_code,
                 "duration_ms": round(duration_ms, 2),
                 "correlation_id": correlation_id,
+                "user_id": user_id,
             }
         },
     )
