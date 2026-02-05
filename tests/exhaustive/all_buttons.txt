@@ -529,7 +529,7 @@ templates/specialty_bureaus.html:64:        .btn-danger {
 templates/specialty_bureaus.html:69:        .btn-danger:hover { background: #fecaca; }
 templates/specialty_bureaus.html:178:        .filter-btn {
 templates/specialty_bureaus.html:190:        .filter-btn:hover { border-color: #319795; }
-templates/specialty_bureaus.html:191:        .filter-btn.active { 
+templates/specialty_bureaus.html:191:        .filter-btn.active {
 templates/specialty_bureaus.html:401:        .action-btns {
 templates/specialty_bureaus.html:405:        .action-btn {
 templates/specialty_bureaus.html:416:        .action-btn.edit {
@@ -690,10 +690,10 @@ templates/signups.html:341:                <a href="/dashboard/signups?status=pe
 templates/signups.html:342:                <a href="/dashboard/signups?status=free" class="filter-btn {% if status_filter == 'free' %}active{% endif %}">Free Tier</a>
 templates/signups.html:343:                <a href="/dashboard/signups?status=failed" class="filter-btn {% if status_filter == 'failed' %}active{% endif %}">Failed</a>
 templates/signups.html:390:                            <a href="/portal/{{ client.portal_token }}" class="action-btn" target="_blank" title="View client portal">
-templates/signups.html:395:                            <button class="action-btn confirm-btn" 
-templates/signups.html:396:                                    onclick="confirmPayment({{ client.id }}, this)" 
-templates/signups.html:401:                            <button class="action-btn {% if client.contacted %}contacted{% endif %}" 
-templates/signups.html:402:                                    onclick="markContacted('client', {{ client.id }}, this)" 
+templates/signups.html:395:                            <button class="action-btn confirm-btn"
+templates/signups.html:396:                                    onclick="confirmPayment({{ client.id }}, this)"
+templates/signups.html:401:                            <button class="action-btn {% if client.contacted %}contacted{% endif %}"
+templates/signups.html:402:                                    onclick="markContacted('client', {{ client.id }}, this)"
 templates/signups.html:431:        async function markContacted(type, id, btn) {
 templates/signups.html:442:                    btn.classList.add('contacted');
 templates/signups.html:443:                    btn.innerHTML = '📞 Contacted';
@@ -784,7 +784,7 @@ templates/chexsystems.html:54:        .btn-secondary {
 templates/chexsystems.html:59:        .btn-secondary:hover { border-color: #319795; }
 templates/chexsystems.html:96:        .filter-btn {
 templates/chexsystems.html:108:        .filter-btn:hover { border-color: #319795; }
-templates/chexsystems.html:109:        .filter-btn.active { 
+templates/chexsystems.html:109:        .filter-btn.active {
 templates/chexsystems.html:440:                <button class="btn btn-primary" onclick="openNewDisputeModal()">
 templates/chexsystems.html:477:            <a href="?status=all{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'all' %}active{% endif %}">All</a>
 templates/chexsystems.html:478:            <a href="?status=pending{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'pending' %}active{% endif %}">Pending</a>
@@ -845,7 +845,7 @@ templates/credit_report_view.html:1011:                btn.style.color = 'white'
 templates/credit_report_view.html:1012:                btn.style.border = 'none';
 templates/sops.html:80:        .filter-btn {
 templates/sops.html:92:        .filter-btn:hover { border-color: #319795; }
-templates/sops.html:93:        .filter-btn.active { 
+templates/sops.html:93:        .filter-btn.active {
 templates/sops.html:98:        .filter-btn .count {
 templates/sops.html:254:        .view-btn {
 templates/sops.html:265:        .view-btn:hover {
@@ -1447,7 +1447,7 @@ templates/billing_management.html:59:        .btn-sm {
 templates/billing_management.html:363:                <button class="btn btn-primary" onclick="openCreatePlanModal()">
 templates/billing_management.html:394:                <button class="btn btn-secondary btn-sm" onclick="initializeDefaultPlans()">
 templates/billing_management.html:423:                        <button class="btn btn-secondary btn-sm" onclick="editPlan({{ plan.id }})">Edit</button>
-templates/billing_management.html:424:                        <button class="btn btn-sm {% if plan.is_active %}btn-danger{% else %}btn-primary{% endif %}" 
+templates/billing_management.html:424:                        <button class="btn btn-sm {% if plan.is_active %}btn-danger{% else %}btn-primary{% endif %}"
 templates/billing_management.html:425:                                onclick="togglePlanStatus({{ plan.id }}, {{ 'false' if plan.is_active else 'true' }})">
 templates/billing_management.html:437:                <button class="btn btn-primary" style="margin-top: 20px;" onclick="initializeDefaultPlans()">
 templates/billing_management.html:480:                            <button class="btn btn-secondary btn-sm" onclick="openPortal({{ sub.client_id }})">

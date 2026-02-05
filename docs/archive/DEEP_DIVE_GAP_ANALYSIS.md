@@ -257,7 +257,7 @@
 
 ### 4.2 Hover Quick Info Popup
 
-BAG shows popup with client details on hover. 
+BAG shows popup with client details on hover.
 
 | Data Point | Our Status | Test Status |
 |------------|------------|-------------|

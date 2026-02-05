@@ -79,7 +79,7 @@ async def test_all_buttons():
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context()
         page = await context.new_page()
-        
+
         # All pages to test
         pages_to_test = [
             "/",
@@ -127,53 +127,53 @@ async def test_all_buttons():
             "/dashboard/performance",
             "/dashboard/suspense-accounts",
         ]
-        
+
         for url in pages_to_test:
             await test_buttons_on_page(page, url)
-        
+
         await browser.close()
-    
+
     save_results()
 
 async def test_buttons_on_page(page, url):
     """Find and test every button on a page"""
-    
+
     print(f"\n{'='*60}")
     print(f"TESTING PAGE: {url}")
     print(f"{'='*60}")
-    
+
     page_result = {
         "url": url,
         "buttons_found": 0,
         "buttons_tested": 0,
         "buttons": []
     }
-    
+
     try:
         await page.goto(f"{BASE_URL}{url}", wait_until="networkidle", timeout=15000)
     except Exception as e:
         print(f"  ERROR loading page: {e}")
         RESULTS["pages"].append(page_result)
         return
-    
+
     # Find ALL button elements
     buttons = await page.query_selector_all("button")
     print(f"  Found {len(buttons)} buttons")
-    
+
     page_result["buttons_found"] = len(buttons)
     RESULTS["buttons_found"] += len(buttons)
-    
+
     for i, button in enumerate(buttons):
         button_result = await test_single_button(page, button, i, url)
         page_result["buttons"].append(button_result)
         page_result["buttons_tested"] += 1
         RESULTS["buttons_tested"] += 1
-    
+
     RESULTS["pages"].append(page_result)
 
 async def test_single_button(page, button, index, page_url):
     """Test a single button and determine its status"""
-    
+
     result = {
         "index": index,
         "text": "",
@@ -183,14 +183,14 @@ async def test_single_button(page, button, index, page_url):
         "status": "",
         "notes": ""
     }
-    
+
     try:
         # Get button info
         result["text"] = (await button.inner_text() or "").strip()[:50]
         result["id"] = await button.get_attribute("id") or ""
         result["class"] = (await button.get_attribute("class") or "")[:50]
         result["type"] = await button.get_attribute("type") or "button"
-        
+
         # Check visibility
         is_visible = await button.is_visible()
         if not is_visible:
@@ -199,7 +199,7 @@ async def test_single_button(page, button, index, page_url):
             RESULTS["status_counts"]["hidden"] += 1
             print(f"    [{index}] 👻 HIDDEN: {result['text'][:30] or result['id'] or 'unnamed'}")
             return result
-        
+
         # Check if enabled
         is_enabled = await button.is_enabled()
         if not is_enabled:
@@ -208,37 +208,37 @@ async def test_single_button(page, button, index, page_url):
             RESULTS["status_counts"]["disabled"] += 1
             print(f"    [{index}] ⚠️ DISABLED: {result['text'][:30] or result['id'] or 'unnamed'}")
             return result
-        
+
         # Check if dangerous (delete, remove, logout, etc.)
         text_lower = result["text"].lower()
         dangerous_keywords = ["delete", "remove", "logout", "sign out", "cancel subscription", "deactivate", "destroy"]
         is_dangerous = any(kw in text_lower for kw in dangerous_keywords)
-        
+
         # Store current URL to detect navigation
         current_url = page.url
-        
+
         # Click the button
         try:
             await button.click(timeout=3000)
             await page.wait_for_timeout(500)
-            
+
             # Check what happened
             new_url = page.url
-            
+
             # Check for modal
             modal = await page.query_selector(".modal.show, .modal-overlay:not([style*='display: none']), [class*='modal']:not([style*='display: none'])")
-            
+
             # Check for error
             error = await page.query_selector(".error, .alert-danger, .alert-error, [class*='error']:not(input)")
-            
+
             # Check for success
             success = await page.query_selector(".success, .alert-success, [class*='success']")
-            
+
             if is_dangerous:
                 # Handle dangerous button - try to cancel
                 result["status"] = STATUS_DANGEROUS
                 RESULTS["status_counts"]["dangerous_safe"] += 1
-                
+
                 # Try to close any dialog
                 cancel = await page.query_selector("button:has-text('Cancel'), button:has-text('No'), button:has-text('Close'), .btn-secondary, [data-dismiss], [data-bs-dismiss]")
                 if cancel:
@@ -250,7 +250,7 @@ async def test_single_button(page, button, index, page_url):
                 await page.keyboard.press("Escape")
                 result["notes"] = "Clicked and cancelled safely"
                 print(f"    [{index}] 🔒 DANGEROUS (safe): {result['text'][:30]}")
-                
+
             elif modal:
                 result["status"] = STATUS_WORKING
                 result["notes"] = "Opens modal"
@@ -265,7 +265,7 @@ async def test_single_button(page, button, index, page_url):
                         pass
                 await page.keyboard.press("Escape")
                 print(f"    [{index}] ✅ WORKING: {result['text'][:30]} -> Opens modal")
-                
+
             elif new_url != current_url:
                 result["status"] = STATUS_WORKING
                 result["notes"] = f"Navigates to {new_url}"
@@ -273,7 +273,7 @@ async def test_single_button(page, button, index, page_url):
                 # Go back
                 await page.goto(f"{BASE_URL}{page_url}", wait_until="networkidle", timeout=10000)
                 print(f"    [{index}] ✅ WORKING: {result['text'][:30]} -> Navigates")
-                
+
             elif error:
                 error_text = await error.inner_text()
                 result["status"] = STATUS_BROKEN
@@ -285,20 +285,20 @@ async def test_single_button(page, button, index, page_url):
                     "error": error_text[:100]
                 })
                 print(f"    [{index}] ❌ BROKEN: {result['text'][:30]} -> Error")
-                
+
             elif success:
                 result["status"] = STATUS_WORKING
                 result["notes"] = "Shows success message"
                 RESULTS["status_counts"]["working"] += 1
                 print(f"    [{index}] ✅ WORKING: {result['text'][:30]} -> Success")
-                
+
             else:
                 # Nothing visible happened - might not be built yet
                 result["status"] = STATUS_NOT_BUILT
                 result["notes"] = "No visible response"
                 RESULTS["status_counts"]["not_built"] += 1
                 print(f"    [{index}] 🔨 NOT BUILT: {result['text'][:30]} -> No response")
-            
+
         except Exception as click_error:
             error_msg = str(click_error)
             if "timeout" in error_msg.lower():
@@ -311,31 +311,31 @@ async def test_single_button(page, button, index, page_url):
                 result["notes"] = f"Click error: {error_msg[:50]}"
                 RESULTS["status_counts"]["broken"] += 1
                 print(f"    [{index}] ❌ BROKEN: {result['text'][:30]} -> Error")
-            
+
             # Try to recover
             try:
                 await page.goto(f"{BASE_URL}{page_url}", wait_until="networkidle", timeout=10000)
             except:
                 pass
-    
+
     except Exception as e:
         result["status"] = STATUS_BROKEN
         result["notes"] = str(e)[:100]
         RESULTS["status_counts"]["broken"] += 1
         print(f"    [{index}] ❌ ERROR: {str(e)[:50]}")
-    
+
     return result
 
 def save_results():
     # Save JSON
     with open("tests/mandatory/BUTTONS_THOROUGH_RESULTS.json", "w") as f:
         json.dump(RESULTS, f, indent=2, default=str)
-    
+
     # Calculate percentages
     total = RESULTS["buttons_tested"]
     if total == 0:
         total = 1  # Avoid division by zero
-    
+
     # Save detailed inventory report
     report = f"""# BUTTON INVENTORY - COMPLETE STATUS REPORT
 
@@ -375,7 +375,7 @@ def save_results():
 These buttons exist but do nothing when clicked:
 
 """
-    
+
     not_built = []
     for page_data in RESULTS["pages"]:
         for btn in page_data["buttons"]:
@@ -385,7 +385,7 @@ These buttons exist but do nothing when clicked:
                     "button": btn["text"] or btn["id"] or "unnamed",
                     "notes": btn["notes"]
                 })
-    
+
     if not_built:
         report += "| Page | Button | Notes |\n"
         report += "|------|--------|-------|\n"
@@ -393,7 +393,7 @@ These buttons exist but do nothing when clicked:
             report += f"| {item['page']} | {item['button']} | {item['notes']} |\n"
     else:
         report += "*None - all buttons are functional!*\n"
-    
+
     report += """
 
 ---
@@ -403,7 +403,7 @@ These buttons exist but do nothing when clicked:
 These buttons cause errors and need fixing:
 
 """
-    
+
     if RESULTS["issues"]:
         report += "| Page | Button | Error |\n"
         report += "|------|--------|-------|\n"
@@ -411,7 +411,7 @@ These buttons cause errors and need fixing:
             report += f"| {issue['page']} | {issue['button']} | {issue['error'][:50]} |\n"
     else:
         report += "*None - no broken buttons found!*\n"
-    
+
     report += """
 
 ---
@@ -419,7 +419,7 @@ These buttons cause errors and need fixing:
 ## Full Inventory by Page
 
 """
-    
+
     for page_data in RESULTS["pages"]:
         if page_data["buttons_found"] > 0:
             report += f"\n### {page_data['url']}\n"
@@ -429,7 +429,7 @@ These buttons cause errors and need fixing:
             for btn in page_data["buttons"]:
                 name = btn["text"][:25] or btn["id"][:25] or "unnamed"
                 report += f"| {btn['index']} | {name} | {btn['status']} | {btn['notes'][:30]} |\n"
-    
+
     report += f"""
 
 ---
@@ -442,10 +442,10 @@ These buttons cause errors and need fixing:
 - **Need Fixing:** {RESULTS['status_counts']['broken']}
 
 """
-    
+
     with open("tests/mandatory/BUTTONS_INVENTORY_REPORT.md", "w") as f:
         f.write(report)
-    
+
     print(f"\n{'='*60}")
     print("BUTTON TESTING COMPLETE")
     print(f"{'='*60}")

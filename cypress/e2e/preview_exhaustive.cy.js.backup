@@ -97,7 +97,7 @@ describe('Credit Report Preview Page', () => {
         fileName: fileName,
         mimeType: 'application/pdf'
       }, { force: true });
-      
+
       cy.get('#uploadPrompt').should('have.class', 'hidden');
       cy.get('#fileSelected').should('not.have.class', 'hidden');
       cy.get('#fileName').should('contain.text', fileName);
@@ -109,7 +109,7 @@ describe('Credit Report Preview Page', () => {
         fileName: 'test.pdf',
         mimeType: 'application/pdf'
       }, { force: true });
-      
+
       cy.get('#analyzeBtn').should('be.visible').and('not.be.disabled');
     });
   });
@@ -125,7 +125,7 @@ describe('Credit Report Preview Page', () => {
 
     it('should show analyzing section when analysis starts', () => {
       cy.intercept('POST', '/api/instant-preview', { delay: 1000, body: { success: true, data: {} } });
-      
+
       cy.get('#analyzeBtn').click();
       cy.get('#uploadSection').should('have.class', 'hidden');
       cy.get('#analyzingSection').should('not.have.class', 'hidden');
@@ -158,15 +158,15 @@ describe('Credit Report Preview Page', () => {
           ]
         }
       };
-      
+
       cy.intercept('POST', '/api/instant-preview', { body: mockResults });
-      
+
       cy.get('#fileInput').selectFile({
         contents: Cypress.Buffer.from('test content'),
         fileName: 'test.pdf',
         mimeType: 'application/pdf'
       }, { force: true });
-      
+
       cy.get('#analyzeBtn').click();
     });
 
@@ -231,21 +231,21 @@ describe('Credit Report Preview Page', () => {
     });
 
     it('should show error section on analysis failure', () => {
-      cy.intercept('POST', '/api/instant-preview', { 
+      cy.intercept('POST', '/api/instant-preview', {
         statusCode: 500,
         body: { success: false, error: 'Analysis failed' }
       });
-      
+
       cy.get('#analyzeBtn').click();
       cy.get('#errorSection').should('not.have.class', 'hidden');
     });
 
     it('should display error message and retry button', () => {
-      cy.intercept('POST', '/api/instant-preview', { 
+      cy.intercept('POST', '/api/instant-preview', {
         statusCode: 500,
         body: { success: false, error: 'Custom error message' }
       });
-      
+
       cy.get('#analyzeBtn').click();
       cy.get('h2').should('contain.text', 'Analysis Error');
       cy.get('.fa-exclamation-circle').should('be.visible');
@@ -254,17 +254,17 @@ describe('Credit Report Preview Page', () => {
 
     it('should handle network errors', () => {
       cy.intercept('POST', '/api/instant-preview', { forceNetworkError: true });
-      
+
       cy.get('#analyzeBtn').click();
       cy.get('#errorSection').should('not.have.class', 'hidden');
     });
 
     it('should allow retry after error', () => {
-      cy.intercept('POST', '/api/instant-preview', { 
+      cy.intercept('POST', '/api/instant-preview', {
         statusCode: 500,
         body: { success: false, error: 'Test error' }
       });
-      
+
       cy.get('#analyzeBtn').click();
       cy.get('button').contains('Try Again').click();
       cy.url().should('include', '/preview');
@@ -345,7 +345,7 @@ describe('Credit Report Preview Page', () => {
           violations: []
         }
       };
-      
+
       cy.intercept('POST', '/api/instant-preview', { body: mockResults });
 
       // Upload file
@@ -357,13 +357,13 @@ describe('Credit Report Preview Page', () => {
 
       // Verify file selected
       cy.get('#fileName').should('contain.text', 'credit-report.pdf');
-      
+
       // Start analysis
       cy.get('#analyzeBtn').click();
-      
+
       // Verify analyzing state
       cy.get('#analyzingSection').should('not.have.class', 'hidden');
-      
+
       // Verify results
       cy.get('#resultsSection').should('not.have.class', 'hidden');
       cy.get('#violationCount').should('contain.text', '3');
@@ -381,7 +381,7 @@ describe('Credit Report Preview Page', () => {
           violations: []
         }
       };
-      
+
       cy.intercept('POST', '/api/instant-preview', { body: mockResults });
 
       cy.get('#fileInput').selectFile({

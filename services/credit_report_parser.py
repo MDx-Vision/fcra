@@ -47,6 +47,7 @@ def _record_parse_failure(service_name: str, errors: List[Dict]):
         # Try to send admin notification
         try:
             from services.email_service import send_email
+
             send_email(
                 to_email="admin@brightpathcredit.com",
                 subject=f"[ALERT] Credit Report Parser Failures - {service_name}",
@@ -55,7 +56,9 @@ def _record_parse_failure(service_name: str, errors: List[Dict]):
                     f"<p>The credit report parser for <strong>{service_name}</strong> "
                     f"has failed {count} times in the last {_FAILURE_WINDOW_MINUTES} minutes.</p>"
                     f"<p>Recent errors:</p><ul>"
-                    + "".join(f"<li>{e['section']}: {e['error']}</li>" for e in errors[:5])
+                    + "".join(
+                        f"<li>{e['section']}: {e['error']}</li>" for e in errors[:5]
+                    )
                     + "</ul>"
                 ),
             )
@@ -129,9 +132,7 @@ class CreditReportParser:
         """
         self._parse_errors: List[Dict[str, str]] = []
 
-        self._summary_counts = self._safe_extract(
-            "_extract_summary_counts", default={}
-        )
+        self._summary_counts = self._safe_extract("_extract_summary_counts", default={})
 
         result = {
             "scores": self._safe_extract("_extract_scores", default={}),
@@ -140,7 +141,9 @@ class CreditReportParser:
             "inquiries": self._safe_extract("_extract_inquiries", default=[]),
             "public_records": self._safe_extract("_extract_public_records", default=[]),
             "collections": self._safe_extract("_extract_collections", default=[]),
-            "creditor_contacts": self._safe_extract("_extract_creditor_contacts", default=[]),
+            "creditor_contacts": self._safe_extract(
+                "_extract_creditor_contacts", default=[]
+            ),
             "summary": {},
             "parse_errors": self._parse_errors,
         }
@@ -178,7 +181,10 @@ class CreditReportParser:
             self._parse_errors.append(error_info)
             logger.error(
                 "Error parsing section '%s' [service=%s]: %s: %s",
-                method_name, self.service, type(e).__name__, e,
+                method_name,
+                self.service,
+                type(e).__name__,
+                e,
                 exc_info=True,
             )
             return default if default is not None else {}

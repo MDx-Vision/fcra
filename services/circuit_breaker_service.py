@@ -44,13 +44,15 @@ logger = logging.getLogger("circuit_breaker")
 
 class CircuitState(Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Failing fast
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing fast
     HALF_OPEN = "half_open"  # Testing recovery
 
 
 class CircuitBreakerError(Exception):
     """Raised when circuit is open and call is rejected."""
+
     def __init__(self, service_name: str, message: str = None):
         self.service_name = service_name
         self.message = message or f"Circuit breaker open for service: {service_name}"
@@ -60,15 +62,19 @@ class CircuitBreakerError(Exception):
 @dataclass
 class CircuitBreakerConfig:
     """Configuration for a circuit breaker."""
-    failure_threshold: int = 5          # Failures before opening
-    success_threshold: int = 2          # Successes in half-open before closing
-    timeout: float = 30.0               # Seconds before trying half-open
-    excluded_exceptions: Tuple[Type[Exception], ...] = ()  # Don't count these as failures
+
+    failure_threshold: int = 5  # Failures before opening
+    success_threshold: int = 2  # Successes in half-open before closing
+    timeout: float = 30.0  # Seconds before trying half-open
+    excluded_exceptions: Tuple[
+        Type[Exception], ...
+    ] = ()  # Don't count these as failures
 
 
 @dataclass
 class CircuitBreakerStats:
     """Statistics for a circuit breaker."""
+
     total_calls: int = 0
     successful_calls: int = 0
     failed_calls: int = 0
@@ -274,9 +280,7 @@ class CircuitBreaker:
 
             # Try fallback if available
             if self.fallback:
-                logger.info(
-                    f"Circuit breaker '{self.name}' using fallback"
-                )
+                logger.info(f"Circuit breaker '{self.name}' using fallback")
                 return self.fallback(*args, **kwargs)
 
             raise CircuitBreakerError(self.name)
@@ -333,11 +337,13 @@ class CircuitBreaker:
                     "consecutive_successes": self.stats.consecutive_successes,
                     "last_failure_time": (
                         self.stats.last_failure_time.isoformat()
-                        if self.stats.last_failure_time else None
+                        if self.stats.last_failure_time
+                        else None
                     ),
                     "last_success_time": (
                         self.stats.last_success_time.isoformat()
-                        if self.stats.last_success_time else None
+                        if self.stats.last_success_time
+                        else None
                     ),
                     "recent_state_changes": self.stats.state_changes[-10:],
                 },
@@ -451,6 +457,7 @@ def circuit_protected(
         def send_email(to, subject, body):
             return smtp.send(to, subject, body)
     """
+
     def decorator(func: Callable) -> Callable:
         breaker = get_circuit_breaker(
             service_name,
@@ -475,8 +482,7 @@ def get_all_circuit_status() -> Dict[str, Dict[str, Any]]:
     """Get status of all registered circuit breakers."""
     with _registry_lock:
         return {
-            name: breaker.get_status()
-            for name, breaker in _circuit_breakers.items()
+            name: breaker.get_status() for name, breaker in _circuit_breakers.items()
         }
 
 
@@ -515,10 +521,7 @@ def reset_all_circuits() -> int:
 def get_open_circuits() -> List[str]:
     """Get list of currently open circuit breakers."""
     with _registry_lock:
-        return [
-            name for name, breaker in _circuit_breakers.items()
-            if breaker.is_open
-        ]
+        return [name for name, breaker in _circuit_breakers.items() if breaker.is_open]
 
 
 def get_circuit_health_summary() -> Dict[str, Any]:
@@ -564,8 +567,7 @@ def get_circuit_health_summary() -> Dict[str, Any]:
             "total_failures": total_failures,
             "total_rejections": total_rejections,
             "failure_rate": (
-                round(total_failures / total_calls * 100, 2)
-                if total_calls > 0 else 0
+                round(total_failures / total_calls * 100, 2) if total_calls > 0 else 0
             ),
         }
 

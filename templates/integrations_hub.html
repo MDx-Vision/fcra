@@ -400,7 +400,7 @@
 <body>
     {% set active_page = 'integrations' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="header">
             <h1>Integrations Hub</h1>
@@ -412,7 +412,7 @@
                 <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
             </div>
         </div>
-        
+
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Mailings Sent</div>
@@ -435,7 +435,7 @@
                 <div class="stat-change neutral">All time</div>
             </div>
         </div>
-        
+
         <div class="integrations-grid">
             <div class="integration-card {{ 'connected' if integrations.sendcertified.connected else ('error' if integrations.sendcertified.status == 'error' else '') }}" id="card-sendcertified">
                 <div class="integration-header">
@@ -461,7 +461,7 @@
                     <button class="btn btn-primary btn-sm" onclick="testConnection('sendcertified')">Test Connection</button>
                 </div>
             </div>
-            
+
             <div class="integration-card {{ 'connected' if integrations.notarize.connected else ('error' if integrations.notarize.status == 'error' else '') }}" id="card-notarize">
                 <div class="integration-header">
                     <div class="integration-icon notarize">&#128220;</div>
@@ -486,7 +486,7 @@
                     <button class="btn btn-primary btn-sm" onclick="testConnection('notarize')">Test Connection</button>
                 </div>
             </div>
-            
+
             <div class="integration-card {{ 'connected' if integrations.creditpull.connected else ('error' if integrations.creditpull.status == 'error' else '') }}" id="card-creditpull">
                 <div class="integration-header">
                     <div class="integration-icon credit">&#128200;</div>
@@ -511,7 +511,7 @@
                     <button class="btn btn-primary btn-sm" onclick="testConnection('creditpull')">Test Connection</button>
                 </div>
             </div>
-            
+
             <div class="integration-card {{ 'connected' if integrations.stripe.connected else ('error' if integrations.stripe.status == 'error' else '') }}" id="card-stripe">
                 <div class="integration-header">
                     <div class="integration-icon stripe">&#128179;</div>
@@ -537,7 +537,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="content-card">
             <h2 class="section-title">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -566,7 +566,7 @@
             </div>
         </div>
     </main>
-    
+
     <div class="modal-overlay" id="configModal">
         <div class="modal">
             <div class="modal-header">
@@ -576,19 +576,19 @@
             <div class="modal-body">
                 <form id="configForm">
                     <input type="hidden" id="configService" name="service">
-                    
+
                     <div class="form-group">
                         <label class="form-label" for="apiKey">API Key</label>
                         <input type="password" class="form-input" id="apiKey" name="api_key" placeholder="Enter API key">
                         <div class="form-hint">Your API key from the service provider</div>
                     </div>
-                    
+
                     <div class="form-group" id="apiSecretGroup">
                         <label class="form-label" for="apiSecret">API Secret</label>
                         <input type="password" class="form-input" id="apiSecret" name="api_secret" placeholder="Enter API secret">
                         <div class="form-hint">Your API secret (if required)</div>
                     </div>
-                    
+
                     <div class="form-group">
                         <div class="form-toggle">
                             <label class="toggle-switch">
@@ -609,9 +609,9 @@
             </div>
         </div>
     </div>
-    
+
     <div class="toast" id="toast"></div>
-    
+
     <script>
         const integrationTitles = {
             'sendcertified': 'SendCertified',
@@ -619,52 +619,52 @@
             'creditpull': 'Credit Pull Service',
             'stripe': 'Stripe Payments'
         };
-        
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = 'toast show' + (isError ? ' error' : '');
             setTimeout(() => toast.className = 'toast', 3000);
         }
-        
+
         function openConfigModal(service) {
             document.getElementById('configService').value = service;
             document.getElementById('modalTitle').textContent = 'Configure ' + integrationTitles[service];
-            
+
             if (service === 'stripe') {
                 document.getElementById('apiSecretGroup').style.display = 'none';
             } else {
                 document.getElementById('apiSecretGroup').style.display = 'block';
             }
-            
+
             document.getElementById('configModal').classList.add('show');
         }
-        
+
         function closeModal() {
             document.getElementById('configModal').classList.remove('show');
             document.getElementById('configForm').reset();
         }
-        
+
         async function saveConfiguration() {
             const service = document.getElementById('configService').value;
             const apiKey = document.getElementById('apiKey').value;
             const apiSecret = document.getElementById('apiSecret').value;
             const sandbox = document.getElementById('sandboxMode').checked;
-            
+
             if (!apiKey) {
                 showToast('Please enter an API key', true);
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/api/integrations/${service}/configure`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ api_key: apiKey, api_secret: apiSecret, sandbox: sandbox })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast('Configuration saved successfully!');
                     closeModal();
@@ -676,22 +676,22 @@
                 showToast('Error saving configuration: ' + error.message, true);
             }
         }
-        
+
         async function testConnection(service) {
             const statusBadge = document.getElementById('status-' + service);
             const card = document.getElementById('card-' + service);
-            
+
             statusBadge.textContent = 'Testing...';
             statusBadge.className = 'status-badge testing';
-            
+
             try {
                 const response = await fetch(`/api/integrations/${service}/test`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success && data.connected) {
                     statusBadge.textContent = 'Connected';
                     statusBadge.className = 'status-badge connected';
@@ -715,17 +715,17 @@
                 showToast('Error testing connection: ' + error.message, true);
             }
         }
-        
+
         async function refreshStatuses() {
             try {
                 const response = await fetch('/api/integrations/status');
                 const data = await response.json();
-                
+
                 if (data.success) {
                     for (const [service, status] of Object.entries(data.integrations)) {
                         const statusBadge = document.getElementById('status-' + service);
                         const card = document.getElementById('card-' + service);
-                        
+
                         if (statusBadge && card) {
                             if (status.connected) {
                                 statusBadge.textContent = 'Connected';
@@ -748,7 +748,7 @@
                 showToast('Error refreshing statuses: ' + error.message, true);
             }
         }
-        
+
         document.getElementById('configModal').addEventListener('click', function(e) {
             if (e.target === this) closeModal();
         });

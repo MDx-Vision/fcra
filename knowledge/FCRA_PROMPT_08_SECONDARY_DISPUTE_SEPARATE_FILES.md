@@ -1,9 +1,9 @@
 # FCRA PROMPT 08: SECONDARY BUREAU DISPUTES (SEPARATE FILES)
 ## Dispute Errors Found in Secondary Bureau Files
 
-**Version:** 2.0 (Separate File Output)  
-**Created:** November 24, 2025  
-**Output:** One file per secondary bureau disputed  
+**Version:** 2.0 (Separate File Output)
+**Created:** November 24, 2025
+**Output:** One file per secondary bureau disputed
 
 ---
 
@@ -96,7 +96,7 @@ LETTER TEMPLATE
 
 Dear Sir or Madam:
 
-On [Date], I received my file disclosure from [Bureau Name]. Upon review, 
+On [Date], I received my file disclosure from [Bureau Name]. Upon review,
 I have identified inaccuracies that must be corrected immediately.
 
 Pursuant to FCRA Â§ 1681i, I formally dispute the following.

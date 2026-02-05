@@ -276,20 +276,20 @@ describe.skip('Staff Management - Comprehensive Tests', () => {
   describe('Add Staff Modal - Successful Submission', () => {
     it('should create new staff member with valid data', () => {
       const uniqueEmail = `newstaff_${Date.now()}@example.com`
-      
+
       cy.get('[data-testid="add-staff-button"]').click()
       cy.get('[data-testid="add-modal"]').should('be.visible')
-      
+
       cy.get('[data-testid="add-first-name"]').type('New')
       cy.get('[data-testid="add-last-name"]').type('Staff')
       cy.get('[data-testid="add-email"]').type(uniqueEmail)
       cy.get('[data-testid="add-password"]').type('password123')
       cy.get('[data-testid="add-role"]').select('paralegal')
       cy.get('[data-testid="add-submit-button"]').click()
-      
+
       // Wait for page reload or success message
       cy.wait(2000)
-      
+
       // Either modal closes, success message shows, or page reloads
       cy.get('body').then(($body) => {
         const hasSuccess = $body.find('[data-testid="success-message"]').length > 0
@@ -470,13 +470,13 @@ describe.skip('Staff Management - Comprehensive Tests', () => {
         if ($body.find('[data-testid^="edit-btn-"]').length > 0) {
           cy.get('[data-testid^="edit-btn-"]').first().click()
           cy.get('[data-testid="edit-modal"]').should('be.visible')
-          
+
           cy.get('[data-testid="edit-first-name"]').clear().type('Updated')
           cy.get('[data-testid="edit-submit-button"]').click()
-          
+
           // Wait for update
           cy.wait(2000)
-          
+
           // Should return to table or show success
           cy.get('[data-testid="staff-table"]').should('be.visible')
         }
@@ -545,20 +545,20 @@ describe.skip('Staff Management - Comprehensive Tests', () => {
     it('should show success message after successful action', () => {
       // Create a new staff member to trigger success message
       const uniqueEmail = `flashtest_${Date.now()}@example.com`
-      
+
       cy.get('[data-testid="add-staff-button"]').click()
       cy.get('[data-testid="add-modal"]').should('be.visible')
-      
+
       cy.get('[data-testid="add-first-name"]').type('Flash')
       cy.get('[data-testid="add-last-name"]').type('Test')
       cy.get('[data-testid="add-email"]').type(uniqueEmail)
       cy.get('[data-testid="add-password"]').type('password123')
       cy.get('[data-testid="add-role"]').select('paralegal')
       cy.get('[data-testid="add-submit-button"]').click()
-      
+
       // Wait for page reload
       cy.wait(2000)
-      
+
       // Check for success message OR that the operation completed
       cy.get('body').then(($body) => {
         const hasSuccess = $body.find('[data-testid="success-message"]').length > 0

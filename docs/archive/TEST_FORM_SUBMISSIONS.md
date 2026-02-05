@@ -272,26 +272,26 @@ async def test_all_form_submissions():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
-        
+
         for form_test in FORM_TESTS:
             await test_single_form_submission(page, form_test)
-        
+
         await browser.close()
-    
+
     save_results()
 
 async def test_single_form_submission(page, form_test):
     """Test a single form: fill, submit, verify"""
-    
+
     name = form_test["name"]
     url = form_test["url"]
-    
+
     print(f"\n{'='*60}")
     print(f"Testing: {name}")
     print(f"URL: {url}")
     print(f"Priority: {form_test['priority']}")
     print(f"{'='*60}")
-    
+
     result = {
         "name": name,
         "url": url,
@@ -303,12 +303,12 @@ async def test_single_form_submission(page, form_test):
         "status": "",
         "notes": ""
     }
-    
+
     try:
         # Navigate to page
         await page.goto(f"{BASE_URL}{url}", wait_until="networkidle", timeout=15000)
         print(f"  ✓ Page loaded")
-        
+
         # Open modal if needed
         if "modal_trigger" in form_test:
             trigger = await page.query_selector(form_test["modal_trigger"])
@@ -325,7 +325,7 @@ async def test_single_form_submission(page, form_test):
                     print(f"  ✓ Modal opened via JS")
                 except:
                     print(f"  ⚠ Could not open modal")
-        
+
         # Find form
         form = await page.query_selector(form_test["form_selector"])
         if not form:
@@ -335,7 +335,7 @@ async def test_single_form_submission(page, form_test):
             RESULTS["forms_failed"] += 1
             RESULTS["submissions"].append(result)
             return
-        
+
         # Fill fields
         fields_filled = 0
         for field_name, value in form_test["fields"].items():
@@ -348,29 +348,29 @@ async def test_single_form_submission(page, form_test):
                     f"textarea[name='{field_name}']",
                     f"select[name='{field_name}']",
                 ]
-                
+
                 field = None
                 for selector in selectors:
                     field = await page.query_selector(selector)
                     if field:
                         break
-                
+
                 if field:
                     tag = await field.evaluate("el => el.tagName.toLowerCase()")
-                    
+
                     if tag == "select":
                         await field.select_option(value)
                     else:
                         await field.fill("")
                         await field.fill(str(value))
-                    
+
                     fields_filled += 1
                 else:
                     print(f"    ⚠ Field not found: {field_name}")
-                    
+
             except Exception as e:
                 print(f"    ⚠ Error filling {field_name}: {str(e)[:30]}")
-        
+
         if fields_filled > 0:
             result["filled"] = True
             print(f"  ✓ Filled {fields_filled}/{len(form_test['fields'])} fields")
@@ -381,16 +381,16 @@ async def test_single_form_submission(page, form_test):
             RESULTS["forms_failed"] += 1
             RESULTS["submissions"].append(result)
             return
-        
+
         # Find and click submit button
         submit_selectors = form_test["submit_button"].split(", ")
         submit_btn = None
-        
+
         for selector in submit_selectors:
             submit_btn = await page.query_selector(selector)
             if submit_btn and await submit_btn.is_visible():
                 break
-        
+
         if not submit_btn:
             result["status"] = "SUBMIT_NOT_FOUND"
             result["notes"] = "Could not find submit button"
@@ -398,17 +398,17 @@ async def test_single_form_submission(page, form_test):
             RESULTS["forms_failed"] += 1
             RESULTS["submissions"].append(result)
             return
-        
+
         # Click submit
         await submit_btn.click()
         await page.wait_for_timeout(2000)  # Wait for submission
         result["submitted"] = True
         print(f"  ✓ Form submitted")
-        
+
         # Check for success indicator
         success_selectors = form_test["success_indicator"].split(", ")
         success_found = False
-        
+
         for selector in success_selectors:
             try:
                 success = await page.query_selector(selector)
@@ -417,10 +417,10 @@ async def test_single_form_submission(page, form_test):
                     break
             except:
                 pass
-        
+
         # Also check for no error messages
         error = await page.query_selector(".error, .alert-danger, .alert-error")
-        
+
         if success_found and not error:
             result["success_shown"] = True
             print(f"  ✓ Success indicator found")
@@ -430,7 +430,7 @@ async def test_single_form_submission(page, form_test):
             print(f"  ⚠ Error shown: {error_text[:50]}")
         else:
             print(f"  ⚠ No clear success/error indicator")
-        
+
         # Try to verify in database (optional - may not have DB access)
         if form_test.get("db_check_field"):
             try:
@@ -440,7 +440,7 @@ async def test_single_form_submission(page, form_test):
                 print(f"  ℹ DB verification: manual check needed")
             except:
                 pass
-        
+
         # Determine final status
         if result["filled"] and result["submitted"] and result["success_shown"]:
             result["status"] = "PASS"
@@ -454,13 +454,13 @@ async def test_single_form_submission(page, form_test):
             result["status"] = "FAIL"
             RESULTS["forms_failed"] += 1
             print(f"  ❌ FAIL")
-        
+
     except Exception as e:
         result["status"] = "ERROR"
         result["notes"] = str(e)[:100]
         RESULTS["forms_failed"] += 1
         print(f"  ❌ Error: {str(e)[:50]}")
-    
+
     RESULTS["forms_tested"] += 1
     RESULTS["submissions"].append(result)
 
@@ -468,12 +468,12 @@ def save_results():
     # Save JSON
     with open("tests/mandatory/FORM_SUBMISSIONS_RESULTS.json", "w") as f:
         json.dump(RESULTS, f, indent=2, default=str)
-    
+
     # Calculate stats
     total = RESULTS["forms_tested"] or 1
     passed = RESULTS["forms_passed"]
     failed = RESULTS["forms_failed"]
-    
+
     # Generate report
     report = f"""# FORM SUBMISSION TESTING - COMPLETE REPORT
 
@@ -496,30 +496,30 @@ def save_results():
 
 ### Critical Forms
 """
-    
+
     critical = [s for s in RESULTS["submissions"] if s["priority"] == "critical"]
     for form in critical:
         status_icon = "✅" if form["status"] in ["PASS", "PARTIAL"] else "❌"
         report += f"| {form['name']} | {status_icon} {form['status']} | {form['notes'][:40] if form['notes'] else 'OK'} |\n"
-    
+
     report += """
 ### Important Forms
 """
-    
+
     important = [s for s in RESULTS["submissions"] if s["priority"] == "important"]
     for form in important:
         status_icon = "✅" if form["status"] in ["PASS", "PARTIAL"] else "❌"
         report += f"| {form['name']} | {status_icon} {form['status']} | {form['notes'][:40] if form['notes'] else 'OK'} |\n"
-    
+
     report += """
 ### Secondary Forms
 """
-    
+
     secondary = [s for s in RESULTS["submissions"] if s["priority"] == "secondary"]
     for form in secondary:
         status_icon = "✅" if form["status"] in ["PASS", "PARTIAL"] else "❌"
         report += f"| {form['name']} | {status_icon} {form['status']} | {form['notes'][:40] if form['notes'] else 'OK'} |\n"
-    
+
     # Detailed results
     report += """
 
@@ -530,16 +530,16 @@ def save_results():
 | Form | Filled | Submitted | Success | Status | Notes |
 |------|--------|-----------|---------|--------|-------|
 """
-    
+
     for form in RESULTS["submissions"]:
         filled = "✅" if form["filled"] else "❌"
         submitted = "✅" if form["submitted"] else "❌"
         success = "✅" if form["success_shown"] else "❌"
         report += f"| {form['name']} | {filled} | {submitted} | {success} | {form['status']} | {form['notes'][:30]} |\n"
-    
+
     # Issues section
     issues = [s for s in RESULTS["submissions"] if s["status"] not in ["PASS", "PARTIAL"]]
-    
+
     if issues:
         report += """
 
@@ -552,7 +552,7 @@ def save_results():
 """
         for issue in issues:
             report += f"| {issue['name']} | {issue['status']}: {issue['notes']} |\n"
-    
+
     report += f"""
 
 ---
@@ -566,16 +566,16 @@ def save_results():
 ### Launch Readiness
 
 """
-    
+
     critical_pass = len([s for s in critical if s["status"] in ["PASS", "PARTIAL"]])
     if critical_pass == len(critical):
         report += "✅ **READY** - All critical forms work\n"
     else:
         report += f"❌ **NOT READY** - {len(critical) - critical_pass} critical forms need fixing\n"
-    
+
     with open("tests/mandatory/FORM_SUBMISSIONS_REPORT.md", "w") as f:
         f.write(report)
-    
+
     print(f"\n{'='*60}")
     print("FORM SUBMISSION TESTING COMPLETE")
     print(f"{'='*60}")

@@ -84,42 +84,42 @@ DOCUMENTS = [
 def clean_html(html_content):
     """Remove unnecessary Word artifacts from HTML"""
     import re
-    
+
     # Remove XML declarations
     html_content = re.sub(r'<\?xml[^>]*\?>', '', html_content)
-    
+
     # Remove Word-specific meta tags
     html_content = re.sub(r'<meta[^>]*ProgId[^>]*>', '', html_content, flags=re.IGNORECASE)
     html_content = re.sub(r'<meta[^>]*Generator[^>]*>', '', html_content, flags=re.IGNORECASE)
     html_content = re.sub(r'<meta[^>]*Originator[^>]*>', '', html_content, flags=re.IGNORECASE)
-    
+
     # Remove Word namespace declarations
     html_content = re.sub(r'xmlns:[a-z]+="[^"]*"', '', html_content, flags=re.IGNORECASE)
-    
+
     # Remove mso- styles (Microsoft Office specific)
     html_content = re.sub(r'mso-[^;:"]+:[^;:"]+;?', '', html_content)
-    
+
     # Remove empty style attributes
     html_content = re.sub(r'style="\s*"', '', html_content)
-    
+
     # Remove Word-specific class names
     html_content = re.sub(r'class="Mso[^"]*"', '', html_content)
-    
+
     # Clean up extra whitespace
     html_content = re.sub(r'\s+', ' ', html_content)
-    
+
     return html_content.strip()
 
 
 def extract_body_content(html_content):
     """Extract just the body content, not full HTML document"""
     import re
-    
+
     # Try to extract body content
     body_match = re.search(r'<body[^>]*>(.*?)</body>', html_content, re.DOTALL | re.IGNORECASE)
     if body_match:
         return body_match.group(1).strip()
-    
+
     return html_content
 
 

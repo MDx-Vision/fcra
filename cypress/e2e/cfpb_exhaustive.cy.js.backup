@@ -169,7 +169,7 @@ describe('Staff Login - /dashboard/cfpb', () => {
     it('should disable login button and show loading state on form submission', () => {
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
-      
+
       cy.window().then((win) => {
         cy.stub(win, 'fetch').resolves({
           ok: false,
@@ -230,21 +230,21 @@ describe('Staff Login - /dashboard/cfpb', () => {
   describe('Form Submission Tests', () => {
     it('should submit form with valid credentials', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 302, headers: { location: '/dashboard' } }).as('loginRequest');
-      
+
       cy.get('[data-testid="email-input"]').type('staff@example.com');
       cy.get('[data-testid="password-input"]').type('validpassword');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@loginRequest');
     });
 
     it('should handle login failure gracefully', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 401, body: { error: 'Invalid credentials' } }).as('loginError');
-      
+
       cy.get('[data-testid="email-input"]').type('invalid@example.com');
       cy.get('[data-testid="password-input"]').type('wrongpassword');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@loginError');
     });
   });
@@ -252,21 +252,21 @@ describe('Staff Login - /dashboard/cfpb', () => {
   describe('Error Handling Tests', () => {
     it('should handle network errors during form submission', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@networkError');
     });
 
     it('should handle server errors (500)', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500 }).as('serverError');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@serverError');
     });
   });

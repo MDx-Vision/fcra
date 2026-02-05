@@ -579,11 +579,11 @@ def _build_deadline_email(
 
     content = f"""
         <h2 style="color: #1a1a2e; margin: 0 0 20px 0; font-size: 24px;">Deadline Reminder</h2>
-        
+
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
             Hi {first_name},
         </p>
-        
+
         <div style="background-color: #f8fafc; border-left: 4px solid {urgency_color}; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
             <p style="color: #334155; margin: 0; font-size: 16px; font-weight: 600;">
                 {deadline_type_name}{bureau_text}{round_text}
@@ -592,21 +592,21 @@ def _build_deadline_email(
                 {urgency_text}
             </p>
         </div>
-        
+
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
             {action_text}
         </p>
-        
+
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
             <strong>What this deadline means:</strong>
         </p>
-        
+
         <ul style="color: #334155; line-height: 1.8; font-size: 15px; padding-left: 20px;">
             <li>Credit bureaus and furnishers must respond within the legally required timeframe</li>
             <li>If no response is received, this strengthens your dispute case</li>
             <li>We track all deadlines to ensure your rights are protected</li>
         </ul>
-        
+
         <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
             If you have any questions about this deadline, please reply to this email or contact our team.
         </p>

@@ -967,13 +967,13 @@ SOPS_DATA = [
 def seed_knowledge_content(db):
     """Seed the knowledge_content table with course sections."""
     print("Seeding Credit Repair Course sections...")
-    
+
     for section in CREDIT_REPAIR_SECTIONS:
         existing = db.query(KnowledgeContent).filter_by(
             course="credit_repair",
             section_number=section["section_number"]
         ).first()
-        
+
         if existing:
             print(f"  Updating Section {section['section_number']}: {section['section_title'][:50]}...")
             existing.section_title = section["section_title"]
@@ -997,15 +997,15 @@ def seed_knowledge_content(db):
                 display_order=section["section_number"]
             )
             db.add(content)
-    
+
     print("Seeding Metro 2® Course sections...")
-    
+
     for section in METRO2_COURSE_SECTIONS:
         existing = db.query(KnowledgeContent).filter_by(
             course="metro2",
             section_number=section["section_number"]
         ).first()
-        
+
         if existing:
             print(f"  Updating Section {section['section_number']}: {section['section_title'][:50]}...")
             existing.section_title = section["section_title"]
@@ -1031,20 +1031,20 @@ def seed_knowledge_content(db):
                 display_order=section["section_number"]
             )
             db.add(content)
-    
+
     db.commit()
     print(f"✅ Knowledge content seeded successfully!")
 
 def seed_metro2_codes(db):
     """Seed the Metro 2® code lookup tables."""
     print("Seeding Metro 2® codes...")
-    
+
     for code_data in METRO2_CODES_DATA:
         existing = db.query(Metro2Code).filter_by(
             code_type=code_data["code_type"],
             code=code_data["code"]
         ).first()
-        
+
         if existing:
             print(f"  Updating {code_data['code_type']} code {code_data['code']}...")
             for key, value in code_data.items():
@@ -1053,17 +1053,17 @@ def seed_metro2_codes(db):
             print(f"  Adding {code_data['code_type']} code {code_data['code']}: {code_data['name']}")
             code = Metro2Code(**code_data)
             db.add(code)
-    
+
     db.commit()
     print(f"✅ Metro 2® codes seeded successfully! ({len(METRO2_CODES_DATA)} codes)")
 
 def seed_sops(db):
     """Seed the SOP table with standard operating procedures."""
     print("Seeding Standard Operating Procedures...")
-    
+
     for sop_data in SOPS_DATA:
         existing = db.query(SOP).filter_by(title=sop_data["title"]).first()
-        
+
         if existing:
             print(f"  Updating SOP: {sop_data['title'][:50]}...")
             for key, value in sop_data.items():
@@ -1072,7 +1072,7 @@ def seed_sops(db):
             print(f"  Adding SOP: {sop_data['title'][:50]}...")
             sop = SOP(**sop_data)
             db.add(sop)
-    
+
     db.commit()
     print(f"✅ SOPs seeded successfully! ({len(SOPS_DATA)} procedures)")
 
@@ -1081,9 +1081,9 @@ def main():
     print("TRAINING CONTENT SEEDING SCRIPT")
     print("=" * 60)
     print()
-    
+
     db = get_db()
-    
+
     try:
         seed_knowledge_content(db)
         print()

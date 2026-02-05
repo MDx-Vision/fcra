@@ -13,7 +13,7 @@
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -27,7 +27,7 @@
             font-weight: 700;
             color: #1a1a2e;
         }
-        
+
         .search-box {
             display: flex;
             align-items: center;
@@ -46,7 +46,7 @@
             margin-left: 10px;
         }
         .search-box svg { color: #64748b; }
-        
+
         .stats-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -72,7 +72,7 @@
         .stat-card.credit-repair { border-left: 4px solid #3b82f6; }
         .stat-card.metro2 { border-left: 4px solid #22c55e; }
         .stat-card.codes { border-left: 4px solid #8b5cf6; }
-        
+
         .tabs {
             display: flex;
             gap: 10px;
@@ -91,18 +91,18 @@
             color: #1a1a2e;
         }
         .tab:hover { border-color: #319795; }
-        .tab.active { 
-            background: linear-gradient(135deg, #319795 0%, #84cc16 100%); 
-            color: #1a1a2e; 
+        .tab.active {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
             border-color: transparent;
         }
-        
+
         .content-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
             gap: 20px;
         }
-        
+
         .card {
             background: white;
             border-radius: 16px;
@@ -135,7 +135,7 @@
         .card-icon.orange { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
         .card-icon.teal { background: linear-gradient(135deg, #319795 0%, #0d9488 100%); }
         .card-icon svg { width: 24px; height: 24px; color: white; }
-        
+
         .card-title {
             font-size: 18px;
             font-weight: 700;
@@ -155,7 +155,7 @@
         }
         .card-badge.credit_repair { background: #dbeafe; color: #1d4ed8; }
         .card-badge.metro2 { background: #dcfce7; color: #16a34a; }
-        
+
         .card-content {
             color: #475569;
             line-height: 1.7;
@@ -179,7 +179,7 @@
         .card-content.expanded::after {
             display: none;
         }
-        
+
         .expand-btn {
             margin-top: 15px;
             padding: 8px 16px;
@@ -195,7 +195,7 @@
         .expand-btn:hover {
             background: #e2e8f0;
         }
-        
+
         .tags {
             display: flex;
             flex-wrap: wrap;
@@ -219,7 +219,7 @@
             background: #dcfce7;
             color: #16a34a;
         }
-        
+
         .metro2-section {
             margin-top: 40px;
         }
@@ -229,7 +229,7 @@
             color: #1a1a2e;
             margin-bottom: 20px;
         }
-        
+
         .metro2-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -264,7 +264,7 @@
         .metro2-code-card.derogatory .code {
             color: #ef4444;
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -286,7 +286,7 @@
         .empty-state p {
             color: #64748b;
         }
-        
+
         .error-banner {
             background: #fee2e2;
             border: 1px solid #fecaca;
@@ -295,7 +295,7 @@
             border-radius: 12px;
             margin-bottom: 20px;
         }
-        
+
         .quick-links {
             display: flex;
             gap: 10px;
@@ -340,13 +340,13 @@
                 <input type="text" name="search" placeholder="Search content, statutes, codes..." value="{{ search_query or '' }}">
             </form>
         </div>
-        
+
         {% if error %}
         <div class="error-banner">
             <strong>Error:</strong> {{ error }}
         </div>
         {% endif %}
-        
+
         <div class="stats-row">
             <div class="stat-card credit-repair">
                 <div class="stat-value">{{ credit_repair_count or 0 }}</div>
@@ -361,7 +361,7 @@
                 <div class="stat-label">Metro 2 Codes</div>
             </div>
         </div>
-        
+
         <div class="quick-links">
             <a href="/dashboard/sops" class="quick-link">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
@@ -376,13 +376,13 @@
                 Static Knowledge Base
             </a>
         </div>
-        
+
         <div class="tabs">
             <a href="?course=all{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_course == 'all' %}active{% endif %}">All Content</a>
             <a href="?course=credit_repair{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_course == 'credit_repair' %}active{% endif %}">Credit Repair Course</a>
             <a href="?course=metro2{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_course == 'metro2' %}active{% endif %}">Metro 2 Course</a>
         </div>
-        
+
         <div class="content-grid">
             {% if content %}
                 {% for item in content %}
@@ -401,7 +401,7 @@
                         {{ item.content|safe }}
                     </div>
                     <button class="expand-btn" onclick="toggleContent({{ item.id }})">Show More</button>
-                    
+
                     <div class="tags">
                         {% if item.statute_references %}
                             {% for statute in item.statute_references %}
@@ -429,7 +429,7 @@
                 </div>
             {% endif %}
         </div>
-        
+
         {% if metro2_codes %}
         <div class="metro2-section">
             <h2>Metro 2 Code Reference</h2>
@@ -452,7 +452,7 @@
         function toggleContent(id) {
             const content = document.getElementById('content-' + id);
             const btn = content.nextElementSibling;
-            
+
             if (content.classList.contains('expanded')) {
                 content.classList.remove('expanded');
                 btn.textContent = 'Show More';

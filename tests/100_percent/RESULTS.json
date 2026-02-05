@@ -1,259 +1,244 @@
 {
-  "timestamp": "2026-01-20T23:24:15.868744",
-  "pages_tested": 45,
+  "timestamp": "2026-01-29T17:24:05.839769",
+  "pages_tested": 0,
   "forms_tested": 2,
-  "fields_tested": 3,
+  "fields_tested": 0,
   "buttons_clicked": 0,
   "links_checked": 0,
   "modals_tested": 0,
-  "edge_cases_tested": 23,
-  "responsive_tests": 12,
-  "accessibility_tests": 3,
+  "edge_cases_tested": 0,
+  "responsive_tests": 0,
+  "accessibility_tests": 0,
   "issues_found": [
     {
-      "type": "page_load",
+      "type": "page_error",
+      "page": "/",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/\nCall log:\n  - navigating to \"http:/"
+    },
+    {
+      "type": "page_error",
+      "page": "/signup",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/signup\nCall log:\n  - navigating to \""
+    },
+    {
+      "type": "page_error",
+      "page": "/staff/login",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/staff/login\nCall log:\n  - navigating"
+    },
+    {
+      "type": "page_error",
+      "page": "/portal/login",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/portal/login\nCall log:\n  - navigatin"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard\nCall log:\n  - navigating t"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/clients",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/clients\nCall log:\n  - navi"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/signups",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/signups\nCall log:\n  - navi"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/cases",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/cases\nCall log:\n  - naviga"
+    },
+    {
+      "type": "page_error",
       "page": "/dashboard/settlements",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/settlements\nCall log:\n  - "
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/staff",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/staff\nCall log:\n  - naviga"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/analytics",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/analytics\nCall log:\n  - na"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/credit-tracker",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-tracker\nCall log:\n "
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/calendar",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/calendar\nCall log:\n  - nav"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/contacts",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/contacts\nCall log:\n  - nav"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/automation-tools",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/automation-tools\nCall log:"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/letter-queue",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/letter-queue\nCall log:\n  -"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/demand-generator",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/demand-generator\nCall log:"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/import",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/import\nCall log:\n  - navig"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/documents",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/documents\nCall log:\n  - na"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/settings",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/settings\nCall log:\n  - nav"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/integrations",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/integrations\nCall log:\n  -"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/billing",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/billing\nCall log:\n  - navi"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/tasks",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/tasks\nCall log:\n  - naviga"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/workflows",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/workflows\nCall log:\n  - na"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/ml-insights",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/ml-insights\nCall log:\n  - "
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/white-label",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/white-label\nCall log:\n  - "
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/whitelabel",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/whitelabel\nCall log:\n  - n"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/franchise",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/franchise\nCall log:\n  - na"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/affiliates",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/affiliates\nCall log:\n  - n"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/triage",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/triage\nCall log:\n  - navig"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/escalation",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/escalation\nCall log:\n  - n"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/case-law",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/case-law\nCall log:\n  - nav"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/knowledge-base",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/knowledge-base\nCall log:\n "
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/sops",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/sops\nCall log:\n  - navigat"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/chexsystems",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/chexsystems\nCall log:\n  - "
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/specialty-bureaus",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/specialty-bureaus\nCall log"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/furnishers",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/furnishers\nCall log:\n  - n"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/patterns",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/patterns\nCall log:\n  - nav"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/sol",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/sol\nCall log:\n  - navigati"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/cfpb",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/cfpb\nCall log:\n  - navigat"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/frivolousness",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/frivolousness\nCall log:\n  "
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/predictive",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/predictive\nCall log:\n  - n"
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/credit-import",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-import\nCall log:\n  "
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/performance",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/performance\nCall log:\n  - "
     },
     {
-      "type": "page_load",
+      "type": "page_error",
       "page": "/dashboard/suspense-accounts",
-      "status": 429
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/suspense-accounts\nCall log"
     }
   ],
   "issues_fixed": [],
-  "passed": 11,
-  "failed": 37,
-  "console_errors": [
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)"
-  ],
+  "passed": 0,
+  "failed": 48,
+  "console_errors": [],
   "page_errors": []
 }

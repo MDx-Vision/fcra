@@ -131,7 +131,7 @@ templates/api_docs.html:382:                        <li class="sub-item"><a href
 templates/api_docs.html:383:                        <li class="sub-item"><a href="#webhooks">Webhooks</a></li>
 templates/api_docs.html:386:                <li><a href="#errors">Error Codes</a></li>
 templates/api_docs.html:387:                <li><a href="#examples">Code Examples</a></li>
-templates/api_docs.html:424:                        Generate your API key from the <a href="/dashboard/api-keys" style="color: #15803d; font-weight: 500;">API Keys Management</a> page. 
+templates/api_docs.html:424:                        Generate your API key from the <a href="/dashboard/api-keys" style="color: #15803d; font-weight: 500;">API Keys Management</a> page.
 templates/api_docs.html:1173:                <a href="/dashboard/api-keys" class="btn btn-primary" style="background: linear-gradient(135deg, #84cc16 0%, #22c55e 100%);">
 templates/includes/tenant_branding.html:70:<link rel="icon" type="image/x-icon" href="{{ tenant_branding.favicon_url }}">
 templates/includes/tenant_branding.html:71:<link rel="shortcut icon" href="{{ tenant_branding.favicon_url }}">

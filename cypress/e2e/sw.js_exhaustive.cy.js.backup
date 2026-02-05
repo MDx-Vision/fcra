@@ -197,12 +197,12 @@ describe('/sw.js - Service Worker Tests', () => {
       cy.request('/sw.js').then((response) => {
         const eventListeners = [
           'install',
-          'activate', 
+          'activate',
           'fetch',
           'push',
           'notificationclick'
         ];
-        
+
         eventListeners.forEach(event => {
           expect(response.body).to.include(`addEventListener('${event}'`);
         });

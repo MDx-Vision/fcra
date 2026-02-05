@@ -1,10 +1,10 @@
 # FCRA PROMPT 11 V2: CLIENT REPORT (APPLE-STYLE)
 ## Upload Report → Generate 7-Page Premium Client Report
 
-**Version:** 2.0  
-**Updated:** December 13, 2025  
-**Use Case:** Generate premium Apple-style client report  
-**Output:** 7-page HTML client report (NO LETTERS)  
+**Version:** 2.0
+**Updated:** December 13, 2025
+**Use Case:** Generate premium Apple-style client report
+**Output:** 7-page HTML client report (NO LETTERS)
 **Audience:** Client — professional, educational, premium feel
 
 ---
@@ -59,7 +59,7 @@ FCRA CLIENT REPORT GENERATOR — APPLE-STYLE (7 PAGES)
 
 **YOUR TASK:**
 
-Analyze the uploaded credit report and generate a premium 7-page client 
+Analyze the uploaded credit report and generate a premium 7-page client
 report using the Apple-style design system below.
 
 **OUTPUT:** One HTML document — 7-page Apple-style client report
@@ -81,17 +81,17 @@ DESIGN SYSTEM — APPLE-STYLE
   --brand-teal-light: #14b8a6;
   --brand-navy: #1e3a5f;
   --brand-navy-dark: #0a2540;
-  
+
   /* Text Colors */
   --text-primary: #1a1a2e;
   --text-secondary: #4a5568;
   --text-muted: #718096;
-  
+
   /* Backgrounds */
   --bg-cream: #faf9f7;
   --bg-white: #ffffff;
   --border-subtle: #e8e6e3;
-  
+
   /* Fonts */
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body: 'DM Sans', -apple-system, sans-serif;
@@ -134,9 +134,9 @@ Generate this complete HTML document:
       --bg-white: #ffffff;
       --border-subtle: #e8e6e3;
     }
-    
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
       font-family: 'DM Sans', -apple-system, sans-serif;
       font-size: 14px;
@@ -144,7 +144,7 @@ Generate this complete HTML document:
       color: var(--text-primary);
       background: var(--bg-cream);
     }
-    
+
     .page {
       max-width: 8.5in;
       min-height: 11in;
@@ -153,7 +153,7 @@ Generate this complete HTML document:
       box-shadow: 0 4px 20px rgba(0,0,0,0.08);
       position: relative;
     }
-    
+
     /* ========================================
        PAGE 1: COVER
        ======================================== */
@@ -168,19 +168,19 @@ Generate this complete HTML document:
       padding: 60px;
       position: relative;
     }
-    
+
     .cover::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       background: radial-gradient(ellipse at 30% 20%, rgba(13, 148, 136, 0.15) 0%, transparent 50%);
     }
-    
+
     .cover-content {
       position: relative;
       z-index: 1;
     }
-    
+
     .cover-brand {
       font-family: 'DM Sans', sans-serif;
       font-size: 16px;
@@ -190,7 +190,7 @@ Generate this complete HTML document:
       text-transform: uppercase;
       margin-bottom: 60px;
     }
-    
+
     .cover-title {
       font-family: 'Playfair Display', serif;
       font-size: 42px;
@@ -199,25 +199,25 @@ Generate this complete HTML document:
       margin-bottom: 20px;
       line-height: 1.2;
     }
-    
+
     .cover-subtitle {
       font-size: 18px;
       color: rgba(255,255,255,0.7);
       margin-bottom: 80px;
     }
-    
+
     .cover-client {
       font-family: 'Playfair Display', serif;
       font-size: 24px;
       color: white;
       margin-bottom: 10px;
     }
-    
+
     .cover-meta {
       font-size: 14px;
       color: rgba(255,255,255,0.5);
     }
-    
+
     .cover-footer {
       position: absolute;
       bottom: 40px;
@@ -225,14 +225,14 @@ Generate this complete HTML document:
       right: 0;
       text-align: center;
     }
-    
+
     .cover-confidential {
       font-size: 11px;
       letter-spacing: 2px;
       color: var(--brand-teal);
       text-transform: uppercase;
     }
-    
+
     /* ========================================
        PAGE HEADER (Pages 2-7)
        ======================================== */
@@ -243,7 +243,7 @@ Generate this complete HTML document:
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .page-header-brand {
       font-size: 12px;
       font-weight: 700;
@@ -251,24 +251,24 @@ Generate this complete HTML document:
       color: var(--brand-teal);
       text-transform: uppercase;
     }
-    
+
     .page-header-title {
       font-family: 'Playfair Display', serif;
       font-size: 14px;
       color: rgba(255,255,255,0.7);
     }
-    
+
     /* ========================================
        CONTENT AREA
        ======================================== */
     .content {
       padding: 40px;
     }
-    
+
     .section {
       margin-bottom: 35px;
     }
-    
+
     .section-header {
       display: flex;
       align-items: center;
@@ -277,7 +277,7 @@ Generate this complete HTML document:
       padding-bottom: 12px;
       border-bottom: 2px solid var(--brand-teal);
     }
-    
+
     .section-number {
       width: 32px;
       height: 32px;
@@ -290,14 +290,14 @@ Generate this complete HTML document:
       font-size: 14px;
       font-weight: 700;
     }
-    
+
     .section-title {
       font-family: 'Playfair Display', serif;
       font-size: 22px;
       font-weight: 600;
       color: var(--brand-navy);
     }
-    
+
     /* ========================================
        EXECUTIVE SUMMARY BOX
        ======================================== */
@@ -307,7 +307,7 @@ Generate this complete HTML document:
       padding: 30px;
       margin-bottom: 30px;
     }
-    
+
     .exec-title {
       font-family: 'Playfair Display', serif;
       font-size: 14px;
@@ -315,20 +315,20 @@ Generate this complete HTML document:
       text-align: center;
       margin-bottom: 25px;
     }
-    
+
     .exec-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 20px;
     }
-    
+
     .exec-item {
       text-align: center;
       padding: 15px;
       background: rgba(255,255,255,0.05);
       border-radius: 6px;
     }
-    
+
     .exec-label {
       font-size: 10px;
       text-transform: uppercase;
@@ -336,14 +336,14 @@ Generate this complete HTML document:
       color: var(--brand-teal);
       margin-bottom: 8px;
     }
-    
+
     .exec-value {
       font-family: 'Playfair Display', serif;
       font-size: 28px;
       font-weight: 700;
       color: white;
     }
-    
+
     /* ========================================
        KEY FINDING BOX
        ======================================== */
@@ -354,7 +354,7 @@ Generate this complete HTML document:
       border-left: 4px solid var(--brand-teal);
       margin: 25px 0;
     }
-    
+
     .key-finding-label {
       font-size: 11px;
       font-weight: 700;
@@ -363,13 +363,13 @@ Generate this complete HTML document:
       color: var(--brand-teal);
       margin-bottom: 10px;
     }
-    
+
     .key-finding-text {
       font-size: 15px;
       color: var(--text-primary);
       line-height: 1.6;
     }
-    
+
     /* ========================================
        STATS GRID
        ======================================== */
@@ -379,21 +379,21 @@ Generate this complete HTML document:
       gap: 15px;
       margin: 25px 0;
     }
-    
+
     .stat-card {
       background: var(--bg-cream);
       border-radius: 6px;
       padding: 20px;
       text-align: center;
     }
-    
+
     .stat-number {
       font-family: 'Playfair Display', serif;
       font-size: 32px;
       font-weight: 700;
       color: var(--brand-teal);
     }
-    
+
     .stat-label {
       font-size: 11px;
       font-weight: 600;
@@ -402,7 +402,7 @@ Generate this complete HTML document:
       color: var(--text-muted);
       margin-top: 5px;
     }
-    
+
     /* ========================================
        TABLES
        ======================================== */
@@ -412,7 +412,7 @@ Generate this complete HTML document:
       font-size: 12px;
       margin: 20px 0;
     }
-    
+
     th {
       background: var(--brand-navy);
       color: white;
@@ -423,20 +423,20 @@ Generate this complete HTML document:
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    
+
     th:first-child { border-radius: 6px 0 0 0; }
     th:last-child { border-radius: 0 6px 0 0; }
-    
+
     td {
       padding: 12px 15px;
       border-bottom: 1px solid var(--border-subtle);
     }
-    
+
     tr:hover { background: var(--bg-cream); }
-    
+
     tr:last-child td:first-child { border-radius: 0 0 0 6px; }
     tr:last-child td:last-child { border-radius: 0 0 6px 0; }
-    
+
     /* ========================================
        BADGES
        ======================================== */
@@ -449,12 +449,12 @@ Generate this complete HTML document:
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
-    
+
     .badge-critical { background: #fef2f2; color: #dc2626; }
     .badge-high { background: #fff7ed; color: #ea580c; }
     .badge-medium { background: #fefce8; color: #ca8a04; }
     .badge-low { background: #f0fdf4; color: #16a34a; }
-    
+
     /* ========================================
        ACCOUNT CARDS
        ======================================== */
@@ -465,7 +465,7 @@ Generate this complete HTML document:
       padding: 20px;
       margin-bottom: 15px;
     }
-    
+
     .account-header {
       display: flex;
       justify-content: space-between;
@@ -474,26 +474,26 @@ Generate this complete HTML document:
       padding-bottom: 12px;
       border-bottom: 1px solid var(--border-subtle);
     }
-    
+
     .account-name {
       font-weight: 600;
       color: var(--brand-navy);
       font-size: 14px;
     }
-    
+
     .account-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 15px;
       text-align: center;
     }
-    
+
     .bureau-col {
       padding: 10px;
       background: var(--bg-cream);
       border-radius: 4px;
     }
-    
+
     .bureau-name {
       font-size: 10px;
       font-weight: 600;
@@ -501,17 +501,17 @@ Generate this complete HTML document:
       color: var(--text-muted);
       margin-bottom: 8px;
     }
-    
+
     .bureau-status {
       font-weight: 600;
       font-size: 13px;
     }
-    
+
     .status-open { color: #16a34a; }
     .status-paid { color: #2563eb; }
     .status-closed { color: #6b7280; }
     .status-error { color: #dc2626; background: #fef2f2; padding: 2px 6px; border-radius: 3px; }
-    
+
     /* ========================================
        RIGHTS SECTION
        ======================================== */
@@ -521,7 +521,7 @@ Generate this complete HTML document:
       gap: 20px;
       margin: 20px 0;
     }
-    
+
     .right-card {
       display: flex;
       gap: 15px;
@@ -529,7 +529,7 @@ Generate this complete HTML document:
       background: var(--bg-cream);
       border-radius: 6px;
     }
-    
+
     .right-icon {
       width: 40px;
       height: 40px;
@@ -542,18 +542,18 @@ Generate this complete HTML document:
       font-size: 18px;
       flex-shrink: 0;
     }
-    
+
     .right-title {
       font-weight: 600;
       color: var(--brand-navy);
       margin-bottom: 5px;
     }
-    
+
     .right-desc {
       font-size: 13px;
       color: var(--text-secondary);
     }
-    
+
     /* ========================================
        TIMELINE
        ======================================== */
@@ -563,7 +563,7 @@ Generate this complete HTML document:
       margin: 30px 0;
       position: relative;
     }
-    
+
     .timeline::before {
       content: '';
       position: absolute;
@@ -573,14 +573,14 @@ Generate this complete HTML document:
       height: 3px;
       background: linear-gradient(90deg, var(--brand-teal), var(--brand-navy));
     }
-    
+
     .timeline-step {
       text-align: center;
       position: relative;
       z-index: 1;
       flex: 1;
     }
-    
+
     .timeline-dot {
       width: 40px;
       height: 40px;
@@ -594,19 +594,19 @@ Generate this complete HTML document:
       margin: 0 auto 15px;
       box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
     }
-    
+
     .timeline-label {
       font-size: 12px;
       font-weight: 600;
       color: var(--brand-navy);
     }
-    
+
     .timeline-days {
       font-size: 11px;
       color: var(--text-muted);
       margin-top: 3px;
     }
-    
+
     /* ========================================
        CTA SECTION
        ======================================== */
@@ -617,7 +617,7 @@ Generate this complete HTML document:
       text-align: center;
       margin: 30px 0;
     }
-    
+
     .cta-title {
       font-family: 'Playfair Display', serif;
       font-size: 24px;
@@ -625,13 +625,13 @@ Generate this complete HTML document:
       color: white;
       margin-bottom: 10px;
     }
-    
+
     .cta-text {
       font-size: 15px;
       color: rgba(255,255,255,0.9);
       margin-bottom: 25px;
     }
-    
+
     .cta-button {
       display: inline-block;
       background: white;
@@ -643,7 +643,7 @@ Generate this complete HTML document:
       text-decoration: none;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
-    
+
     /* ========================================
        PAGE FOOTER
        ======================================== */
@@ -658,7 +658,7 @@ Generate this complete HTML document:
       left: 0;
       right: 0;
     }
-    
+
     .footer-brand {
       font-size: 11px;
       font-weight: 600;
@@ -666,19 +666,19 @@ Generate this complete HTML document:
       letter-spacing: 1px;
       text-transform: uppercase;
     }
-    
+
     .footer-info {
       font-size: 10px;
       color: rgba(255,255,255,0.4);
     }
-    
+
     /* ========================================
        PRINT STYLES
        ======================================== */
     @media print {
       body { background: white; }
-      .page { 
-        box-shadow: none; 
+      .page {
+        box-shadow: none;
         margin: 0;
         page-break-after: always;
       }
@@ -711,14 +711,14 @@ Generate this complete HTML document:
     <div class="page-header-brand">Brightpath Ascend Group</div>
     <div class="page-header-title">Executive Summary</div>
   </div>
-  
+
   <div class="content">
     <div class="section">
       <div class="section-header">
         <div class="section-number">1</div>
         <div class="section-title">Executive Summary</div>
       </div>
-      
+
       <div class="exec-box">
         <div class="exec-title">Case Assessment</div>
         <div class="exec-grid">
@@ -740,12 +740,12 @@ Generate this complete HTML document:
           </div>
         </div>
       </div>
-      
+
       <div class="key-finding">
         <div class="key-finding-label">Key Finding</div>
         <p class="key-finding-text">[KEY_FINDING_TEXT]</p>
       </div>
-      
+
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-number">[VIOLATION_COUNT]</div>
@@ -760,12 +760,12 @@ Generate this complete HTML document:
           <div class="stat-label">Affected Accounts</div>
         </div>
       </div>
-      
+
       <h3 style="color: var(--brand-navy); margin: 25px 0 15px;">What This Means</h3>
       <p style="color: var(--text-secondary); line-height: 1.8;">[WHAT_THIS_MEANS_TEXT]</p>
     </div>
   </div>
-  
+
   <div class="page-footer">
     <div class="footer-brand">Brightpath Ascend Group</div>
     <div class="footer-info">Page 2 of 7 • Case #[CASE_NUMBER]</div>
@@ -780,20 +780,20 @@ Generate this complete HTML document:
     <div class="page-header-brand">Brightpath Ascend Group</div>
     <div class="page-header-title">Understanding Your Rights</div>
   </div>
-  
+
   <div class="content">
     <div class="section">
       <div class="section-header">
         <div class="section-number">2</div>
         <div class="section-title">Your Rights Under the FCRA</div>
       </div>
-      
+
       <p style="color: var(--text-secondary); margin-bottom: 25px; line-height: 1.8;">
-        The Fair Credit Reporting Act (FCRA), 15 U.S.C. § 1681, is a federal law that protects 
-        the accuracy, fairness, and privacy of consumer information in credit reports. When 
+        The Fair Credit Reporting Act (FCRA), 15 U.S.C. § 1681, is a federal law that protects
+        the accuracy, fairness, and privacy of consumer information in credit reports. When
         credit bureaus or furnishers violate this law, you have the right to seek damages.
       </p>
-      
+
       <div class="rights-grid">
         <div class="right-card">
           <div class="right-icon">✓</div>
@@ -840,7 +840,7 @@ Generate this complete HTML document:
       </div>
     </div>
   </div>
-  
+
   <div class="page-footer">
     <div class="footer-brand">Brightpath Ascend Group</div>
     <div class="footer-info">Page 3 of 7 • Case #[CASE_NUMBER]</div>
@@ -855,14 +855,14 @@ Generate this complete HTML document:
     <div class="page-header-brand">Brightpath Ascend Group</div>
     <div class="page-header-title">Violation Summary</div>
   </div>
-  
+
   <div class="content">
     <div class="section">
       <div class="section-header">
         <div class="section-number">3</div>
         <div class="section-title">Violations Identified</div>
       </div>
-      
+
       <table>
         <tr>
           <th>Category</th>
@@ -872,13 +872,13 @@ Generate this complete HTML document:
         </tr>
         [VIOLATION_ROWS]
       </table>
-      
+
       <h3 style="color: var(--brand-navy); margin: 30px 0 15px;">Critical Violations</h3>
       <p style="color: var(--text-secondary); margin-bottom: 20px;">
-        The following accounts show impossible contradictions — the same account cannot have 
+        The following accounts show impossible contradictions — the same account cannot have
         mutually exclusive statuses across bureaus:
       </p>
-      
+
       <table>
         <tr>
           <th>Account</th>
@@ -891,7 +891,7 @@ Generate this complete HTML document:
       </table>
     </div>
   </div>
-  
+
   <div class="page-footer">
     <div class="footer-brand">Brightpath Ascend Group</div>
     <div class="footer-info">Page 4 of 7 • Case #[CASE_NUMBER]</div>
@@ -906,19 +906,19 @@ Generate this complete HTML document:
     <div class="page-header-brand">Brightpath Ascend Group</div>
     <div class="page-header-title">Account Analysis</div>
   </div>
-  
+
   <div class="content">
     <div class="section">
       <div class="section-header">
         <div class="section-number">4</div>
         <div class="section-title">Account-by-Account Review</div>
       </div>
-      
+
       [ACCOUNT_CARDS]
-      
+
     </div>
   </div>
-  
+
   <div class="page-footer">
     <div class="footer-brand">Brightpath Ascend Group</div>
     <div class="footer-info">Page 5 of 7 • Case #[CASE_NUMBER]</div>
@@ -933,14 +933,14 @@ Generate this complete HTML document:
     <div class="page-header-brand">Brightpath Ascend Group</div>
     <div class="page-header-title">Damages & Strategy</div>
   </div>
-  
+
   <div class="content">
     <div class="section">
       <div class="section-header">
         <div class="section-number">5</div>
         <div class="section-title">Potential Recovery</div>
       </div>
-      
+
       <table>
         <tr>
           <th>Component</th>
@@ -973,9 +973,9 @@ Generate this complete HTML document:
           <td><strong>$[TOTAL_AGG]</strong></td>
         </tr>
       </table>
-      
+
       <h3 style="color: var(--brand-navy); margin: 30px 0 15px;">Our Process</h3>
-      
+
       <div class="timeline">
         <div class="timeline-step">
           <div class="timeline-dot">1</div>
@@ -1000,7 +1000,7 @@ Generate this complete HTML document:
       </div>
     </div>
   </div>
-  
+
   <div class="page-footer">
     <div class="footer-brand">Brightpath Ascend Group</div>
     <div class="footer-info">Page 6 of 7 • Case #[CASE_NUMBER]</div>
@@ -1015,21 +1015,21 @@ Generate this complete HTML document:
     <div class="page-header-brand">Brightpath Ascend Group</div>
     <div class="page-header-title">Next Steps</div>
   </div>
-  
+
   <div class="content">
     <div class="section">
       <div class="section-header">
         <div class="section-number">6</div>
         <div class="section-title">Moving Forward</div>
       </div>
-      
+
       <h3 style="color: var(--brand-navy); margin-bottom: 15px;">What We Need From You</h3>
       <ul style="color: var(--text-secondary); padding-left: 25px; line-height: 2;">
         <li>Your approval to proceed (reply "APPROVED")</li>
         <li>Any denial letters or adverse action notices you've received</li>
         <li>Documentation of any harm caused by inaccurate reporting</li>
       </ul>
-      
+
       <h3 style="color: var(--brand-navy); margin: 30px 0 15px;">What Happens Next</h3>
       <ul style="color: var(--text-secondary); padding-left: 25px; line-height: 2;">
         <li>We send formal dispute letters to all [DEFENDANT_COUNT] defendants via certified mail</li>
@@ -1037,13 +1037,13 @@ Generate this complete HTML document:
         <li>We escalate based on their responses</li>
         <li>Target resolution in 60-120 days</li>
       </ul>
-      
+
       <div class="cta-box">
         <div class="cta-title">Ready to Protect Your Rights?</div>
         <p class="cta-text">Reply "APPROVED" to begin the dispute process immediately.</p>
         <a href="mailto:support@brightpathascend.com?subject=APPROVED" class="cta-button">I'm Ready to Start →</a>
       </div>
-      
+
       <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border-subtle);">
         <div style="font-weight: 600; color: var(--brand-navy); margin-bottom: 5px;">Brightpath Ascend Group</div>
         <div style="color: var(--text-muted); font-size: 13px;">
@@ -1052,7 +1052,7 @@ Generate this complete HTML document:
       </div>
     </div>
   </div>
-  
+
   <div class="page-footer">
     <div class="footer-brand">Brightpath Ascend Group</div>
     <div class="footer-info">Page 7 of 7 • Case #[CASE_NUMBER]</div>

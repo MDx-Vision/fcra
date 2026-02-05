@@ -1,10 +1,10 @@
 # FCRA PROMPT 05: ROUND 4 â€” PRE-ARBITRATION DEMANDS (SEPARATE FILES)
 ## Final Settlement Demands + Draft AAA Arbitration
 
-**Version:** 2.0 (Separate File Output)  
-**Created:** November 24, 2025  
-**Use Case:** Round 4 â€” Papers ready to file, final settlement opportunity  
-**Output:** Each demand + draft arbitration saved as separate files  
+**Version:** 2.0 (Separate File Output)
+**Created:** November 24, 2025
+**Use Case:** Round 4 â€” Papers ready to file, final settlement opportunity
+**Output:** Each demand + draft arbitration saved as separate files
 **Deadline:** 10 days before filing
 
 ---
@@ -100,7 +100,7 @@ TEMPLATE 1: PRE-ARBITRATION DEMAND LETTER
 
 Dear Sir or Madam:
 
-**This is your final opportunity to settle before arbitration papers are 
+**This is your final opportunity to settle before arbitration papers are
 filed with the American Arbitration Association.**
 
 ---------------------------------------------------------------------------
@@ -146,7 +146,7 @@ SETTLEMENT OFFER
 YOUR ALTERNATIVE: ARBITRATION
 ---------------------------------------------------------------------------
 
-If you do not accept this settlement, on Day 11 we will file the attached 
+If you do not accept this settlement, on Day 11 we will file the attached
 draft AAA arbitration demand.
 
 **Your Arbitration Costs:**
@@ -245,7 +245,7 @@ TEMPLATE 2: DRAFT AAA ARBITRATION DEMAND
 
 **DEMAND FOR ARBITRATION**
 
-Claimant [Name] demands arbitration against Respondents for violations of 
+Claimant [Name] demands arbitration against Respondents for violations of
 the Fair Credit Reporting Act, 15 U.S.C. Â§Â§ 1681 et seq.
 
 ---
@@ -406,7 +406,7 @@ I. Expert reports (if applicable)
 
 **VERIFICATION**
 
-I, [Consumer Name], declare under penalty of perjury that the foregoing 
+I, [Consumer Name], declare under penalty of perjury that the foregoing
 is true and correct to the best of my knowledge.
 
 _______________________________________

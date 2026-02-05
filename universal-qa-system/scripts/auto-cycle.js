@@ -129,7 +129,7 @@ if (categories.auth.length > 10) {
 // Step 7: Auto-fix auth if needed
 if (categories.auth.length > 10) {
   console.log('🔧 STEP 7: Auto-fixing auth issue...\n');
-  
+
   // Create test user that doesn't require password change
   const seedCode = `
 from app import app, db
@@ -156,7 +156,7 @@ with app.app_context():
     db.session.commit()
     print('✅ Test user ready: test@example.com / testpass123')
 `;
-  
+
   fs.writeFileSync('/tmp/fix_auth.py', seedCode);
   try {
     execSync('python /tmp/fix_auth.py 2>&1', { encoding: 'utf8' });

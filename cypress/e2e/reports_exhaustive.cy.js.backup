@@ -212,10 +212,10 @@ describe('Staff Login Page - /dashboard/reports', () => {
       it('should toggle password visibility when clicked', () => {
         cy.get('[data-testid="password-input"]').type('password123');
         cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-        
+
         cy.get('.toggle-btn').click();
         cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-        
+
         cy.get('.toggle-btn').click();
         cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
       });
@@ -402,7 +402,7 @@ describe('Staff Login Page - /dashboard/reports', () => {
     it('should have all expected data-testids present', () => {
       const expectedTestIds = [
         'login-container',
-        'login-card', 
+        'login-card',
         'login-title',
         'login-form',
         'email-input',

@@ -21,7 +21,10 @@ from typing import Any, Dict, Optional, Tuple
 from flask import jsonify, request
 
 # Environment check
-IS_PRODUCTION = os.environ.get("FLASK_ENV") == "production" or os.environ.get("PRODUCTION") == "true"
+IS_PRODUCTION = (
+    os.environ.get("FLASK_ENV") == "production"
+    or os.environ.get("PRODUCTION") == "true"
+)
 DEBUG_ERRORS = os.environ.get("DEBUG_ERRORS", "false").lower() == "true"
 
 # Logger for server-side error logging
@@ -86,13 +89,31 @@ def classify_error(error: Exception) -> str:
     error_msg = str(error).lower()
 
     # File operation errors - check type first (before "not found" check)
-    if error_type in ["FileNotFoundError", "IOError", "PermissionError", "IsADirectoryError", "NotADirectoryError"]:
+    if error_type in [
+        "FileNotFoundError",
+        "IOError",
+        "PermissionError",
+        "IsADirectoryError",
+        "NotADirectoryError",
+    ]:
         return "file_operation"
-    if "file" in error_msg and ("read" in error_msg or "write" in error_msg or "open" in error_msg):
+    if "file" in error_msg and (
+        "read" in error_msg or "write" in error_msg or "open" in error_msg
+    ):
         return "file_operation"
 
     # Database errors
-    if any(db_type in error_type for db_type in ["SQLAlchemy", "Database", "Postgres", "MySQL", "IntegrityError", "OperationalError"]):
+    if any(
+        db_type in error_type
+        for db_type in [
+            "SQLAlchemy",
+            "Database",
+            "Postgres",
+            "MySQL",
+            "IntegrityError",
+            "OperationalError",
+        ]
+    ):
         return "database"
     if "database" in error_msg or "sql" in error_msg or "query" in error_msg:
         return "database"
@@ -108,15 +129,26 @@ def classify_error(error: Exception) -> str:
         return "authentication"
 
     # Authorization errors
-    if "permission" in error_msg or "forbidden" in error_msg or "access denied" in error_msg:
+    if (
+        "permission" in error_msg
+        or "forbidden" in error_msg
+        or "access denied" in error_msg
+    ):
         return "authorization"
 
     # Not found errors
-    if "NotFound" in error_type or "not found" in error_msg or "does not exist" in error_msg:
+    if (
+        "NotFound" in error_type
+        or "not found" in error_msg
+        or "does not exist" in error_msg
+    ):
         return "not_found"
 
     # External service errors
-    if any(svc in error_msg for svc in ["stripe", "twilio", "sendgrid", "api", "timeout", "connection"]):
+    if any(
+        svc in error_msg
+        for svc in ["stripe", "twilio", "sendgrid", "api", "timeout", "connection"]
+    ):
         return "external_service"
 
     # Rate limit errors
@@ -155,7 +187,7 @@ def log_error_server_side(
     error: Exception,
     error_id: str,
     category: str,
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[Dict[str, Any]] = None,
 ) -> None:
     """
     Log full error details server-side only.
@@ -170,6 +202,7 @@ def log_error_server_side(
     request_id = None
     try:
         from services.request_id_service import get_request_id
+
         request_id = get_request_id()
     except ImportError:
         pass
@@ -201,14 +234,14 @@ def log_error_server_side(
     error_logger.error(
         f"[{error_id}] {category.upper()}: {type(error).__name__}: {str(error)}",
         extra=log_data,
-        exc_info=True
+        exc_info=True,
     )
 
 
 def sanitize_error(
     error: Exception,
     context: Optional[Dict[str, Any]] = None,
-    include_error_id: bool = True
+    include_error_id: bool = True,
 ) -> Dict[str, Any]:
     """
     Sanitize an error for client response.
@@ -249,6 +282,7 @@ def sanitize_error(
     # Add request ID for correlation
     try:
         from services.request_id_service import get_request_id
+
         request_id = get_request_id()
         if request_id:
             result["request_id"] = request_id
@@ -259,9 +293,7 @@ def sanitize_error(
 
 
 def sanitize_error_response(
-    error: Exception,
-    status_code: int = 500,
-    context: Optional[Dict[str, Any]] = None
+    error: Exception, status_code: int = 500, context: Optional[Dict[str, Any]] = None
 ) -> Tuple[Any, int]:
     """
     Create a sanitized Flask JSON response for an error.
@@ -303,9 +335,7 @@ def safe_error_message(error: Exception, default: str = "An error occurred") -> 
 
 # Convenience function for quick sanitization
 def handle_exception(
-    error: Exception,
-    context: Optional[Dict[str, Any]] = None,
-    status_code: int = 500
+    error: Exception, context: Optional[Dict[str, Any]] = None, status_code: int = 500
 ) -> Tuple[Any, int]:
     """
     Handle an exception with full sanitization and logging.

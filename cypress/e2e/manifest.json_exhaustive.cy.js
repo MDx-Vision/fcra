@@ -35,7 +35,7 @@ describe('/manifest.json', () => {
     it('should have required PWA manifest fields', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         // Test required fields
         expect(manifest).to.have.property('name');
         expect(manifest).to.have.property('short_name');
@@ -50,7 +50,7 @@ describe('/manifest.json', () => {
     it('should have correct app name and description', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         expect(manifest.name).to.eq('Brightpath Ascend FCRA Platform');
         expect(manifest.short_name).to.eq('Brightpath FCRA');
         expect(manifest.description).to.eq('Comprehensive FCRA litigation automation platform');
@@ -60,7 +60,7 @@ describe('/manifest.json', () => {
     it('should have correct display and orientation settings', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         expect(manifest.display).to.eq('standalone');
         expect(manifest.orientation).to.eq('any');
       });
@@ -69,7 +69,7 @@ describe('/manifest.json', () => {
     it('should have correct theme and background colors', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         expect(manifest.theme_color).to.eq('#319795');
         expect(manifest.background_color).to.eq('#1a1a2e');
       });
@@ -78,7 +78,7 @@ describe('/manifest.json', () => {
     it('should have correct start URL', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         expect(manifest.start_url).to.eq('/dashboard');
       });
     });
@@ -86,7 +86,7 @@ describe('/manifest.json', () => {
     it('should have correct categories', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         expect(manifest.categories).to.be.an('array');
         expect(manifest.categories).to.have.length(2);
         expect(manifest.categories).to.include('business');
@@ -99,13 +99,13 @@ describe('/manifest.json', () => {
     it('should have required icon sizes', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         expect(manifest.icons).to.be.an('array');
         expect(manifest.icons).to.have.length(2);
-        
+
         const icon192 = manifest.icons.find(icon => icon.sizes === '192x192');
         const icon512 = manifest.icons.find(icon => icon.sizes === '512x512');
-        
+
         expect(icon192).to.exist;
         expect(icon512).to.exist;
       });
@@ -114,7 +114,7 @@ describe('/manifest.json', () => {
     it('should have correct icon properties', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         manifest.icons.forEach(icon => {
           expect(icon).to.have.property('src');
           expect(icon).to.have.property('sizes');
@@ -128,7 +128,7 @@ describe('/manifest.json', () => {
     it('should have accessible icon files', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         manifest.icons.forEach(icon => {
           cy.request({
             url: icon.src,
@@ -145,7 +145,7 @@ describe('/manifest.json', () => {
     it('should have shortcuts array', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         expect(manifest.shortcuts).to.be.an('array');
         expect(manifest.shortcuts).to.have.length(2);
       });
@@ -154,7 +154,7 @@ describe('/manifest.json', () => {
     it('should have dashboard shortcut', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         const dashboardShortcut = manifest.shortcuts.find(s => s.url === '/dashboard');
         expect(dashboardShortcut).to.exist;
         expect(dashboardShortcut.name).to.eq('Dashboard');
@@ -169,7 +169,7 @@ describe('/manifest.json', () => {
     it('should have contacts shortcut', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         const contactsShortcut = manifest.shortcuts.find(s => s.url === '/dashboard/contacts');
         expect(contactsShortcut).to.exist;
         expect(contactsShortcut.name).to.eq('Contacts');
@@ -184,7 +184,7 @@ describe('/manifest.json', () => {
     it('should have valid shortcut URLs', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         manifest.shortcuts.forEach(shortcut => {
           expect(shortcut.url).to.match(/^\/dashboard/);
           expect(shortcut.url).to.not.be.empty;
@@ -228,7 +228,7 @@ describe('/manifest.json', () => {
           'start_url',
           'theme_color'
         ];
-        
+
         Object.keys(manifest).forEach(key => {
           expect(expectedProperties).to.include(key);
         });
@@ -238,7 +238,7 @@ describe('/manifest.json', () => {
     it('should have valid color format', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         expect(manifest.theme_color).to.match(/^#[0-9a-fA-F]{6}$/);
         expect(manifest.background_color).to.match(/^#[0-9a-fA-F]{6}$/);
       });
@@ -247,7 +247,7 @@ describe('/manifest.json', () => {
     it('should have non-empty required strings', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
-        
+
         expect(manifest.name).to.not.be.empty;
         expect(manifest.short_name).to.not.be.empty;
         expect(manifest.description).to.not.be.empty;

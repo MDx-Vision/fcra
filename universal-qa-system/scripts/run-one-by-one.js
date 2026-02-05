@@ -13,7 +13,7 @@ const results = [];
 files.forEach((file, i) => {
   console.log(`\n[${i+1}/${files.length}] ${file}`);
   const start = Date.now();
-  
+
   try {
     execSync(`npx cypress run --headless --browser electron --spec "cypress/e2e/${file}"`, {
       encoding: 'utf8',

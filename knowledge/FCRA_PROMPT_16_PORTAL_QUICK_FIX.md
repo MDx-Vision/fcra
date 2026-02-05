@@ -1,10 +1,10 @@
 # FCRA PROMPT 16: PORTAL QUICK FIX
 ## Fast PII & Inquiry Disputes via Online Portal
 
-**Version:** 1.0  
-**Created:** January 13, 2026  
-**Use Case:** Quick fixes for funding/approval - NOT case building  
-**Method:** Online portal submission + phone follow-up  
+**Version:** 1.0
+**Created:** January 13, 2026
+**Use Case:** Quick fixes for funding/approval - NOT case building
+**Method:** Online portal submission + phone follow-up
 **Turnaround:** 3-7 days typical
 
 ---
@@ -123,11 +123,11 @@ I submitted a dispute on [DATE] for [PII error / unauthorized inquiry].
 
 Can you tell me the status? When can I expect this to be resolved?
 
-[IF THEY SAY 30 DAYS]: Is there any way to expedite this? 
-I'm in the middle of a loan application and this error is 
+[IF THEY SAY 30 DAYS]: Is there any way to expedite this?
+I'm in the middle of a loan application and this error is
 causing delays.
 
-[GET CONFIRMATION]: Can I get a confirmation number or 
+[GET CONFIRMATION]: Can I get a confirmation number or
 reference number for this call?
 
 Thank you."

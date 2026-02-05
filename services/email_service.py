@@ -14,8 +14,8 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from services.circuit_breaker_service import CircuitBreakerError, circuit_protected
 from services.retry_service import retry_email
-from services.circuit_breaker_service import circuit_protected, CircuitBreakerError
 
 logger = logging.getLogger(__name__)
 
@@ -130,15 +130,24 @@ def send_email(
         # Inject email open/click tracking
         try:
             import os
-            base_url = os.environ.get("BASE_URL", os.environ.get("REPLIT_DEV_DOMAIN", ""))
+
+            base_url = os.environ.get(
+                "BASE_URL", os.environ.get("REPLIT_DEV_DOMAIN", "")
+            )
             if base_url and not base_url.startswith("http"):
                 base_url = f"https://{base_url}"
             if base_url:
-                from services.email_tracking_service import EmailTrackingService, generate_tracking_id
+                from services.email_tracking_service import (
+                    EmailTrackingService,
+                    generate_tracking_id,
+                )
+
                 _tracking_id = generate_tracking_id()
                 tracker = EmailTrackingService()
                 try:
-                    html_content = tracker.inject_tracking(html_content, _tracking_id, base_url)
+                    html_content = tracker.inject_tracking(
+                        html_content, _tracking_id, base_url
+                    )
                 finally:
                     tracker.close()
         except Exception:
@@ -192,7 +201,9 @@ def send_email(
 
         # Send via Gmail SMTP with retry logic
         logger.debug(f"Sending email to {to_email}: {subject}")
-        _smtp_send_with_retry(gmail_user, gmail_password, from_email, to_email, msg.as_string())
+        _smtp_send_with_retry(
+            gmail_user, gmail_password, from_email, to_email, msg.as_string()
+        )
         logger.info(f"Email sent successfully to {to_email}")
 
         # Generate a pseudo message ID (Gmail doesn't return one via SMTP)

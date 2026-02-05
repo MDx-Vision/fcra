@@ -1,10 +1,10 @@
 # FCRA PROMPT 03: ROUND 2 â€” METHOD OF VERIFICATION (SEPARATE FILES)
 ## Escalated MOV Demands After "Verified" Responses
 
-**Version:** 2.0 (Separate File Output)  
-**Created:** November 24, 2025  
-**Use Case:** Round 2 escalation after CRAs/Furnishers claim "verified"  
-**Output:** Each MOV letter saved as separate downloadable file  
+**Version:** 2.0 (Separate File Output)
+**Created:** November 24, 2025
+**Use Case:** Round 2 escalation after CRAs/Furnishers claim "verified"
+**Output:** Each MOV letter saved as separate downloadable file
 **Deadline:** 15 days (shorter than Round 1's 30 days)
 
 ---
@@ -107,14 +107,14 @@ LETTER TEMPLATE â€” METHOD OF VERIFICATION DEMAND
 
 Dear Sir or Madam:
 
-On [Date], I submitted a formal dispute pursuant to FCRA Â§ 1681i. On [Date], 
+On [Date], I submitted a formal dispute pursuant to FCRA Â§ 1681i. On [Date],
 you responded claiming the disputed information was "verified."
 
-**Pursuant to FCRA Â§ 1681i(a)(7), I DEMAND that you provide the METHOD OF 
+**Pursuant to FCRA Â§ 1681i(a)(7), I DEMAND that you provide the METHOD OF
 VERIFICATION you used.**
 
-Under *Cushman v. Trans Union Corp.*, 115 F.3d 220 (3d Cir. 1997), 
-"verification" requires tangible documentary proof â€” not mere confirmation 
+Under *Cushman v. Trans Union Corp.*, 115 F.3d 220 (3d Cir. 1997),
+"verification" requires tangible documentary proof â€” not mere confirmation
 from a database or furnisher's assertion.
 
 ---------------------------------------------------------------------------
@@ -158,14 +158,14 @@ SECTION 3: CUSHMAN STANDARD
 
 *Cushman v. Trans Union Corp.* established that:
 
-"Verification requires the CRA to obtain additional information from the 
-furnisher beyond a mere confirmation of the disputed entry. The CRA must 
+"Verification requires the CRA to obtain additional information from the
+furnisher beyond a mere confirmation of the disputed entry. The CRA must
 obtain tangible evidence that the item is accurate."
 
-**Your response claiming "verified" without providing tangible documentary 
+**Your response claiming "verified" without providing tangible documentary
 proof violates Cushman.**
 
-**If you cannot provide actual documentation, you must DELETE the disputed 
+**If you cannot provide actual documentation, you must DELETE the disputed
 information under FCRA Â§ 1681i(a)(5)(A).**
 
 ---------------------------------------------------------------------------
@@ -177,7 +177,7 @@ You have **15 DAYS** from receipt of this letter to:
 1. **PROVIDE** the method of verification with documentary evidence, OR
 2. **DELETE** the disputed information
 
-Failure to comply within 15 days will result in escalation to regulatory 
+Failure to comply within 15 days will result in escalation to regulatory
 complaints and legal action.
 
 ---------------------------------------------------------------------------
@@ -191,7 +191,7 @@ Non-compliance will result in:
 3. **State AG Complaint**
 4. **Legal action** under FCRA Â§Â§ 1681n and 1681o
 
-**You are on notice.** Continued reporting without proper verification 
+**You are on notice.** Continued reporting without proper verification
 after this demand constitutes willfulness under *Safeco v. Burr*.
 
 ---------------------------------------------------------------------------

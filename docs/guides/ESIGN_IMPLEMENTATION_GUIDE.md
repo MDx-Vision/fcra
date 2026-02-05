@@ -216,7 +216,7 @@ if not template.must_sign_before_contract:
         SignedDocument.session_id == session.id,
         DocumentTemplate.must_sign_before_contract == True
     ).first()
-    
+
     if not rights_disclosure:
         return jsonify({
             'error': 'Consumer Credit File Rights Disclosure must be signed first',
@@ -233,7 +233,7 @@ from utils.business_days import add_business_days
 contract_signed = datetime(2024, 12, 16, 14, 30, 0)
 
 # Day 1 = Tuesday Dec 17
-# Day 2 = Wednesday Dec 18  
+# Day 2 = Wednesday Dec 18
 # Day 3 = Thursday Dec 19
 cancellation_end = add_business_days(contract_signed, 3)
 # Result: Thursday Dec 19, 2024 at 11:59:59 PM

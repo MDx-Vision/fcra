@@ -484,8 +484,8 @@ describe('Clients Page - Comprehensive Tests', () => {
       cy.get('body').then(($body) => {
         if ($body.find('[data-testid^="client-score-"]').length > 0) {
           cy.get('[data-testid^="client-score-"]').first().then(($badge) => {
-            const hasScoreClass = $badge.hasClass('score-high') || 
-                                  $badge.hasClass('score-medium') || 
+            const hasScoreClass = $badge.hasClass('score-high') ||
+                                  $badge.hasClass('score-medium') ||
                                   $badge.hasClass('score-low')
             expect(hasScoreClass).to.be.true
           })

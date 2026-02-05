@@ -235,40 +235,40 @@ async def test_everything():
             viewport={"width": 1920, "height": 1080}
         )
         page = await context.new_page()
-        
+
         # Enable console logging
         page.on("console", lambda msg: log_console(msg))
         page.on("pageerror", lambda err: log_error(err))
-        
+
         # Test all pages
         await test_all_pages(page)
-        
+
         # Test all forms with edge cases
         await test_all_forms(page)
-        
+
         # Test all buttons
         await test_all_buttons(page)
-        
+
         # Test all links
         await test_all_links(page)
-        
+
         # Test all modals
         await test_all_modals(page)
-        
+
         # Test responsive
         await test_responsive(page, context)
-        
+
         # Test accessibility
         await test_accessibility(page)
-        
+
         # Test performance with load
         await test_performance(page)
-        
+
         # Test critical flows end-to-end
         await test_critical_flows(page)
-        
+
         await browser.close()
-    
+
     # Save results
     save_results()
 
@@ -281,7 +281,7 @@ def log_console(msg):
 
 def log_error(err):
     RESULTS["issues_found"].append({
-        "type": "page_error", 
+        "type": "page_error",
         "message": str(err)
     })
 
@@ -332,20 +332,20 @@ async def test_all_pages(page):
         "/dashboard/predictive",
         "/dashboard/credit-imports",
     ]
-    
+
     for url in pages:
         try:
             response = await page.goto(f"{BASE_URL}{url}", wait_until="networkidle")
             status = response.status if response else 0
-            
+
             if status == 200:
                 RESULTS["passed"] += 1
-                
+
                 # Check for JS errors
                 errors = await page.evaluate("""() => {
                     return window.__errors || [];
                 }""")
-                
+
                 if errors:
                     RESULTS["issues_found"].append({
                         "page": url,
@@ -359,9 +359,9 @@ async def test_all_pages(page):
                     "type": "http_error",
                     "status": status
                 })
-            
+
             RESULTS["pages_tested"] += 1
-            
+
         except Exception as e:
             RESULTS["failed"] += 1
             RESULTS["issues_found"].append({
@@ -372,7 +372,7 @@ async def test_all_pages(page):
 
 async def test_all_forms(page):
     """Test every form with every edge case"""
-    
+
     # Get all forms from each page
     form_pages = [
         ("/signup", "signupForm"),
@@ -383,17 +383,17 @@ async def test_all_forms(page):
         ("/dashboard/settlements", "addSettlementForm"),
         ("/dashboard/staff", "addStaffForm"),
     ]
-    
+
     for url, form_id in form_pages:
         await page.goto(f"{BASE_URL}{url}", wait_until="networkidle")
-        
+
         # Find all input fields in the form
         inputs = await page.query_selector_all(f"#{form_id} input, #{form_id} select, #{form_id} textarea")
-        
+
         for input_el in inputs:
             input_type = await input_el.get_attribute("type") or "text"
             input_name = await input_el.get_attribute("name") or await input_el.get_attribute("id")
-            
+
             # Determine edge cases based on input type
             if input_type == "email":
                 cases = EDGE_CASES["email"]
@@ -409,7 +409,7 @@ async def test_all_forms(page):
                 cases = EDGE_CASES["checkbox"]
             else:
                 cases = EDGE_CASES["text"]
-            
+
             # Test each edge case
             for case in cases:
                 try:
@@ -430,9 +430,9 @@ async def test_all_forms(page):
                         await input_el.fill("")
                         if case is not None:
                             await input_el.fill(str(case))
-                    
+
                     RESULTS["edge_cases_tested"] += 1
-                    
+
                 except Exception as e:
                     RESULTS["issues_found"].append({
                         "form": form_id,
@@ -440,14 +440,14 @@ async def test_all_forms(page):
                         "edge_case": str(case)[:50],
                         "error": str(e)
                     })
-            
+
             RESULTS["fields_tested"] += 1
-        
+
         RESULTS["forms_tested"] += 1
 
 async def test_all_buttons(page):
     """Click every single button on every page"""
-    
+
     pages_to_test = [
         "/signup",
         "/dashboard",
@@ -458,37 +458,37 @@ async def test_all_buttons(page):
         "/dashboard/analytics",
         "/dashboard/settings",
     ]
-    
+
     for url in pages_to_test:
         await page.goto(f"{BASE_URL}{url}", wait_until="networkidle")
-        
+
         # Find all clickable elements
         buttons = await page.query_selector_all("button, [type='submit'], [type='button'], .btn, [onclick]")
-        
+
         for i, button in enumerate(buttons):
             try:
                 # Check if button is visible and enabled
                 is_visible = await button.is_visible()
                 is_enabled = await button.is_enabled()
-                
+
                 if is_visible and is_enabled:
                     button_text = await button.inner_text()
-                    
+
                     # Skip dangerous buttons (delete, logout) unless in safe context
                     dangerous = ["delete", "remove", "logout", "sign out"]
                     if any(d in button_text.lower() for d in dangerous):
                         RESULTS["buttons_clicked"] += 1
                         continue
-                    
+
                     # Click the button
                     await button.click(timeout=5000)
                     await page.wait_for_timeout(500)
-                    
+
                     # Check for errors after click
                     # ... error checking ...
-                    
+
                 RESULTS["buttons_clicked"] += 1
-                
+
             except Exception as e:
                 RESULTS["issues_found"].append({
                     "page": url,
@@ -498,17 +498,17 @@ async def test_all_buttons(page):
 
 async def test_all_links(page):
     """Test every single link on every page"""
-    
+
     pages = ["/", "/dashboard", "/dashboard/clients"]
-    
+
     for url in pages:
         await page.goto(f"{BASE_URL}{url}", wait_until="networkidle")
-        
+
         links = await page.query_selector_all("a[href]")
-        
+
         for link in links:
             href = await link.get_attribute("href")
-            
+
             if href and not href.startswith("#") and not href.startswith("javascript:"):
                 try:
                     # Check if link is valid
@@ -518,103 +518,103 @@ async def test_all_links(page):
                         full_url = href
                     else:
                         continue
-                    
+
                     # Just check the link responds
                     response = await page.request.get(full_url)
-                    
+
                     if response.status >= 400:
                         RESULTS["issues_found"].append({
                             "page": url,
                             "link": href,
                             "status": response.status
                         })
-                    
+
                     RESULTS["links_checked"] += 1
-                    
+
                 except Exception as e:
                     pass
 
 async def test_all_modals(page):
     """Test every modal opens for each trigger"""
-    
+
     modal_triggers = [
         ("/dashboard/clients", "[data-bs-toggle='modal']"),
         ("/dashboard/cases", "[data-bs-toggle='modal']"),
         ("/dashboard/settlements", "[data-bs-toggle='modal']"),
         ("/dashboard/staff", "[data-bs-toggle='modal']"),
     ]
-    
+
     for url, selector in modal_triggers:
         await page.goto(f"{BASE_URL}{url}", wait_until="networkidle")
-        
+
         triggers = await page.query_selector_all(selector)
-        
+
         for trigger in triggers:
             try:
                 is_visible = await trigger.is_visible()
                 if is_visible:
                     await trigger.click()
                     await page.wait_for_timeout(500)
-                    
+
                     # Check modal is visible
                     modal = await page.query_selector(".modal.show, .modal[style*='display: block']")
-                    
+
                     if modal:
                         # Test close button
                         close_btn = await modal.query_selector("[data-bs-dismiss='modal'], .btn-close, .close")
                         if close_btn:
                             await close_btn.click()
                             await page.wait_for_timeout(300)
-                        
+
                         RESULTS["modals_tested"] += 1
-                    
+
             except Exception as e:
                 pass
 
 async def test_responsive(page, context):
     """Test at different viewport sizes"""
-    
+
     viewports = [
         {"width": 375, "height": 667, "name": "mobile"},
         {"width": 768, "height": 1024, "name": "tablet"},
         {"width": 1024, "height": 768, "name": "laptop"},
         {"width": 1920, "height": 1080, "name": "desktop"},
     ]
-    
+
     test_pages = ["/", "/signup", "/dashboard", "/dashboard/clients"]
-    
+
     for viewport in viewports:
         await page.set_viewport_size({"width": viewport["width"], "height": viewport["height"]})
-        
+
         for url in test_pages:
             await page.goto(f"{BASE_URL}{url}", wait_until="networkidle")
-            
+
             # Check for horizontal scroll (bad)
             has_horizontal_scroll = await page.evaluate("""() => {
                 return document.documentElement.scrollWidth > document.documentElement.clientWidth;
             }""")
-            
+
             if has_horizontal_scroll:
                 RESULTS["issues_found"].append({
                     "page": url,
                     "viewport": viewport["name"],
                     "issue": "horizontal_scroll"
                 })
-            
+
             # Check for overlapping elements
             # Check for text overflow
             # Check touch target sizes (min 44x44)
-            
+
             RESULTS["passed"] += 1
 
 async def test_accessibility(page):
     """Test accessibility on all pages"""
-    
+
     test_pages = ["/", "/signup", "/dashboard", "/dashboard/clients"]
-    
+
     for url in test_pages:
         await page.goto(f"{BASE_URL}{url}", wait_until="networkidle")
-        
+
         # Check all images have alt text
         images = await page.query_selector_all("img")
         for img in images:
@@ -626,14 +626,14 @@ async def test_accessibility(page):
                     "type": "accessibility",
                     "issue": f"Image missing alt text: {src}"
                 })
-        
+
         # Check all form inputs have labels
         inputs = await page.query_selector_all("input:not([type='hidden']):not([type='submit']):not([type='button'])")
         for input_el in inputs:
             input_id = await input_el.get_attribute("id")
             input_name = await input_el.get_attribute("name")
             aria_label = await input_el.get_attribute("aria-label")
-            
+
             if input_id:
                 label = await page.query_selector(f"label[for='{input_id}']")
                 if not label and not aria_label:
@@ -642,7 +642,7 @@ async def test_accessibility(page):
                         "type": "accessibility",
                         "issue": f"Input missing label: {input_name or input_id}"
                     })
-        
+
         # Check focus states
         focusable = await page.query_selector_all("a, button, input, select, textarea, [tabindex]")
         for el in focusable[:10]:  # Sample first 10
@@ -651,66 +651,66 @@ async def test_accessibility(page):
                 # Check if focus is visible
             except:
                 pass
-        
+
         # Check keyboard navigation
         await page.keyboard.press("Tab")
         await page.keyboard.press("Tab")
         await page.keyboard.press("Tab")
-        
+
         RESULTS["passed"] += 1
 
 async def test_performance(page):
     """Test performance with large data sets"""
-    
+
     # This would require seeding database with 100+ records
     # Then testing list pages still load fast
-    
+
     # Check for N+1 queries
     # Check for slow endpoints
     # Check for memory leaks
-    
+
     pass
 
 async def test_critical_flows(page):
     """Test complete end-to-end flows"""
-    
+
     # Flow 1: Complete signup
     await test_signup_flow(page)
-    
+
     # Flow 2: Staff login and client management
     await test_staff_flow(page)
-    
+
     # Flow 3: Client portal access
     await test_portal_flow(page)
 
 async def test_signup_flow(page):
     """Test complete signup flow end-to-end"""
-    
+
     await page.goto(f"{BASE_URL}/signup", wait_until="networkidle")
-    
+
     # Step 1: Personal Info
     await page.fill("#firstName", "Test")
     await page.fill("#lastName", "User")
     await page.fill("#email", f"test{datetime.now().timestamp()}@example.com")
     await page.fill("#phone", "1234567890")
-    
+
     next_btn = await page.query_selector("button:has-text('Next'), .next-btn, [onclick*='nextStep']")
     if next_btn:
         await next_btn.click()
         await page.wait_for_timeout(500)
-    
+
     # Step 2: Case Info
     # ... fill case fields ...
-    
+
     # Step 3: Plan Selection
     # ... select plan ...
-    
+
     # Step 4: Payment
     # ... fill payment ...
-    
+
     # Submit
     # ... submit form ...
-    
+
     # Verify success
     # ... check success message ...
 
@@ -724,10 +724,10 @@ async def test_portal_flow(page):
 
 def save_results():
     """Save results to file"""
-    
+
     with open("tests/100_percent/RESULTS.json", "w") as f:
         json.dump(RESULTS, f, indent=2)
-    
+
     # Generate markdown report
     report = f"""# 100% EXHAUSTIVE QA RESULTS
 
@@ -753,17 +753,17 @@ def save_results():
 ## Issues Found
 
 """
-    
+
     for issue in RESULTS['issues_found']:
         report += f"- {issue}\n"
-    
+
     report += """
 
 ## Conclusion
 
 [Auto-generated based on results]
 """
-    
+
     with open("tests/100_percent/FINAL_REPORT.md", "w") as f:
         f.write(report)
 
@@ -810,41 +810,41 @@ API_ENDPOINTS = [
     ("GET", "/"),
     ("GET", "/signup"),
     ("POST", "/api/client-signup"),
-    
+
     # Auth
     ("GET", "/staff/login"),
     ("POST", "/api/staff/login"),
     ("GET", "/portal/login"),
-    
+
     # Clients
     ("GET", "/api/clients"),
     ("GET", "/api/clients/1"),
     ("POST", "/api/clients"),
     ("PUT", "/api/clients/1"),
     ("DELETE", "/api/clients/1"),
-    
+
     # Cases
     ("GET", "/api/cases"),
     ("GET", "/api/cases/1"),
     ("POST", "/api/cases"),
     ("PUT", "/api/cases/1"),
-    
+
     # Settlements
     ("GET", "/api/settlements"),
     ("POST", "/api/settlements"),
-    
+
     # Staff
     ("GET", "/api/staff"),
     ("POST", "/api/staff"),
-    
+
     # Analytics
     ("GET", "/api/analytics/revenue-trends"),
     ("GET", "/api/analytics/case-stats"),
-    
+
     # Calendar
     ("GET", "/api/calendar/events"),
     ("POST", "/api/calendar/events"),
-    
+
     # All other endpoints...
 ]
 
@@ -859,7 +859,7 @@ PAYLOADS = {
 
 def test_all_apis():
     results = []
-    
+
     for method, endpoint in API_ENDPOINTS:
         for payload_name, payload in PAYLOADS.items():
             try:
@@ -871,7 +871,7 @@ def test_all_apis():
                     r = requests.put(f"{BASE}{endpoint}", json=payload, timeout=10)
                 elif method == "DELETE":
                     r = requests.delete(f"{BASE}{endpoint}", timeout=10)
-                
+
                 results.append({
                     "method": method,
                     "endpoint": endpoint,
@@ -879,14 +879,14 @@ def test_all_apis():
                     "status": r.status_code,
                     "time_ms": r.elapsed.total_seconds() * 1000
                 })
-                
+
             except Exception as e:
                 results.append({
                     "method": method,
                     "endpoint": endpoint,
                     "error": str(e)
                 })
-    
+
     # Save results
     with open("api_results.json", "w") as f:
         json.dump(results, f, indent=2)
@@ -905,36 +905,36 @@ import sqlite3
 def test_database():
     conn = sqlite3.connect("instance/fcra.db")
     cursor = conn.cursor()
-    
+
     issues = []
-    
+
     # Check all required columns exist
     # Check all foreign keys valid
     # Check no orphaned records
     # Check data integrity
     # Check indexes exist
     # Check constraints enforced
-    
+
     # Test: No plain text passwords
     cursor.execute("SELECT id, password FROM staff WHERE password NOT LIKE 'scrypt:%'")
     plain_passwords = cursor.fetchall()
     if plain_passwords:
         issues.append(f"Plain text passwords found: {plain_passwords}")
-    
+
     # Test: All emails valid format
     cursor.execute("SELECT id, email FROM clients WHERE email NOT LIKE '%@%.%'")
     invalid_emails = cursor.fetchall()
     if invalid_emails:
         issues.append(f"Invalid emails: {invalid_emails}")
-    
+
     # Test: No XSS in stored data
     cursor.execute("SELECT id, first_name FROM clients WHERE first_name LIKE '%<script%'")
     xss_data = cursor.fetchall()
     if xss_data:
         issues.append(f"XSS in database: {xss_data}")
-    
+
     conn.close()
-    
+
     return issues
 
 if __name__ == "__main__":
@@ -953,13 +953,13 @@ import time
 
 async def load_test():
     """Simulate 100 concurrent users"""
-    
+
     urls = [
         "http://localhost:5001/",
         "http://localhost:5001/dashboard",
         "http://localhost:5001/api/clients",
     ]
-    
+
     async def fetch(session, url):
         start = time.time()
         async with session.get(url) as response:
@@ -969,17 +969,17 @@ async def load_test():
                 "status": response.status,
                 "time": time.time() - start
             }
-    
+
     async with aiohttp.ClientSession() as session:
         # 100 concurrent requests
         tasks = [fetch(session, url) for url in urls * 34]  # ~100 requests
         results = await asyncio.gather(*tasks)
-    
+
     # Analyze results
     avg_time = sum(r["time"] for r in results) / len(results)
     max_time = max(r["time"] for r in results)
     errors = [r for r in results if r["status"] != 200]
-    
+
     print(f"Requests: {len(results)}")
     print(f"Avg time: {avg_time:.3f}s")
     print(f"Max time: {max_time:.3f}s")

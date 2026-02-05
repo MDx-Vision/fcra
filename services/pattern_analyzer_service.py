@@ -64,10 +64,7 @@ class PatternAnalyzerService:
     def _cleanup_expired(self) -> int:
         """Remove all expired cache entries"""
         now = datetime.utcnow()
-        expired_keys = [
-            k for k, exp in self._cache_expiry.items()
-            if now > exp
-        ]
+        expired_keys = [k for k, exp in self._cache_expiry.items() if now > exp]
         for key in expired_keys:
             self._cache.pop(key, None)
             self._cache_expiry.pop(key, None)

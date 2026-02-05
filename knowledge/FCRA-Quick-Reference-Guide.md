@@ -212,7 +212,7 @@ Total Ã— [70-90%]:      $_______ (probability of success)
 
 **SETTLEMENT RANGE:**
 - **Low (quick resolution):**  60% of risk-adjusted value
-- **Mid (after discovery):**   75% of risk-adjusted value  
+- **Mid (after discovery):**   75% of risk-adjusted value
 - **High (trial-ready):**      90% of risk-adjusted value
 
 ---

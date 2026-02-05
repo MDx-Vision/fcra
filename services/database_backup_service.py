@@ -40,7 +40,9 @@ class DatabaseBackupService:
         s3_prefix: str = "db-backups",
     ):
         self.database_url = database_url or os.environ.get("DATABASE_URL", "")
-        self.backup_dir = Path(backup_dir or os.environ.get("BACKUP_DIR", DEFAULT_BACKUP_DIR))
+        self.backup_dir = Path(
+            backup_dir or os.environ.get("BACKUP_DIR", DEFAULT_BACKUP_DIR)
+        )
         self.retention_days = retention_days
         self.s3_bucket = s3_bucket or os.environ.get("BACKUP_S3_BUCKET")
         self.s3_prefix = s3_prefix
@@ -82,10 +84,14 @@ class DatabaseBackupService:
 
             cmd = [
                 "pg_dump",
-                "-h", db_params.get("host", "localhost"),
-                "-p", str(db_params.get("port", 5432)),
-                "-U", db_params.get("user", "postgres"),
-                "-d", db_params.get("database", "fcra"),
+                "-h",
+                db_params.get("host", "localhost"),
+                "-p",
+                str(db_params.get("port", 5432)),
+                "-U",
+                db_params.get("user", "postgres"),
+                "-d",
+                db_params.get("database", "fcra"),
                 "--format=plain",
                 "--no-owner",
                 "--no-privileges",
@@ -107,14 +113,14 @@ class DatabaseBackupService:
                 proc.wait()
                 stderr = proc.stderr.read().decode()
             else:
-                result = subprocess.run(
-                    cmd, capture_output=True, env=env
-                )
+                result = subprocess.run(cmd, capture_output=True, env=env)
                 filepath.write_bytes(result.stdout)
                 stderr = result.stderr.decode()
                 proc = result
 
-            returncode = proc.returncode if hasattr(proc, "returncode") else proc.returncode
+            returncode = (
+                proc.returncode if hasattr(proc, "returncode") else proc.returncode
+            )
             if returncode != 0:
                 logger.error("pg_dump failed: %s", stderr)
                 # Clean up failed file
@@ -128,7 +134,9 @@ class DatabaseBackupService:
 
             logger.info(
                 "Backup created successfully: %s (%s bytes, checksum: %s)",
-                filename, size, checksum[:16],
+                filename,
+                size,
+                checksum[:16],
             )
 
             result = {
@@ -236,9 +244,7 @@ class DatabaseBackupService:
             # Checksum
             checks["checksum"] = self._calculate_checksum(filepath)
 
-            all_valid = all(
-                v for k, v in checks.items() if k != "checksum"
-            )
+            all_valid = all(v for k, v in checks.items() if k != "checksum")
 
             return {
                 "success": True,
@@ -309,7 +315,9 @@ class DatabaseBackupService:
             paginator = s3.get_paginator("list_objects_v2")
             removed = 0
 
-            for page in paginator.paginate(Bucket=self.s3_bucket, Prefix=self.s3_prefix):
+            for page in paginator.paginate(
+                Bucket=self.s3_bucket, Prefix=self.s3_prefix
+            ):
                 for obj in page.get("Contents", []):
                     if obj["LastModified"].replace(tzinfo=None) < cutoff:
                         s3.delete_object(Bucket=self.s3_bucket, Key=obj["Key"])
@@ -328,17 +336,17 @@ class DatabaseBackupService:
         """List all available backup files."""
         try:
             backups = []
-            for f in sorted(
-                self.backup_dir.glob("fcra_backup_*.sql*"), reverse=True
-            ):
+            for f in sorted(self.backup_dir.glob("fcra_backup_*.sql*"), reverse=True):
                 stat = f.stat()
-                backups.append({
-                    "filename": f.name,
-                    "size": stat.st_size,
-                    "size_human": self._human_size(stat.st_size),
-                    "created_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
-                    "compressed": f.name.endswith(".gz"),
-                })
+                backups.append(
+                    {
+                        "filename": f.name,
+                        "size": stat.st_size,
+                        "size_human": self._human_size(stat.st_size),
+                        "created_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                        "compressed": f.name.endswith(".gz"),
+                    }
+                )
 
             return {
                 "success": True,
@@ -353,7 +361,9 @@ class DatabaseBackupService:
     # Restore
     # =========================================================================
 
-    def restore_backup(self, filename: str, target_database: Optional[str] = None) -> Dict:
+    def restore_backup(
+        self, filename: str, target_database: Optional[str] = None
+    ) -> Dict:
         """
         Restore a backup to the database.
 
@@ -381,13 +391,19 @@ class DatabaseBackupService:
 
             cmd = [
                 "psql",
-                "-h", db_params.get("host", "localhost"),
-                "-p", str(db_params.get("port", 5432)),
-                "-U", db_params.get("user", "postgres"),
-                "-d", database,
+                "-h",
+                db_params.get("host", "localhost"),
+                "-p",
+                str(db_params.get("port", 5432)),
+                "-U",
+                db_params.get("user", "postgres"),
+                "-d",
+                database,
             ]
 
-            logger.warning("Starting database restore from: %s to %s", filename, database)
+            logger.warning(
+                "Starting database restore from: %s to %s", filename, database
+            )
 
             if filename.endswith(".gz"):
                 proc_gunzip = subprocess.Popen(
@@ -407,9 +423,7 @@ class DatabaseBackupService:
                 returncode = proc_psql.returncode
             else:
                 with open(filepath, "r") as f:
-                    result = subprocess.run(
-                        cmd, stdin=f, capture_output=True, env=env
-                    )
+                    result = subprocess.run(cmd, stdin=f, capture_output=True, env=env)
                     returncode = result.returncode
                     stderr = result.stderr
 
@@ -427,7 +441,10 @@ class DatabaseBackupService:
             }
 
         except FileNotFoundError:
-            return {"success": False, "error": "psql not found. Ensure PostgreSQL client tools are installed."}
+            return {
+                "success": False,
+                "error": "psql not found. Ensure PostgreSQL client tools are installed.",
+            }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -450,7 +467,9 @@ class DatabaseBackupService:
         results["backup"] = backup_result
 
         if not backup_result.get("success"):
-            self._send_failure_alert("Backup creation failed", backup_result.get("error", "Unknown"))
+            self._send_failure_alert(
+                "Backup creation failed", backup_result.get("error", "Unknown")
+            )
             results["success"] = False
             return results
 
@@ -494,6 +513,7 @@ class DatabaseBackupService:
         try:
             # postgresql://user:pass@host:port/dbname?params
             from urllib.parse import urlparse
+
             parsed = urlparse(url)
             return {
                 "user": parsed.username or "postgres",
@@ -526,6 +546,7 @@ class DatabaseBackupService:
         """Send admin alert on backup failure."""
         try:
             from services.email_service import send_email
+
             send_email(
                 to_email="admin@brightpathcredit.com",
                 subject=f"[ALERT] Database Backup: {subject}",

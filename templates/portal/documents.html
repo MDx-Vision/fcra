@@ -59,7 +59,7 @@
     <p style="color: #6b7280; margin-bottom: 24px;">Select document type and upload files related to your case.</p>
 
     <form action="{{ url_for('portal.upload_document') }}" method="POST" enctype="multipart/form-data" data-testid="upload-form">
-        
+
         <!-- Document Types -->
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;" class="stats-grid-responsive" data-testid="doc-type-options">
             <label style="display: flex; flex-direction: column; align-items: center; padding: 20px 16px; background: rgba(13, 148, 136, 0.05); border: 2px solid #0d9488; border-radius: 12px; cursor: pointer;">

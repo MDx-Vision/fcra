@@ -92,7 +92,7 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
         .and('have.attr', 'placeholder', 'your@email.com')
         .and('have.attr', 'required')
         .and('have.attr', 'autocomplete', 'email');
-      
+
       cy.get('label[for="email"]').should('contain.text', 'Email Address');
     });
 
@@ -105,7 +105,7 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
         .and('have.attr', 'placeholder', 'Enter your password')
         .and('have.attr', 'required')
         .and('have.attr', 'autocomplete', 'current-password');
-      
+
       cy.get('label[for="password"]').should('contain.text', 'Password');
     });
 
@@ -132,7 +132,7 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
       cy.get('[data-testid="email-input"]').type('invalid-email');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.get('[data-testid="email-input"]').then(($input) => {
         expect($input[0].validationMessage).to.contain('valid email');
       });
@@ -140,21 +140,21 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
 
     it('should submit form with valid data', () => {
       cy.intercept('POST', '/staff/login', { fixture: 'login-success.json' }).as('loginRequest');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@loginRequest');
     });
 
     it('should disable button and show loading state on submit', () => {
       cy.intercept('POST', '/staff/login', { delay: 1000, fixture: 'login-success.json' }).as('loginRequest');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.get('[data-testid="login-button"]')
         .should('be.disabled')
         .and('contain.text', 'Signing in...');
@@ -164,12 +164,12 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
   describe('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').type('password123');
-      
+
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      
+
       cy.get('.toggle-btn').click();
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      
+
       cy.get('.toggle-btn').click();
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
     });
@@ -220,11 +220,11 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
   describe('Error Handling Tests', () => {
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@networkError');
     });
 
@@ -233,11 +233,11 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
         statusCode: 401,
         body: { error: 'Invalid credentials' }
       }).as('invalidLogin');
-      
+
       cy.get('[data-testid="email-input"]').type('invalid@example.com');
       cy.get('[data-testid="password-input"]').type('wrongpassword');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@invalidLogin');
     });
 
@@ -246,17 +246,17 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
         statusCode: 500,
         body: { error: 'Internal server error' }
       }).as('serverError');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@serverError');
     });
 
     it('should handle empty form submission', () => {
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.get('[data-testid="email-input"]').should('have.focus');
       cy.get('[data-testid="email-input"]').then(($input) => {
         expect($input[0].validationMessage).to.not.be.empty;
@@ -266,7 +266,7 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
     it('should handle partial form submission (email only)', () => {
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.get('[data-testid="password-input"]').then(($input) => {
         expect($input[0].validationMessage).to.not.be.empty;
       });
@@ -275,7 +275,7 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
     it('should handle partial form submission (password only)', () => {
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.get('[data-testid="email-input"]').then(($input) => {
         expect($input[0].validationMessage).to.not.be.empty;
       });
@@ -298,7 +298,7 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
       cy.get('[data-testid="login-button"]')
         .should('have.attr', 'type', 'submit')
         .and('be.visible');
-      
+
       cy.get('.toggle-btn')
         .should('have.attr', 'type', 'button')
         .and('be.visible');
@@ -313,7 +313,7 @@ describe('Staff Login Page (/dashboard/knowledge-base)', () => {
     it('should execute form submission handler', () => {
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
-      
+
       cy.window().then((win) => {
         cy.spy(win, 'addEventListener').as('eventListener');
       });

@@ -32,7 +32,7 @@
     .status-dot.in-dispute { background: #eab308; }
     .status-dot.complete { background: #10b981; }
     .status-dot.paused { background: #f97316; }
-    
+
     .client-card {
         background: rgba(30, 41, 59, 0.5);
         border: 1px solid rgba(255,255,255,0.1);
@@ -70,7 +70,7 @@
     .client-earnings {
         text-align: right;
     }
-    
+
     .filter-bar {
         display: flex;
         gap: 12px;
@@ -96,7 +96,7 @@
     .filter-bar input::placeholder {
         color: #475569;
     }
-    
+
     .empty-state {
         text-align: center;
         padding: 60px 20px;
@@ -200,15 +200,15 @@ function filterClients() {
     const search = document.getElementById('search-clients').value.toLowerCase();
     const status = document.getElementById('status-filter').value.toLowerCase();
     const cards = document.querySelectorAll('.client-card');
-    
+
     cards.forEach(card => {
         const name = card.dataset.name.toLowerCase();
         const email = card.dataset.email.toLowerCase();
         const cardStatus = card.dataset.status.toLowerCase();
-        
+
         const matchesSearch = !search || name.includes(search) || email.includes(search);
         const matchesStatus = !status || cardStatus === status;
-        
+
         card.style.display = (matchesSearch && matchesStatus) ? 'grid' : 'none';
     });
 }

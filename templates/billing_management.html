@@ -407,7 +407,7 @@
                     <div class="plan-name">{{ plan.display_name }}</div>
                     <div class="plan-price">{{ plan.price_display }}</div>
                     <div class="plan-interval">per {{ plan.billing_interval }}</div>
-                    
+
                     {% if plan.features %}
                     <ul class="plan-features">
                         {% for feature in plan.features[:5] %}
@@ -418,10 +418,10 @@
                         {% endif %}
                     </ul>
                     {% endif %}
-                    
+
                     <div class="plan-actions">
                         <button class="btn btn-secondary btn-sm" onclick="editPlan({{ plan.id }})">Edit</button>
-                        <button class="btn btn-sm {% if plan.is_active %}btn-danger{% else %}btn-primary{% endif %}" 
+                        <button class="btn btn-sm {% if plan.is_active %}btn-danger{% else %}btn-primary{% endif %}"
                                 onclick="togglePlanStatus({{ plan.id }}, {{ 'false' if plan.is_active else 'true' }})">
                             {{ 'Deactivate' if plan.is_active else 'Activate' }}
                         </button>
@@ -443,7 +443,7 @@
 
         <div class="content-card">
             <div class="section-title">Active Subscriptions</div>
-            
+
             {% if subscriptions %}
             <table>
                 <thead>
@@ -580,16 +580,16 @@
 
         document.getElementById('createPlanForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const name = document.getElementById('planName').value.trim().toLowerCase().replace(/\s+/g, '_');
             const displayName = document.getElementById('planDisplayName').value.trim();
             const priceInDollars = parseFloat(document.getElementById('planPrice').value);
             const interval = document.getElementById('planInterval').value;
             const featuresText = document.getElementById('planFeatures').value.trim();
-            
+
             const features = featuresText ? featuresText.split('\n').map(f => f.trim()).filter(f => f) : [];
             const priceCents = Math.round(priceInDollars * 100);
-            
+
             try {
                 const response = await fetch('/api/billing/plans', {
                     method: 'POST',
@@ -602,9 +602,9 @@
                         features: features
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showAlert('Plan created successfully!');
                     closeCreatePlanModal();
@@ -621,15 +621,15 @@
             if (!confirm('This will create the default 3-tier pricing plans (Basic $299, Professional $599, Premium $999). Continue?')) {
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/billing/plans/initialize', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showAlert('Default plans initialized! Refreshing page...');
                     setTimeout(() => window.location.reload(), 1500);
@@ -646,16 +646,16 @@
             if (!confirm(`Are you sure you want to ${action} this plan?`)) {
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/api/billing/plans/${planId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ is_active: activate })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showAlert(`Plan ${action}d successfully!`);
                     setTimeout(() => window.location.reload(), 1000);
@@ -675,7 +675,7 @@
             try {
                 const response = await fetch(`/api/billing/portal/${clientId}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.portal_url) {
                     window.open(data.portal_url, '_blank');
                 } else {
@@ -688,20 +688,20 @@
 
         async function cancelSubscription(clientId) {
             const cancelType = confirm('Click OK to cancel at the end of the billing period, or Cancel and then use immediate cancellation.');
-            
+
             if (!confirm(`Are you sure you want to cancel this subscription${cancelType ? ' at period end' : ' immediately'}?`)) {
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/api/billing/cancel/${clientId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ at_period_end: cancelType })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showAlert('Subscription canceled successfully!');
                     setTimeout(() => window.location.reload(), 1500);

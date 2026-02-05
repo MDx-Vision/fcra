@@ -13,12 +13,12 @@
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .main-content {
             margin-left: 260px;
             padding: 30px;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -31,7 +31,7 @@
             color: #1a1a2e;
         }
         .header-actions { display: flex; gap: 15px; }
-        
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -58,14 +58,14 @@
         .btn-danger { background: #ef4444; color: white; }
         .btn-danger:hover { background: #dc2626; }
         .btn-sm { padding: 8px 16px; font-size: 12px; }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .stat-card {
             background: white;
             border-radius: 16px;
@@ -91,13 +91,13 @@
         .stat-card.highlight .stat-label { color: rgba(255,255,255,0.7); }
         .stat-card.warning { border-left: 4px solid #f59e0b; }
         .stat-card.critical { border-left: 4px solid #ef4444; }
-        
+
         .content-grid {
             display: grid;
             grid-template-columns: 3fr 1fr;
             gap: 30px;
         }
-        
+
         .card {
             background: white;
             border-radius: 16px;
@@ -116,7 +116,7 @@
             font-weight: 600;
             color: #1a1a2e;
         }
-        
+
         .filters {
             display: flex;
             gap: 15px;
@@ -142,7 +142,7 @@
             outline: none;
             border-color: #319795;
         }
-        
+
         .search-box {
             display: flex;
             gap: 10px;
@@ -155,7 +155,7 @@
             border-radius: 8px;
             font-size: 14px;
         }
-        
+
         .audit-table {
             width: 100%;
             border-collapse: collapse;
@@ -174,7 +174,7 @@
             background: #f8fafc;
         }
         .audit-table tr:hover { background: #f8fafc; }
-        
+
         .severity-badge {
             padding: 4px 10px;
             border-radius: 20px;
@@ -185,7 +185,7 @@
         .severity-info { background: #dbeafe; color: #1e40af; }
         .severity-warning { background: #fef3c7; color: #92400e; }
         .severity-critical { background: #fee2e2; color: #991b1b; }
-        
+
         .event-type-badge {
             padding: 4px 10px;
             border-radius: 6px;
@@ -203,7 +203,7 @@
         .event-type-export { background: #ccfbf1; color: #0f766e; }
         .event-type-phi_access { background: #fce7f3; color: #be185d; }
         .event-type-credit_report_access { background: #fce7f3; color: #be185d; }
-        
+
         .user-type-badge {
             padding: 3px 8px;
             border-radius: 4px;
@@ -214,7 +214,7 @@
         .user-type-client { background: #dcfce7; color: #166534; }
         .user-type-api { background: #f3e8ff; color: #7c3aed; }
         .user-type-system { background: #f1f5f9; color: #475569; }
-        
+
         .pagination {
             display: flex;
             justify-content: center;
@@ -233,7 +233,7 @@
         .pagination button:hover { border-color: #319795; }
         .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
         .pagination .page-info { font-size: 14px; color: #64748b; }
-        
+
         .security-events {
             max-height: 400px;
             overflow-y: auto;
@@ -258,7 +258,7 @@
             font-size: 12px;
             color: #64748b;
         }
-        
+
         .compliance-section {
             margin-bottom: 20px;
         }
@@ -289,12 +289,12 @@
         .compliance-btn .text { text-align: left; }
         .compliance-btn .text h3 { font-size: 16px; font-weight: 600; color: #1a1a2e; margin-bottom: 3px; }
         .compliance-btn .text p { font-size: 12px; color: #64748b; }
-        
+
         .chart-container {
             height: 200px;
             margin: 20px 0;
         }
-        
+
         .top-users {
             list-style: none;
         }
@@ -314,7 +314,7 @@
             font-weight: 600;
             color: #319795;
         }
-        
+
         .modal-overlay {
             display: none;
             position: fixed;
@@ -351,7 +351,7 @@
             cursor: pointer;
             color: #64748b;
         }
-        
+
         .report-summary {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -366,13 +366,13 @@
         }
         .report-stat .value { font-size: 24px; font-weight: 700; color: #1a1a2e; }
         .report-stat .label { font-size: 12px; color: #64748b; }
-        
+
         .export-options {
             display: flex;
             gap: 15px;
             margin-top: 20px;
         }
-        
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -388,7 +388,7 @@
             margin: 0 auto 15px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -396,12 +396,12 @@
         }
         .empty-state svg { width: 64px; height: 64px; margin-bottom: 20px; opacity: 0.5; }
         .empty-state h3 { font-size: 18px; font-weight: 600; margin-bottom: 10px; color: #1a1a2e; }
-        
+
         @media (max-width: 1200px) {
             .content-grid { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
-        
+
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; }
@@ -413,7 +413,7 @@
 <body>
     {% set active_page = 'audit' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <div class="main-content">
         <div class="header">
             <h1>Audit Logs & Compliance</h1>
@@ -428,7 +428,7 @@
                 </button>
             </div>
         </div>
-        
+
         <div class="stats-grid">
             <div class="stat-card highlight">
                 <div class="stat-icon" style="background: rgba(255,255,255,0.2);">
@@ -459,14 +459,14 @@
                 <div class="stat-label">Critical Events</div>
             </div>
         </div>
-        
+
         <div class="content-grid">
             <div class="main-column">
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">Audit Log Feed</h2>
                     </div>
-                    
+
                     <div class="filters">
                         <div class="filter-group">
                             <label>Event Type</label>
@@ -520,14 +520,14 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div id="logs-container">
                         <div class="loading">
                             <div class="spinner"></div>
                             Loading audit logs...
                         </div>
                     </div>
-                    
+
                     <div class="pagination" id="pagination" style="display: none;">
                         <button id="prev-btn" onclick="changePage(-1)" disabled>Previous</button>
                         <span class="page-info" id="page-info">Page 1 of 1</span>
@@ -535,13 +535,13 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="side-column">
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">Compliance Reports</h2>
                     </div>
-                    
+
                     <div class="compliance-section">
                         <button class="compliance-btn" onclick="generateReport('soc2')">
                             <div class="icon soc2">
@@ -552,7 +552,7 @@
                                 <p>Security & access controls audit</p>
                             </div>
                         </button>
-                        
+
                         <button class="compliance-btn" onclick="generateReport('hipaa')">
                             <div class="icon hipaa">
                                 <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
@@ -564,12 +564,12 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">Recent Security Events</h2>
                     </div>
-                    
+
                     <div class="security-events" id="security-events">
                         {% if stats.recent_security_events %}
                             {% for event in stats.recent_security_events %}
@@ -591,12 +591,12 @@
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">Most Active Users</h2>
                     </div>
-                    
+
                     <ul class="top-users" id="top-users">
                         {% for user in stats.top_users %}
                         <li>
@@ -612,14 +612,14 @@
             </div>
         </div>
     </div>
-    
+
     <div class="modal-overlay" id="export-modal">
         <div class="modal">
             <div class="modal-header">
                 <h2>Export Audit Logs</h2>
                 <button class="modal-close" onclick="closeModal('export-modal')">&times;</button>
             </div>
-            
+
             <div class="filters">
                 <div class="filter-group">
                     <label>Start Date</label>
@@ -639,7 +639,7 @@
                     </select>
                 </div>
             </div>
-            
+
             <div class="export-options">
                 <button class="btn btn-primary" onclick="exportLogs('csv')">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -652,14 +652,14 @@
             </div>
         </div>
     </div>
-    
+
     <div class="modal-overlay" id="report-modal">
         <div class="modal">
             <div class="modal-header">
                 <h2 id="report-title">Compliance Report</h2>
                 <button class="modal-close" onclick="closeModal('report-modal')">&times;</button>
             </div>
-            
+
             <div id="report-content">
                 <div class="loading">
                     <div class="spinner"></div>
@@ -668,30 +668,30 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         let currentPage = 1;
         let totalPages = 1;
         let searchTimeout = null;
-        
+
         document.addEventListener('DOMContentLoaded', function() {
             loadLogs();
-            
+
             const today = new Date().toISOString().split('T')[0];
             const thirtyDaysAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
             document.getElementById('export-start-date').value = thirtyDaysAgo;
             document.getElementById('export-end-date').value = today;
         });
-        
+
         function loadLogs() {
             const container = document.getElementById('logs-container');
             container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading audit logs...</div>';
-            
+
             const params = new URLSearchParams({
                 page: currentPage,
                 per_page: 50
             });
-            
+
             const eventType = document.getElementById('filter-event-type').value;
             const resourceType = document.getElementById('filter-resource-type').value;
             const severity = document.getElementById('filter-severity').value;
@@ -699,7 +699,7 @@
             const startDate = document.getElementById('filter-start-date').value;
             const endDate = document.getElementById('filter-end-date').value;
             const search = document.getElementById('filter-search').value;
-            
+
             if (eventType) params.append('event_type', eventType);
             if (resourceType) params.append('resource_type', resourceType);
             if (severity) params.append('severity', severity);
@@ -707,7 +707,7 @@
             if (startDate) params.append('start_date', startDate);
             if (endDate) params.append('end_date', endDate);
             if (search) params.append('search', search);
-            
+
             fetch('/api/audit/logs?' + params.toString())
                 .then(response => response.json())
                 .then(data => {
@@ -723,10 +723,10 @@
                     container.innerHTML = '<div class="empty-state"><h3>Error loading logs</h3><p>' + error.message + '</p></div>';
                 });
         }
-        
+
         function renderLogs(logs) {
             const container = document.getElementById('logs-container');
-            
+
             if (!logs || logs.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -737,7 +737,7 @@
                 `;
                 return;
             }
-            
+
             let html = `
                 <table class="audit-table">
                     <thead>
@@ -753,13 +753,13 @@
                     </thead>
                     <tbody>
             `;
-            
+
             logs.forEach(log => {
                 const timestamp = new Date(log.timestamp).toLocaleString();
                 const eventClass = 'event-type-' + log.event_type;
                 const userTypeClass = 'user-type-' + log.user_type;
                 const severityClass = 'severity-' + log.severity;
-                
+
                 html += `
                     <tr>
                         <td style="white-space: nowrap;">${timestamp}</td>
@@ -783,17 +783,17 @@
                     </tr>
                 `;
             });
-            
+
             html += '</tbody></table>';
             container.innerHTML = html;
         }
-        
+
         function updatePagination(page, pages, total) {
             const pagination = document.getElementById('pagination');
             const pageInfo = document.getElementById('page-info');
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
-            
+
             if (total > 0) {
                 pagination.style.display = 'flex';
                 pageInfo.textContent = `Page ${page} of ${pages} (${total} total)`;
@@ -803,31 +803,31 @@
                 pagination.style.display = 'none';
             }
         }
-        
+
         function changePage(delta) {
             currentPage += delta;
             if (currentPage < 1) currentPage = 1;
             if (currentPage > totalPages) currentPage = totalPages;
             loadLogs();
         }
-        
+
         function applyFilters() {
             currentPage = 1;
             loadLogs();
         }
-        
+
         function debounceSearch() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 applyFilters();
             }, 500);
         }
-        
+
         function refreshLogs() {
             loadLogs();
             loadSecurityEvents();
         }
-        
+
         function loadSecurityEvents() {
             fetch('/api/audit/security?days=7')
                 .then(response => response.json())
@@ -837,15 +837,15 @@
                     }
                 });
         }
-        
+
         function renderSecurityEvents(events) {
             const container = document.getElementById('security-events');
-            
+
             if (!events || events.length === 0) {
                 container.innerHTML = '<div class="empty-state" style="padding: 20px;"><p>No recent security events</p></div>';
                 return;
             }
-            
+
             let html = '';
             events.slice(0, 10).forEach(event => {
                 const timestamp = new Date(event.timestamp).toLocaleString();
@@ -862,30 +862,30 @@
                     </div>
                 `;
             });
-            
+
             container.innerHTML = html;
         }
-        
+
         function showExportModal() {
             document.getElementById('export-modal').classList.add('active');
         }
-        
+
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
         }
-        
+
         function exportLogs(format) {
             const startDate = document.getElementById('export-start-date').value;
             const endDate = document.getElementById('export-end-date').value;
             const eventType = document.getElementById('export-event-type').value;
-            
+
             const params = {
                 format: format
             };
             if (startDate) params.start_date = startDate;
             if (endDate) params.end_date = endDate;
             if (eventType) params.event_type = eventType;
-            
+
             fetch('/api/audit/export', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -908,16 +908,16 @@
                 alert('Export failed: ' + error.message);
             });
         }
-        
+
         function generateReport(reportType) {
             const modal = document.getElementById('report-modal');
             const title = document.getElementById('report-title');
             const content = document.getElementById('report-content');
-            
+
             title.textContent = reportType === 'soc2' ? 'SOC 2 Compliance Report' : 'HIPAA Compliance Report';
             content.innerHTML = '<div class="loading"><div class="spinner"></div>Generating report...</div>';
             modal.classList.add('active');
-            
+
             fetch(`/api/audit/compliance/${reportType}?days=30`)
                 .then(response => response.json())
                 .then(data => {
@@ -931,22 +931,22 @@
                     content.innerHTML = '<div class="empty-state"><h3>Error generating report</h3><p>' + error.message + '</p></div>';
                 });
         }
-        
+
         function renderReport(report, reportType) {
             const content = document.getElementById('report-content');
-            
+
             let html = `
                 <div class="report-period" style="margin-bottom: 20px; color: #64748b;">
                     Report Period: ${new Date(report.period.start).toLocaleDateString()} - ${new Date(report.period.end).toLocaleDateString()}
                 </div>
-                
+
                 <div class="report-summary">
                     <div class="report-stat">
                         <div class="value">${report.summary.total_events}</div>
                         <div class="label">Total Events</div>
                     </div>
             `;
-            
+
             if (reportType === 'soc2') {
                 html += `
                     <div class="report-stat">
@@ -986,32 +986,32 @@
                     </div>
                 `;
             }
-            
+
             html += '</div>';
-            
+
             html += `
                 <h3 style="margin: 20px 0 15px; font-size: 16px;">Events by Type</h3>
                 <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
             `;
-            
+
             Object.entries(report.summary.events_by_type || {}).forEach(([type, count]) => {
                 html += `<span class="event-type-badge">${type}: ${count}</span>`;
             });
-            
+
             html += '</div>';
-            
+
             html += `
                 <h3 style="margin: 20px 0 15px; font-size: 16px;">Events by Severity</h3>
                 <div style="display: flex; gap: 15px; margin-bottom: 20px;">
             `;
-            
+
             ['info', 'warning', 'critical'].forEach(sev => {
                 const count = report.summary.events_by_severity?.[sev] || 0;
                 html += `<span class="severity-badge severity-${sev}">${sev}: ${count}</span>`;
             });
-            
+
             html += '</div>';
-            
+
             if (reportType === 'hipaa' && report.details.phi_access_by_user) {
                 html += `
                     <h3 style="margin: 20px 0 15px; font-size: 16px;">PHI Access by User</h3>
@@ -1021,7 +1021,7 @@
                         </thead>
                         <tbody>
                 `;
-                
+
                 report.details.phi_access_by_user.forEach(user => {
                     html += `
                         <tr>
@@ -1031,10 +1031,10 @@
                         </tr>
                     `;
                 });
-                
+
                 html += '</tbody></table>';
             }
-            
+
             html += `
                 <div style="margin-top: 30px; text-align: center;">
                     <button class="btn btn-secondary" onclick="printReport()">
@@ -1043,10 +1043,10 @@
                     </button>
                 </div>
             `;
-            
+
             content.innerHTML = html;
         }
-        
+
         function printReport() {
             window.print();
         }

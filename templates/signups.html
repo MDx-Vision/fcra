@@ -256,13 +256,13 @@
 <body>
     {% set active_page = 'signups' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="header">
             <h1>Signups & Payments</h1>
             <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
         </div>
-        
+
         <div class="stats-grid">
             <div class="stat-card highlight">
                 <div class="stat-label">Total Revenue</div>
@@ -289,7 +289,7 @@
                 </div>
             </div>
         </div>
-        
+
         {% if drafts %}
         <div class="content-card">
             <div class="section-title">Pending Signups (Awaiting Payment)</div>
@@ -330,10 +330,10 @@
             </table>
         </div>
         {% endif %}
-        
+
         <div class="content-card">
             <div class="section-title">Client Signups</div>
-            
+
             <div class="filters">
                 <a href="/dashboard/signups" class="filter-btn {% if status_filter == 'all' %}active{% endif %}">All</a>
                 <a href="/dashboard/signups?status=paid" class="filter-btn {% if status_filter == 'paid' %}active{% endif %}">Paid</a>
@@ -342,11 +342,11 @@
                 <a href="/dashboard/signups?status=free" class="filter-btn {% if status_filter == 'free' %}active{% endif %}">Free Tier</a>
                 <a href="/dashboard/signups?status=failed" class="filter-btn {% if status_filter == 'failed' %}active{% endif %}">Failed</a>
             </div>
-            
+
             <div class="search-box">
                 <input type="text" placeholder="Search clients..." id="searchInput" onkeyup="searchClients()">
             </div>
-            
+
             {% if clients %}
             <table>
                 <thead>
@@ -392,14 +392,14 @@
                             </a>
                             {% endif %}
                             {% if client.payment_pending %}
-                            <button class="action-btn confirm-btn" 
-                                    onclick="confirmPayment({{ client.id }}, this)" 
+                            <button class="action-btn confirm-btn"
+                                    onclick="confirmPayment({{ client.id }}, this)"
                                     title="Confirm payment received">
                                 ✓ Confirm Payment
                             </button>
                             {% endif %}
-                            <button class="action-btn {% if client.contacted %}contacted{% endif %}" 
-                                    onclick="markContacted('client', {{ client.id }}, this)" 
+                            <button class="action-btn {% if client.contacted %}contacted{% endif %}"
+                                    onclick="markContacted('client', {{ client.id }}, this)"
                                     title="{% if client.contacted %}Already contacted{% else %}Mark as contacted{% endif %}">
                                 📞 {% if client.contacted %}Contacted{% else %}Contact{% endif %}
                             </button>
@@ -416,7 +416,7 @@
             {% endif %}
         </div>
     </main>
-    
+
     <script>
         function searchClients() {
             const query = document.getElementById('searchInput').value.toLowerCase();
@@ -427,7 +427,7 @@
                 row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
             });
         }
-        
+
         async function markContacted(type, id, btn) {
             try {
                 const response = await fetch('/api/signups/mark-contacted', {
@@ -435,14 +435,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ type, id })
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     btn.classList.add('contacted');
                     btn.innerHTML = '📞 Contacted';
                     btn.title = 'Already contacted';
-                    
+
                     const nameEl = btn.closest('tr').querySelector('.client-name');
                     if (!nameEl.querySelector('.contacted-badge')) {
                         nameEl.innerHTML += '<span class="contacted-badge">Contacted</span>';
@@ -454,21 +454,21 @@
                 alert('Error marking as contacted: ' + error.message);
             }
         }
-        
+
         async function confirmPayment(clientId, btn) {
             if (!confirm('Confirm that payment has been received for this client?')) {
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/signups/confirm-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ client_id: clientId })
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     const row = btn.closest('tr');
                     const statusCell = row.querySelector('.status-badge');

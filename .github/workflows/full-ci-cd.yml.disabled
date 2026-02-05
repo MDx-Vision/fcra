@@ -29,42 +29,42 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      
+
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
-      
+
       - name: Install Python deps
         run: pip install -r requirements.txt && pip install anthropic
-      
+
       - name: Install Node deps
         run: npm ci
-      
+
       - name: Start app
         run: nohup python app.py &
-      
+
       - name: Wait for app
         run: sleep 15
-        
+
       - name: Debug staff login page
         run: |
           echo "=== Checking what /staff/login returns ==="
           curl -s http://localhost:5000/staff/login | head -100
           echo ""
           echo "=== Checking for data-testid ==="
-          curl -s http://localhost:5000/staff/login | grep -o 'data-testid="[^"]*"' || echo "NO DATA-TESTID FOUND"   
-          
+          curl -s http://localhost:5000/staff/login | grep -o 'data-testid="[^"]*"' || echo "NO DATA-TESTID FOUND"
+
       - name: Debug test user
         run: |
           echo "=== Checking if test user exists ==="
           curl -s -X POST http://localhost:5000/staff/login \
             -d "email=test@example.com&password=testpass123" \
-            -c cookies.txt -L -v 2>&1 | head -50  
-            
+            -c cookies.txt -L -v 2>&1 | head -50
+
       - name: Run Cypress
         id: cypress
         uses: cypress-io/github-action@v6
@@ -72,12 +72,12 @@ jobs:
           wait-on: http://localhost:5000
           wait-on-timeout: 120
         continue-on-error: true
-      
+
       - name: Auto-fix with Claude
         if: steps.cypress.outcome == 'failure'
         run: |
           python ci_helpers/claude_assistant.py fix "$(cat cypress/logs/*.log 2>/dev/null || echo 'Cypress tests failed - check screenshots')"
-      
+
       - name: Commit fixes
         if: steps.cypress.outcome == 'failure'
         run: |
@@ -86,7 +86,7 @@ jobs:
           git add -A
           git diff --staged --quiet || git commit -m "Auto-fix: Cypress test failures"
           git push || echo "Nothing to push"
-      
+
       - name: Re-run Cypress
         if: steps.cypress.outcome == 'failure'
         uses: cypress-io/github-action@v6

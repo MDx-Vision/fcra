@@ -7,14 +7,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     {% include 'includes/dashboard_sidebar_styles.html' %}
     <style>
-        
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -26,7 +26,7 @@
             font-weight: 700;
             color: #1a1a2e;
         }
-        
+
         .search-box {
             display: flex;
             align-items: center;
@@ -44,7 +44,7 @@
             margin-left: 10px;
         }
         .search-box svg { color: #64748b; }
-        
+
         .tabs {
             display: flex;
             gap: 10px;
@@ -61,18 +61,18 @@
             transition: all 0.2s;
         }
         .tab:hover { border-color: #319795; }
-        .tab.active { 
-            background: linear-gradient(135deg, #319795 0%, #84cc16 100%); 
-            color: #1a1a2e; 
+        .tab.active {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
             border-color: transparent;
         }
-        
+
         .content-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 20px;
         }
-        
+
         .card {
             background: white;
             border-radius: 16px;
@@ -105,7 +105,7 @@
         .card-icon.teal { background: linear-gradient(135deg, #319795 0%, #0d9488 100%); }
         .card-icon.red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
         .card-icon svg { width: 24px; height: 24px; color: white; }
-        
+
         .card-title {
             font-size: 18px;
             font-weight: 700;
@@ -130,7 +130,7 @@
         .card-content strong {
             color: #1a1a2e;
         }
-        
+
         .highlight-box {
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
             border-left: 4px solid #f59e0b;
@@ -150,7 +150,7 @@
             background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
             border-left-color: #ef4444;
         }
-        
+
         .statute-ref {
             display: inline-block;
             background: #1a1a2e;
@@ -161,7 +161,7 @@
             font-size: 13px;
             margin: 2px;
         }
-        
+
         .timeline-item {
             display: flex;
             align-items: flex-start;
@@ -189,7 +189,7 @@
             background: #e2e8f0;
         }
         .timeline-item:last-child::after { display: none; }
-        
+
         .timeline-days {
             background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             color: #1a1a2e;
@@ -199,7 +199,7 @@
             margin-right: 15px;
             white-space: nowrap;
         }
-        
+
         .metro2-code {
             display: inline-block;
             background: #f1f5f9;
@@ -216,11 +216,11 @@
         .metro2-code.xe { border-color: #8b5cf6; background: #ede9fe; }
         .metro2-code.xh { border-color: #06b6d4; background: #cffafe; }
         .metro2-code.xr { border-color: #ef4444; background: #fee2e2; }
-        
+
         .full-width-card {
             grid-column: 1 / -1;
         }
-        
+
         .escalation-path {
             display: flex;
             align-items: center;
@@ -250,7 +250,7 @@
             font-size: 24px;
             font-weight: 700;
         }
-        
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -269,10 +269,10 @@
             color: #1a1a2e;
         }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
-        
+
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
+
         .quick-ref-table {
             width: 100%;
             border-collapse: collapse;
@@ -291,14 +291,14 @@
         .quick-ref-table tr:hover {
             background: #f8fafc;
         }
-        
+
         .letter-template-card {
             border-left: 4px solid #319795;
         }
         .letter-template-card:hover {
             border-left-color: #84cc16;
         }
-        
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -314,7 +314,7 @@
                 <input type="text" id="searchInput" placeholder="Search statutes, codes, timelines...">
             </div>
         </div>
-        
+
         <div class="tabs">
             <div class="tab" data-tab="all">All</div>
             <div class="tab active" data-tab="statutes">FCRA Statutes</div>
@@ -325,7 +325,7 @@
             <div class="tab" data-tab="regulators">Regulators</div>
             <div class="tab" data-tab="croa">CROA Compliance</div>
         </div>
-        
+
         <!-- FCRA STATUTES TAB -->
         <div id="statutes" class="tab-content active">
             <div class="content-grid">
@@ -353,7 +353,7 @@
                         <p><span class="statute-ref">§611(a)(5)(B)</span> Reinsertions require furnisher certification AND consumer notification within 5 business days.</p>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="623 furnisher duties metro2 inaccurate dispute investigation">
                     <div class="card-header">
                         <div class="card-icon green">
@@ -377,7 +377,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="621 enforcement cfpb ftc state attorney general regulators complaint">
                     <div class="card-header">
                         <div class="card-icon purple">
@@ -402,7 +402,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="616 617 civil liability damages willful negligent attorney lawsuit">
                     <div class="card-header">
                         <div class="card-icon orange">
@@ -415,7 +415,7 @@
                     </div>
                     <div class="card-content">
                         <p><strong>When to bring in consumer law attorneys.</strong></p>
-                        
+
                         <table class="quick-ref-table">
                             <tr>
                                 <th>Type</th>
@@ -438,13 +438,13 @@
                                 <td>Yes</td>
                             </tr>
                         </table>
-                        
+
                         <div class="highlight-box danger">
                             <strong>Willfulness Trigger:</strong> Continued reporting after clear proof of inaccuracy, reinsertion without certification, failure to mark as disputed.
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="reg z tila mortgage servicer payment late crediting">
                     <div class="card-header">
                         <div class="card-icon teal">
@@ -467,7 +467,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="respa servicing qwr qualified written request error resolution">
                     <div class="card-header">
                         <div class="card-icon blue">
@@ -490,7 +490,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="fdcpa debt collection validation cease communication">
                     <div class="card-header">
                         <div class="card-icon red">
@@ -513,7 +513,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="605b identity theft block sweep police report ftc">
                     <div class="card-header">
                         <div class="card-icon purple">
@@ -526,7 +526,7 @@
                     </div>
                     <div class="card-content">
                         <p><strong>Lawful "credit sweep" for TRUE identity theft victims.</strong></p>
-                        
+
                         <p>Requirements for valid §605B block:</p>
                         <ul>
                             <li>Identity proof (government ID)</li>
@@ -534,7 +534,7 @@
                             <li>Identification of impostor accounts</li>
                             <li>Statement the information isn't yours</li>
                         </ul>
-                        
+
                         <div class="highlight-box danger">
                             <strong>WARNING:</strong> A "credit sweep" based on FALSE police reports is ILLEGAL and can be criminal. Only use for actual identity theft victims.
                         </div>
@@ -542,7 +542,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- METRO 2 CODES TAB -->
         <div id="metro2" class="tab-content">
             <div class="content-grid">
@@ -558,7 +558,7 @@
                     </div>
                     <div class="card-content">
                         <p>Furnishers must use these codes to properly track dispute status. <strong>Failure to use correct codes = violation.</strong></p>
-                        
+
                         <div style="margin: 20px 0;">
                             <div class="metro2-code xb"><strong>XB</strong> - Consumer Disputes (active dispute filed)</div>
                             <div class="metro2-code xc"><strong>XC</strong> - Completed Investigation - Consumer Disagrees</div>
@@ -567,11 +567,11 @@
                             <div class="metro2-code xh"><strong>XH</strong> - Previously Disputed, Now Resolved</div>
                             <div class="metro2-code xr"><strong>XR</strong> - Remove Last Compliance Condition Code</div>
                         </div>
-                        
+
                         <div class="highlight-box info">
                             <strong>Violation Opportunity:</strong> If furnisher fails to flag account as "disputed" (XB code) when you dispute, that's a §623 violation for failing to report dispute status.
                         </div>
-                        
+
                         <table class="quick-ref-table">
                             <tr>
                                 <th>Code</th>
@@ -601,7 +601,7 @@
                         </table>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="dofd date first delinquency obsolescence 7 year">
                     <div class="card-header">
                         <div class="card-icon orange">
@@ -624,7 +624,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="acdv eoscar verification superficial automated">
                     <div class="card-header">
                         <div class="card-icon blue">
@@ -650,7 +650,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- TIMELINES TAB -->
         <div id="timelines" class="tab-content">
             <div class="content-grid">
@@ -693,7 +693,7 @@
                                 If deleted info is reinserted, CRA must notify consumer within 5 business days AND have furnisher certification.
                             </div>
                         </div>
-                        
+
                         <div class="highlight-box info" style="margin-top: 25px;">
                             <strong>RESPA Timelines (Mortgage):</strong><br>
                             • Acknowledge QWR: 20 business days<br>
@@ -701,7 +701,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="frivolous repeat dispute new evidence legal theory">
                     <div class="card-header">
                         <div class="card-icon orange">
@@ -714,7 +714,7 @@
                     </div>
                     <div class="card-content">
                         <p><strong>Re-disputing same item without new grounds can be labeled frivolous.</strong></p>
-                        
+
                         <p>To re-dispute, you need:</p>
                         <ul>
                             <li>New evidence (payment proof, correspondence)</li>
@@ -722,7 +722,7 @@
                             <li>Failure in previous investigation (no method of verification)</li>
                             <li>Different violation angle</li>
                         </ul>
-                        
+
                         <div class="highlight-box success">
                             <strong>Valid Re-Dispute Angles:</strong><br>
                             • DOFD not reported or incorrect<br>
@@ -732,7 +732,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="obsolescence 7 year reporting period remove old">
                     <div class="card-header">
                         <div class="card-icon purple">
@@ -758,7 +758,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- ESCALATION PATH TAB -->
         <div id="escalation" class="tab-content">
             <div class="content-grid">
@@ -794,7 +794,7 @@
                                 <div class="step-title">§§616-617 Lawsuit</div>
                             </div>
                         </div>
-                        
+
                         <table class="quick-ref-table">
                             <tr>
                                 <th>Step</th>
@@ -822,13 +822,13 @@
                                 <td>Documented willful violations, clear damages, strong evidence chain</td>
                             </tr>
                         </table>
-                        
+
                         <div class="highlight-box success" style="margin-top: 20px;">
                             <strong>Key Principle:</strong> Each step builds evidence for the next. Document everything - dates, responses, proof of mailing, phone call logs.
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="evidence documentation proof certified mail">
                     <div class="card-header">
                         <div class="card-icon blue">
@@ -855,7 +855,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="when attorney lawyer litigation sue">
                     <div class="card-header">
                         <div class="card-icon orange">
@@ -882,7 +882,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- LETTER TEMPLATES TAB -->
         <div id="letters" class="tab-content">
             <div class="content-grid">
@@ -907,7 +907,7 @@
                         <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
                     </div>
                 </div>
-                
+
                 <div class="card letter-template-card" data-search="623 furnisher direct dispute letter">
                     <div class="card-header">
                         <div class="card-icon green">
@@ -929,7 +929,7 @@
                         <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
                     </div>
                 </div>
-                
+
                 <div class="card letter-template-card" data-search="respa qwr qualified written request mortgage">
                     <div class="card-header">
                         <div class="card-icon teal">
@@ -951,7 +951,7 @@
                         <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
                     </div>
                 </div>
-                
+
                 <div class="card letter-template-card" data-search="reg z tila mortgage late payment">
                     <div class="card-header">
                         <div class="card-icon orange">
@@ -973,7 +973,7 @@
                         <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
                     </div>
                 </div>
-                
+
                 <div class="card letter-template-card" data-search="fdcpa validation debt collection">
                     <div class="card-header">
                         <div class="card-icon red">
@@ -995,7 +995,7 @@
                         <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
                     </div>
                 </div>
-                
+
                 <div class="card letter-template-card" data-search="605b identity theft block">
                     <div class="card-header">
                         <div class="card-icon purple">
@@ -1019,7 +1019,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card letter-template-card" data-search="reinsertion challenge 611 notice">
                     <div class="card-header">
                         <div class="card-icon orange">
@@ -1041,7 +1041,7 @@
                         <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
                     </div>
                 </div>
-                
+
                 <div class="card letter-template-card" data-search="method verification request 611">
                     <div class="card-header">
                         <div class="card-icon blue">
@@ -1065,7 +1065,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- REGULATORS TAB -->
         <div id="regulators" class="tab-content">
             <div class="content-grid">
@@ -1090,7 +1090,7 @@
                         <a href="https://www.consumerfinance.gov/complaint/" target="_blank" class="btn btn-primary" style="margin-top: 15px;">File CFPB Complaint</a>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="state attorney general ag consumer protection">
                     <div class="card-header">
                         <div class="card-icon green">
@@ -1114,7 +1114,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="occ office comptroller currency national bank">
                     <div class="card-header">
                         <div class="card-icon purple">
@@ -1135,7 +1135,7 @@
                         <a href="https://www.helpwithmybank.gov/" target="_blank" class="btn btn-primary" style="margin-top: 15px;">File OCC Complaint</a>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="ncua credit union federal">
                     <div class="card-header">
                         <div class="card-icon teal">
@@ -1156,7 +1156,7 @@
                         <a href="https://www.mycreditunion.gov/consumer-assistance-center" target="_blank" class="btn btn-primary" style="margin-top: 15px;">File NCUA Complaint</a>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="ftc federal trade commission">
                     <div class="card-header">
                         <div class="card-icon orange">
@@ -1178,7 +1178,7 @@
                         <a href="https://reportfraud.ftc.gov/" target="_blank" class="btn btn-primary" style="margin-top: 15px;">Report to FTC</a>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="fdic federal deposit insurance state bank">
                     <div class="card-header">
                         <div class="card-icon red">
@@ -1201,7 +1201,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- CROA COMPLIANCE TAB -->
         <div id="croa" class="tab-content">
             <div class="content-grid">
@@ -1217,7 +1217,7 @@
                     </div>
                     <div class="card-content">
                         <p><strong>If you operate a credit repair business, strict compliance is non-negotiable.</strong></p>
-                        
+
                         <table class="quick-ref-table">
                             <tr>
                                 <th>Requirement</th>
@@ -1250,13 +1250,13 @@
                                 <td>FTC enforcement + damages</td>
                             </tr>
                         </table>
-                        
+
                         <div class="highlight-box danger" style="margin-top: 20px;">
                             <strong>Critical Warning:</strong> Never tell clients to lie, file false police reports, or dispute accurate information. These are federal crimes and destroy your business.
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="tsr telemarketing sales rule advance fee">
                     <div class="card-header">
                         <div class="card-icon orange">
@@ -1280,7 +1280,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="record keeping audit documentation compliance">
                     <div class="card-header">
                         <div class="card-icon blue">
@@ -1306,7 +1306,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="card" data-search="disclosure required language consumer rights">
                     <div class="card-header">
                         <div class="card-icon green">
@@ -1341,7 +1341,7 @@
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                
+
                 if (tab.dataset.tab === 'all') {
                     // Show all tab content when "All" is selected
                     document.querySelectorAll('.tab-content').forEach(c => {
@@ -1358,34 +1358,34 @@
                 }
             });
         });
-        
+
         // Search functionality
         const searchInput = document.getElementById('searchInput');
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
-            
+
             if (query.length < 2) {
                 document.querySelectorAll('.card').forEach(card => card.classList.remove('hidden'));
                 return;
             }
-            
+
             document.querySelectorAll('.card').forEach(card => {
                 const searchData = card.dataset.search || '';
                 const cardText = card.textContent.toLowerCase();
-                
+
                 if (searchData.includes(query) || cardText.includes(query)) {
                     card.classList.remove('hidden');
                 } else {
                     card.classList.add('hidden');
                 }
             });
-            
+
             // Show all tabs if searching
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.style.display = 'block';
             });
         });
-        
+
         searchInput.addEventListener('blur', () => {
             if (searchInput.value.length < 2) {
                 // Restore tab behavior

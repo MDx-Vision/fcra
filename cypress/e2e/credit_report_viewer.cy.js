@@ -4,9 +4,9 @@
  */
 
 describe('Credit Report Viewer - Full QA Suite', () => {
-  
+
   let validReportId = null;
-  
+
   before(() => {
     cy.login('test@example.com', 'testpass123');
     cy.request({

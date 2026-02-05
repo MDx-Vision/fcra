@@ -626,3 +626,343 @@ class TestIntegration:
         # Test round info
         round_info = service.get_round_info(1)
         assert round_info['round'] == 1
+
+
+class TestFormatCraResponses:
+    """Tests for format_cra_responses method."""
+
+    def test_format_cra_responses_empty(self):
+        """Test formatting with no CRA responses."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        result = service.format_cra_responses([], 2)
+        assert result == "No previous CRA responses."
+
+    def test_format_cra_responses_with_responses(self):
+        """Test formatting with CRA responses."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        mock_response = MagicMock()
+        mock_response.dispute_round = 1
+        mock_response.bureau = "Equifax"
+        mock_response.response_type = "Verified"
+        mock_response.response_date = datetime(2024, 1, 15)
+        mock_response.items_deleted = 2
+        mock_response.items_verified = 3
+
+        result = service.format_cra_responses([mock_response], 2)
+        assert "PREVIOUS CRA RESPONSES" in result
+        assert "Round 1" in result
+        assert "Equifax" in result
+        assert "01/15/2024" in result
+
+    def test_format_cra_responses_excludes_current_round(self):
+        """Test that current round responses are excluded."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        mock_response_r1 = MagicMock()
+        mock_response_r1.dispute_round = 1
+        mock_response_r1.bureau = "Equifax"
+        mock_response_r1.response_type = "Verified"
+        mock_response_r1.response_date = datetime(2024, 1, 15)
+        mock_response_r1.items_deleted = None
+        mock_response_r1.items_verified = None
+
+        mock_response_r2 = MagicMock()
+        mock_response_r2.dispute_round = 2
+        mock_response_r2.bureau = "Experian"
+        mock_response_r2.response_type = "Deleted"
+        mock_response_r2.response_date = datetime(2024, 2, 15)
+        mock_response_r2.items_deleted = None
+        mock_response_r2.items_verified = None
+
+        result = service.format_cra_responses([mock_response_r1, mock_response_r2], 2)
+        assert "Round 1" in result
+        assert "Round 2" not in result  # Current round excluded
+
+    def test_format_cra_responses_no_date(self):
+        """Test formatting when response_date is None."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        mock_response = MagicMock()
+        mock_response.dispute_round = 1
+        mock_response.bureau = "TransUnion"
+        mock_response.response_type = "Verified"
+        mock_response.response_date = None
+        mock_response.items_deleted = None
+        mock_response.items_verified = None
+
+        result = service.format_cra_responses([mock_response], 2)
+        assert "N/A" in result
+
+
+class TestParseLetters:
+    """Tests for _parse_letters method."""
+
+    def test_parse_letters_formal_format(self):
+        """Test parsing letters in formal format."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        response_text = """
+===START LETTER: Equifax===
+Dear Equifax,
+This is the letter content.
+===END LETTER: Equifax===
+
+===START LETTER: Experian===
+Dear Experian,
+This is another letter.
+===END LETTER: Experian===
+"""
+
+        result = service._parse_letters(response_text)
+        assert "Equifax" in result
+        assert "Experian" in result
+        assert "letter content" in result["Equifax"]
+        assert "another letter" in result["Experian"]
+
+    def test_parse_letters_fallback_combined(self):
+        """Test fallback to combined letter when parsing fails."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        response_text = """
+This is just plain text that doesn't match any pattern.
+It should be returned as a combined letter.
+"""
+
+        result = service._parse_letters(response_text)
+        assert "Combined" in result
+        assert "plain text" in result["Combined"]
+
+    def test_parse_letters_empty_response(self):
+        """Test parsing empty response."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        result = service._parse_letters("")
+        assert "Combined" in result
+
+
+class TestBuildGenerationPrompt:
+    """Tests for _build_generation_prompt method."""
+
+    def test_build_generation_prompt_includes_client_info(self):
+        """Test that prompt includes client info."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        mock_client = MagicMock()
+        mock_client.name = "John Doe"
+        mock_client.address_street = "123 Main St"
+        mock_client.address_city = "Test City"
+        mock_client.address_state = "CA"
+        mock_client.address_zip = "90210"
+        mock_client.ssn_last_four = "1234"
+        mock_client.date_of_birth = date(1990, 1, 1)
+        mock_client.email = "john@test.com"
+        mock_client.phone = "555-1234"
+
+        round_info = service.ROUND_STRATEGIES[1]
+
+        prompt = service._build_generation_prompt(
+            client=mock_client,
+            violations=[],
+            dispute_items=[],
+            cra_responses=[],
+            round_number=1,
+            round_info=round_info,
+            target_bureaus=["Equifax"],
+            custom_instructions=None,
+            tone="professional"
+        )
+
+        assert "John Doe" in prompt
+        assert "Round 1" in prompt or "ROUND: 1" in prompt
+        assert "Equifax" in prompt
+
+    def test_build_generation_prompt_with_custom_instructions(self):
+        """Test prompt with custom instructions."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        mock_client = MagicMock()
+        mock_client.name = "Jane Doe"
+        mock_client.address_street = "456 Oak Ave"
+        mock_client.address_city = "City"
+        mock_client.address_state = "NY"
+        mock_client.address_zip = "10001"
+        mock_client.ssn_last_four = "5678"
+        mock_client.date_of_birth = date(1985, 5, 15)
+        mock_client.email = "jane@test.com"
+        mock_client.phone = "555-5678"
+
+        round_info = service.ROUND_STRATEGIES[2]
+
+        prompt = service._build_generation_prompt(
+            client=mock_client,
+            violations=[],
+            dispute_items=[],
+            cra_responses=[],
+            round_number=2,
+            round_info=round_info,
+            target_bureaus=["Experian", "TransUnion"],
+            custom_instructions="Focus on late payments",
+            tone="aggressive"
+        )
+
+        assert "Focus on late payments" in prompt
+
+    def test_build_generation_prompt_all_tones(self):
+        """Test prompt generation with all tone options."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        mock_client = MagicMock()
+        mock_client.name = "Test User"
+        mock_client.address_street = "123 St"
+        mock_client.address_city = "City"
+        mock_client.address_state = "TX"
+        mock_client.address_zip = "75001"
+        mock_client.ssn_last_four = "9999"
+        mock_client.date_of_birth = date(1980, 1, 1)
+        mock_client.email = "test@test.com"
+        mock_client.phone = "555-0000"
+
+        round_info = service.ROUND_STRATEGIES[1]
+
+        for tone in ["professional", "aggressive", "formal"]:
+            prompt = service._build_generation_prompt(
+                client=mock_client,
+                violations=[],
+                dispute_items=[],
+                cra_responses=[],
+                round_number=1,
+                round_info=round_info,
+                target_bureaus=["Equifax"],
+                custom_instructions=None,
+                tone=tone
+            )
+            assert "TONE:" in prompt
+
+
+class TestGenerateLetters:
+    """Tests for generate_letters method."""
+
+    def test_generate_letters_invalid_round(self):
+        """Test generate_letters with invalid round number."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+
+        # Setup mock client
+        mock_client = MagicMock()
+        mock_client.id = 1
+        mock_client.name = "Test Client"
+        mock_client.current_dispute_round = 1
+
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_client
+        mock_db.query.return_value.filter.return_value.all.return_value = []
+        mock_db.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
+        mock_db.query.return_value.filter.return_value.order_by.return_value.first.return_value = None
+        mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = []
+
+        service = AIDisputeWriterService(mock_db)
+
+        with patch('services.ai_dispute_writer_service.log_activity'):
+            result = service.generate_letters(client_id=1, round_number=5)
+
+        assert "error" in result
+        assert "Invalid round" in result["error"]
+
+    def test_generate_letters_client_not_found(self):
+        """Test generate_letters when client not found."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        mock_db.query.return_value.filter.return_value.first.return_value = None
+
+        service = AIDisputeWriterService(mock_db)
+
+        with patch('services.ai_dispute_writer_service.log_activity'):
+            result = service.generate_letters(client_id=999, round_number=1)
+
+        assert "error" in result
+
+
+class TestSpecialStrategies:
+    """Tests for special strategy configurations."""
+
+    def test_5day_knockout_strategy_defined(self):
+        """Test 5-day knockout strategy exists."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        assert "5dayknockout" in service.SPECIAL_STRATEGIES
+        strategy = service.SPECIAL_STRATEGIES["5dayknockout"]
+        assert "605B" in strategy["description"] or "identity theft" in strategy["description"].lower()
+
+    def test_idtheft_strategy_defined(self):
+        """Test identity theft strategy exists."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        assert "idtheft" in service.SPECIAL_STRATEGIES
+
+    def test_inquiry_strategy_defined(self):
+        """Test inquiry strategy exists."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        assert "inquiry" in service.SPECIAL_STRATEGIES
+
+    def test_portalfix_strategy_defined(self):
+        """Test portal fix strategy exists."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        assert "portalfix" in service.SPECIAL_STRATEGIES
+
+    def test_strategy_requirements(self):
+        """Test strategy requirements are lists."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        for key, strategy in service.SPECIAL_STRATEGIES.items():
+            if "requires" in strategy:
+                assert isinstance(strategy["requires"], list)

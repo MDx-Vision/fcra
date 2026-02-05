@@ -401,7 +401,7 @@
                 <span class="icon">🔌</span>
                 SendGrid Connection
             </div>
-            
+
             {% if sendgrid_configured %}
             <div class="email-from">
                 <span class="icon">✅</span>
@@ -416,7 +416,7 @@
                 <button class="btn btn-primary" style="margin-top: 12px;" onclick="setupSendGrid()">Connect SendGrid</button>
             </div>
             {% endif %}
-            
+
             <div class="test-section">
                 <h4 style="margin-bottom: 15px; color: #1a1a2e;">Send Test Email</h4>
                 <div class="test-input-row">
@@ -437,7 +437,7 @@
                 <span class="icon">⚡</span>
                 Email Notifications
             </div>
-            
+
             <div class="config-row">
                 <div class="config-info">
                     <h4>Email Automation Enabled</h4>
@@ -445,7 +445,7 @@
                 </div>
                 <div class="toggle-switch {{ 'active' if settings.email_enabled }}" id="toggle_email_enabled" onclick="toggleSetting('email_enabled')"></div>
             </div>
-            
+
             <div class="config-row">
                 <div class="config-info">
                     <h4>Welcome Email</h4>
@@ -453,7 +453,7 @@
                 </div>
                 <div class="toggle-switch {{ 'active' if settings.welcome_email_enabled }}" id="toggle_welcome_email_enabled" onclick="toggleSetting('welcome_email_enabled')"></div>
             </div>
-            
+
             <div class="config-row">
                 <div class="config-info">
                     <h4>Document Reminder</h4>
@@ -461,7 +461,7 @@
                 </div>
                 <div class="toggle-switch {{ 'active' if settings.document_reminder_enabled }}" id="toggle_document_reminder_enabled" onclick="toggleSetting('document_reminder_enabled')"></div>
             </div>
-            
+
             <div class="config-row">
                 <div class="config-info">
                     <h4>Case Status Updates</h4>
@@ -469,7 +469,7 @@
                 </div>
                 <div class="toggle-switch {{ 'active' if settings.case_update_enabled }}" id="toggle_case_update_enabled" onclick="toggleSetting('case_update_enabled')"></div>
             </div>
-            
+
             <div class="config-row">
                 <div class="config-info">
                     <h4>Dispute Sent Notification</h4>
@@ -477,7 +477,7 @@
                 </div>
                 <div class="toggle-switch {{ 'active' if settings.dispute_sent_enabled }}" id="toggle_dispute_sent_enabled" onclick="toggleSetting('dispute_sent_enabled')"></div>
             </div>
-            
+
             <div class="config-row">
                 <div class="config-info">
                     <h4>CRA Response Received</h4>
@@ -485,7 +485,7 @@
                 </div>
                 <div class="toggle-switch {{ 'active' if settings.cra_response_enabled }}" id="toggle_cra_response_enabled" onclick="toggleSetting('cra_response_enabled')"></div>
             </div>
-            
+
             <div class="config-row">
                 <div class="config-info">
                     <h4>Payment Reminders</h4>
@@ -493,7 +493,7 @@
                 </div>
                 <div class="toggle-switch {{ 'active' if settings.payment_reminder_enabled }}" id="toggle_payment_reminder_enabled" onclick="toggleSetting('payment_reminder_enabled')"></div>
             </div>
-            
+
             <div class="config-row">
                 <div class="config-info">
                     <h4>Analysis Ready</h4>
@@ -501,7 +501,7 @@
                 </div>
                 <div class="toggle-switch {{ 'active' if settings.analysis_ready_enabled }}" id="toggle_analysis_ready_enabled" onclick="toggleSetting('analysis_ready_enabled')"></div>
             </div>
-            
+
             <div class="config-row">
                 <div class="config-info">
                     <h4>Letters Ready</h4>
@@ -517,7 +517,7 @@
                 Visual Email Template Editor
                 <span id="templateStatus" class="template-status default">Using Default</span>
             </div>
-            
+
             <div class="template-selector">
                 <select id="templateType" onchange="loadTemplate()">
                     <option value="welcome">Welcome Email</option>
@@ -533,7 +533,7 @@
                     <input type="text" id="templateSubject" placeholder="Email Subject Line">
                 </div>
             </div>
-            
+
             <div class="merge-tags-panel">
                 <h4>Available Merge Tags (click to copy)</h4>
                 <div class="merge-tags-grid">
@@ -605,7 +605,7 @@
                         <span class="desc">TransUnion phone</span>
                     </div>
                 </div>
-                
+
                 <h4 style="margin-top: 15px;">Main CRAs - Freeze Addresses</h4>
                 <div class="merge-tags-grid">
                     <div class="merge-tag" onclick="copyMergeTag('{{equifax_freeze_address}}')">
@@ -633,7 +633,7 @@
                         <span class="desc">TransUnion freeze phone</span>
                     </div>
                 </div>
-                
+
                 <h4 style="margin-top: 15px;">Secondary Bureaus (9)</h4>
                 <div class="merge-tags-grid">
                     <div class="merge-tag" onclick="copyMergeTag('{{innovis_name}}')">
@@ -746,14 +746,14 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="editor-container" style="position: relative;">
                 <div id="unlayer-editor"></div>
                 <div id="editorLoading" class="loading-overlay">
                     <span>Loading editor...</span>
                 </div>
             </div>
-            
+
             <div class="editor-actions">
                 <div class="left-actions">
                     <button class="btn btn-primary" onclick="saveTemplate()">
@@ -779,7 +779,7 @@
                 <span class="icon">📋</span>
                 Recent Email Logs
             </div>
-            
+
             {% if logs %}
             <table class="logs-table">
                 <thead>
@@ -854,14 +854,14 @@
                 alert('Please enter an email address');
                 return;
             }
-            
+
             const resultDiv = document.getElementById('testResult');
             resultDiv.className = 'test-result';
             resultDiv.textContent = 'Sending...';
             resultDiv.style.display = 'block';
             resultDiv.style.background = '#f1f5f9';
             resultDiv.style.color = '#64748b';
-            
+
             try {
                 const response = await fetch('/api/email/test', {
                     method: 'POST',
@@ -869,7 +869,7 @@
                     body: JSON.stringify({ email: email })
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     resultDiv.className = 'test-result success';
                     resultDiv.textContent = 'Test email sent successfully! Check your inbox.';
@@ -973,15 +973,15 @@
 
         async function loadTemplate() {
             const templateType = document.getElementById('templateType').value;
-            
+
             try {
                 const response = await fetch(`/api/email-templates/${templateType}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.template) {
                     currentTemplateData = data.template;
                     document.getElementById('templateSubject').value = data.template.subject || '';
-                    
+
                     const statusEl = document.getElementById('templateStatus');
                     if (data.template.is_custom) {
                         statusEl.className = 'template-status custom';
@@ -990,7 +990,7 @@
                         statusEl.className = 'template-status default';
                         statusEl.textContent = 'Using Default';
                     }
-                    
+
                     if (data.template.design_json && editorReady) {
                         try {
                             const designJson = JSON.parse(data.template.design_json);
@@ -1011,12 +1011,12 @@
         function saveTemplate() {
             const templateType = document.getElementById('templateType').value;
             const subject = document.getElementById('templateSubject').value.trim();
-            
+
             if (!subject) {
                 alert('Please enter a subject line');
                 return;
             }
-            
+
             unlayer.exportHtml(function(data) {
                 unlayer.saveDesign(function(design) {
                     const payload = {
@@ -1024,7 +1024,7 @@
                         html_content: data.html,
                         design_json: JSON.stringify(design)
                     };
-                    
+
                     fetch(`/api/email-templates/${templateType}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1060,17 +1060,17 @@
                 'analysis_ready': 'Analysis Ready',
                 'letters_ready': 'Letters Ready'
             };
-            
+
             if (!confirm(`Reset "${templateNames[templateType]}" to the default template? Any customizations will be lost.`)) {
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/api/email-templates/${templateType}/reset`, {
                     method: 'POST'
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     alert('Template reset to default!');
                     loadTemplate();
@@ -1087,15 +1087,15 @@
             if (!email || !email.trim()) {
                 return;
             }
-            
+
             const subject = document.getElementById('templateSubject').value.trim();
             if (!subject) {
                 alert('Please enter a subject line first');
                 return;
             }
-            
+
             const templateType = document.getElementById('templateType').value;
-            
+
             unlayer.exportHtml(function(data) {
                 fetch(`/api/email-templates/${templateType}/preview`, {
                     method: 'POST',

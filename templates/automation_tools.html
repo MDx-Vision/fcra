@@ -479,7 +479,7 @@
 <body>
     {% set active_page = 'automation-tools' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="header">
             <h1>Automation Tools</h1>
@@ -501,7 +501,7 @@
         <div id="tab-freeze-letters" class="tab-content active">
             <div class="content-card">
                 <div class="section-title">Generate Freeze Letters</div>
-                
+
                 <div class="form-group" style="max-width: 400px;">
                     <label>Select Client</label>
                     <select id="freezeClientSelect">
@@ -992,7 +992,7 @@
         <div id="tab-settlement-calculator" class="tab-content">
             <div class="content-card">
                 <div class="section-title">Calculate Settlement Value</div>
-                
+
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Select Client</label>
@@ -1726,7 +1726,7 @@
         function switchTab(tabId) {
             document.querySelectorAll('.top-nav-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            
+
             document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
             document.getElementById(`tab-${tabId}`).classList.add('active');
 
@@ -1742,13 +1742,13 @@
             try {
                 const response = await fetch('/api/dispute/round-summary');
                 const data = await response.json();
-                
+
                 if (data.success) {
                     document.getElementById('readyToAdvanceCount').textContent = data.stats.ready_count || 0;
                     document.getElementById('incompleteRoundsCount').textContent = data.stats.incomplete_count || 0;
                     document.getElementById('activeDeadlinesCount').textContent = data.stats.active_deadlines || 0;
                     document.getElementById('overdueDeadlinesCount').textContent = data.stats.overdue_deadlines || 0;
-                    
+
                     renderReadyToAdvanceTable(data.ready_to_advance);
                     renderIncompleteRoundsTable(data.incomplete_rounds);
                 }
@@ -1782,7 +1782,7 @@
 
         function renderReadyToAdvanceTable(clients) {
             const tbody = document.getElementById('readyToAdvanceBody');
-            
+
             if (!clients || clients.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><h3>No clients ready to advance</h3><p>Clients will appear here when all 3 bureaus respond</p></td></tr>`;
                 return;
@@ -1791,7 +1791,7 @@
             tbody.innerHTML = clients.map(client => {
                 const nextRound = (client.current_dispute_round || 1) + 1;
                 const canAdvance = nextRound <= 4;
-                
+
                 return `
                     <tr>
                         <td><strong>${client.name}</strong></td>
@@ -1804,10 +1804,10 @@
                             </span>
                         </td>
                         <td>
-                            ${canAdvance ? 
+                            ${canAdvance ?
                                 `<button class="btn btn-primary btn-sm" onclick="advanceClientRound(${client.id}, ${nextRound})">
                                     Advance to Round ${nextRound}
-                                </button>` : 
+                                </button>` :
                                 `<span class="status-badge status-completed">Final Round Complete</span>`
                             }
                             <button class="btn btn-secondary btn-sm" onclick="viewRoundHistory(${client.id})" style="margin-left:5px;">
@@ -1821,7 +1821,7 @@
 
         function renderIncompleteRoundsTable(clients) {
             const tbody = document.getElementById('incompleteRoundsBody');
-            
+
             if (!clients || clients.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><h3>No incomplete rounds</h3><p>All active clients have complete rounds</p></td></tr>`;
                 return;
@@ -1829,7 +1829,7 @@
 
             tbody.innerHTML = clients.map(client => {
                 const roundStarted = client.round_started_at ? new Date(client.round_started_at).toLocaleDateString() : 'N/A';
-                
+
                 return `
                     <tr>
                         <td><strong>${client.name}</strong></td>
@@ -1863,7 +1863,7 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast(`Successfully advanced to Round ${newRound}! ${data.deadlines_created.length} deadlines created.`);
                     loadDisputeRoundSummary();
@@ -1903,7 +1903,7 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast(`Successfully advanced to Round ${newRound}! ${data.deadlines_created.length} deadlines created.`);
                     loadDisputeRoundSummary();
@@ -1922,7 +1922,7 @@
             try {
                 const response = await fetch(`/api/dispute/client/${clientId}/round-history`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showRoundHistoryModal(data);
                 } else {
@@ -1973,7 +1973,7 @@
             const modal = document.createElement('div');
             modal.id = 'roundHistoryModal';
             modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;';
-            
+
             modal.innerHTML = `
                 <div style="background:white;padding:30px;border-radius:12px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -1986,11 +1986,11 @@
                     ${historyHtml}
                 </div>
             `;
-            
+
             modal.addEventListener('click', function(e) {
                 if (e.target === modal) modal.remove();
             });
-            
+
             document.body.appendChild(modal);
         }
 
@@ -2030,7 +2030,7 @@
 
             const selectedBureaus = Array.from(document.querySelectorAll('input[name="bureau"]:checked'))
                 .map(cb => cb.value);
-            
+
             if (selectedBureaus.length === 0) {
                 showToast('Please select at least one bureau', true);
                 return;
@@ -2051,7 +2051,7 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast('Freeze letters generated successfully!');
                     loadFreezeLetterBatches();
@@ -2070,9 +2070,9 @@
             try {
                 const response = await fetch('/api/freeze-letters/recent');
                 const data = await response.json();
-                
+
                 const tbody = document.querySelector('#freezeLettersTable tbody');
-                
+
                 if (data.batches && data.batches.length > 0) {
                     tbody.innerHTML = data.batches.map(batch => `
                         <tr>
@@ -2095,7 +2095,7 @@
         function downloadFreezePDF(batchId) {
             window.open(`/api/freeze-letters/download/${batchId}?format=pdf`, '_blank');
         }
-        
+
         function downloadFreezeDocx(batchId) {
             window.open(`/api/freeze-letters/download/${batchId}?format=docx`, '_blank');
         }
@@ -2210,7 +2210,7 @@
         }
 
         let commonAgencies = [];
-        
+
         async function loadCommonAgencies() {
             try {
                 const response = await fetch('/api/validation-letters/agencies');
@@ -2229,7 +2229,7 @@
                 console.error('Error loading common agencies:', error);
             }
         }
-        
+
         function fillCommonAgency() {
             const select = document.getElementById('commonAgencySelect');
             const idx = select.value;
@@ -2240,12 +2240,12 @@
                 document.getElementById('collectionCityStateZip').value = agency.city_state_zip;
             }
         }
-        
+
         document.getElementById('validationClientSelect').addEventListener('change', async function() {
             const clientId = this.value;
             const caseSelect = document.getElementById('validationCaseSelect');
             caseSelect.innerHTML = '<option value="">-- No Case (Manual Entry) --</option>';
-            
+
             if (clientId) {
                 try {
                     const response = await fetch(`/api/cases/client/${clientId}`);
@@ -2263,30 +2263,30 @@
                 }
             }
         });
-        
+
         document.getElementById('validationCaseSelect').addEventListener('change', function() {
             const caseId = this.value;
             const autoBtn = document.getElementById('autoGenerateBtn');
             autoBtn.disabled = !caseId;
         });
-        
+
         async function generateValidationLetter() {
             const clientId = document.getElementById('validationClientSelect').value;
             if (!clientId) {
                 showToast('Please select a client', true);
                 return;
             }
-            
+
             const creditorName = document.getElementById('collectionCreditorName').value.trim();
             if (!creditorName) {
                 showToast('Collection agency name is required', true);
                 return;
             }
-            
+
             const btn = document.getElementById('generateValidationBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
-            
+
             try {
                 const response = await fetch('/api/validation-letters/single', {
                     method: 'POST',
@@ -2303,9 +2303,9 @@
                         }
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast('Validation letter generated! Choose format to download.');
                     showDownloadOptions(data.pdf_path, data.docx_path);
@@ -2319,25 +2319,25 @@
                 btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Generate Validation Letter';
             }
         }
-        
+
         async function autoGenerateFromCase() {
             const caseId = document.getElementById('validationCaseSelect').value;
             if (!caseId) {
                 showToast('Please select a case first', true);
                 return;
             }
-            
+
             const btn = document.getElementById('autoGenerateBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="loading-spinner"></span> Scanning case...';
-            
+
             try {
                 const response = await fetch(`/api/validation-letters/auto-generate/${caseId}`, {
                     method: 'POST'
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     if (data.letters_generated > 0) {
                         showToast(`Generated ${data.letters_generated} validation letters! Choose format.`);
@@ -2355,17 +2355,17 @@
                 btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Auto-Generate from Case Analysis';
             }
         }
-        
+
         loadCommonAgencies();
-        
+
         function showDownloadOptions(pdfPath, docxPath) {
             const existingModal = document.getElementById('downloadOptionsModal');
             if (existingModal) existingModal.remove();
-            
+
             const modal = document.createElement('div');
             modal.id = 'downloadOptionsModal';
             modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;';
-            
+
             modal.innerHTML = `
                 <div style="background:white;padding:30px;border-radius:12px;max-width:400px;width:90%;text-align:center;">
                     <h3 style="margin:0 0 20px;color:#1e293b;">Download Letter</h3>
@@ -2383,11 +2383,11 @@
                     <button onclick="document.getElementById('downloadOptionsModal').remove();" style="margin-top:20px;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;">Cancel</button>
                 </div>
             `;
-            
+
             modal.addEventListener('click', function(e) {
                 if (e.target === modal) modal.remove();
             });
-            
+
             document.body.appendChild(modal);
         }
 
@@ -2395,7 +2395,7 @@
             try {
                 const response = await fetch('/api/deadlines/upcoming');
                 const data = await response.json();
-                
+
                 if (data.success && data.deadlines) {
                     renderDeadlines(data.deadlines);
                     updateDeadlineStats(data.deadlines);
@@ -2407,7 +2407,7 @@
 
         function renderDeadlines(deadlines) {
             const tbody = document.getElementById('deadlinesTableBody');
-            
+
             if (deadlines.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><p>No upcoming deadlines</p></td></tr>';
                 return;
@@ -2447,7 +2447,7 @@
                 high: deadlines.filter(d => d.days_left > 3 && d.days_left <= 7).length,
                 normal: deadlines.filter(d => d.days_left > 7).length
             };
-            
+
             document.getElementById('overdueCount').textContent = stats.overdue;
             document.getElementById('criticalCount').textContent = stats.critical;
             document.getElementById('highCount').textContent = stats.high;
@@ -2553,7 +2553,7 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (data.success) {
                     displaySettlementResults(data);
                 } else {
@@ -2571,23 +2571,23 @@
             const resultsPanel = document.getElementById('settlementResults');
             resultsPanel.classList.remove('hidden');
 
-            document.getElementById('statutoryDamages').textContent = 
+            document.getElementById('statutoryDamages').textContent =
                 `$${formatNumber(data.statutory_min)} - $${formatNumber(data.statutory_max)}`;
-            document.getElementById('punitiveDamages').textContent = 
+            document.getElementById('punitiveDamages').textContent =
                 `$${formatNumber(data.punitive_min)} - $${formatNumber(data.punitive_max)}`;
-            document.getElementById('actualDamagesTotal').textContent = 
+            document.getElementById('actualDamagesTotal').textContent =
                 `$${formatNumber(data.actual_damages_total)}`;
-            document.getElementById('attorneyFees').textContent = 
+            document.getElementById('attorneyFees').textContent =
                 `$${formatNumber(data.attorney_fees)}`;
-            
+
             const likelihoodBadge = document.getElementById('settlementLikelihood');
-            const likelihoodClass = data.likelihood === 'High' ? 'likelihood-high' : 
+            const likelihoodClass = data.likelihood === 'High' ? 'likelihood-high' :
                                    data.likelihood === 'Medium' ? 'likelihood-medium' : 'likelihood-low';
             likelihoodBadge.innerHTML = `<span class="likelihood-badge ${likelihoodClass}">${data.likelihood}</span>`;
-            
-            document.getElementById('recommendedDemand').textContent = 
+
+            document.getElementById('recommendedDemand').textContent =
                 `$${formatNumber(data.recommended_demand)}`;
-            document.getElementById('totalRecoveryRange').textContent = 
+            document.getElementById('totalRecoveryRange').textContent =
                 `$${formatNumber(data.total_min)} - $${formatNumber(data.total_max)}`;
         }
 
@@ -2620,23 +2620,23 @@
                 card.style.borderColor = 'transparent';
                 card.style.background = '#f8fafc';
             });
-            
+
             const selectedCard = document.getElementById(`letter-card-${letterType}`);
             if (selectedCard) {
                 selectedCard.style.borderColor = '#84cc16';
                 selectedCard.style.background = '#f0fdf4';
             }
-            
+
             document.querySelectorAll('.advanced-letter-form').forEach(form => {
                 form.style.display = 'none';
             });
-            
+
             const formDiv = document.getElementById(`advanced-letter-form-${letterType}`);
             if (formDiv) {
                 formDiv.style.display = 'block';
                 formDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-            
+
             document.getElementById('advanced-letter-preview').style.display = 'none';
             currentAdvancedLetterType = letterType;
         }
@@ -2650,17 +2650,17 @@
         }
 
         function formatDate(date) {
-            return new Date(date || Date.now()).toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+            return new Date(date || Date.now()).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
             });
         }
 
         function generateLetterContent(letterType) {
             const today = formatDate();
             let content = '';
-            
+
             switch(letterType) {
                 case 'respa-qwr':
                     content = generateRespaQwrLetter(today);
@@ -2684,7 +2684,7 @@
                     content = generateMovLetter(today);
                     break;
             }
-            
+
             return content;
         }
 
@@ -3471,12 +3471,12 @@ ${description}
 
         function previewAdvancedLetter(letterType) {
             const content = generateLetterContent(letterType);
-            
+
             if (!content || content.includes('[') && content.includes('*')) {
                 showToast('Please fill in the required fields before previewing', true);
                 return;
             }
-            
+
             currentLetterContent = content;
             document.getElementById('letterPreviewContent').innerHTML = content;
             document.getElementById('advanced-letter-preview').style.display = 'block';
@@ -3498,13 +3498,13 @@ ${description}
                 'reinsertion': 'reinsertionClientSelect',
                 'mov-request': 'movClientSelect'
             };
-            
+
             const clientId = document.getElementById(clientSelectId[letterType]).value;
             if (!clientId) {
                 showToast('Please select a client', true);
                 return;
             }
-            
+
             const content = generateLetterContent(letterType);
             const buttonId = {
                 'respa-qwr': 'generateRespaBtn',
@@ -3515,11 +3515,11 @@ ${description}
                 'reinsertion': 'generateReinsertionBtn',
                 'mov-request': 'generateMovBtn'
             };
-            
+
             const btn = document.getElementById(buttonId[letterType]);
             btn.disabled = true;
             btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
-            
+
             try {
                 const response = await fetch('/api/advanced-letters/generate', {
                     method: 'POST',
@@ -3530,9 +3530,9 @@ ${description}
                         letter_content: content
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast('Letter generated successfully!');
                     showDownloadOptions(data.pdf_path, data.docx_path);
@@ -3565,7 +3565,7 @@ ${description}
                 showToast('No letter content to download', true);
                 return;
             }
-            
+
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <!DOCTYPE html>
@@ -3574,9 +3574,9 @@ ${description}
                     <title>Letter - Print to PDF</title>
                     <style>
                         @page { margin: 1in; }
-                        body { 
-                            font-family: 'Times New Roman', Times, serif; 
-                            font-size: 12pt; 
+                        body {
+                            font-family: 'Times New Roman', Times, serif;
+                            font-size: 12pt;
                             line-height: 1.5;
                             color: #000;
                             max-width: 8.5in;
@@ -3584,8 +3584,8 @@ ${description}
                             padding: 20px;
                         }
                         p { margin-bottom: 12pt; }
-                        blockquote { 
-                            margin: 15pt 30pt; 
+                        blockquote {
+                            margin: 15pt 30pt;
                             padding: 10pt;
                             background: #f5f5f5;
                             border-left: 3px solid #333;

@@ -20,10 +20,18 @@ from typing import Any, Callable, Dict, List, Optional, Set
 from flask import request
 
 # Configuration from environment
-VIOLATION_THRESHOLD = int(os.environ.get("RATE_LIMIT_VIOLATION_THRESHOLD", "10"))  # violations before block
-BLOCK_DURATION_MINUTES = int(os.environ.get("RATE_LIMIT_BLOCK_DURATION", "60"))  # minutes
-VIOLATION_WINDOW_MINUTES = int(os.environ.get("RATE_LIMIT_VIOLATION_WINDOW", "5"))  # window to count violations
-ALERT_THRESHOLD = int(os.environ.get("RATE_LIMIT_ALERT_THRESHOLD", "5"))  # violations before alert
+VIOLATION_THRESHOLD = int(
+    os.environ.get("RATE_LIMIT_VIOLATION_THRESHOLD", "10")
+)  # violations before block
+BLOCK_DURATION_MINUTES = int(
+    os.environ.get("RATE_LIMIT_BLOCK_DURATION", "60")
+)  # minutes
+VIOLATION_WINDOW_MINUTES = int(
+    os.environ.get("RATE_LIMIT_VIOLATION_WINDOW", "5")
+)  # window to count violations
+ALERT_THRESHOLD = int(
+    os.environ.get("RATE_LIMIT_ALERT_THRESHOLD", "5")
+)  # violations before alert
 
 logger = logging.getLogger("rate_limit_monitor")
 
@@ -31,6 +39,7 @@ logger = logging.getLogger("rate_limit_monitor")
 @dataclass
 class ViolationRecord:
     """Record of a single rate limit violation."""
+
     ip_address: str
     endpoint: str
     timestamp: datetime
@@ -41,6 +50,7 @@ class ViolationRecord:
 @dataclass
 class IPStats:
     """Statistics for a single IP address."""
+
     ip_address: str
     total_violations: int = 0
     violations_in_window: int = 0
@@ -57,11 +67,17 @@ class IPStats:
             "ip_address": self.ip_address,
             "total_violations": self.total_violations,
             "violations_in_window": self.violations_in_window,
-            "first_violation": self.first_violation.isoformat() if self.first_violation else None,
-            "last_violation": self.last_violation.isoformat() if self.last_violation else None,
+            "first_violation": (
+                self.first_violation.isoformat() if self.first_violation else None
+            ),
+            "last_violation": (
+                self.last_violation.isoformat() if self.last_violation else None
+            ),
             "blocked": self.blocked,
             "blocked_at": self.blocked_at.isoformat() if self.blocked_at else None,
-            "blocked_until": self.blocked_until.isoformat() if self.blocked_until else None,
+            "blocked_until": (
+                self.blocked_until.isoformat() if self.blocked_until else None
+            ),
             "endpoints_hit": list(self.endpoints_hit),
         }
 
@@ -118,11 +134,7 @@ class RateLimitMonitor:
         self._stop_cleanup = False
 
     def record_violation(
-        self,
-        ip_address: str,
-        endpoint: str,
-        user_agent: str = "",
-        key: str = ""
+        self, ip_address: str, endpoint: str, user_agent: str = "", key: str = ""
     ) -> bool:
         """
         Record a rate limit violation.
@@ -166,7 +178,8 @@ class RateLimitMonitor:
             # Count violations in window
             window_start = now - self._violation_window
             stats.violations_in_window = sum(
-                1 for v in self._violations
+                1
+                for v in self._violations
                 if v.ip_address == ip_address and v.timestamp >= window_start
             )
 
@@ -178,11 +191,17 @@ class RateLimitMonitor:
             )
 
             # Check for alert threshold
-            if stats.violations_in_window >= self._alert_threshold and not stats.blocked:
+            if (
+                stats.violations_in_window >= self._alert_threshold
+                and not stats.blocked
+            ):
                 self._trigger_alert(ip_address, stats, "threshold_approaching")
 
             # Check for block threshold
-            if stats.violations_in_window >= self._violation_threshold and not stats.blocked:
+            if (
+                stats.violations_in_window >= self._violation_threshold
+                and not stats.blocked
+            ):
                 self._block_ip(ip_address, stats)
                 return True
 
@@ -286,20 +305,26 @@ class RateLimitMonitor:
             for ip, blocked_until in list(self._blocked_ips.items()):
                 if now < blocked_until:
                     stats = self._ip_stats.get(ip)
-                    result.append({
-                        "ip_address": ip,
-                        "blocked_until": blocked_until.isoformat(),
-                        "remaining_seconds": (blocked_until - now).total_seconds(),
-                        "total_violations": stats.total_violations if stats else 0,
-                    })
+                    result.append(
+                        {
+                            "ip_address": ip,
+                            "blocked_until": blocked_until.isoformat(),
+                            "remaining_seconds": (blocked_until - now).total_seconds(),
+                            "total_violations": stats.total_violations if stats else 0,
+                        }
+                    )
 
             for ip in self._permanent_blocklist:
-                result.append({
-                    "ip_address": ip,
-                    "blocked_until": "permanent",
-                    "remaining_seconds": -1,
-                    "total_violations": self._ip_stats.get(ip, IPStats(ip)).total_violations,
-                })
+                result.append(
+                    {
+                        "ip_address": ip,
+                        "blocked_until": "permanent",
+                        "remaining_seconds": -1,
+                        "total_violations": self._ip_stats.get(
+                            ip, IPStats(ip)
+                        ).total_violations,
+                    }
+                )
 
         return result
 
@@ -307,9 +332,7 @@ class RateLimitMonitor:
         """Get top violating IPs."""
         with self._lock:
             sorted_stats = sorted(
-                self._ip_stats.values(),
-                key=lambda s: s.total_violations,
-                reverse=True
+                self._ip_stats.values(), key=lambda s: s.total_violations, reverse=True
             )[:limit]
             return [s.to_dict() for s in sorted_stats]
 
@@ -338,8 +361,7 @@ class RateLimitMonitor:
             )
 
             active_blocks = sum(
-                1 for blocked_until in self._blocked_ips.values()
-                if now < blocked_until
+                1 for blocked_until in self._blocked_ips.values() if now < blocked_until
             )
 
             return {
@@ -422,9 +444,7 @@ class RateLimitMonitor:
 
         self._stop_cleanup = False
         self._cleanup_thread = threading.Thread(
-            target=self._cleanup_loop,
-            daemon=True,
-            name="rate-limit-cleanup"
+            target=self._cleanup_loop, daemon=True, name="rate-limit-cleanup"
         )
         self._cleanup_thread.start()
 

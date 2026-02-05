@@ -1,10 +1,10 @@
 # FCRA PROMPT 02: ROUND 1 LETTERS ONLY (SEPARATE FILES)
 ## Upload Report â†’ Generate Individual Letter Files
 
-**Version:** 2.0 (Separate File Output)  
-**Created:** November 24, 2025  
-**Use Case:** Existing clients who need Round 1 dispute letters only  
-**Output:** Each letter saved as a separate downloadable file  
+**Version:** 2.0 (Separate File Output)
+**Created:** November 24, 2025
+**Use Case:** Existing clients who need Round 1 dispute letters only
+**Output:** Each letter saved as a separate downloadable file
 **Does NOT Generate:** Client report, standing analysis, violation summary
 
 ---
@@ -141,17 +141,17 @@ LETTER TEMPLATE â€” USE FOR EACH RECIPIENT
 
 Dear Sir or Madam:
 
-Pursuant to the Fair Credit Reporting Act, 15 U.S.C. Â§ 1681i, I am formally 
+Pursuant to the Fair Credit Reporting Act, 15 U.S.C. Â§ 1681i, I am formally
 disputing the following inaccurate information in my credit file.
 
 [IF CRA - INCLUDE THIS SECTION:]
-As a consumer reporting agency, you are required under FCRA Â§ 1681e(b) to 
-"follow reasonable procedures to assure maximum possible accuracy." The 
+As a consumer reporting agency, you are required under FCRA Â§ 1681e(b) to
+"follow reasonable procedures to assure maximum possible accuracy." The
 violations detailed below demonstrate your failure to meet this standard.
 
 [IF FURNISHER - INCLUDE THIS SECTION:]
-As a furnisher of information, you are required under FCRA Â§ 1681s-2(a) to 
-ensure accuracy before reporting and to conduct reasonable investigations 
+As a furnisher of information, you are required under FCRA Â§ 1681s-2(a) to
+ensure accuracy before reporting and to conduct reasonable investigations
 of disputes.
 
 ---------------------------------------------------------------------------
@@ -170,8 +170,8 @@ Your report shows [Account] with [Status/Balance], but:
 - [Other Bureau 1] reports: [Different Status/Balance]
 - [Other Bureau 2] reports: [Different Status/Balance]
 
-**These reports are mutually exclusive. All three cannot be accurate 
-simultaneously.** Under FCRA Â§ 1681e(b), maintaining logically impossible 
+**These reports are mutually exclusive. All three cannot be accurate
+simultaneously.** Under FCRA Â§ 1681e(b), maintaining logically impossible
 data is a clear violation.
 
 [For Metro 2 violations:]
@@ -179,7 +179,7 @@ Your report shows [Account] with:
 - Payment Status: "[Status]"
 - Payment Rating: "[Rating]"
 
-**This combination violates Metro 2Â® reporting standards.** An account 
+**This combination violates Metro 2Â® reporting standards.** An account
 cannot be reported as "[Status]" while also showing "[Rating]."
 
 [For late payments:]
@@ -191,26 +191,26 @@ Your report shows a [X]-day late payment on [Date] for [Account].
 - No warning letter documentation
 - No change in account status
 
-Under *Cushman v. Trans Union Corp.*, you must provide tangible documentary 
-proof. Without such proof, this late payment appears fabricated and must 
+Under *Cushman v. Trans Union Corp.*, you must provide tangible documentary
+proof. Without such proof, this late payment appears fabricated and must
 be deleted.
 
 [For charge-offs:]
-Your report shows [Account] was charged off for $[Amount], yet the balance 
+Your report shows [Account] was charged off for $[Amount], yet the balance
 continues to show as $[Current Balance].
 
-**A charged-off account cannot continue accruing charges.** This violates 
-FCRA Â§ 1681s-2 and demonstrates either inaccurate reporting or continued 
+**A charged-off account cannot continue accruing charges.** This violates
+FCRA Â§ 1681s-2 and demonstrates either inaccurate reporting or continued
 improper collection activity.
 
-**DEMAND:** [Delete this account / Correct balance to $0 / Update status 
+**DEMAND:** [Delete this account / Correct balance to $0 / Update status
 to accurate / etc.]
 
 ---------------------------------------------------------------------------
 SECTION 2: ADDITIONAL VIOLATIONS â€” LATE PAYMENT BUNDLING
 ---------------------------------------------------------------------------
 
-**In addition to the primary violation above, the following late payments 
+**In addition to the primary violation above, the following late payments
 in my file also lack documentation and must be deleted:**
 
 [LIST ALL LATE PAYMENTS FROM THE CONSUMER'S ENTIRE FILE]
@@ -247,8 +247,8 @@ Under FCRA Â§ 1681i, you are required to:
 4. **CORRECT** information that is inaccurate
 5. Provide written notice of results within **5 DAYS** of completion
 
-Under *Cushman v. Trans Union Corp.*, verification requires tangible 
-documentary proof â€” not mere confirmation from your database. You must 
+Under *Cushman v. Trans Union Corp.*, verification requires tangible
+documentary proof â€” not mere confirmation from your database. You must
 obtain and review actual documentation supporting each disputed item.
 
 **For late payments specifically:** You must provide:
@@ -257,17 +257,17 @@ obtain and review actual documentation supporting each disputed item.
 - Copy of warning letter sent to consumer
 - Account statements showing late payment processing
 
-**If you cannot provide this documentation, you MUST DELETE the late 
+**If you cannot provide this documentation, you MUST DELETE the late
 payment under FCRA Â§ 1681i(a)(5)(A).**
 
 ---------------------------------------------------------------------------
 SECTION 4: CONSEQUENCES OF NON-COMPLIANCE
 ---------------------------------------------------------------------------
 
-Failure to conduct a reasonable reinvestigation or delete unverifiable 
+Failure to conduct a reasonable reinvestigation or delete unverifiable
 information will result in:
 
-1. Formal complaint to the **Consumer Financial Protection Bureau (CFPB)** 
+1. Formal complaint to the **Consumer Financial Protection Bureau (CFPB)**
    under 12 C.F.R. Â§ 1022.43
 
 2. Formal complaint to the **Federal Trade Commission (FTC)**
@@ -280,9 +280,9 @@ information will result in:
    - Punitive damages for willful non-compliance
    - Attorney fees and costs
 
-**You are hereby on notice.** Under *Safeco Insurance Co. v. Burr*, 
-continued reporting of disputed information without proper verification 
-after receiving this letter may constitute willful violation, exposing you 
+**You are hereby on notice.** Under *Safeco Insurance Co. v. Burr*,
+continued reporting of disputed information without proper verification
+after receiving this letter may constitute willful violation, exposing you
 to enhanced damages.
 
 ---------------------------------------------------------------------------
@@ -298,7 +298,7 @@ Please direct all correspondence regarding this matter to:
 
 **Case Reference:** [Case Number]
 
-Do not contact the consumer directly. All communication must go through 
+Do not contact the consumer directly. All communication must go through
 our office.
 
 ---------------------------------------------------------------------------

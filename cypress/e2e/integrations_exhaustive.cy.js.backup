@@ -63,7 +63,7 @@ describe('Staff Login Page - /dashboard/integrations', () => {
         .should('be.visible')
         .and('have.attr', 'href', '/portal/login')
         .and('contain.text', 'Client Login');
-      
+
       cy.get('.client-portal-link').should('contain.text', 'Looking for client portal?');
     });
   });
@@ -162,10 +162,10 @@ describe('Staff Login Page - /dashboard/integrations', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      
+
       cy.get('.toggle-btn').click();
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      
+
       cy.get('.toggle-btn').click();
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
     });
@@ -178,7 +178,7 @@ describe('Staff Login Page - /dashboard/integrations', () => {
     it('should disable submit button and show loading state on form submission', () => {
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
-      
+
       cy.get('[data-testid="login-button"]').click();
       cy.get('[data-testid="login-button"]')
         .should('be.disabled')
@@ -231,9 +231,9 @@ describe('Staff Login Page - /dashboard/integrations', () => {
     it('should maintain form data when toggling password visibility', () => {
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
-      
+
       cy.get('.toggle-btn').click();
-      
+
       cy.get('[data-testid="email-input"]').should('have.value', 'test@example.com');
       cy.get('[data-testid="password-input"]').should('have.value', 'password123');
     });

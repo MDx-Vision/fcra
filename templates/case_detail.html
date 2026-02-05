@@ -54,7 +54,7 @@
 <body>
     {% set active_page = 'cases' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content" data-testid="case-detail-page">
         <div class="header">
             <div>
@@ -70,7 +70,7 @@
                 <a href="/dashboard/clients" class="btn btn-secondary" data-testid="back-button">Back</a>
             </div>
         </div>
-        
+
         <div class="grid">
             <div class="card">
                 <div class="card-title" data-testid="case-score-title">Case Score</div>
@@ -101,7 +101,7 @@
                 <p style="text-align: center; color: #94a3b8;">No score available</p>
                 {% endif %}
             </div>
-            
+
             <div class="card">
                 <div class="card-title" data-testid="damages-title">Damages Exposure</div>
                 {% if damages %}
@@ -129,7 +129,7 @@
                 <p style="text-align: center; color: #94a3b8;">No damages calculated</p>
                 {% endif %}
             </div>
-            
+
             <div class="card">
                 <div class="card-title" data-testid="standing-title">Standing Analysis</div>
                 {% if standing %}
@@ -164,7 +164,7 @@
                 <p style="color: #94a3b8;">No standing analysis available</p>
                 {% endif %}
             </div>
-            
+
             <div class="card">
                 <div class="card-title" data-testid="letters-title">Generated Letters ({{ letters|length }})</div>
                 {% if letters %}
@@ -178,7 +178,7 @@
                 <p style="color: #94a3b8;">No letters generated yet</p>
                 {% endif %}
             </div>
-            
+
             <div class="card full-width" id="solStatusSection" data-testid="sol-status-section">
                 <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                     <span>Statute of Limitations Status</span>
@@ -212,7 +212,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="card full-width" id="settlementSection" data-testid="settlement-section">
                 <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                     <span>Settlement Tracking</span>
@@ -225,7 +225,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="card full-width" id="escalationSection" data-testid="escalation-section">
                 <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="display: flex; align-items: center; gap: 10px;">
@@ -244,7 +244,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="card full-width">
                 <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                     <span data-testid="violations-title">Violations ({{ violations|length }})</span>
@@ -273,7 +273,7 @@
                 <p style="color: #94a3b8;">No violations found</p>
                 {% endif %}
             </div>
-            
+
             <div class="card full-width">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <div class="card-title" style="margin: 0; border: none; padding: 0;" data-testid="timeline-title">Dispute Timeline</div>
@@ -285,7 +285,7 @@
                         <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #64748b;"><span style="width: 10px; height: 10px; background: #6b7280; border-radius: 50%;"></span>Milestone</span>
                     </div>
                 </div>
-                
+
                 <div id="adminTimelineSummary" data-testid="timeline-summary" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 25px;">
                     <div style="background: #dbeafe; padding: 15px; border-radius: 10px; text-align: center;">
                         <div style="font-size: 20px; font-weight: 700; color: #1e40af;" id="adminLettersSent" data-testid="timeline-letters-sent">-</div>
@@ -308,7 +308,7 @@
                         <div style="font-size: 11px; color: #ef4444;">Overdue</div>
                     </div>
                 </div>
-                
+
                 <div id="adminTimelineContainer" data-testid="timeline-container" style="position: relative; padding-left: 30px; max-height: 500px; overflow-y: auto;">
                     <div style="position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #e5e7eb 0%, #e5e7eb 100%);"></div>
                     <div style="text-align: center; padding: 40px; color: #64748b;">
@@ -318,10 +318,10 @@
             </div>
         </div>
     </main>
-    
+
     <script>
         const clientId = {{ client.id if client else 0 }};
-        
+
         function getTimelineColor(color) {
             const colors = {
                 'blue': '#3b82f6',
@@ -332,7 +332,7 @@
             };
             return colors[color] || colors.gray;
         }
-        
+
         async function loadAdminTimeline() {
             if (!clientId) {
                 document.getElementById('adminTimelineContainer').innerHTML = `
@@ -340,18 +340,18 @@
                 `;
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/api/client/${clientId}/timeline`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     document.getElementById('adminLettersSent').textContent = data.summary.letters_sent;
                     document.getElementById('adminResponses').textContent = data.summary.responses_received;
                     document.getElementById('adminDeleted').textContent = data.summary.items_deleted;
                     document.getElementById('adminUpdated').textContent = data.summary.items_updated;
                     document.getElementById('adminOverdue').textContent = data.summary.overdue_deadlines;
-                    
+
                     renderAdminTimeline(data.events);
                 } else {
                     document.getElementById('adminTimelineContainer').innerHTML = `
@@ -369,10 +369,10 @@
                 `;
             }
         }
-        
+
         function renderAdminTimeline(events) {
             const container = document.getElementById('adminTimelineContainer');
-            
+
             if (!events || events.length === 0) {
                 container.innerHTML = `
                     <div style="position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #e5e7eb;"></div>
@@ -383,12 +383,12 @@
                 `;
                 return;
             }
-            
+
             let html = '<div style="position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #3b82f6 0%, #22c55e 50%, #6b7280 100%);"></div>';
-            
+
             events.forEach((event, index) => {
                 const color = getTimelineColor(event.color);
-                
+
                 html += `
                     <div class="timeline-event" style="position: relative; margin-bottom: 20px; padding-left: 25px;">
                         <div style="position: absolute; left: 0; top: 5px; width: 20px; height: 20px; background: ${color}; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; font-size: 10px;">${event.icon || ''}</div>
@@ -414,15 +414,15 @@
                     </div>
                 `;
             });
-            
+
             container.innerHTML = html;
         }
-        
+
         document.addEventListener('DOMContentLoaded', loadAdminTimeline);
-        
+
         const caseId = {{ analysis.id if analysis else 0 }};
         const analysisId = {{ analysis.id if analysis else 0 }};
-        
+
         async function loadSettlementData() {
             if (!caseId) {
                 document.getElementById('settlementContent').innerHTML = `
@@ -430,11 +430,11 @@
                 `;
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/api/case/${caseId}/settlement`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     if (data.exists) {
                         renderExistingSettlement(data.settlement);
@@ -453,16 +453,16 @@
                 `;
             }
         }
-        
+
         function renderCreateSettlement(canCreate, suggestedTarget, suggestedMinimum) {
             const actionsHtml = canCreate ? `
                 <button class="btn btn-primary" onclick="showCreateSettlementForm()">
                     Create Settlement Demand
                 </button>
             ` : '';
-            
+
             document.getElementById('settlementActions').innerHTML = actionsHtml;
-            
+
             if (canCreate) {
                 document.getElementById('settlementContent').innerHTML = `
                     <div id="createSettlementForm" style="display: none; padding: 20px; background: #f8fafc; border-radius: 12px;">
@@ -508,23 +508,23 @@
                 `;
             }
         }
-        
+
         function showCreateSettlementForm() {
             document.getElementById('createSettlementForm').style.display = 'block';
             document.getElementById('noSettlementMsg').style.display = 'none';
         }
-        
+
         function hideCreateSettlementForm() {
             document.getElementById('createSettlementForm').style.display = 'none';
             document.getElementById('noSettlementMsg').style.display = 'block';
         }
-        
+
         async function createSettlement() {
             const target = parseFloat(document.getElementById('settlementTarget').value) || 0;
             const minimum = parseFloat(document.getElementById('settlementMinimum').value) || 0;
             const demand = parseFloat(document.getElementById('settlementDemand').value) || target;
             const notes = document.getElementById('settlementNotes').value;
-            
+
             try {
                 const response = await fetch('/api/settlements', {
                     method: 'POST',
@@ -537,7 +537,7 @@
                         notes: notes
                     })
                 });
-                
+
                 const data = await response.json();
                 if (data.success) {
                     alert('Settlement created successfully!');
@@ -550,7 +550,7 @@
                 alert('Error creating settlement');
             }
         }
-        
+
         function renderExistingSettlement(settlement) {
             const statusColors = {
                 'pending': '#f1f5f9',
@@ -560,7 +560,7 @@
                 'rejected': '#fee2e2',
                 'litigated': '#ede9fe'
             };
-            
+
             const statusTextColors = {
                 'pending': '#64748b',
                 'demand_sent': '#1e40af',
@@ -569,15 +569,15 @@
                 'rejected': '#991b1b',
                 'litigated': '#5b21b6'
             };
-            
+
             const s = settlement;
             const statusBg = statusColors[s.status] || statusColors.pending;
             const statusText = statusTextColors[s.status] || statusTextColors.pending;
-            
+
             document.getElementById('settlementActions').innerHTML = `
                 <a href="/dashboard/settlements" class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;">View All Settlements</a>
             `;
-            
+
             let offersHtml = '';
             if (s.initial_demand) {
                 offersHtml += `
@@ -623,7 +623,7 @@
                     </div>
                 `;
             }
-            
+
             document.getElementById('settlementContent').innerHTML = `
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
                     <div>
@@ -645,13 +645,13 @@
                             </div>
                             ` : ''}
                         </div>
-                        
+
                         <div style="background: #f8fafc; border-radius: 10px; padding: 15px;">
                             <div style="font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 10px;">Offers Timeline</div>
                             ${offersHtml || '<div style="color: #64748b; font-size: 13px;">No offers recorded yet</div>'}
                         </div>
                     </div>
-                    
+
                     <div style="background: #f8fafc; border-radius: 10px; padding: 15px;">
                         <div style="font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 15px;">Quick Actions</div>
                         ${s.status !== 'accepted' && s.status !== 'rejected' && s.status !== 'litigated' ? `
@@ -670,11 +670,11 @@
                 </div>
             `;
         }
-        
+
         function quickAddOffer(settlementId) {
             const amount = prompt('Enter counter-offer amount:');
             if (!amount) return;
-            
+
             fetch(`/api/settlements/${settlementId}/offer`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -690,11 +690,11 @@
                 }
             });
         }
-        
+
         function quickMarkSettled(settlementId) {
             const amount = prompt('Enter final settlement amount:');
             if (!amount) return;
-            
+
             fetch(`/api/settlements/${settlementId}/settle`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -710,11 +710,11 @@
                 }
             });
         }
-        
+
         function quickRecordPayment(settlementId) {
             const amount = prompt('Enter payment amount received:');
             if (!amount) return;
-            
+
             fetch(`/api/settlements/${settlementId}/payment`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -730,9 +730,9 @@
                 }
             });
         }
-        
+
         document.addEventListener('DOMContentLoaded', loadSettlementData);
-        
+
         const actionTypeNames = {
             'standard_redispute': 'Standard Re-dispute',
             'mov_demand': 'Method of Verification Demand',
@@ -747,23 +747,23 @@
             'request_disclosures': 'Request Disclosures',
             'prepare_litigation': 'Prepare for Litigation'
         };
-        
+
         async function loadEscalationRecommendations() {
             if (!clientId) return;
-            
+
             const container = document.getElementById('escalationContent');
             try {
                 const response = await fetch(`/api/escalation/recommendations/${clientId}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.recommendations.length > 0) {
                     let html = '<div style="display: grid; gap: 15px;">';
-                    
+
                     data.recommendations.slice(0, 5).forEach(rec => {
                         const confidenceClass = rec.confidence_score >= 0.8 ? 'high' : rec.confidence_score >= 0.5 ? 'medium' : 'low';
                         const confidenceColors = { high: '#166534', medium: '#92400e', low: '#991b1b' };
                         const confidenceBg = { high: '#dcfce7', medium: '#fef3c7', low: '#fee2e2' };
-                        
+
                         html += `
                             <div style="background: #f8fafc; border-radius: 12px; padding: 15px; border-left: 4px solid ${rec.applied ? '#84cc16' : '#319795'};">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
@@ -792,7 +792,7 @@
                             </div>
                         `;
                     });
-                    
+
                     html += '</div>';
                     container.innerHTML = html;
                 } else {
@@ -809,13 +809,13 @@
                 container.innerHTML = `<div style="color: #ef4444; text-align: center; padding: 20px;">Error loading recommendations</div>`;
             }
         }
-        
+
         async function generateEscalationRecommendations() {
             if (!clientId) return;
-            
+
             const container = document.getElementById('escalationContent');
             container.innerHTML = '<div style="text-align: center; padding: 30px; color: #64748b;">Generating recommendations...</div>';
-            
+
             try {
                 const response = await fetch(`/api/escalation/recommend/${clientId}`, {
                     method: 'POST',
@@ -823,7 +823,7 @@
                     body: JSON.stringify({ save: true })
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     loadEscalationRecommendations();
                 } else {
@@ -834,14 +834,14 @@
                 container.innerHTML = `<div style="color: #ef4444; text-align: center; padding: 20px;">Error generating recommendations</div>`;
             }
         }
-        
+
         async function applyRecommendation(recId) {
             if (!confirm('Mark this recommendation as applied?')) return;
-            
+
             try {
                 const response = await fetch(`/api/escalation/${recId}/apply`, { method: 'PUT' });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     loadEscalationRecommendations();
                 } else {
@@ -851,11 +851,11 @@
                 alert('Error: ' + error.message);
             }
         }
-        
+
         async function recordOutcome(recId) {
             const outcome = prompt('Enter the actual outcome (e.g., deleted, verified, updated, settled):');
             if (!outcome) return;
-            
+
             try {
                 const response = await fetch(`/api/escalation/${recId}/outcome`, {
                     method: 'PUT',
@@ -863,7 +863,7 @@
                     body: JSON.stringify({ outcome: outcome })
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     loadEscalationRecommendations();
                 } else {
@@ -873,19 +873,19 @@
                 alert('Error: ' + error.message);
             }
         }
-        
+
         document.addEventListener('DOMContentLoaded', loadEscalationRecommendations);
-        
+
         async function loadSolStatus() {
             if (!clientId) return;
-            
+
             try {
                 const response = await fetch(`/api/sol/client/${clientId}`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     let safe = 0, caution = 0, warning = 0, critical = 0, expired = 0;
-                    
+
                     data.violations.forEach(v => {
                         const level = v.warning_level;
                         if (level === 'expired') expired++;
@@ -893,7 +893,7 @@
                         else if (level === 'warning') warning++;
                         else if (level === 'caution') caution++;
                         else safe++;
-                        
+
                         const solEl = document.getElementById(`sol-${v.violation_id}`);
                         if (solEl) {
                             const badge = solEl.querySelector('.sol-badge');
@@ -904,16 +904,16 @@
                             }
                         }
                     });
-                    
+
                     document.getElementById('solSafeCount').textContent = safe;
                     document.getElementById('solCautionCount').textContent = caution;
                     document.getElementById('solWarningCount').textContent = warning;
                     document.getElementById('solCriticalCount').textContent = critical;
-                    
+
                     if (critical > 0 || warning > 0) {
                         const banner = document.getElementById('solAlertBanner');
                         banner.style.display = 'block';
-                        
+
                         if (critical > 0) {
                             document.getElementById('solAlertTitle').textContent = `CRITICAL: ${critical} claim(s) expiring in less than 30 days!`;
                             banner.style.background = '#fef2f2';
@@ -931,7 +931,7 @@
                 console.error('Error loading SOL status:', error);
             }
         }
-        
+
         function openSolCalculator() {
             const modal = document.createElement('div');
             modal.id = 'solCalculatorModal';
@@ -958,16 +958,16 @@
             `;
             document.body.appendChild(modal);
         }
-        
+
         async function calculateSol() {
             const violationDate = document.getElementById('solViolationDate').value;
             const discoveryDate = document.getElementById('solDiscoveryDate').value;
-            
+
             if (!violationDate) {
                 alert('Violation date is required');
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/sol/calculate', {
                     method: 'POST',
@@ -978,10 +978,10 @@
                     })
                 });
                 const data = await response.json();
-                
+
                 const resultDiv = document.getElementById('solCalculatorResult');
                 resultDiv.style.display = 'block';
-                
+
                 if (data.success) {
                     const levelColors = {
                         'expired': '#ef4444',
@@ -990,7 +990,7 @@
                         'caution': '#eab308',
                         'ok': '#22c55e'
                     };
-                    
+
                     resultDiv.innerHTML = `
                         <div style="background: ${data.color}15; border: 1px solid ${data.color}40; border-radius: 12px; padding: 15px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -1011,7 +1011,7 @@
                 document.getElementById('solCalculatorResult').innerHTML = `<div style="color: #ef4444;">Error calculating SOL: ${error.message}</div>`;
             }
         }
-        
+
         document.addEventListener('DOMContentLoaded', loadSolStatus);
     </script>
 </body>

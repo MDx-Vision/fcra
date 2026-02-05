@@ -26,9 +26,9 @@ def generate_referral_code():
 
 DEMO_CLIENTS = [
     {
-        "first_name": "Marcus", "last_name": "Thompson", 
+        "first_name": "Marcus", "last_name": "Thompson",
         "email": "marcus.thompson@demo.brightpath.com", "phone": "(404) 555-0101",
-        "address_street": "1234 Peachtree Lane", "address_city": "Atlanta", 
+        "address_street": "1234 Peachtree Lane", "address_city": "Atlanta",
         "address_state": "GA", "address_zip": "30301",
         "status": "stage2_complete", "score": 9, "exposure": 125000,
         "violations_count": 8, "profile": "high_value"
@@ -140,10 +140,10 @@ def create_demo_data():
         print("BRIGHTPATH ASCEND DEMO DATA GENERATOR")
         print("Creating realistic demo data for SOP and training...")
         print("=" * 60)
-        
+
         created_clients = []
         created_analyses = []
-        
+
         print("\n[1/6] Creating Demo Clients...")
         for i, client_data in enumerate(DEMO_CLIENTS):
             existing = db.query(Client).filter(Client.email == client_data["email"]).first()
@@ -151,7 +151,7 @@ def create_demo_data():
                 print(f"  - Client {client_data['first_name']} {client_data['last_name']} already exists, skipping...")
                 created_clients.append(existing)
                 continue
-            
+
             client = Client(
                 name=f"{client_data['first_name']} {client_data['last_name']}",
                 first_name=client_data["first_name"],
@@ -180,18 +180,18 @@ def create_demo_data():
             db.flush()
             created_clients.append(client)
             print(f"  + Created: {client.name} ({client_data['status']}) - {client_data['profile']}")
-        
+
         print("\n[2/6] Creating Analyses and Cases...")
         for i, (client, client_data) in enumerate(zip(created_clients, DEMO_CLIENTS)):
             if client_data["profile"] == "new_signup":
                 continue
-                
+
             existing_analysis = db.query(Analysis).filter(Analysis.client_id == client.id).first()
             if existing_analysis:
                 print(f"  - Analysis for {client.name} already exists, skipping...")
                 created_analyses.append(existing_analysis)
                 continue
-            
+
             stage1_data = {
                 "violations_found": client_data["violations_count"],
                 "statutory_damages_min": client_data["exposure"] * 0.4,
@@ -200,7 +200,7 @@ def create_demo_data():
                 "standing_met": True,
                 "willfulness_indicators": random.randint(2, 5)
             }
-            
+
             analysis = Analysis(
                 credit_report_id=random.randint(1000, 9999),
                 client_id=client.id,
@@ -219,7 +219,7 @@ def create_demo_data():
             db.add(analysis)
             db.flush()
             created_analyses.append(analysis)
-            
+
             existing_case = db.query(Case).filter(Case.client_id == client.id).first()
             if not existing_case:
                 case_number = f"BP-{datetime.now().year}-{random.randint(10000, 99999)}-{secrets.token_hex(2)}"
@@ -240,23 +240,23 @@ def create_demo_data():
                 )
                 db.add(case)
                 db.flush()
-            
+
             print(f"  + Created analysis for: {client.name} (Score: {client_data['score']}, Exposure: ${client_data['exposure']:,})")
-        
+
         print("\n[3/6] Creating Violations...")
         for analysis, client_data in zip(created_analyses, [c for c in DEMO_CLIENTS if c["profile"] != "new_signup"]):
             existing_violations = db.query(Violation).filter(Violation.analysis_id == analysis.id).count()
             if existing_violations > 0:
                 print(f"  - Violations for analysis {analysis.id} already exist, skipping...")
                 continue
-            
+
             num_violations = client_data["violations_count"]
             used_types = []
-            
+
             for v in range(num_violations):
                 vtype = random.choice([t for t in VIOLATION_TYPES if t["type"] not in used_types])
                 used_types.append(vtype["type"])
-                
+
                 violation = Violation(
                     analysis_id=analysis.id,
                     client_id=analysis.client_id,
@@ -273,26 +273,26 @@ def create_demo_data():
                     created_at=datetime.utcnow()
                 )
                 db.add(violation)
-            
+
             print(f"  + Created {num_violations} violations for analysis {analysis.id}")
-        
+
         print("\n[4/6] Creating Dispute Items and CRA Responses...")
         for client, client_data in zip(created_clients, DEMO_CLIENTS):
             if client_data["profile"] in ["new_signup", "settled", "complete"]:
                 continue
-            
+
             existing_items = db.query(DisputeItem).filter(DisputeItem.client_id == client.id).count()
             if existing_items > 0:
                 print(f"  - Dispute items for {client.name} already exist, skipping...")
                 continue
-            
+
             dispute_round = random.randint(1, 3)
-            
+
             for bureau in BUREAUS:
                 for _ in range(random.randint(2, 5)):
                     status = random.choice(["sent", "deleted", "verified", "in_progress", "updated"])
                     escalation = random.choice(["section_611", "section_611", "section_623", "section_621"])
-                    
+
                     item = DisputeItem(
                         client_id=client.id,
                         bureau=bureau,
@@ -310,7 +310,7 @@ def create_demo_data():
                         created_at=datetime.utcnow()
                     )
                     db.add(item)
-            
+
             for bureau in random.sample(BUREAUS, random.randint(1, 3)):
                 response = CRAResponse(
                     client_id=client.id,
@@ -328,23 +328,23 @@ def create_demo_data():
                     created_at=datetime.utcnow()
                 )
                 db.add(response)
-            
+
             print(f"  + Created dispute items and CRA responses for: {client.name}")
-        
+
         print("\n[5/6] Creating Settlements...")
         for client, client_data in zip(created_clients, DEMO_CLIENTS):
             if client_data["profile"] not in ["settled", "complete", "high_value"]:
                 continue
-            
+
             case = db.query(Case).filter(Case.client_id == client.id).first()
             if not case:
                 continue
-            
+
             existing_settlement = db.query(Settlement).filter(Settlement.case_id == case.id).first()
             if existing_settlement:
                 print(f"  - Settlement for {client.name} already exists, skipping...")
                 continue
-            
+
             if client_data["profile"] == "settled":
                 status = "accepted"
                 final_amount = client_data["exposure"] * random.uniform(0.4, 0.7)
@@ -354,7 +354,7 @@ def create_demo_data():
             else:
                 status = random.choice(["demand_sent", "negotiating"])
                 final_amount = 0
-            
+
             settlement = Settlement(
                 case_id=case.id,
                 target_amount=client_data["exposure"],
@@ -375,29 +375,29 @@ def create_demo_data():
             )
             db.add(settlement)
             print(f"  + Created settlement for: {client.name} (Status: {status}, Amount: ${final_amount:,.0f})")
-        
+
         print("\n[6/6] Creating Affiliates and Commissions...")
         demo_affiliates = [
-            {"name": "Michael Roberts", "email": "michael.roberts@demo.brightpath.com", 
+            {"name": "Michael Roberts", "email": "michael.roberts@demo.brightpath.com",
              "company": "Roberts Legal Marketing", "code": "ROBERTS25", "referrals": 8, "earnings": 4800},
             {"name": "Lisa Chen", "email": "lisa.chen@demo.brightpath.com",
              "company": "Chen Credit Solutions", "code": "CHEN2024", "referrals": 15, "earnings": 9000},
             {"name": "William Foster", "email": "william.foster@demo.brightpath.com",
              "company": "Foster & Associates", "code": "FOSTER10", "referrals": 5, "earnings": 3000, "parent": "CHEN2024"},
         ]
-        
+
         for aff_data in demo_affiliates:
             existing = db.query(Affiliate).filter(Affiliate.email == aff_data["email"]).first()
             if existing:
                 print(f"  - Affiliate {aff_data['name']} already exists, skipping...")
                 continue
-            
+
             parent_id = None
             if "parent" in aff_data:
                 parent = db.query(Affiliate).filter(Affiliate.affiliate_code == aff_data["parent"]).first()
                 if parent:
                     parent_id = parent.id
-            
+
             affiliate = Affiliate(
                 name=aff_data["name"],
                 email=aff_data["email"],
@@ -417,7 +417,7 @@ def create_demo_data():
             )
             db.add(affiliate)
             print(f"  + Created affiliate: {aff_data['name']} ({aff_data['code']})")
-        
+
         print("\n[BONUS] Creating Furnisher Intelligence Data...")
         demo_furnishers = [
             {"name": "Capital One", "industry": "Credit Card", "disputes": 45, "deletions": 28, "settlements": 12, "avg_settlement": 8500},
@@ -426,13 +426,13 @@ def create_demo_data():
             {"name": "Chase Bank", "industry": "Bank", "disputes": 38, "deletions": 15, "settlements": 8, "avg_settlement": 12000},
             {"name": "Synchrony Bank", "industry": "Credit Card", "disputes": 52, "deletions": 31, "settlements": 15, "avg_settlement": 5500},
         ]
-        
+
         for f_data in demo_furnishers:
             existing = db.query(Furnisher).filter(Furnisher.name == f_data["name"]).first()
             if existing:
                 print(f"  - Furnisher {f_data['name']} already exists, skipping...")
                 continue
-            
+
             furnisher = Furnisher(
                 name=f_data["name"],
                 industry=f_data["industry"],
@@ -441,7 +441,7 @@ def create_demo_data():
             )
             db.add(furnisher)
             db.flush()
-            
+
             stats = FurnisherStats(
                 furnisher_id=furnisher.id,
                 total_disputes=f_data["disputes"],
@@ -454,9 +454,9 @@ def create_demo_data():
             )
             db.add(stats)
             print(f"  + Created furnisher: {f_data['name']} ({f_data['industry']})")
-        
+
         db.commit()
-        
+
         print("\n" + "=" * 60)
         print("DEMO DATA CREATION COMPLETE!")
         print("=" * 60)
@@ -470,7 +470,7 @@ def create_demo_data():
         print("  - Client Portal: [any demo client email] / Demo123!")
         print("\nView at: /dashboard")
         print("=" * 60)
-        
+
     except Exception as e:
         db.rollback()
         print(f"\nERROR: {str(e)}")

@@ -1,10 +1,10 @@
 # FCRA PROMPT 14: IDENTITY THEFT 5-DAY KNOCKOUT (SEPARATE FILES)
 ## Legitimate § 605B Package with RLPP Integration
 
-**Version:** 1.0 (Separate File Output)  
-**Created:** January 9, 2026  
-**Use Case:** Real identity theft victims requiring full § 605B block + § 623 furnisher notice  
-**Output:** 14 separate files for complete identity theft remediation  
+**Version:** 1.0 (Separate File Output)
+**Created:** January 9, 2026
+**Use Case:** Real identity theft victims requiring full § 605B block + § 623 furnisher notice
+**Output:** 14 separate files for complete identity theft remediation
 **Integrates:** RLPP bundling + Standing documentation + Damages calculation
 
 ---
@@ -279,7 +279,7 @@ When you reach the desk officer or online form, say/enter:
 **If asked for details, provide:**
 
 > "I discovered [NUMBER] fraudulent accounts on my credit report:
-> 
+>
 > 1. [CREDITOR 1] — Account #[LAST 4 DIGITS] — Opened [DATE] — Balance $[AMOUNT]
 > 2. [CREDITOR 2] — Account #[LAST 4 DIGITS] — Opened [DATE] — Balance $[AMOUNT]
 > [List all fraudulent accounts]
@@ -853,7 +853,7 @@ SECTION 2: IDENTITY THEFT DOCUMENTATION
 Enclosed please find:
 
 ☐ Copy of FTC Identity Theft Report (Report #[FTC NUMBER])
-☐ Copy of Police Report (Case #[POLICE CASE NUMBER])  
+☐ Copy of Police Report (Case #[POLICE CASE NUMBER])
 ☐ Copy of Notarized Identity Theft Affidavit
 ☐ Copy of Government-Issued Photo ID
 
@@ -916,7 +916,7 @@ Date: [TODAY'S DATE]
 **ENCLOSURES:**
 ☐ FTC Identity Theft Report
 ☐ Police Report
-☐ Notarized Identity Theft Affidavit  
+☐ Notarized Identity Theft Affidavit
 ☐ Copy of Driver's License
 ═══════════════════════════════════════════════════════════════════════════
 ```

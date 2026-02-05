@@ -20,20 +20,20 @@
     <form id="form">
         <label>Client Name *</label>
         <input type="text" id="name" placeholder="John Doe" required>
-        
+
         <label>Email</label>
         <input type="email" id="email" placeholder="john@example.com">
-        
+
         <label>Credit Provider</label>
         <select id="provider">
             <option>IdentityIQ.com</option>
             <option>MyScoreIQ.com</option>
             <option>SmartCredit.com</option>
         </select>
-        
+
         <label>Credit Report HTML *</label>
         <textarea id="report" placeholder="Paste HTML here" required style="min-height: 200px;"></textarea>
-        
+
         <label>Dispute Round</label>
         <select id="round">
             <option value="1">Round 1</option>
@@ -41,10 +41,10 @@
             <option value="3">Round 3</option>
             <option value="4">Round 4</option>
         </select>
-        
+
         <button type="button" onclick="submitForm()">🚀 Analyze</button>
     </form>
-    
+
     <div id="status"></div>
 </div>
 
@@ -56,14 +56,14 @@ function submitForm() {
     const provider = document.getElementById('provider').value;
     const report = document.getElementById('report').value;
     const round = parseInt(document.getElementById('round').value);
-    
+
     if (!name || !report) {
         status.innerHTML = '<p class="error">❌ Client name and report are required</p>';
         return;
     }
-    
+
     status.innerHTML = '<p style="color: blue;">⏳ Sending to server...</p>';
-    
+
     fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

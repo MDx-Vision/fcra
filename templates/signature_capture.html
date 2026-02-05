@@ -290,7 +290,7 @@
                 <h1>Electronic Signature</h1>
                 <p>Please review and sign the document below</p>
             </div>
-            
+
             <div class="container-body">
                 <div class="form-state" id="formState">
                     <div class="document-info">
@@ -347,7 +347,7 @@
                     </div>
 
                     <div class="legal-notice">
-                        By clicking "Sign Document", you agree that this electronic signature is the legal equivalent of your handwritten signature 
+                        By clicking "Sign Document", you agree that this electronic signature is the legal equivalent of your handwritten signature
                         and you consent to be legally bound by this document.
                     </div>
                 </div>
@@ -382,14 +382,14 @@
             const errorMessage = document.getElementById('errorMessage');
             const formState = document.getElementById('formState');
             const successState = document.getElementById('successState');
-            
+
             const token = "{{ token }}";
-            
+
             let isDrawing = false;
             let hasSignature = false;
             let lastX = 0;
             let lastY = 0;
-            
+
             function resizeCanvas() {
                 const rect = canvasContainer.getBoundingClientRect();
                 const dpr = window.devicePixelRatio || 1;
@@ -403,11 +403,11 @@
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
             }
-            
+
             function getPosition(e) {
                 const rect = canvas.getBoundingClientRect();
                 let clientX, clientY;
-                
+
                 if (e.touches && e.touches.length > 0) {
                     clientX = e.touches[0].clientX;
                     clientY = e.touches[0].clientY;
@@ -415,13 +415,13 @@
                     clientX = e.clientX;
                     clientY = e.clientY;
                 }
-                
+
                 return {
                     x: clientX - rect.left,
                     y: clientY - rect.top
                 };
             }
-            
+
             function startDrawing(e) {
                 e.preventDefault();
                 isDrawing = true;
@@ -431,27 +431,27 @@
                 canvasContainer.classList.add('active');
                 canvasPlaceholder.classList.add('hidden');
             }
-            
+
             function draw(e) {
                 if (!isDrawing) return;
                 e.preventDefault();
-                
+
                 const pos = getPosition(e);
-                
+
                 ctx.beginPath();
                 ctx.moveTo(lastX, lastY);
                 ctx.lineTo(pos.x, pos.y);
                 ctx.stroke();
-                
+
                 lastX = pos.x;
                 lastY = pos.y;
-                
+
                 if (!hasSignature) {
                     hasSignature = true;
                     signBtn.disabled = false;
                 }
             }
-            
+
             function stopDrawing(e) {
                 if (isDrawing) {
                     e.preventDefault();
@@ -459,7 +459,7 @@
                     canvasContainer.classList.remove('active');
                 }
             }
-            
+
             function clearCanvas() {
                 const dpr = window.devicePixelRatio || 1;
                 ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
@@ -467,16 +467,16 @@
                 signBtn.disabled = true;
                 canvasPlaceholder.classList.remove('hidden');
             }
-            
+
             function showError(message) {
                 errorMessage.textContent = message;
                 errorMessage.classList.add('active');
             }
-            
+
             function hideError() {
                 errorMessage.classList.remove('active');
             }
-            
+
             function setLoading(loading) {
                 if (loading) {
                     signBtn.disabled = true;
@@ -490,21 +490,21 @@
                     signBtnText.textContent = 'Sign Document';
                 }
             }
-            
+
             function showSuccess() {
                 formState.classList.add('hidden');
                 successState.classList.add('active');
             }
-            
+
             async function submitSignature() {
                 if (!hasSignature) return;
-                
+
                 hideError();
                 setLoading(true);
-                
+
                 try {
                     const signatureData = canvas.toDataURL('image/png');
-                    
+
                     const response = await fetch('/api/esignature/capture', {
                         method: 'POST',
                         headers: {
@@ -515,9 +515,9 @@
                             signature_data: signatureData
                         })
                     });
-                    
+
                     const result = await response.json();
-                    
+
                     if (result.success) {
                         showSuccess();
                     } else {
@@ -530,20 +530,20 @@
                     setLoading(false);
                 }
             }
-            
+
             canvas.addEventListener('mousedown', startDrawing);
             canvas.addEventListener('mousemove', draw);
             canvas.addEventListener('mouseup', stopDrawing);
             canvas.addEventListener('mouseleave', stopDrawing);
-            
+
             canvas.addEventListener('touchstart', startDrawing, { passive: false });
             canvas.addEventListener('touchmove', draw, { passive: false });
             canvas.addEventListener('touchend', stopDrawing, { passive: false });
             canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
-            
+
             clearBtn.addEventListener('click', clearCanvas);
             signBtn.addEventListener('click', submitSignature);
-            
+
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
         })();

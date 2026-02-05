@@ -1,9 +1,9 @@
 # FCRA PROMPT 07: SECONDARY BUREAUS â€” FREEZE + FILE (SEPARATE FILES)
 ## Upload â†’ Analyze â†’ Generate 9 Separate Files
 
-**Version:** 3.0 (Separate File Output)  
-**Created:** November 24, 2025  
-**Output:** 9 separate files (one per secondary bureau)  
+**Version:** 3.0 (Separate File Output)
+**Created:** November 24, 2025
+**Output:** 9 separate files (one per secondary bureau)
 
 ---
 

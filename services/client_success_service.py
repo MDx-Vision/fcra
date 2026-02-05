@@ -896,3 +896,41 @@ class ClientSuccessService:
                 )
 
         return export_data
+
+
+# =========================================================================
+# STANDALONE FUNCTIONS (for use by other services)
+# =========================================================================
+
+
+def get_client_success_metrics(client_id: int) -> Optional[Dict[str, Any]]:
+    """
+    Standalone function to get client success metrics.
+    Used by testimonial_service and other services that need simple metrics.
+
+    Returns dict with:
+        - total_deleted: Number of negative items deleted
+        - score_improvement: Average score improvement
+        - items_deleted: Same as total_deleted (for compatibility)
+        - avg_score_change: Same as score_improvement (for compatibility)
+    """
+    from database import get_db
+
+    try:
+        db = get_db()
+        service = ClientSuccessService(db)
+        metrics = service.calculate_client_metrics(client_id)
+
+        if "error" in metrics:
+            return None
+
+        return {
+            "total_deleted": metrics.get("items_deleted", 0),
+            "score_improvement": metrics.get("avg_score_change", 0),
+            "items_deleted": metrics.get("items_deleted", 0),
+            "avg_score_change": metrics.get("avg_score_change", 0),
+            "deletion_rate": metrics.get("deletion_rate", 0),
+            "days_in_program": metrics.get("days_in_program", 0),
+        }
+    except Exception:
+        return None

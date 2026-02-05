@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three Bureau Credit Report - {{ client_name }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 12px; background: #fff; color: #333; padding: 20px; }
+
+        .report-header { text-align: center; margin-bottom: 20px; }
+        .report-header h1 { font-size: 24px; color: #2c5282; margin-bottom: 5px; }
+        .report-date { text-align: right; font-size: 14px; margin-bottom: 20px; }
+
+        .section { margin-bottom: 25px; border: 1px solid #ccc; }
+        .section-header { background: #2c5282; color: white; padding: 8px 12px; font-weight: bold; font-size: 14px; }
+        .section-note { background: #f7fafc; padding: 8px 12px; font-size: 11px; color: #666; border-bottom: 1px solid #ccc; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; }
+        th { background: #4a5568; color: white; font-weight: bold; text-align: center; }
+        th.tu { background: #3182ce; }
+        th.ex { background: #c53030; }
+        th.eq { background: #d69e2e; }
+
+        .label-col { width: 180px; background: #f7fafc; font-weight: bold; }
+        .bureau-col { width: 27%; }
+
+        .account-header { background: #2d3748; color: white; padding: 8px 12px; font-weight: bold; }
+
+        .payment-grid { font-size: 10px; }
+        .payment-grid th, .payment-grid td { padding: 3px 4px; text-align: center; }
+        .payment-ok { background: #c6f6d5; color: #22543d; }
+        .payment-30 { background: #fefcbf; color: #744210; }
+        .payment-60 { background: #fed7aa; color: #9c4221; }
+        .payment-90 { background: #feb2b2; color: #9b2c2c; }
+        .payment-co { background: #e53e3e; color: white; }
+        .payment-na { background: #e2e8f0; color: #718096; }
+
+        .score-value { font-size: 24px; font-weight: bold; text-align: center; }
+
+        @media print {
+            .section { page-break-inside: avoid; }
+            .account-section { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-header">
+        <h1>Three Bureau Credit Report</h1>
+    </div>
+    <div class="report-date"><strong>Report Date:</strong> {{ report_date }}</div>
+
+    <!-- Personal Information -->
+    <div class="section">
+        <div class="section-header">Personal Information</div>
+        <div class="section-note">Below is your personal information as it appears in your credit file.</div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="label-col"></th>
+                    <th class="bureau-col tu">TransUnion</th>
+                    <th class="bureau-col ex">Experian</th>
+                    <th class="bureau-col eq">Equifax</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="label-col">Credit Report Date:</td>
+                    <td>{{ report_date }}</td>
+                    <td>{{ report_date }}</td>
+                    <td>{{ report_date }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Name:</td>
+                    {% set tu = personal_info.get('transunion', {}) %}
+                    {% set ex = personal_info.get('experian', {}) %}
+                    {% set eq = personal_info.get('equifax', {}) %}
+                    <td>{{ tu.get('names', [])|join('<br>')|safe or personal_info.get('name', 'N/A') }}</td>
+                    <td>{{ ex.get('names', [])|join('<br>')|safe or personal_info.get('name', 'N/A') }}</td>
+                    <td>{{ eq.get('names', [])|join('<br>')|safe or personal_info.get('name', 'N/A') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Date of Birth:</td>
+                    <td>{{ tu.get('dob') or personal_info.get('dob', 'N/A') }}</td>
+                    <td>{{ ex.get('dob') or personal_info.get('dob', 'N/A') }}</td>
+                    <td>{{ eq.get('dob') or personal_info.get('dob', 'N/A') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Current Address:</td>
+                    <td>{{ tu.get('current_address') or personal_info.get('address', 'N/A') }}</td>
+                    <td>{{ ex.get('current_address') or personal_info.get('address', 'N/A') }}</td>
+                    <td>{{ eq.get('current_address') or personal_info.get('address', 'N/A') }}</td>
+                </tr>
+                {% if tu.get('previous_addresses') or ex.get('previous_addresses') or eq.get('previous_addresses') %}
+                <tr>
+                    <td class="label-col">Previous Address(es):</td>
+                    <td>{% for addr in tu.get('previous_addresses', []) %}{{ addr }}<br>{% endfor %}</td>
+                    <td>{% for addr in ex.get('previous_addresses', []) %}{{ addr }}<br>{% endfor %}</td>
+                    <td>{% for addr in eq.get('previous_addresses', []) %}{{ addr }}<br>{% endfor %}</td>
+                </tr>
+                {% endif %}
+                {% if tu.get('employers') or ex.get('employers') or eq.get('employers') %}
+                <tr>
+                    <td class="label-col">Employers:</td>
+                    <td>{% for emp in tu.get('employers', []) %}{{ emp.name }}{% if emp.date_updated %} ({{ emp.date_updated }}){% endif %}<br>{% endfor %}</td>
+                    <td>{% for emp in ex.get('employers', []) %}{{ emp.name }}{% if emp.date_updated %} ({{ emp.date_updated }}){% endif %}<br>{% endfor %}</td>
+                    <td>{% for emp in eq.get('employers', []) %}{{ emp.name }}{% if emp.date_updated %} ({{ emp.date_updated }}){% endif %}<br>{% endfor %}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Credit Score -->
+    <div class="section">
+        <div class="section-header">Credit Score</div>
+        <div class="section-note">Your Credit Score is a representation of your overall credit health.</div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="label-col"></th>
+                    <th class="bureau-col tu">TransUnion</th>
+                    <th class="bureau-col ex">Experian</th>
+                    <th class="bureau-col eq">Equifax</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="label-col">Credit Score:</td>
+                    <td class="score-value">{{ scores.get('transunion', 'N/A') }}</td>
+                    <td class="score-value">{{ scores.get('experian', 'N/A') }}</td>
+                    <td class="score-value">{{ scores.get('equifax', 'N/A') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Score Scale:</td>
+                    <td>300-850</td>
+                    <td>300-850</td>
+                    <td>300-850</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Summary -->
+    <div class="section">
+        <div class="section-header">Summary</div>
+        <div class="section-note">Below is an overview of your present and past credit status.</div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="label-col"></th>
+                    <th class="bureau-col tu">TransUnion</th>
+                    <th class="bureau-col ex">Experian</th>
+                    <th class="bureau-col eq">Equifax</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="label-col">Total Accounts:</td>
+                    <td>{{ summary.get('total_accounts', '0') }}</td>
+                    <td>{{ summary.get('total_accounts', '0') }}</td>
+                    <td>{{ summary.get('total_accounts', '0') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Open Accounts:</td>
+                    <td>{{ summary.get('open_accounts', '0') }}</td>
+                    <td>{{ summary.get('open_accounts', '0') }}</td>
+                    <td>{{ summary.get('open_accounts', '0') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Closed Accounts:</td>
+                    <td>{{ summary.get('closed_accounts', '0') }}</td>
+                    <td>{{ summary.get('closed_accounts', '0') }}</td>
+                    <td>{{ summary.get('closed_accounts', '0') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Delinquent:</td>
+                    <td>{{ summary.get('delinquent_accounts', '0') }}</td>
+                    <td>{{ summary.get('delinquent_accounts', '0') }}</td>
+                    <td>{{ summary.get('delinquent_accounts', '0') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Derogatory:</td>
+                    <td>{{ summary.get('derogatory_accounts', '0') }}</td>
+                    <td>{{ summary.get('derogatory_accounts', '0') }}</td>
+                    <td>{{ summary.get('derogatory_accounts', '0') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Collection:</td>
+                    <td>{{ summary.get('total_collections', '0') }}</td>
+                    <td>{{ summary.get('total_collections', '0') }}</td>
+                    <td>{{ summary.get('total_collections', '0') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Balances:</td>
+                    <td>{{ summary.get('total_balances', '$0') }}</td>
+                    <td>{{ summary.get('total_balances', '$0') }}</td>
+                    <td>{{ summary.get('total_balances', '$0') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Payments:</td>
+                    <td>{{ summary.get('total_payments', '$0') }}</td>
+                    <td>{{ summary.get('total_payments', '$0') }}</td>
+                    <td>{{ summary.get('total_payments', '$0') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Public Records:</td>
+                    <td>{{ summary.get('total_public_records', '0') }}</td>
+                    <td>{{ summary.get('total_public_records', '0') }}</td>
+                    <td>{{ summary.get('total_public_records', '0') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Inquiries (2 years):</td>
+                    <td>{{ summary.get('total_inquiries', '0') }}</td>
+                    <td>{{ summary.get('total_inquiries', '0') }}</td>
+                    <td>{{ summary.get('total_inquiries', '0') }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Account History -->
+    <div class="section">
+        <div class="section-header">Account History</div>
+        <div class="section-note">Information on accounts you have opened in the past is displayed below.</div>
+
+        {% for account in accounts %}
+        <div class="account-section" style="margin-bottom: 15px;">
+            <div class="account-header">{{ account.creditor or 'Unknown Creditor' }}</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="label-col"></th>
+                        <th class="bureau-col tu">TransUnion</th>
+                        <th class="bureau-col ex">Experian</th>
+                        <th class="bureau-col eq">Equifax</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="label-col">Account #:</td>
+                        <td>{{ account.account_number if account.account_number and account.account_number != 'None' else '' }}</td>
+                        <td>{{ account.account_number if account.account_number and account.account_number != 'None' else '' }}</td>
+                        <td>{{ account.account_number if account.account_number and account.account_number != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Account Type:</td>
+                        <td>{{ account.account_type if account.account_type and account.account_type != 'None' else '' }}</td>
+                        <td>{{ account.account_type if account.account_type and account.account_type != 'None' else '' }}</td>
+                        <td>{{ account.account_type if account.account_type and account.account_type != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Account Status:</td>
+                        <td>{{ account.status if account.status and account.status != 'None' else '' }}</td>
+                        <td>{{ account.status if account.status and account.status != 'None' else '' }}</td>
+                        <td>{{ account.status if account.status and account.status != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Monthly Payment:</td>
+                        {% set mpay = account.monthly_payment or account.payment_amount %}
+                        <td>{{ mpay if mpay and mpay != 'None' else '' }}</td>
+                        <td>{{ mpay if mpay and mpay != 'None' else '' }}</td>
+                        <td>{{ mpay if mpay and mpay != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Date Opened:</td>
+                        <td>{{ account.date_opened if account.date_opened and account.date_opened != 'None' else '' }}</td>
+                        <td>{{ account.date_opened if account.date_opened and account.date_opened != 'None' else '' }}</td>
+                        <td>{{ account.date_opened if account.date_opened and account.date_opened != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Balance:</td>
+                        <td>{{ account.balance if account.balance and account.balance != 'None' else '' }}</td>
+                        <td>{{ account.balance if account.balance and account.balance != 'None' else '' }}</td>
+                        <td>{{ account.balance if account.balance and account.balance != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">High Credit:</td>
+                        {% set hcred = account.high_credit or account.high_balance %}
+                        <td>{{ hcred if hcred and hcred != 'None' else '' }}</td>
+                        <td>{{ hcred if hcred and hcred != 'None' else '' }}</td>
+                        <td>{{ hcred if hcred and hcred != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Credit Limit:</td>
+                        <td>{{ account.credit_limit if account.credit_limit and account.credit_limit != 'None' else '' }}</td>
+                        <td>{{ account.credit_limit if account.credit_limit and account.credit_limit != 'None' else '' }}</td>
+                        <td>{{ account.credit_limit if account.credit_limit and account.credit_limit != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Past Due:</td>
+                        <td>{{ account.past_due if account.past_due and account.past_due != 'None' else '' }}</td>
+                        <td>{{ account.past_due if account.past_due and account.past_due != 'None' else '' }}</td>
+                        <td>{{ account.past_due if account.past_due and account.past_due != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Payment Status:</td>
+                        <td>{{ account.payment_status if account.payment_status and account.payment_status != 'None' else '' }}</td>
+                        <td>{{ account.payment_status if account.payment_status and account.payment_status != 'None' else '' }}</td>
+                        <td>{{ account.payment_status if account.payment_status and account.payment_status != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Last Reported:</td>
+                        {% set lrep = account.last_reported or account.date_reported %}
+                        <td>{{ lrep if lrep and lrep != 'None' else '' }}</td>
+                        <td>{{ lrep if lrep and lrep != 'None' else '' }}</td>
+                        <td>{{ lrep if lrep and lrep != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Date Last Active:</td>
+                        {% set lact = account.last_active or account.last_activity %}
+                        <td>{{ lact if lact and lact != 'None' else '' }}</td>
+                        <td>{{ lact if lact and lact != 'None' else '' }}</td>
+                        <td>{{ lact if lact and lact != 'None' else '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Date of Last Payment:</td>
+                        <td>{{ account.last_payment if account.last_payment and account.last_payment != 'None' else '' }}</td>
+                        <td>{{ account.last_payment if account.last_payment and account.last_payment != 'None' else '' }}</td>
+                        <td>{{ account.last_payment if account.last_payment and account.last_payment != 'None' else '' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            {% if account.payment_history and account.payment_history|length > 0 %}
+            <div style="margin-top: 10px;">
+                <strong>Two-Year payment history</strong>
+                <table class="payment-grid" style="margin-top: 5px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Month</th>
+                            {% for entry in account.payment_history[:24] %}
+                            <th>{{ entry.month[:3] if entry.month else '' }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>TransUnion</strong></td>
+                            {% for entry in account.payment_history[:24] %}
+                            <td class="{% if entry.transunion == 'OK' %}payment-ok{% elif entry.transunion == '30' %}payment-30{% elif entry.transunion == '60' %}payment-60{% elif entry.transunion == '90' %}payment-90{% elif entry.transunion in ['CO', 'CL'] %}payment-co{% else %}payment-na{% endif %}">{{ entry.transunion or '' }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td><strong>Experian</strong></td>
+                            {% for entry in account.payment_history[:24] %}
+                            <td class="{% if entry.experian == 'OK' %}payment-ok{% elif entry.experian == '30' %}payment-30{% elif entry.experian == '60' %}payment-60{% elif entry.experian == '90' %}payment-90{% elif entry.experian in ['CO', 'CL'] %}payment-co{% else %}payment-na{% endif %}">{{ entry.experian or '' }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td><strong>Equifax</strong></td>
+                            {% for entry in account.payment_history[:24] %}
+                            <td class="{% if entry.equifax == 'OK' %}payment-ok{% elif entry.equifax == '30' %}payment-30{% elif entry.equifax == '60' %}payment-60{% elif entry.equifax == '90' %}payment-90{% elif entry.equifax in ['CO', 'CL'] %}payment-co{% else %}payment-na{% endif %}">{{ entry.equifax or '' }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Inquiries -->
+    {% if inquiries and inquiries|length > 0 %}
+    <div class="section">
+        <div class="section-header">Inquiries</div>
+        <div class="section-note">Below are the names of people and/or organizations who have obtained a copy of your Credit Report.</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Creditor Name</th>
+                    <th>Type of Business</th>
+                    <th>Date of Inquiry</th>
+                    <th>Credit Bureau</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inq in inquiries %}
+                <tr>
+                    <td>{{ inq.company or inq.creditor or 'N/A' }}</td>
+                    <td>{{ inq.type or 'N/A' }}</td>
+                    <td>{{ inq.date or 'N/A' }}</td>
+                    <td>{{ inq.bureau or 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Public Information -->
+    <div class="section">
+        <div class="section-header">Public Information</div>
+        <div class="section-note">Below is an overview of your public records.</div>
+        <table>
+            <tbody>
+                {% if public_records and public_records|length > 0 %}
+                {% for record in public_records %}
+                <tr>
+                    <td>{{ record.type }}: {{ record.description }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td style="text-align: center; padding: 15px;"><strong>None Reported</strong></td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Creditor Contacts -->
+    {% if creditor_contacts and creditor_contacts|length > 0 %}
+    <div class="section">
+        <div class="section-header">Creditor Contacts</div>
+        <div class="section-note">The names of people and/or organizations who have obtained a copy of your credit report are listed below.</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Creditor Name</th>
+                    <th>Address</th>
+                    <th>Phone Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contact in creditor_contacts %}
+                <tr>
+                    <td>{{ contact.name }}</td>
+                    <td>{{ contact.address }}</td>
+                    <td>{{ contact.phone }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+</body>
+</html>

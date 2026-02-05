@@ -237,7 +237,7 @@ The Supreme Court (5-4 decision) held:
 **Statute**: CRAs must reinvestigate disputed items within 30 days.
 
 **Standing Analysis**:
-- âœ… **Strong Standing**: 
+- âœ… **Strong Standing**:
   - CRA failed to reinvestigate â†’ inaccurate info remained â†’ credit denial
   - CRA conducted sham investigation â†’ harm continued
 - âš ï¸ **Uncertain Standing**:
@@ -330,15 +330,15 @@ The Supreme Court (5-4 decision) held:
 **Sample Pleading Language**:
 
 > "Plaintiff has suffered concrete harm as a result of Defendant's FCRA violations. Specifically:
-> 
+>
 > a. On [date], Defendant furnished Plaintiff's credit report to [Lender], which contained materially inaccurate information regarding [account]. (Exhibit A - Credit Report)
-> 
+>
 > b. As a direct result of this inaccurate information, [Lender] denied Plaintiff's application for a $300,000 mortgage loan on [date]. (Exhibit B - Adverse Action Notice)
-> 
+>
 > c. Plaintiff suffered actual damages including: (i) loss of the benefit of a 3.5% interest rate (vs. current rate of 5.2%), resulting in $87,000 in additional interest over 30 years; (ii) inability to purchase home, forcing Plaintiff to continue renting at $2,500/month; and (iii) emotional distress from being wrongly labeled as a credit risk.
-> 
+>
 > d. Additionally, Plaintiff spent approximately 40 hours over six months attempting to correct the inaccurate information, during which time the information was repeatedly furnished to other third parties.
-> 
+>
 > These harms are concrete, particularized to Plaintiff, and directly caused by Defendant's FCRA violations."
 
 ### 2.6 Responding to Standing Challenges
@@ -479,7 +479,7 @@ The Supreme Court (5-4 decision) held:
   - More liberal standing requirements
   - Higher statutory damages awards
   - Pro-consumer jury pools in urban areas
-  
+
 - **3rd Circuit** (Pennsylvania, New Jersey, Delaware)
   - Moderate approach to standing
   - Strong consumer protection history
@@ -1529,7 +1529,7 @@ Violator is liable for:
 > - Staffing levels for dispute investigation department
 > - Average time to complete dispute investigations"
 
-**Purpose**: 
+**Purpose**:
 - Defendant's financial condition (relevant to punitive damages)
 - Error rates (prove systemic accuracy failures)
 - Workload data (prove inadequate investigations)
@@ -1684,15 +1684,15 @@ Violator is liable for:
 1. **Damages Calculation**
    - Economic damages (lost credit opportunity, wage loss)
    - Future damages projections
-   
+
 2. **Compliance Standards**
    - Whether CRA's procedures were "reasonable" (Â§ 1681e(b))
    - Industry standards for accuracy verification
-   
+
 3. **Technical/System Issues**
    - How CRA's matching algorithms work
    - Whether automated dispute systems are adequate
-   
+
 4. **Emotional Distress** (optional)
    - Psychologist testimony on plaintiff's mental anguish
 
@@ -1957,7 +1957,7 @@ Expert testimony admissible if:
 
 **Case Study 3: *Garcia v. TransUnion* (Central District of California 2023) - CERTIFIED**
 - **Certified Class**: Consumers whose credit reports with specific inaccurate public records were furnished to lenders AND who were denied credit
-- **Success Factors**: 
+- **Success Factors**:
   - Narrow class definition
   - Objective criteria (defendant's records showed dissemination + denials)
   - Clear concrete harm (credit denials)
@@ -2345,10 +2345,10 @@ Settlement Value = (Statutory Damages) + (Actual Damages) + (Punitive Damages Po
 **Key Questions**:
 1. "Has anyone had a problem with their credit report or credit score?"
    - Identify jurors sympathetic to plaintiff
-   
+
 2. "Does anyone work for a bank, credit card company, or credit reporting agency?"
    - Identify potential defense bias
-   
+
 3. "Does anyone believe that large companies should be held to a high standard when they make mistakes that hurt people?"
    - Gauge attitude toward corporate accountability
 
@@ -2447,24 +2447,24 @@ Settlement Value = (Statutory Damages) + (Actual Damages) + (Punitive Damages Po
 **Sample Verdict Form**:
 
 > **VERDICT FORM**
-> 
+>
 > We, the jury, answer the following questions:
-> 
+>
 > 1. Did Defendant violate 15 U.S.C. Â§ 1681e(b)?
 >    â˜ Yes  â˜ No
-> 
+>
 > 2. If yes, was the violation willful?
 >    â˜ Yes  â˜ No
-> 
+>
 > 3. What amount of actual damages, if any, do you award to Plaintiff?
 >    $__________
-> 
+>
 > 4. If you found the violation was willful, what amount of statutory damages do you award to Plaintiff ($100-$1,000)?
 >    $__________
-> 
+>
 > 5. If you found the violation was willful, what amount of punitive damages, if any, do you award to Plaintiff?
 >    $__________
-> 
+>
 > Date: __________  Foreperson Signature: __________
 
 ---

@@ -5,24 +5,24 @@ from database import SessionLocal, Client, ClientNote
 
 def import_lrm_clients(csv_path):
     """Import clients from LRM CSV with correct field mappings"""
-    
+
     results = {'total': 0, 'imported': 0, 'skipped': 0, 'errors': 0, 'error_details': []}
-    
+
     # Status mapping
     status_map = {'C': 'active', 'I': 'paused', 'L': 'lead', 'X': 'cancelled'}
-    
+
     db = SessionLocal()
-    
+
     try:
         with open(csv_path, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
-            
+
             for row_num, row in enumerate(reader, start=2):
                 results['total'] += 1
-                
+
                 try:
                     email = row.get('email', '').strip()
-                    
+
                     # Skip if no email
                     if not email:
                         results['skipped'] += 1
@@ -32,17 +32,17 @@ def import_lrm_clients(csv_path):
                             'error': 'No email - skipped'
                         })
                         continue
-                    
+
                     # Check for duplicate
                     existing = db.query(Client).filter(Client.email == email).first()
                     if existing:
                         results['skipped'] += 1
                         continue
-                    
+
                     # Parse SSN - get last 4 only
                     ssn_raw = row.get('social_security', '').replace('-', '').replace(' ', '')
                     ssn_last_four = ssn_raw[-4:] if len(ssn_raw) >= 4 else None
-                    
+
                     # Parse date of birth
                     dob = None
                     dob_raw = row.get('dob', '').strip()
@@ -53,21 +53,21 @@ def import_lrm_clients(csv_path):
                                 break
                             except:
                                 pass
-                    
+
                     # Get phone (prefer phone, fallback to mobile)
                     phone = row.get('phone', '').strip() or row.get('mobile', '').strip()
                     # Clean phone
                     phone = ''.join(c for c in phone if c.isdigit())[:10] if phone else None
-                    
+
                     # Map status
                     lrm_type = row.get('type', 'L').strip().upper()
                     status = status_map.get(lrm_type, 'lead')
-                    
+
                     # Build name
                     first = row.get('first_name', '').strip()
                     last = row.get('last_name', '').strip()
                     name = f"{first} {last}".strip() or email
-                    
+
                     # Build import notes
                     notes_parts = []
                     if row.get('affiliate'):
@@ -76,11 +76,11 @@ def import_lrm_clients(csv_path):
                         notes_parts.append(f"Comment: {row.get('comment')}")
                     if row.get('dispute_center_notes'):
                         notes_parts.append(f"Dispute notes: {row.get('dispute_center_notes')}")
-                    
+
                     import_notes = f"Migrated from LRM on {datetime.now().strftime('%Y-%m-%d')}. LRM ID: {row.get('contact_id', 'unknown')}. Original status: {row.get('status_1', lrm_type)}"
                     if notes_parts:
                         import_notes += "\n" + "\n".join(notes_parts)
-                    
+
                     # Create client with CORRECT field names
                     client = Client(
                         name=name,
@@ -103,12 +103,12 @@ def import_lrm_clients(csv_path):
                         status=status,
                         dispute_status='new'
                     )
-                    
+
                     db.add(client)
                     db.flush()  # Get ID
-                    
+
                     results['imported'] += 1
-                    
+
                 except Exception as e:
                     results['errors'] += 1
                     results['error_details'].append({
@@ -118,15 +118,15 @@ def import_lrm_clients(csv_path):
                     })
                     db.rollback()
                     continue
-            
+
             db.commit()
-            
+
     except Exception as e:
         results['error_details'].append({'row': 0, 'error': str(e)})
         results['errors'] += 1
     finally:
         db.close()
-    
+
     return results
 
 if __name__ == '__main__':

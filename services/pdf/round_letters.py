@@ -194,9 +194,9 @@ class RoundLetterBuilder(BasePDFBuilder):
 
                 dispute_text = f"""
                 FCRA Violation: {v.get('fcra_section', 'N/A')} - {v.get('violation_type', 'Unknown')}
-                
+
                 Reason for Dispute: {v.get('description', 'Information is inaccurate, incomplete, or unverifiable.')}
-                
+
                 Requested Action: Immediately delete this tradeline or provide documentary evidence proving the accuracy of ALL data elements including dates, balances, payment history, and account status.
                 """
                 self.add_paragraph(story, dispute_text)
@@ -482,17 +482,17 @@ class RoundLetterBuilder(BasePDFBuilder):
         self.add_section_header(story, "Description of Problem", level=2)
 
         desc = f"""
-        I have submitted multiple disputes to {bureau} regarding inaccurate information on my credit 
-        report. Despite providing documentation and specific identification of errors, {bureau} has 
-        failed to conduct a reasonable investigation as required by Section 611 of the Fair Credit 
+        I have submitted multiple disputes to {bureau} regarding inaccurate information on my credit
+        report. Despite providing documentation and specific identification of errors, {bureau} has
+        failed to conduct a reasonable investigation as required by Section 611 of the Fair Credit
         Reporting Act (15 U.S.C. 1681i).
-        
-        After my initial dispute, {bureau} responded by claiming the disputed items were "verified" 
-        without providing any evidence of a meaningful investigation. When I requested the Method 
-        of Verification pursuant to Section 611(a)(7), {bureau} either ignored my request or provided 
+
+        After my initial dispute, {bureau} responded by claiming the disputed items were "verified"
+        without providing any evidence of a meaningful investigation. When I requested the Method
+        of Verification pursuant to Section 611(a)(7), {bureau} either ignored my request or provided
         generic responses that did not address my specific concerns.
-        
-        This pattern of behavior constitutes willful noncompliance with the FCRA and has caused me 
+
+        This pattern of behavior constitutes willful noncompliance with the FCRA and has caused me
         concrete harm including [describe specific harm - credit denials, higher interest rates, etc.].
         """
         self.add_paragraph(story, desc)

@@ -1,6 +1,6 @@
 # TASK 7: FILE UPLOAD TESTING RESULTS
 
-**Timestamp:** 2026-01-20T23:24:15.963859
+**Timestamp:** 2026-01-29T17:24:05.928095
 
 ## Summary
 | Metric | Count |
@@ -18,11 +18,17 @@
 ```
 
 === Testing uploads on: /dashboard/import ===
-  Found 0 file inputs
+  ERROR: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/import
+Call log:
+  - navig
 
 === Testing uploads on: /dashboard/documents ===
-  Found 0 file inputs
+  ERROR: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/documents
+Call log:
+  - na
 
 === Testing uploads on: /dashboard/credit-import ===
-  Found 0 file inputs
+  ERROR: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-import
+Call log:
+
 ```

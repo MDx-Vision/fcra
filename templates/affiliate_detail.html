@@ -13,12 +13,12 @@
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .main-content {
             margin-left: 260px;
             padding: 30px;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -50,7 +50,7 @@
             color: #1a1a2e;
         }
         .header-actions { display: flex; gap: 15px; }
-        
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -76,21 +76,21 @@
         .btn-secondary:hover { border-color: #84cc16; }
         .btn-danger { background: #ef4444; color: white; }
         .btn-sm { padding: 8px 16px; font-size: 13px; }
-        
+
         .profile-grid {
             display: grid;
             grid-template-columns: 1fr 2fr;
             gap: 30px;
             margin-bottom: 30px;
         }
-        
+
         .profile-card {
             background: white;
             border-radius: 16px;
             padding: 30px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        
+
         .profile-header {
             text-align: center;
             padding-bottom: 24px;
@@ -121,7 +121,7 @@
             color: #64748b;
             margin-bottom: 12px;
         }
-        
+
         .code-badge-lg {
             display: inline-block;
             padding: 8px 16px;
@@ -133,7 +133,7 @@
             font-family: monospace;
             border: 2px solid #86efac;
         }
-        
+
         .status-badge {
             display: inline-block;
             padding: 6px 14px;
@@ -146,7 +146,7 @@
         .status-pending { background: #fef3c7; color: #92400e; }
         .status-suspended { background: #fee2e2; color: #991b1b; }
         .status-inactive { background: #f1f5f9; color: #64748b; }
-        
+
         .profile-details {
             margin-bottom: 24px;
         }
@@ -165,7 +165,7 @@
             font-weight: 500;
             color: #1a1a2e;
         }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -175,7 +175,7 @@
         .stats-grid-4 {
             grid-template-columns: repeat(4, 1fr);
         }
-        
+
         .stat-card {
             background: white;
             border-radius: 16px;
@@ -205,7 +205,7 @@
             color: #84cc16;
             font-weight: 500;
         }
-        
+
         .content-card {
             background: white;
             border-radius: 16px;
@@ -213,7 +213,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             margin-bottom: 30px;
         }
-        
+
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -225,7 +225,7 @@
             font-weight: 600;
             color: #1a1a2e;
         }
-        
+
         .tabs {
             display: flex;
             gap: 10px;
@@ -250,10 +250,10 @@
             background: #f0fdf4;
             border-bottom: 3px solid #84cc16;
         }
-        
+
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
+
         table { width: 100%; border-collapse: collapse; }
         th {
             text-align: left;
@@ -272,7 +272,7 @@
             color: #334155;
         }
         tr:hover { background: #f8fafc; }
-        
+
         .level-badge {
             display: inline-block;
             padding: 4px 10px;
@@ -282,7 +282,7 @@
         }
         .level-1 { background: #dbeafe; color: #1e40af; }
         .level-2 { background: #e0e7ff; color: #3730a3; }
-        
+
         .commission-status {
             display: inline-block;
             padding: 4px 10px;
@@ -294,7 +294,7 @@
         .commission-approved { background: #dbeafe; color: #1e40af; }
         .commission-paid { background: #dcfce7; color: #166534; }
         .commission-cancelled { background: #fee2e2; color: #991b1b; }
-        
+
         .tree-container {
             padding: 20px;
             background: #f8fafc;
@@ -333,7 +333,7 @@
             border-left: 2px dashed #e2e8f0;
             padding-left: 20px;
         }
-        
+
         .client-row {
             display: flex;
             align-items: center;
@@ -351,7 +351,7 @@
             font-weight: 600;
             font-size: 14px;
         }
-        
+
         .modal-overlay {
             display: none;
             position: fixed;
@@ -365,7 +365,7 @@
             justify-content: center;
         }
         .modal-overlay.active { display: flex; }
-        
+
         .modal {
             background: white;
             border-radius: 16px;
@@ -397,7 +397,7 @@
             justify-content: flex-end;
             gap: 10px;
         }
-        
+
         .form-group { margin-bottom: 15px; }
         .form-group label {
             display: block;
@@ -419,21 +419,21 @@
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus { border-color: #84cc16; }
-        
+
         .pending-amount {
             font-size: 28px;
             font-weight: 700;
             color: #f59e0b;
             margin-bottom: 10px;
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
             color: #64748b;
         }
         .empty-state p { font-size: 14px; }
-        
+
         @media (max-width: 768px) {
             .profile-grid { grid-template-columns: 1fr; }
             .stats-grid-4 { grid-template-columns: repeat(2, 1fr); }
@@ -443,7 +443,7 @@
 <body>
     {% set active_page = 'affiliates' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="header">
             <div class="header-left">
@@ -466,7 +466,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <div class="profile-grid">
             <div class="profile-card">
                 <div class="profile-header">
@@ -478,7 +478,7 @@
                     <div class="code-badge-lg">{{ affiliate.affiliate_code }}</div>
                     <span class="status-badge status-{{ affiliate.status }}">{{ affiliate.status|title }}</span>
                 </div>
-                
+
                 <div class="profile-details">
                     <div class="detail-row">
                         <span class="detail-label">Email</span>
@@ -512,7 +512,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div>
                 <div class="stats-grid stats-grid-4">
                     <div class="stat-card highlight">
@@ -536,7 +536,7 @@
                         <div class="stat-subtext">Signup to paid</div>
                     </div>
                 </div>
-                
+
                 <div class="stats-grid stats-grid-4">
                     <div class="stat-card">
                         <div class="stat-label">Level 1 Earnings</div>
@@ -561,14 +561,14 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="content-card">
             <div class="tabs">
                 <button class="tab-btn active" onclick="showTab('commissions')">Commission History</button>
                 <button class="tab-btn" onclick="showTab('referrals')">Referred Clients</button>
                 <button class="tab-btn" onclick="showTab('tree')">Referral Tree</button>
             </div>
-            
+
             <div class="tab-content active" id="commissions-tab">
                 {% if commissions %}
                 <table>
@@ -603,7 +603,7 @@
                 </div>
                 {% endif %}
             </div>
-            
+
             <div class="tab-content" id="referrals-tab">
                 {% if referred_clients %}
                 <table>
@@ -639,7 +639,7 @@
                 </div>
                 {% endif %}
             </div>
-            
+
             <div class="tab-content" id="tree-tab">
                 <div class="tree-container">
                     {% if affiliate.parent %}
@@ -648,7 +648,7 @@
                         <div class="tree-node-code">{{ affiliate.parent.affiliate_code }}</div>
                     </div>
                     {% endif %}
-                    
+
                     <div class="tree-node current">
                         <div class="tree-node-name">{{ tree.name }} (Current)</div>
                         <div class="tree-node-code">{{ tree.affiliate_code }}</div>
@@ -657,7 +657,7 @@
                             <span>${{ "{:,.2f}".format(tree.total_earnings) }} earned</span>
                         </div>
                     </div>
-                    
+
                     {% if tree.children %}
                     <div class="tree-children">
                         {% for child in tree.children %}
@@ -683,7 +683,7 @@
             </div>
         </div>
     </main>
-    
+
     <div class="modal-overlay" id="payoutModal">
         <div class="modal">
             <div class="modal-header">
@@ -694,7 +694,7 @@
                 <div class="modal-body">
                     <p style="margin-bottom: 20px; color: #64748b;">Available for payout:</p>
                     <div class="pending-amount">${{ "{:,.2f}".format(stats.pending_earnings or 0) }}</div>
-                    
+
                     <div class="form-group">
                         <label>Payout Amount *</label>
                         <input type="number" name="amount" step="0.01" max="{{ stats.pending_earnings or 0 }}" required>
@@ -721,7 +721,7 @@
             </form>
         </div>
     </div>
-    
+
     <div class="modal-overlay" id="editModal">
         <div class="modal">
             <div class="modal-header">
@@ -781,50 +781,50 @@
             </form>
         </div>
     </div>
-    
+
     <script>
         const affiliateId = {{ affiliate.id }};
-        
+
         function showTab(tabName) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
+
             event.target.classList.add('active');
             document.getElementById(tabName + '-tab').classList.add('active');
         }
-        
+
         function openPayoutModal() {
             document.getElementById('payoutModal').classList.add('active');
         }
-        
+
         function openEditModal() {
             document.getElementById('editModal').classList.add('active');
         }
-        
+
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
         }
-        
+
         async function submitPayout(e) {
             e.preventDefault();
             const form = e.target;
             const formData = new FormData(form);
-            
+
             const data = {
                 amount: parseFloat(formData.get('amount')),
                 payout_method: formData.get('payout_method') || null,
                 notes: formData.get('notes') || null
             };
-            
+
             try {
                 const response = await fetch('/api/affiliates/' + affiliateId + '/payout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     alert('Payout processed successfully!');
                     window.location.reload();
@@ -835,12 +835,12 @@
                 alert('Error processing payout: ' + err.message);
             }
         }
-        
+
         async function submitEdit(e) {
             e.preventDefault();
             const form = e.target;
             const formData = new FormData(form);
-            
+
             const data = {
                 name: formData.get('name'),
                 email: formData.get('email'),
@@ -851,16 +851,16 @@
                 commission_rate_2: parseFloat(formData.get('commission_rate_2')) / 100,
                 payout_method: formData.get('payout_method') || null
             };
-            
+
             try {
                 const response = await fetch('/api/affiliates/' + affiliateId, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     alert('Affiliate updated successfully!');
                     window.location.reload();

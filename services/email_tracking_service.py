@@ -14,16 +14,15 @@ import re
 from datetime import datetime, timedelta
 from urllib.parse import quote, unquote
 
-from sqlalchemy import func, desc
-
+from sqlalchemy import desc, func
 
 # 1x1 transparent GIF pixel (43 bytes)
 TRACKING_PIXEL = (
-    b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00'
-    b'\x80\x00\x00\xff\xff\xff\x00\x00\x00\x21'
-    b'\xf9\x04\x00\x00\x00\x00\x00\x2c\x00\x00'
-    b'\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44'
-    b'\x01\x00\x3b'
+    b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00"
+    b"\x80\x00\x00\xff\xff\xff\x00\x00\x00\x21"
+    b"\xf9\x04\x00\x00\x00\x00\x00\x2c\x00\x00"
+    b"\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44"
+    b"\x01\x00\x3b"
 )
 
 
@@ -42,6 +41,7 @@ class EmailTrackingService:
     def _get_db(self):
         if self._db is None:
             from database import get_db
+
             self._db = get_db()
         return self._db
 
@@ -65,6 +65,7 @@ class EmailTrackingService:
         try:
             db = self._get_db()
             from database import EmailLog
+
             email_log = db.query(EmailLog).filter(EmailLog.id == email_log_id).first()
             if not email_log:
                 return {"success": False, "error": "Email log not found"}
@@ -119,6 +120,7 @@ class EmailTrackingService:
 
     def _rewrite_links(self, html_content, tracking_id, base_url):
         """Rewrite <a href="..."> links for click tracking."""
+
         def replace_link(match):
             original_url = match.group(1)
             # Skip mailto, tel, and anchor links
@@ -128,7 +130,9 @@ class EmailTrackingService:
             if "/api/email/track/" in original_url:
                 return match.group(0)
             encoded_url = quote(original_url, safe="")
-            tracked_url = f"{base_url}/api/email/track/click/{tracking_id}?url={encoded_url}"
+            tracked_url = (
+                f"{base_url}/api/email/track/click/{tracking_id}?url={encoded_url}"
+            )
             return match.group(0).replace(original_url, tracked_url)
 
         return re.sub(r'href=["\']([^"\']+)["\']', replace_link, html_content)
@@ -142,9 +146,10 @@ class EmailTrackingService:
         try:
             db = self._get_db()
             from database import EmailLog
-            email_log = db.query(EmailLog).filter(
-                EmailLog.tracking_id == tracking_id
-            ).first()
+
+            email_log = (
+                db.query(EmailLog).filter(EmailLog.tracking_id == tracking_id).first()
+            )
 
             if not email_log:
                 return {"success": False, "error": "Tracking ID not found"}
@@ -163,11 +168,11 @@ class EmailTrackingService:
         """Record a link click event."""
         try:
             db = self._get_db()
-            from database import EmailLog, EmailClickLog
+            from database import EmailClickLog, EmailLog
 
-            email_log = db.query(EmailLog).filter(
-                EmailLog.tracking_id == tracking_id
-            ).first()
+            email_log = (
+                db.query(EmailLog).filter(EmailLog.tracking_id == tracking_id).first()
+            )
 
             if not email_log:
                 return {"success": False, "error": "Tracking ID not found"}
@@ -201,27 +206,36 @@ class EmailTrackingService:
         """Get tracking stats for a specific email."""
         try:
             db = self._get_db()
-            from database import EmailLog, EmailClickLog
+            from database import EmailClickLog, EmailLog
 
             email_log = db.query(EmailLog).filter(EmailLog.id == email_log_id).first()
             if not email_log:
                 return {"success": False, "error": "Email not found"}
 
-            clicks = db.query(EmailClickLog).filter(
-                EmailClickLog.email_log_id == email_log_id
-            ).order_by(EmailClickLog.clicked_at.desc()).all()
+            clicks = (
+                db.query(EmailClickLog)
+                .filter(EmailClickLog.email_log_id == email_log_id)
+                .order_by(EmailClickLog.clicked_at.desc())
+                .all()
+            )
 
             return {
                 "success": True,
                 "tracking_id": email_log.tracking_id,
-                "opened_at": email_log.opened_at.isoformat() if email_log.opened_at else None,
+                "opened_at": (
+                    email_log.opened_at.isoformat() if email_log.opened_at else None
+                ),
                 "open_count": email_log.open_count or 0,
-                "clicked_at": email_log.clicked_at.isoformat() if email_log.clicked_at else None,
+                "clicked_at": (
+                    email_log.clicked_at.isoformat() if email_log.clicked_at else None
+                ),
                 "click_count": email_log.click_count or 0,
                 "clicks": [
                     {
                         "url": c.original_url,
-                        "clicked_at": c.clicked_at.isoformat() if c.clicked_at else None,
+                        "clicked_at": (
+                            c.clicked_at.isoformat() if c.clicked_at else None
+                        ),
                         "user_agent": c.user_agent,
                         "ip_address": c.ip_address,
                     }
@@ -239,58 +253,89 @@ class EmailTrackingService:
 
             since = datetime.utcnow() - timedelta(days=days)
 
-            total_sent = db.query(func.count(EmailLog.id)).filter(
-                EmailLog.sent_at >= since,
-                EmailLog.status == "sent",
-            ).scalar() or 0
+            total_sent = (
+                db.query(func.count(EmailLog.id))
+                .filter(
+                    EmailLog.sent_at >= since,
+                    EmailLog.status == "sent",
+                )
+                .scalar()
+                or 0
+            )
 
-            total_tracked = db.query(func.count(EmailLog.id)).filter(
-                EmailLog.sent_at >= since,
-                EmailLog.tracking_id.isnot(None),
-            ).scalar() or 0
+            total_tracked = (
+                db.query(func.count(EmailLog.id))
+                .filter(
+                    EmailLog.sent_at >= since,
+                    EmailLog.tracking_id.isnot(None),
+                )
+                .scalar()
+                or 0
+            )
 
-            total_opened = db.query(func.count(EmailLog.id)).filter(
-                EmailLog.sent_at >= since,
-                EmailLog.opened_at.isnot(None),
-            ).scalar() or 0
+            total_opened = (
+                db.query(func.count(EmailLog.id))
+                .filter(
+                    EmailLog.sent_at >= since,
+                    EmailLog.opened_at.isnot(None),
+                )
+                .scalar()
+                or 0
+            )
 
-            total_clicked = db.query(func.count(EmailLog.id)).filter(
-                EmailLog.sent_at >= since,
-                EmailLog.clicked_at.isnot(None),
-            ).scalar() or 0
+            total_clicked = (
+                db.query(func.count(EmailLog.id))
+                .filter(
+                    EmailLog.sent_at >= since,
+                    EmailLog.clicked_at.isnot(None),
+                )
+                .scalar()
+                or 0
+            )
 
             open_rate = (total_opened / total_tracked * 100) if total_tracked > 0 else 0
-            click_rate = (total_clicked / total_tracked * 100) if total_tracked > 0 else 0
-            click_to_open = (total_clicked / total_opened * 100) if total_opened > 0 else 0
+            click_rate = (
+                (total_clicked / total_tracked * 100) if total_tracked > 0 else 0
+            )
+            click_to_open = (
+                (total_clicked / total_opened * 100) if total_opened > 0 else 0
+            )
 
             # Top performing templates
-            top_templates = db.query(
-                EmailLog.template_type,
-                func.count(EmailLog.id).label("sent"),
-                func.count(EmailLog.opened_at).label("opened"),
-                func.count(EmailLog.clicked_at).label("clicked"),
-            ).filter(
-                EmailLog.sent_at >= since,
-                EmailLog.tracking_id.isnot(None),
-                EmailLog.template_type.isnot(None),
-            ).group_by(
-                EmailLog.template_type
-            ).order_by(
-                desc("sent")
-            ).limit(10).all()
+            top_templates = (
+                db.query(
+                    EmailLog.template_type,
+                    func.count(EmailLog.id).label("sent"),
+                    func.count(EmailLog.opened_at).label("opened"),
+                    func.count(EmailLog.clicked_at).label("clicked"),
+                )
+                .filter(
+                    EmailLog.sent_at >= since,
+                    EmailLog.tracking_id.isnot(None),
+                    EmailLog.template_type.isnot(None),
+                )
+                .group_by(EmailLog.template_type)
+                .order_by(desc("sent"))
+                .limit(10)
+                .all()
+            )
 
             # Daily stats for chart
-            daily_stats = db.query(
-                func.date(EmailLog.sent_at).label("date"),
-                func.count(EmailLog.id).label("sent"),
-                func.count(EmailLog.opened_at).label("opened"),
-                func.count(EmailLog.clicked_at).label("clicked"),
-            ).filter(
-                EmailLog.sent_at >= since,
-                EmailLog.tracking_id.isnot(None),
-            ).group_by(
-                func.date(EmailLog.sent_at)
-            ).order_by("date").all()
+            daily_stats = (
+                db.query(
+                    func.date(EmailLog.sent_at).label("date"),
+                    func.count(EmailLog.id).label("sent"),
+                    func.count(EmailLog.opened_at).label("opened"),
+                    func.count(EmailLog.clicked_at).label("clicked"),
+                )
+                .filter(
+                    EmailLog.sent_at >= since,
+                    EmailLog.tracking_id.isnot(None),
+                )
+                .group_by(func.date(EmailLog.sent_at))
+                .order_by("date")
+                .all()
+            )
 
             return {
                 "success": True,
@@ -331,15 +376,21 @@ class EmailTrackingService:
             db = self._get_db()
             from database import EmailLog
 
-            total = db.query(func.count(EmailLog.id)).filter(
-                EmailLog.tracking_id.isnot(None)
-            ).scalar() or 0
+            total = (
+                db.query(func.count(EmailLog.id))
+                .filter(EmailLog.tracking_id.isnot(None))
+                .scalar()
+                or 0
+            )
 
-            emails = db.query(EmailLog).filter(
-                EmailLog.tracking_id.isnot(None)
-            ).order_by(
-                EmailLog.sent_at.desc()
-            ).offset((page - 1) * per_page).limit(per_page).all()
+            emails = (
+                db.query(EmailLog)
+                .filter(EmailLog.tracking_id.isnot(None))
+                .order_by(EmailLog.sent_at.desc())
+                .offset((page - 1) * per_page)
+                .limit(per_page)
+                .all()
+            )
 
             return {
                 "success": True,
@@ -357,7 +408,9 @@ class EmailTrackingService:
                         "tracking_id": e.tracking_id,
                         "opened_at": e.opened_at.isoformat() if e.opened_at else None,
                         "open_count": e.open_count or 0,
-                        "clicked_at": e.clicked_at.isoformat() if e.clicked_at else None,
+                        "clicked_at": (
+                            e.clicked_at.isoformat() if e.clicked_at else None
+                        ),
                         "click_count": e.click_count or 0,
                     }
                     for e in emails

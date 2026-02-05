@@ -15,9 +15,9 @@ Configuration via environment variables:
 - CLEANUP_INTERVAL_SECONDS: How often to run cleanup (default: 300 = 5 minutes)
 """
 
+import logging
 import os
 import time
-import logging
 from datetime import datetime, timedelta
 from threading import Lock
 from typing import Any, Callable
@@ -25,11 +25,21 @@ from typing import Any, Callable
 logger = logging.getLogger(__name__)
 
 # Configuration from environment
-LOGIN_ATTEMPTS_TTL_SECONDS = int(os.environ.get("LOGIN_ATTEMPTS_TTL_SECONDS", 3600))  # 1 hour
-CREDIT_REPORTS_TTL_SECONDS = int(os.environ.get("CREDIT_REPORTS_TTL_SECONDS", 86400))  # 24 hours
-DELIVERED_CASES_TTL_SECONDS = int(os.environ.get("DELIVERED_CASES_TTL_SECONDS", 604800))  # 7 days
-CLEANUP_INTERVAL_SECONDS = int(os.environ.get("CLEANUP_INTERVAL_SECONDS", 300))  # 5 minutes
-SCAN_SESSION_MAX_AGE_HOURS = int(os.environ.get("SCAN_SESSION_MAX_AGE_HOURS", 24))  # 24 hours
+LOGIN_ATTEMPTS_TTL_SECONDS = int(
+    os.environ.get("LOGIN_ATTEMPTS_TTL_SECONDS", 3600)
+)  # 1 hour
+CREDIT_REPORTS_TTL_SECONDS = int(
+    os.environ.get("CREDIT_REPORTS_TTL_SECONDS", 86400)
+)  # 24 hours
+DELIVERED_CASES_TTL_SECONDS = int(
+    os.environ.get("DELIVERED_CASES_TTL_SECONDS", 604800)
+)  # 7 days
+CLEANUP_INTERVAL_SECONDS = int(
+    os.environ.get("CLEANUP_INTERVAL_SECONDS", 300)
+)  # 5 minutes
+SCAN_SESSION_MAX_AGE_HOURS = int(
+    os.environ.get("SCAN_SESSION_MAX_AGE_HOURS", 24)
+)  # 24 hours
 
 # Track last cleanup time
 _last_cleanup_time = 0.0
@@ -168,6 +178,7 @@ def cleanup_scan_sessions() -> int:
     """
     try:
         from services.document_scanner_service import cleanup_old_sessions
+
         removed = cleanup_old_sessions(max_age_hours=SCAN_SESSION_MAX_AGE_HOURS)
         if removed > 0:
             logger.info(f"Cleaned up {removed} expired scan sessions")
@@ -267,7 +278,9 @@ def get_cleanup_stats() -> dict:
     }
 
 
-def register_cleanup_hook(app, login_attempts: dict, credit_reports: list, delivered_cases: set):
+def register_cleanup_hook(
+    app, login_attempts: dict, credit_reports: list, delivered_cases: set
+):
     """
     Register a Flask before_request hook to run cleanup automatically.
 
@@ -277,6 +290,7 @@ def register_cleanup_hook(app, login_attempts: dict, credit_reports: list, deliv
         credit_reports: The credit_reports list
         delivered_cases: The delivered_cases set
     """
+
     @app.before_request
     def _cleanup_before_request():
         maybe_cleanup(login_attempts, credit_reports, delivered_cases)
@@ -288,5 +302,5 @@ def register_cleanup_hook(app, login_attempts: dict, credit_reports: list, deliv
             "credit_reports_ttl": CREDIT_REPORTS_TTL_SECONDS,
             "delivered_cases_ttl": DELIVERED_CASES_TTL_SECONDS,
             "cleanup_interval": CLEANUP_INTERVAL_SECONDS,
-        }
+        },
     )

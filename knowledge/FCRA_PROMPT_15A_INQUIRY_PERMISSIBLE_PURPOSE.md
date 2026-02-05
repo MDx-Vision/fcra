@@ -1,10 +1,10 @@
 # FCRA PROMPT 15A: REGULAR INQUIRY DISPUTES (§ 604 PERMISSIBLE PURPOSE)
 ## Unauthorized Hard Inquiries - No Identity Theft Required
 
-**Version:** 1.0  
-**Created:** January 13, 2026  
-**Use Case:** Consumer did NOT authorize the credit pull (but NOT identity theft)  
-**Output:** Professional DOCX letters with full legal framework  
+**Version:** 1.0
+**Created:** January 13, 2026
+**Use Case:** Consumer did NOT authorize the credit pull (but NOT identity theft)
+**Output:** Professional DOCX letters with full legal framework
 **Requirements:** Just the dispute letter - NO FTC/Police report needed
 
 ---
@@ -141,22 +141,22 @@ SECTION 2: UNAUTHORIZED INQUIRIES TO BE REMOVED
 
 SECTION 3: LEGAL BASIS - § 1681b PERMISSIBLE PURPOSE
 
-Under 15 U.S.C. § 1681b, a consumer reporting agency may only furnish 
+Under 15 U.S.C. § 1681b, a consumer reporting agency may only furnish
 a consumer report for specific permissible purposes:
 
-§ 1681b(a)(3)(A): "To a person which it has reason to believe intends 
-to use the information in connection with a credit transaction involving 
-the consumer on whom the information is to be furnished and involving 
+§ 1681b(a)(3)(A): "To a person which it has reason to believe intends
+to use the information in connection with a credit transaction involving
+the consumer on whom the information is to be furnished and involving
 the extension of credit to, or review of an account of, the consumer."
 
 KEY REQUIREMENT: The transaction must be INITIATED BY THE CONSUMER.
 
-I did NOT initiate any transaction with [COMPANY]. I did NOT apply for 
-credit. I did NOT authorize any credit inquiry. Therefore, [COMPANY] 
+I did NOT initiate any transaction with [COMPANY]. I did NOT apply for
+credit. I did NOT authorize any credit inquiry. Therefore, [COMPANY]
 had NO PERMISSIBLE PURPOSE to access my consumer report.
 
-Phillips v. Grendahl, 312 F.3d 357 (8th Cir. 2002): "A permissible 
-purpose must exist at the time the report is obtained... the consumer 
+Phillips v. Grendahl, 312 F.3d 357 (8th Cir. 2002): "A permissible
+purpose must exist at the time the report is obtained... the consumer
 must be the one who initiates the transaction."
 
 SECTION 4: YOUR DUTIES UNDER FCRA
@@ -169,8 +169,8 @@ Upon receipt of this dispute, you are REQUIRED to:
    DELETE the inquiry per § 1681i(a)(5)(A)
 4. Provide results within 30 days per § 1681i(a)(1)(A)
 
-A generic "verified" response is NOT ACCEPTABLE. Per Cushman v. Trans 
-Union Corp., 115 F.3d 220 (3d Cir. 1997), you must conduct a GENUINE 
+A generic "verified" response is NOT ACCEPTABLE. Per Cushman v. Trans
+Union Corp., 115 F.3d 220 (3d Cir. 1997), you must conduct a GENUINE
 reinvestigation, not simply parrot what the furnisher claims.
 
 SECTION 5: DEMAND FOR METHOD OF VERIFICATION (§ 1681i(a)(7))
@@ -265,7 +265,7 @@ Inquiry Date: [DATE]
 
 SECTION 1: NOTICE OF UNAUTHORIZED INQUIRY
 
-On [DATE], your company accessed my consumer credit report through 
+On [DATE], your company accessed my consumer credit report through
 [BUREAU(S)]. This inquiry was NOT AUTHORIZED.
 
 I CERTIFY UNDER PENALTY OF PERJURY:
@@ -276,21 +276,21 @@ I CERTIFY UNDER PENALTY OF PERJURY:
 
 SECTION 2: LEGAL BASIS - § 1681b VIOLATION
 
-Under 15 U.S.C. § 1681b, you may ONLY access a consumer report with 
+Under 15 U.S.C. § 1681b, you may ONLY access a consumer report with
 permissible purpose. The primary permissible purposes are:
 
 § 1681b(a)(3)(A): Credit transaction INITIATED BY THE CONSUMER
 § 1681b(a)(3)(F): Legitimate business need in consumer-initiated transaction
 
-I did NOT initiate ANY transaction with your company. Therefore, you 
+I did NOT initiate ANY transaction with your company. Therefore, you
 had NO permissible purpose to access my credit report.
 
-Accessing a consumer report WITHOUT permissible purpose is a FEDERAL 
+Accessing a consumer report WITHOUT permissible purpose is a FEDERAL
 VIOLATION carrying significant civil liability.
 
 SECTION 3: YOUR LIABILITY
 
-Under 15 U.S.C. § 1681n (willful) and § 1681o (negligent), you are 
+Under 15 U.S.C. § 1681n (willful) and § 1681o (negligent), you are
 liable for:
 
 | Damages Category | Statutory Basis | Range |
@@ -300,20 +300,20 @@ liable for:
 | Punitive damages | § 1681n(a)(2) | Unlimited |
 | Attorney fees | § 1681n(a)(3) | $15,000+ |
 
-Key Case: Phillips v. Grendahl, 312 F.3d 357 (8th Cir. 2002) - 
-"Obtaining a consumer report under false pretenses or without 
+Key Case: Phillips v. Grendahl, 312 F.3d 357 (8th Cir. 2002) -
+"Obtaining a consumer report under false pretenses or without
 permissible purpose creates liability under § 1681n."
 
 SECTION 4: DEMANDS
 
 I DEMAND that [COMPANY]:
 
-1. IMMEDIATELY notify Experian, Equifax, and TransUnion to DELETE 
+1. IMMEDIATELY notify Experian, Equifax, and TransUnion to DELETE
    this inquiry from my credit file
 
 2. PROVIDE written confirmation that deletion requests have been sent
 
-3. PROVIDE any documentation you claim shows my authorization 
+3. PROVIDE any documentation you claim shows my authorization
    (you have none because I never authorized this)
 
 4. IMPLEMENT procedures to prevent future unauthorized pulls

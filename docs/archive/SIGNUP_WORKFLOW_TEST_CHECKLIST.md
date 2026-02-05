@@ -1,8 +1,8 @@
 # ✅ Client Signup Workflow - Testing Checklist
 
-**Date Started:** ___________  
-**Tester Name:** ___________  
-**Test Email:** ___________  
+**Date Started:** ___________
+**Tester Name:** ___________
+**Test Email:** ___________
 
 ---
 
@@ -25,7 +25,7 @@
 ☐ Click "Continue to Credit Access" button
 ☐ Progress indicator updates to Step 2
 ```
-**Issues Found:**  
+**Issues Found:**
 _________________________________
 
 ---
@@ -39,7 +39,7 @@ _________________________________
 ☐ Click "Continue to Plan & Payment"
 ☐ Progress indicator updates to Step 3
 ```
-**Notes:** (Is MyScoreIQ login working? Any other services to test?)  
+**Notes:** (Is MyScoreIQ login working? Any other services to test?)
 _________________________________
 
 ---
@@ -52,7 +52,7 @@ _________________________________
 ☐ Click "Continue to Agreement"
 ☐ Progress indicator updates to Step 4
 ```
-**Notes:**  
+**Notes:**
 _________________________________
 
 ---
@@ -65,7 +65,7 @@ _________________________________
 ☐ "Complete Signup" button becomes clickable
 ☐ Click "Complete Signup"
 ```
-**Issues Found:**  
+**Issues Found:**
 _________________________________
 
 ---
@@ -95,7 +95,7 @@ _________________________________
 }
 ```
 
-**Actual Response:**  
+**Actual Response:**
 ```
 _________________________________
 _________________________________
@@ -109,10 +109,10 @@ _________________________________
 ### Check clients Table
 ```
 Run in database:
-SELECT id, name, first_name, last_name, email, phone, 
-       credit_monitoring_service, status, agreement_signed 
-FROM clients 
-WHERE email = '[test email]' 
+SELECT id, name, first_name, last_name, email, phone,
+       credit_monitoring_service, status, agreement_signed
+FROM clients
+WHERE email = '[test email]'
 ORDER BY id DESC LIMIT 1;
 ```
 
@@ -130,7 +130,7 @@ ORDER BY id DESC LIMIT 1;
 ☐ agreement_signed: true
 ```
 
-**Actual Query Result:**  
+**Actual Query Result:**
 ```
 _________________________________
 ```
@@ -140,11 +140,11 @@ _________________________________
 ### Check Encrypted Fields
 ```
 Run in database:
-SELECT id, credit_monitoring_username, 
-       credit_monitoring_password_encrypted, 
+SELECT id, credit_monitoring_username,
+       credit_monitoring_password_encrypted,
        ssn_last_four
-FROM clients 
-WHERE email = '[test email]' 
+FROM clients
+WHERE email = '[test email]'
 ORDER BY id DESC LIMIT 1;
 ```
 
@@ -155,7 +155,7 @@ ORDER BY id DESC LIMIT 1;
 ☐ ssn_last_four: "1234"
 ```
 
-**Actual Query Result:**  
+**Actual Query Result:**
 ```
 _________________________________
 ```
@@ -166,8 +166,8 @@ _________________________________
 ```
 Run in database:
 SELECT id, client_id, case_number, status, pricing_tier, intake_at
-FROM cases 
-WHERE client_id = [id from clients table] 
+FROM cases
+WHERE client_id = [id from clients table]
 LIMIT 1;
 ```
 
@@ -181,7 +181,7 @@ LIMIT 1;
 ☐ intake_at: [recent timestamp]
 ```
 
-**Actual Query Result:**  
+**Actual Query Result:**
 ```
 _________________________________
 ```
@@ -192,7 +192,7 @@ _________________________________
 ```
 Run in database:
 SELECT id, case_id, event_type, description, created_at
-FROM case_events 
+FROM case_events
 WHERE case_id = [id from cases table]
 ORDER BY created_at DESC LIMIT 1;
 ```
@@ -205,7 +205,7 @@ ORDER BY created_at DESC LIMIT 1;
 ☐ created_at: [recent timestamp]
 ```
 
-**Actual Query Result:**  
+**Actual Query Result:**
 ```
 _________________________________
 ```
@@ -215,9 +215,9 @@ _________________________________
 ### Check credit_monitoring_credentials Table
 ```
 Run in database:
-SELECT id, client_id, service_name, username, 
+SELECT id, client_id, service_name, username,
        last_import_status, last_import_at, last_report_path
-FROM credit_monitoring_credentials 
+FROM credit_monitoring_credentials
 WHERE client_id = [id from clients table]
 LIMIT 1;
 ```
@@ -232,7 +232,7 @@ LIMIT 1;
 ☐ last_report_path: "/uploads/credit_reports/..." (if successful)
 ```
 
-**Actual Query Result:**  
+**Actual Query Result:**
 ```
 _________________________________
 ```
@@ -256,7 +256,7 @@ OR
 ☐ "⚠️  Auto-import error (non-fatal): [error details]"
 ```
 
-**Actual Log Output:**  
+**Actual Log Output:**
 ```
 _________________________________
 _________________________________
@@ -276,7 +276,7 @@ ls -lah uploads/credit_reports/ | grep [client_id]
 ☐ File size > 10KB (should contain credit report HTML)
 ```
 
-**Actual Files:**  
+**Actual Files:**
 ```
 _________________________________
 ```
@@ -298,7 +298,7 @@ Go to URL: /api/credit-import/report/[credential_id]
 ☐ Creditor contacts if available
 ```
 
-**Screenshots/Notes:**  
+**Screenshots/Notes:**
 ```
 _________________________________
 _________________________________
@@ -333,7 +333,7 @@ Go to test email inbox and look for:
 - ☐ Not received (check server logs for SendGrid errors)
 - ☐ Received but incomplete
 
-**Issues:**  
+**Issues:**
 ```
 _________________________________
 ```
@@ -363,7 +363,7 @@ _________________________________
 - ☐ Received
 - ☐ Not received (check server logs for Twilio errors)
 
-**Issues:**  
+**Issues:**
 ```
 _________________________________
 ```
@@ -390,7 +390,7 @@ Click "Send Login Link"
 ☐ Can see client dashboard
 ```
 
-**Issues:**  
+**Issues:**
 ```
 _________________________________
 ```
@@ -412,7 +412,7 @@ Go to: /portal/[token from API response]
 ☐ Shows credit report summary (if auto-import succeeded)
 ```
 
-**Issues:**  
+**Issues:**
 ```
 _________________________________
 ```
@@ -432,7 +432,7 @@ _________________________________
 
 **Status:** ☐ Working ☐ Issue Found
 
-**Issues:**  
+**Issues:**
 ```
 _________________________________
 ```
@@ -451,7 +451,7 @@ If you want to test Stripe:
 
 **Status:** ☐ Working ☐ Issue Found
 
-**Issues:**  
+**Issues:**
 ```
 _________________________________
 ```
@@ -468,7 +468,7 @@ If you selected CashApp/Venmo/Zelle:
 
 **Status:** ☐ Working ☐ Issue Found
 
-**Issues:**  
+**Issues:**
 ```
 _________________________________
 ```
@@ -507,7 +507,7 @@ LIMIT 1;
 
 **Status:** ☐ Working ☐ Issue Found
 
-**Issues:**  
+**Issues:**
 ```
 _________________________________
 ```
@@ -534,7 +534,7 @@ Look for lines like:
 
 **Status:** ☐ Working ☐ Issue Found
 
-**Issues:**  
+**Issues:**
 ```
 _________________________________
 ```
@@ -579,18 +579,18 @@ _________________________________
 ## 🐛 ISSUES FOUND
 
 ### Issue #1
-**Description:**  
+**Description:**
 ```
 _________________________________
 _________________________________
 ```
-**Expected vs Actual:**  
+**Expected vs Actual:**
 ```
 _________________________________
 ```
-**Severity:** ☐ Critical ☐ Major ☐ Minor  
-**Fixed:** ☐ Yes ☐ No  
-**Solution:**  
+**Severity:** ☐ Critical ☐ Major ☐ Minor
+**Fixed:** ☐ Yes ☐ No
+**Solution:**
 ```
 _________________________________
 ```
@@ -598,18 +598,18 @@ _________________________________
 ---
 
 ### Issue #2
-**Description:**  
+**Description:**
 ```
 _________________________________
 _________________________________
 ```
-**Expected vs Actual:**  
+**Expected vs Actual:**
 ```
 _________________________________
 ```
-**Severity:** ☐ Critical ☐ Major ☐ Minor  
-**Fixed:** ☐ Yes ☐ No  
-**Solution:**  
+**Severity:** ☐ Critical ☐ Major ☐ Minor
+**Fixed:** ☐ Yes ☐ No
+**Solution:**
 ```
 _________________________________
 ```
@@ -617,18 +617,18 @@ _________________________________
 ---
 
 ### Issue #3
-**Description:**  
+**Description:**
 ```
 _________________________________
 _________________________________
 ```
-**Expected vs Actual:**  
+**Expected vs Actual:**
 ```
 _________________________________
 ```
-**Severity:** ☐ Critical ☐ Major ☐ Minor  
-**Fixed:** ☐ Yes ☐ No  
-**Solution:**  
+**Severity:** ☐ Critical ☐ Major ☐ Minor
+**Fixed:** ☐ Yes ☐ No
+**Solution:**
 ```
 _________________________________
 ```
@@ -648,10 +648,10 @@ _________________________________
 
 ## ✅ TEST COMPLETION SUMMARY
 
-**Total Stages Tested:** _____ / 10  
-**Issues Found:** _____  
-**Issues Fixed:** _____  
-**Issues Remaining:** _____  
+**Total Stages Tested:** _____ / 10
+**Issues Found:** _____
+**Issues Fixed:** _____
+**Issues Remaining:** _____
 
 **Overall Status:**
 - ☐ All Systems Go ✅
@@ -667,5 +667,5 @@ _________________________________
 
 ---
 
-**Test Date Completed:** ___________  
+**Test Date Completed:** ___________
 **Next Test Date:** ___________

@@ -10,20 +10,20 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #0f172a;
             color: #e2e8f0;
             min-height: 100vh;
         }
-        
+
         .header {
             background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
             padding: 24px 32px;
             border-bottom: 1px solid #334155;
         }
-        
+
         .header-content {
             max-width: 1400px;
             margin: 0 auto;
@@ -31,13 +31,13 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .logo {
             display: flex;
             align-items: center;
             gap: 12px;
         }
-        
+
         .logo-icon {
             width: 40px;
             height: 40px;
@@ -49,51 +49,51 @@
             font-weight: bold;
             font-size: 18px;
         }
-        
+
         .logo-text {
             font-size: 20px;
             font-weight: 600;
             color: white;
         }
-        
+
         .client-info {
             text-align: right;
         }
-        
+
         .client-name {
             font-size: 18px;
             font-weight: 600;
             color: white;
         }
-        
+
         .report-date {
             font-size: 14px;
             color: #94a3b8;
         }
-        
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 32px;
         }
-        
+
         .scores-section {
             margin-bottom: 32px;
         }
-        
+
         .section-title {
             font-size: 24px;
             font-weight: 600;
             margin-bottom: 20px;
             color: white;
         }
-        
+
         .scores-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
         }
-        
+
         .score-card {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border: 1px solid #334155;
@@ -102,16 +102,16 @@
             text-align: center;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        
+
         .score-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 12px 24px rgba(0,0,0,0.3);
         }
-        
+
         .score-card.transunion { border-top: 4px solid #3b82f6; }
         .score-card.experian { border-top: 4px solid #ef4444; }
         .score-card.equifax { border-top: 4px solid #f59e0b; }
-        
+
         .bureau-logo {
             font-size: 14px;
             font-weight: 600;
@@ -119,23 +119,23 @@
             letter-spacing: 1px;
             margin-bottom: 16px;
         }
-        
+
         .transunion .bureau-logo { color: #3b82f6; }
         .experian .bureau-logo { color: #ef4444; }
         .equifax .bureau-logo { color: #f59e0b; }
-        
+
         .score-value {
             font-size: 72px;
             font-weight: 700;
             line-height: 1;
             margin-bottom: 8px;
         }
-        
+
         .score-good { color: #10b981; }
         .score-fair { color: #f59e0b; }
         .score-poor { color: #ef4444; }
         .score-na { color: #6b7280; font-size: 36px; }
-        
+
         .score-rating {
             font-size: 14px;
             color: #94a3b8;
@@ -177,7 +177,7 @@
         .summary-section {
             margin-bottom: 32px;
         }
-        
+
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -203,11 +203,11 @@
             color: #94a3b8;
             margin-top: 4px;
         }
-        
+
         .accounts-section {
             margin-bottom: 32px;
         }
-        
+
         .account-card {
             background: #1e293b;
             border: 1px solid #334155;
@@ -215,7 +215,7 @@
             margin-bottom: 16px;
             overflow: hidden;
         }
-        
+
         .account-header {
             background: #0f172a;
             padding: 16px 20px;
@@ -224,40 +224,40 @@
             align-items: center;
             cursor: pointer;
         }
-        
+
         .account-header:hover {
             background: #1e293b;
         }
-        
+
         .creditor-info {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
-        
+
         .creditor-name {
             font-weight: 600;
             color: white;
             font-size: 16px;
         }
-        
+
         .account-number {
             font-size: 12px;
             color: #6b7280;
             font-family: monospace;
         }
-        
+
         .account-meta {
             display: flex;
             gap: 16px;
             align-items: center;
         }
-        
+
         .bureau-dots {
             display: flex;
             gap: 6px;
         }
-        
+
         .bureau-dot {
             width: 24px;
             height: 24px;
@@ -268,12 +268,12 @@
             font-size: 9px;
             font-weight: 600;
         }
-        
+
         .bureau-dot.tu { background: #3b82f6; color: white; }
         .bureau-dot.ex { background: #ef4444; color: white; }
         .bureau-dot.eq { background: #f59e0b; color: white; }
         .bureau-dot.inactive { background: #374151; color: #6b7280; }
-        
+
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -281,36 +281,36 @@
             font-size: 12px;
             font-weight: 500;
         }
-        
+
         .status-open { background: #10b981; color: white; }
         .status-closed { background: #6b7280; color: white; }
         .status-collection { background: #ef4444; color: white; }
         .status-late { background: #f59e0b; color: #000; }
         .status-current { background: #10b981; color: white; }
-        
+
         .account-details {
             padding: 20px;
             display: none;
             border-top: 1px solid #334155;
         }
-        
+
         .account-details.show {
             display: block;
         }
-        
+
         .details-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 16px;
             margin-bottom: 20px;
         }
-        
+
         .detail-item {
             background: #0f172a;
             padding: 12px;
             border-radius: 8px;
         }
-        
+
         .detail-label {
             font-size: 11px;
             color: #6b7280;
@@ -318,43 +318,43 @@
             letter-spacing: 0.5px;
             margin-bottom: 4px;
         }
-        
+
         .detail-value {
             font-size: 14px;
             color: white;
             font-weight: 500;
         }
-        
+
         .payment-history-section {
             margin-top: 20px;
         }
-        
+
         .payment-history-title {
             font-size: 14px;
             font-weight: 600;
             color: #94a3b8;
             margin-bottom: 12px;
         }
-        
+
         .payment-timeline {
             display: flex;
             gap: 4px;
             flex-wrap: wrap;
         }
-        
+
         .payment-month {
             display: flex;
             flex-direction: column;
             align-items: center;
             min-width: 36px;
         }
-        
+
         .month-label {
             font-size: 9px;
             color: #6b7280;
             margin-bottom: 4px;
         }
-        
+
         .payment-status {
             width: 28px;
             height: 28px;
@@ -365,14 +365,14 @@
             font-size: 9px;
             font-weight: 600;
         }
-        
+
         .payment-ok { background: #10b981; color: white; }
         .payment-30 { background: #f59e0b; color: #000; }
         .payment-60 { background: #f97316; color: white; }
         .payment-90 { background: #ef4444; color: white; }
         .payment-co { background: #7f1d1d; color: white; }
         .payment-na { background: #374151; color: #6b7280; }
-        
+
         .late-summary {
             display: flex;
             gap: 12px;
@@ -381,59 +381,59 @@
             background: #0f172a;
             border-radius: 8px;
         }
-        
+
         .late-item {
             display: flex;
             align-items: center;
             gap: 6px;
             font-size: 12px;
         }
-        
+
         .late-count {
             font-weight: 600;
         }
-        
+
         .contacts-section {
             margin-bottom: 32px;
         }
-        
+
         .contacts-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
         }
-        
+
         .contact-card {
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 12px;
             padding: 16px;
         }
-        
+
         .contact-name {
             font-weight: 600;
             color: white;
             margin-bottom: 8px;
         }
-        
+
         .contact-address {
             font-size: 13px;
             color: #94a3b8;
             margin-bottom: 8px;
             line-height: 1.5;
         }
-        
+
         .contact-phone {
             font-size: 13px;
             color: #3b82f6;
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 48px;
             color: #6b7280;
         }
-        
+
         .print-btn {
             background: #3b82f6;
             color: white;
@@ -444,48 +444,48 @@
             font-size: 14px;
             font-weight: 500;
         }
-        
+
         .print-btn:hover {
             background: #2563eb;
         }
-        
+
         .back-link {
             color: #3b82f6;
             text-decoration: none;
             font-size: 14px;
         }
-        
+
         .back-link:hover {
             text-decoration: underline;
         }
-        
+
         .inquiries-section, .collections-section, .public-records-section {
             margin-bottom: 32px;
         }
-        
+
         .card {
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 12px;
             padding: 24px;
         }
-        
+
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
         }
-        
+
         .card-title {
             font-size: 18px;
             font-weight: 600;
         }
-        
+
         .item-list {
             list-style: none;
         }
-        
+
         .item-list li {
             padding: 12px 0;
             border-bottom: 1px solid #334155;
@@ -493,11 +493,11 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .item-list li:last-child {
             border-bottom: none;
         }
-        
+
         .inquiry-bureau {
             font-size: 11px;
             color: #6b7280;
@@ -506,7 +506,7 @@
             border-radius: 4px;
             margin-left: 8px;
         }
-        
+
         @media print {
             body {
                 background: white;
@@ -527,7 +527,7 @@
                 display: block !important;
             }
         }
-        
+
         @media (max-width: 768px) {
             .scores-grid {
                 grid-template-columns: 1fr;
@@ -557,13 +557,13 @@
             </div>
         </div>
     </header>
-    
+
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
             <a href="/dashboard/credit-import" class="back-link">&larr; Back to Credit Import</a>
             <button class="print-btn" onclick="window.print()">Print Report</button>
         </div>
-        
+
         <section class="scores-section">
             <h2 class="section-title">Credit Scores</h2>
             <div class="scores-grid">
@@ -581,7 +581,7 @@
                         <div class="score-rating">Not Available</div>
                     {% endif %}
                 </div>
-                
+
                 <div class="score-card experian">
                     <div class="bureau-logo">Experian</div>
                     {% if scores.experian %}
@@ -596,7 +596,7 @@
                         <div class="score-rating">Not Available</div>
                     {% endif %}
                 </div>
-                
+
                 <div class="score-card equifax">
                     <div class="bureau-logo">Equifax</div>
                     {% if scores.equifax %}
@@ -649,70 +649,72 @@
                     <div class="summary-label">Inquiries</div>
                 </div>
                 <div class="summary-card">
-                    <div class="summary-value" style="color: {% if summary.total_collections > 0 %}#ef4444{% else %}#10b981{% endif %}">{{ summary.total_collections or 0 }}</div>
+                    <div class="summary-value" style="color: {% if summary.get('total_collections', 0)|int > 0 %}#ef4444{% else %}#10b981{% endif %}">{{ summary.get('total_collections', 0) }}</div>
                     <div class="summary-label">Collections</div>
                 </div>
                 <div class="summary-card">
-                    <div class="summary-value" style="color: {% if summary.total_public_records > 0 %}#ef4444{% else %}#10b981{% endif %}">{{ summary.total_public_records or 0 }}</div>
+                    <div class="summary-value" style="color: {% if summary.get('total_public_records', 0)|int > 0 %}#ef4444{% else %}#10b981{% endif %}">{{ summary.get('total_public_records', 0) }}</div>
                     <div class="summary-label">Public Records</div>
                 </div>
                 <div class="summary-card">
-                    <div class="summary-value" style="color: {% if summary.total_late_payments > 0 %}#ef4444{% else %}#10b981{% endif %}">{{ summary.total_late_payments or 0 }}</div>
+                    <div class="summary-value" style="color: {% if summary.get('total_late_payments', 0)|int > 0 %}#ef4444{% else %}#10b981{% endif %}">{{ summary.get('total_late_payments', 0) }}</div>
                     <div class="summary-label">Late Payments</div>
                 </div>
             </div>
         </section>
-        
+
         <!-- Analytics Section -->
+        {% set util = analytics.get('utilization', 0)|default(0, true) %}
+        {% set pscore = analytics.get('payment_score', 0)|default(0, true) %}
         <section class="analytics-section" style="margin-bottom: 30px;">
             <h2 class="section-title">Credit Analytics</h2>
             <div class="summary-grid">
                 <div class="summary-card">
-                    <div class="summary-value" style="color: {% if analytics.utilization <= 30 %}#10b981{% elif analytics.utilization <= 50 %}#f59e0b{% else %}#ef4444{% endif %}">
-                        {{ analytics.utilization }}%
+                    <div class="summary-value" style="color: {% if util <= 30 %}#10b981{% elif util <= 50 %}#f59e0b{% else %}#ef4444{% endif %}">
+                        {{ util }}%
                     </div>
                     <div class="summary-label">Credit Utilization</div>
                     <div style="font-size: 11px; color: #6b7280; margin-top: 5px;">
-                        {% if analytics.utilization <= 30 %}Excellent{% elif analytics.utilization <= 50 %}Fair{% else %}High{% endif %}
+                        {% if util <= 30 %}Excellent{% elif util <= 50 %}Fair{% else %}High{% endif %}
                     </div>
                 </div>
                 <div class="summary-card">
-                    <div class="summary-value" style="color: {% if analytics.payment_score >= 95 %}#10b981{% elif analytics.payment_score >= 80 %}#f59e0b{% else %}#ef4444{% endif %}">
-                        {{ analytics.payment_score }}%
+                    <div class="summary-value" style="color: {% if pscore >= 95 %}#10b981{% elif pscore >= 80 %}#f59e0b{% else %}#ef4444{% endif %}">
+                        {{ pscore }}%
                     </div>
                     <div class="summary-label">On-Time Payments</div>
                     <div style="font-size: 11px; color: #6b7280; margin-top: 5px;">
-                        {{ analytics.on_time_count }} of {{ analytics.total_payments }} months
+                        {{ analytics.get('on_time_count', 0) }} of {{ analytics.get('total_payments', 0) }} months
                     </div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-value" style="color: #3b82f6;">
-                        {{ analytics.avg_account_age }}
+                        {{ analytics.get('avg_account_age', 'N/A') }}
                     </div>
                     <div class="summary-label">Avg Account Age</div>
                     <div style="font-size: 11px; color: #6b7280; margin-top: 5px;">
-                        Oldest: {{ analytics.oldest_account }}
+                        Oldest: {{ analytics.get('oldest_account', 'N/A') }}
                     </div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-value" style="color: #8b5cf6;">
-                        {{ analytics.total_balance }}
+                        {{ analytics.get('total_balance', '$0') }}
                     </div>
                     <div class="summary-label">Total Balance</div>
                     <div style="font-size: 11px; color: #6b7280; margin-top: 5px;">
-                        Limit: {{ analytics.total_limit }}
+                        Limit: {{ analytics.get('total_limit', '$0') }}
                     </div>
                 </div>
             </div>
         </section>
-        
+
         {% if accounts %}
         <section class="accounts-section">
             <h2 class="section-title">Trade Lines ({{ accounts|length }})</h2>
-            
+
             <!-- Filter Bar -->
             <div class="filter-bar" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
-                <input type="text" id="accountSearch" placeholder="Search creditors..." 
+                <input type="text" id="accountSearch" placeholder="Search creditors..."
                     style="padding: 10px 15px; border-radius: 8px; border: 1px solid #374151; background: #1f2937; color: white; width: 250px; font-size: 14px;"
                     onkeyup="filterAccounts()">
                 <div class="status-filters" style="display: flex; gap: 8px;">
@@ -722,11 +724,11 @@
                     <button class="filter-btn" onclick="setStatusFilter('negative', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">Negative</button>
                     <button class="filter-btn" onclick="setStatusFilter('au', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">AU</button>
                     <button class="filter-btn" onclick="setStatusFilter('discrepancy', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #f59e0b; cursor: pointer; font-size: 13px;">⚠ Discrepancy</button>
-                    
+
                 </div>
                 <span id="filterCount" style="color: #9ca3af; font-size: 13px;"></span>
             </div>
-            
+
             {% for account in accounts %}
             <div class="account-card">
                 <div class="account-header" onclick="toggleDetails(this)">
@@ -782,7 +784,7 @@
                             <div class="detail-value">{{ account.date_reported or 'N/A' }}</div>
                         </div>
                     </div>
-                    
+
                     {% if account.payment_history %}
                     <div class="payment-history-section">
                         <div class="payment-history-title">Payment History ({{ account.payment_history|length }} months) <span class="bureau-filter-label" style="font-size: 11px; color: #6b7280; margin-left: 10px;">Showing: All Bureaus</span></div>
@@ -867,7 +869,7 @@
             {% endfor %}
         </section>
         {% endif %}
-        
+
         {% if inquiries %}
         <section class="inquiries-section">
             <div class="card">
@@ -890,7 +892,7 @@
             </div>
         </section>
         {% endif %}
-        
+
         {% if creditor_contacts %}
         <section class="contacts-section">
             <h2 class="section-title">Creditor Contacts ({{ creditor_contacts|length }})</h2>
@@ -909,7 +911,7 @@
             </div>
         </section>
         {% endif %}
-        
+
         {% if collections %}
         <section class="collections-section">
             <div class="card" style="border-left: 4px solid #ef4444;">
@@ -932,7 +934,7 @@
             </div>
         </section>
         {% endif %}
-        
+
         {% if public_records %}
         <section class="public-records-section">
             <div class="card" style="border-left: 4px solid #f59e0b;">
@@ -950,13 +952,13 @@
             </div>
         </section>
         {% endif %}
-        
+
         <div style="text-align: center; padding: 32px; color: #6b7280; font-size: 12px;">
             <p>This report was imported from {{ service_name }} on {{ report_date }}</p>
             <p>Brightpath Ascend FCRA Platform</p>
         </div>
     </div>
-    
+
     <script>
             function toggleDetails(header) {
                 const details = header.nextElementSibling;
@@ -1041,7 +1043,7 @@
                     alert('No accounts flagged for dispute. Click the Flag button on accounts you want to dispute.');
                     return;
                 }
-                
+
                 const accounts = [];
                 flaggedBtns.forEach(btn => {
                     const card = btn.closest('.account-card');
@@ -1053,13 +1055,13 @@
                     const balance = balanceEl ? balanceEl.textContent.trim() : 'N/A';
                     const statusEl = card.querySelector('.status-badge');
                     const status = statusEl ? statusEl.textContent.trim() : 'N/A';
-                    
+
                     accounts.push({ creditor, accountNum, balance, status });
                 });
-                
+
                 const clientName = document.querySelector('h1')?.textContent.replace('Credit Report -', '').trim() || 'Client';
                 const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-                
+
                 let letter = 'DISPUTE LETTER - FAIR CREDIT REPORTING ACT\n\n';
                 letter += 'Date: ' + today + '\n';
                 letter += 'Client: ' + clientName + '\n\n';
@@ -1070,7 +1072,7 @@
                 letter += 'I am writing pursuant to my rights under the Fair Credit Reporting Act, 15 U.S.C. § 1681 et seq., to dispute the following inaccurate information appearing on my credit report:\n\n';
                 letter += 'DISPUTED ACCOUNTS:\n';
                 letter += '==================\n';
-                
+
                 accounts.forEach((acct, i) => {
                     letter += '\n' + (i + 1) + '. Creditor: ' + acct.creditor + '\n';
                     letter += '   Account Number: ' + acct.accountNum + '\n';
@@ -1078,14 +1080,14 @@
                     letter += '   Status: ' + acct.status + '\n';
                     letter += '   Reason for Dispute: [Please verify the accuracy of this account]\n';
                 });
-                
+
                 letter += '\n==================\n\n';
                 letter += 'Under the FCRA, you are required to conduct a reasonable investigation into this dispute within 30 days and provide me with the results. If you cannot verify this information, you must delete it from my credit file.\n\n';
                 letter += 'Please send me written notification of the results of your investigation.\n\n';
                 letter += 'Sincerely,\n\n';
                 letter += '_______________________\n';
                 letter += clientName + '\n';
-                
+
                 const win = window.open('', '_blank');
                 win.document.write('<html><head><title>Dispute Letter</title>');
                 win.document.write('<style>body{font-family:Courier,monospace;white-space:pre-wrap;padding:40px;line-height:1.6;max-width:800px;margin:0 auto;}@media print{body{padding:20px;}}</style>');
@@ -1094,10 +1096,10 @@
                 win.document.write('</body></html>');
                 win.document.close();
             }
-            
+
             // Filter state
             let currentStatusFilter = 'all';
-            
+
             function setStatusFilter(status, btn) {
                 currentStatusFilter = status;
                 // Update button styles
@@ -1111,31 +1113,31 @@
                 btn.style.border = 'none';
                 filterAccounts();
             }
-            
+
             function filterAccounts() {
                 const searchTerm = document.getElementById('accountSearch').value.toLowerCase();
                 const cards = document.querySelectorAll('.account-card');
                 let visibleCount = 0;
-                
+
                 cards.forEach(card => {
                     const creditor = card.querySelector('.creditor-name').textContent.toLowerCase();
                     const statusBadge = card.querySelector('.status-badge');
                     const status = statusBadge ? statusBadge.textContent.toLowerCase() : '';
-                    
+
                     // Search match
                     const matchesSearch = creditor.includes(searchTerm);
-                    
+
                     // Status match
                     let matchesStatus = true;
                     if (currentStatusFilter === 'open') {
-                        matchesStatus = status.includes('open') || status.includes('current') || 
+                        matchesStatus = status.includes('open') || status.includes('current') ||
                                        status.includes('pays') || status.includes('paying') ||
                                        status.includes('past due') || status.includes('late');
                     } else if (currentStatusFilter === 'closed') {
-                        matchesStatus = status.includes('closed') || status.includes('terminated') || 
+                        matchesStatus = status.includes('closed') || status.includes('terminated') ||
                                        status === 'paid' || status.includes('paid satisf');
                     } else if (currentStatusFilter === 'negative') {
-                        matchesStatus = status.includes('late') || status.includes('past due') || 
+                        matchesStatus = status.includes('late') || status.includes('past due') ||
                                        status.includes('collection') || status.includes('charge') ||
                                        status.includes('delinq') || status.includes('30') ||
                                        status.includes('60') || status.includes('90');
@@ -1146,7 +1148,7 @@
                         const discBadge = card.querySelector('.creditor-name');
                         matchesStatus = discBadge && discBadge.textContent.includes('DISCREPANCY');
                     }
-                    
+
                     if (matchesSearch && matchesStatus) {
                         card.style.display = 'block';
                         visibleCount++;
@@ -1154,13 +1156,13 @@
                         card.style.display = 'none';
                     }
                 });
-                
+
                 // Update count
                 const total = cards.length;
-                document.getElementById('filterCount').textContent = 
+                document.getElementById('filterCount').textContent =
                     visibleCount === total ? '' : `Showing ${visibleCount} of ${total}`;
             }
-            
+
             // Auto-expand ALL accounts
             document.addEventListener('DOMContentLoaded', function() {
                 const allAccounts = document.querySelectorAll('.account-details');

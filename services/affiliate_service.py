@@ -9,13 +9,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from database import (
-    Affiliate,
-    AffiliatePayout,
-    Client,
-    Commission,
-    SessionLocal,
-)
+from database import Affiliate, AffiliatePayout, Client, Commission, SessionLocal
 
 # Affiliate status options
 AFFILIATE_STATUSES = {

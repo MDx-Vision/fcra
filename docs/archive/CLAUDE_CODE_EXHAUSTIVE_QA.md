@@ -245,7 +245,7 @@ tests/exhaustive/flow_signup.md
 1. Load /signup
 2. Fill Step 1 (personal info) - test all field validations
 3. Click Next - verify step 2 loads
-4. Fill Step 2 (case info) - test all field validations  
+4. Fill Step 2 (case info) - test all field validations
 5. Click Next - verify step 3 loads
 6. Fill Step 3 (plan selection) - test all options
 7. Click Next - verify step 4 loads
@@ -450,7 +450,7 @@ Create `tests/exhaustive/FINAL_REPORT.md`:
 | Outstanding Issues | |
 
 ## Issues Fixed
-| # | Page | Issue | Fix | 
+| # | Page | Issue | Fix |
 |---|------|-------|-----|
 | 1 | | | |
 

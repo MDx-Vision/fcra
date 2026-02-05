@@ -114,6 +114,7 @@ class SmartCreditAdapter(BaseCreditAdapter):
         # Add request ID for distributed tracing
         try:
             from services.request_id_service import with_request_id_headers
+
             headers = with_request_id_headers(headers)
         except ImportError:
             pass
@@ -393,6 +394,7 @@ class IdentityIQAdapter(BaseCreditAdapter):
         # Add request ID for distributed tracing
         try:
             from services.request_id_service import with_request_id_headers
+
             headers = with_request_id_headers(headers)
         except ImportError:
             pass
@@ -675,6 +677,7 @@ class ExperianConnectAdapter(BaseCreditAdapter):
         # Add request ID for distributed tracing
         try:
             from services.request_id_service import with_request_id_headers
+
             headers = with_request_id_headers(headers)
         except ImportError:
             pass

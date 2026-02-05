@@ -13,13 +13,13 @@
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .main-content {
             margin-left: 260px;
             padding: 30px;
             max-width: 1200px;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -32,7 +32,7 @@
             color: #1a1a2e;
         }
         .header-actions { display: flex; gap: 15px; }
-        
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -57,7 +57,7 @@
             border: 2px solid #e2e8f0;
         }
         .btn-secondary:hover { border-color: #84cc16; }
-        
+
         .card {
             background: white;
             border-radius: 16px;
@@ -78,7 +78,7 @@
             font-weight: 600;
             color: #1a1a2e;
         }
-        
+
         .toc {
             background: #f8fafc;
             border-radius: 12px;
@@ -110,7 +110,7 @@
             font-size: 13px;
             color: #64748b;
         }
-        
+
         .section-title {
             font-size: 22px;
             font-weight: 700;
@@ -118,14 +118,14 @@
             margin-bottom: 16px;
             padding-top: 20px;
         }
-        
+
         .section-description {
             font-size: 15px;
             color: #64748b;
             line-height: 1.7;
             margin-bottom: 20px;
         }
-        
+
         .code-block {
             background: #1a1a2e;
             border-radius: 8px;
@@ -145,7 +145,7 @@
         .code-block .string { color: #fbbf24; }
         .code-block .number { color: #60a5fa; }
         .code-block .property { color: #f472b6; }
-        
+
         .endpoint-card {
             background: white;
             border: 1px solid #e2e8f0;
@@ -173,7 +173,7 @@
         .method-post { background: #dbeafe; color: #1e40af; }
         .method-put { background: #fef3c7; color: #92400e; }
         .method-delete { background: #fee2e2; color: #991b1b; }
-        
+
         .endpoint-path {
             font-family: 'Monaco', 'Consolas', monospace;
             font-size: 14px;
@@ -196,7 +196,7 @@
             color: #64748b;
             margin-bottom: 16px;
         }
-        
+
         .param-table {
             width: 100%;
             border-collapse: collapse;
@@ -244,7 +244,7 @@
             padding: 2px 6px;
             border-radius: 4px;
         }
-        
+
         .response-tabs {
             display: flex;
             gap: 5px;
@@ -262,7 +262,7 @@
         }
         .response-tab:hover { background: #e2e8f0; }
         .response-tab.active { background: #1a1a2e; color: white; }
-        
+
         .error-table {
             width: 100%;
             border-collapse: collapse;
@@ -291,7 +291,7 @@
         .error-code.code-404 { color: #64748b; }
         .error-code.code-429 { color: #8b5cf6; }
         .error-code.code-500 { color: #dc2626; }
-        
+
         .lang-tabs {
             display: flex;
             gap: 5px;
@@ -309,7 +309,7 @@
         }
         .lang-tab:hover { color: white; }
         .lang-tab.active { background: #1a1a2e; color: #84cc16; }
-        
+
         .info-box {
             background: #f0fdf4;
             border: 1px solid #bbf7d0;
@@ -337,7 +337,7 @@
             line-height: 1.6;
         }
         .info-box.warning p { color: #92400e; }
-        
+
         .badge {
             display: inline-block;
             padding: 4px 10px;
@@ -347,7 +347,7 @@
         }
         .badge-success { background: #dcfce7; color: #15803d; }
         .badge-info { background: #e0f2fe; color: #0369a1; }
-        
+
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; }
@@ -357,7 +357,7 @@
 <body>
     {% set active_page = 'api-docs' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="header">
             <h1>API Documentation</h1>
@@ -392,7 +392,7 @@
             <h2 class="section-title">API Overview</h2>
             <div class="card">
                 <p class="section-description">
-                    The Brightpath Ascend FCRA Platform API provides programmatic access to client management, dispute tracking, violation monitoring, and webhook integrations. 
+                    The Brightpath Ascend FCRA Platform API provides programmatic access to client management, dispute tracking, violation monitoring, and webhook integrations.
                     This RESTful API uses JSON for request and response bodies and follows standard HTTP conventions.
                 </p>
                 <p class="section-description">
@@ -410,7 +410,7 @@
                 <p class="section-description">
                     The API uses Bearer token authentication. Include your API key in the <code>Authorization</code> header of each request.
                 </p>
-                
+
                 <div class="code-block">
                     <pre><span class="keyword">Authorization:</span> <span class="string">Bearer your-api-key-here</span></pre>
                 </div>
@@ -421,7 +421,7 @@
                         Getting Your API Key
                     </h4>
                     <p>
-                        Generate your API key from the <a href="/dashboard/api-keys" style="color: #15803d; font-weight: 500;">API Keys Management</a> page. 
+                        Generate your API key from the <a href="/dashboard/api-keys" style="color: #15803d; font-weight: 500;">API Keys Management</a> page.
                         Each key has configurable scopes that determine which endpoints it can access. Keep your API key secure and never expose it in client-side code.
                     </p>
                 </div>
@@ -499,7 +499,7 @@
                         Rate Limit Response
                     </h4>
                     <p>
-                        When you exceed rate limits, the API returns a <code>429 Too Many Requests</code> response. 
+                        When you exceed rate limits, the API returns a <code>429 Too Many Requests</code> response.
                         The response includes headers indicating when you can retry.
                     </p>
                 </div>
@@ -532,7 +532,7 @@
                 </div>
                 <div class="endpoint-body">
                     <p class="endpoint-description">Retrieve a paginated list of all clients.</p>
-                    
+
                     <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Query Parameters</h4>
                     <table class="param-table">
                         <thead>
@@ -600,7 +600,7 @@
                 </div>
                 <div class="endpoint-body">
                     <p class="endpoint-description">Retrieve detailed information about a specific client.</p>
-                    
+
                     <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Path Parameters</h4>
                     <table class="param-table">
                         <thead>
@@ -650,7 +650,7 @@
                 </div>
                 <div class="endpoint-body">
                     <p class="endpoint-description">Create a new client record.</p>
-                    
+
                     <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Request Body</h4>
                     <table class="param-table">
                         <thead>
@@ -728,7 +728,7 @@
                 </div>
                 <div class="endpoint-body">
                     <p class="endpoint-description">Retrieve a list of all disputes with optional filtering.</p>
-                    
+
                     <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Query Parameters</h4>
                     <table class="param-table">
                         <thead>
@@ -793,7 +793,7 @@
                 </div>
                 <div class="endpoint-body">
                     <p class="endpoint-description">Create a new dispute for a client.</p>
-                    
+
                     <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Request Body</h4>
                     <table class="param-table">
                         <thead>
@@ -854,7 +854,7 @@
                 </div>
                 <div class="endpoint-body">
                     <p class="endpoint-description">Retrieve a list of identified FCRA violations.</p>
-                    
+
                     <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Query Parameters</h4>
                     <table class="param-table">
                         <thead>
@@ -915,7 +915,7 @@
                 </div>
                 <div class="endpoint-body">
                     <p class="endpoint-description">Register a new webhook to receive event notifications.</p>
-                    
+
                     <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Request Body</h4>
                     <table class="param-table">
                         <thead>
@@ -974,7 +974,7 @@
             <h2 class="section-title">Error Codes</h2>
             <div class="card">
                 <p class="section-description">
-                    The API uses standard HTTP status codes to indicate the success or failure of requests. 
+                    The API uses standard HTTP status codes to indicate the success or failure of requests.
                     Error responses include a JSON body with details about what went wrong.
                 </p>
 
@@ -1102,7 +1102,7 @@ response = requests.post(
 <span class="comment">// List all clients</span>
 <span class="keyword">async function</span> <span class="function">listClients</span>() {
     <span class="keyword">const</span> data = <span class="keyword">await</span> apiRequest(<span class="string">'/clients?page=1&limit=20'</span>);
-    
+
     <span class="keyword">if</span> (data.success) {
         data.data.clients.forEach(client => {
             console.log(<span class="string">`Client: ${client.first_name} ${client.last_name}`</span>);

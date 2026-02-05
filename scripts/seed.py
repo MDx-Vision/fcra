@@ -58,15 +58,15 @@ def seed_database():
     print("DATABASE SEED SCRIPT")
     print("=" * 50)
     print()
-    
+
     print("Step 1: Clearing all existing data...")
     clear_all_data()
     print()
-    
+
     print("Step 2: Creating test user...")
     user = create_test_user()
     print()
-    
+
     print("=" * 50)
     print("SEED COMPLETE")
     print("=" * 50)

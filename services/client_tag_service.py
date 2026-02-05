@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from database import SessionLocal, ClientTag, ClientTagAssignment, Client
+from database import Client, ClientTag, ClientTagAssignment, SessionLocal
 
 logger = logging.getLogger(__name__)
 
@@ -104,9 +104,11 @@ class ClientTagService:
             name = name.strip()
 
             # Check for duplicate name
-            existing = db.query(ClientTag).filter(
-                func.lower(ClientTag.name) == name.lower()
-            ).first()
+            existing = (
+                db.query(ClientTag)
+                .filter(func.lower(ClientTag.name) == name.lower())
+                .first()
+            )
             if existing:
                 return {"success": False, "error": f"Tag '{name}' already exists"}
 
@@ -203,10 +205,14 @@ class ClientTagService:
                     return {"success": False, "error": "Tag name cannot be empty"}
 
                 # Check for duplicate name (excluding this tag)
-                existing = db.query(ClientTag).filter(
-                    func.lower(ClientTag.name) == name.lower(),
-                    ClientTag.id != tag_id
-                ).first()
+                existing = (
+                    db.query(ClientTag)
+                    .filter(
+                        func.lower(ClientTag.name) == name.lower(),
+                        ClientTag.id != tag_id,
+                    )
+                    .first()
+                )
                 if existing:
                     return {"success": False, "error": f"Tag '{name}' already exists"}
 
@@ -303,10 +309,14 @@ class ClientTagService:
                 return {"success": False, "error": "Tag not found"}
 
             # Check if already assigned
-            existing = db.query(ClientTagAssignment).filter(
-                ClientTagAssignment.client_id == client_id,
-                ClientTagAssignment.tag_id == tag_id
-            ).first()
+            existing = (
+                db.query(ClientTagAssignment)
+                .filter(
+                    ClientTagAssignment.client_id == client_id,
+                    ClientTagAssignment.tag_id == tag_id,
+                )
+                .first()
+            )
             if existing:
                 return {"success": True, "message": "Tag already assigned"}
 
@@ -344,10 +354,14 @@ class ClientTagService:
         """
         db = self._get_db()
         try:
-            assignment = db.query(ClientTagAssignment).filter(
-                ClientTagAssignment.client_id == client_id,
-                ClientTagAssignment.tag_id == tag_id
-            ).first()
+            assignment = (
+                db.query(ClientTagAssignment)
+                .filter(
+                    ClientTagAssignment.client_id == client_id,
+                    ClientTagAssignment.tag_id == tag_id,
+                )
+                .first()
+            )
 
             if not assignment:
                 return {"success": False, "error": "Tag assignment not found"}
@@ -600,10 +614,14 @@ class ClientTagService:
 
             for client_id in client_ids:
                 # Check if already assigned
-                existing = db.query(ClientTagAssignment).filter(
-                    ClientTagAssignment.client_id == client_id,
-                    ClientTagAssignment.tag_id == tag_id
-                ).first()
+                existing = (
+                    db.query(ClientTagAssignment)
+                    .filter(
+                        ClientTagAssignment.client_id == client_id,
+                        ClientTagAssignment.tag_id == tag_id,
+                    )
+                    .first()
+                )
 
                 if existing:
                     skipped += 1
@@ -652,10 +670,14 @@ class ClientTagService:
         """
         db = self._get_db()
         try:
-            deleted = db.query(ClientTagAssignment).filter(
-                ClientTagAssignment.client_id.in_(client_ids),
-                ClientTagAssignment.tag_id == tag_id
-            ).delete(synchronize_session=False)
+            deleted = (
+                db.query(ClientTagAssignment)
+                .filter(
+                    ClientTagAssignment.client_id.in_(client_ids),
+                    ClientTagAssignment.tag_id == tag_id,
+                )
+                .delete(synchronize_session=False)
+            )
 
             db.commit()
 
@@ -697,8 +719,10 @@ class ClientTagService:
 
             # Clients with at least one tag
             clients_with_tags = (
-                db.query(func.count(func.distinct(ClientTagAssignment.client_id)))
-                .scalar() or 0
+                db.query(
+                    func.count(func.distinct(ClientTagAssignment.client_id))
+                ).scalar()
+                or 0
             )
 
             # Most used tags
@@ -707,9 +731,11 @@ class ClientTagService:
                     ClientTag.id,
                     ClientTag.name,
                     ClientTag.color,
-                    func.count(ClientTagAssignment.id).label("count")
+                    func.count(ClientTagAssignment.id).label("count"),
                 )
-                .outerjoin(ClientTagAssignment, ClientTagAssignment.tag_id == ClientTag.id)
+                .outerjoin(
+                    ClientTagAssignment, ClientTagAssignment.tag_id == ClientTag.id
+                )
                 .group_by(ClientTag.id)
                 .order_by(func.count(ClientTagAssignment.id).desc())
                 .limit(10)
@@ -752,9 +778,11 @@ class ClientTagService:
             skipped = 0
 
             for tag_data in DEFAULT_TAGS:
-                existing = db.query(ClientTag).filter(
-                    func.lower(ClientTag.name) == tag_data["name"].lower()
-                ).first()
+                existing = (
+                    db.query(ClientTag)
+                    .filter(func.lower(ClientTag.name) == tag_data["name"].lower())
+                    .first()
+                )
 
                 if existing:
                     skipped += 1
@@ -789,7 +817,9 @@ class ClientTagService:
     # Helper Methods
     # =========================================================================
 
-    def _tag_to_dict(self, tag: ClientTag, db: Optional[Session] = None) -> Dict[str, Any]:
+    def _tag_to_dict(
+        self, tag: ClientTag, db: Optional[Session] = None
+    ) -> Dict[str, Any]:
         """Convert ClientTag to dictionary."""
         result = {
             "id": tag.id,
@@ -803,7 +833,8 @@ class ClientTagService:
             count = (
                 db.query(func.count(ClientTagAssignment.id))
                 .filter(ClientTagAssignment.tag_id == tag.id)
-                .scalar() or 0
+                .scalar()
+                or 0
             )
             result["client_count"] = count
 

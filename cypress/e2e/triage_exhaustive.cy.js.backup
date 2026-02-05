@@ -294,7 +294,7 @@ describe('Staff Login Page (/dashboard/triage)', () => {
       // Test copy/paste
       cy.get('[data-testid="email-input"]').invoke('val', 'test@example.com').trigger('input');
       cy.get('[data-testid="email-input"]').should('have.value', 'test@example.com');
-      
+
       // Test clear and retype
       cy.get('[data-testid="email-input"]').clear().type('new@example.com');
       cy.get('[data-testid="email-input"]').should('have.value', 'new@example.com');
@@ -316,7 +316,7 @@ describe('Staff Login Page (/dashboard/triage)', () => {
     it('should handle rapid form submissions gracefully', () => {
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
-      
+
       // Rapid clicks should not cause issues
       cy.get('[data-testid="login-button"]').click();
       cy.get('[data-testid="login-button"]').click();

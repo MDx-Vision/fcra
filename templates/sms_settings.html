@@ -381,7 +381,7 @@
                         {{ 'Enabled' if settings.sms_enabled else 'Disabled' }}
                     </span>
                 </div>
-                
+
                 <div class="setting-row">
                     <div class="setting-info">
                         <div class="setting-label">Enable SMS Notifications</div>
@@ -399,7 +399,7 @@
                     <span class="icon">📋</span>
                     Automated Message Types
                 </div>
-                
+
                 <div class="setting-row">
                     <div class="setting-info">
                         <div class="setting-label">Welcome SMS</div>
@@ -471,7 +471,7 @@
                         <div class="setting-label">Reminder Delay (Hours)</div>
                         <div class="setting-description">How long to wait before sending document reminders</div>
                     </div>
-                    <input type="number" class="setting-input" name="reminder_delay_hours" 
+                    <input type="number" class="setting-input" name="reminder_delay_hours"
                            value="{{ settings.reminder_delay_hours }}" min="1" max="168">
                 </div>
             </div>
@@ -488,7 +488,7 @@
                 <div class="test-sms-form">
                     <div class="form-group">
                         <label>Phone Number</label>
-                        <input type="tel" id="testPhone" placeholder="+1 (555) 123-4567" 
+                        <input type="tel" id="testPhone" placeholder="+1 (555) 123-4567"
                                pattern="[\+]?[\d\s\-\(\)]+" required>
                     </div>
                     <div class="form-group" style="flex: 2;">
@@ -570,7 +570,7 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast('Test SMS sent successfully!');
                 } else {
@@ -584,12 +584,12 @@
         // Handle form submission with AJAX
         document.getElementById('smsSettingsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const formData = new FormData(e.target);
             const data = {};
-            
+
             // Convert form data to object, handling checkboxes
-            ['sms_enabled', 'welcome_sms_enabled', 'document_reminder_enabled', 
+            ['sms_enabled', 'welcome_sms_enabled', 'document_reminder_enabled',
              'case_update_enabled', 'dispute_sent_enabled', 'cra_response_enabled',
              'payment_reminder_enabled'].forEach(key => {
                 data[key] = formData.has(key);
@@ -604,7 +604,7 @@
                 });
 
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showToast('Settings saved successfully!');
                     setTimeout(() => window.location.reload(), 1000);

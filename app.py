@@ -270,6 +270,7 @@ app = Flask(__name__)
 
 # Initialize Sentry error tracking (with user context and Slack alerts)
 from services.sentry_service import init_sentry
+
 if init_sentry(app):
     app_logger.info("Sentry error tracking initialized with user context")
 else:
@@ -299,6 +300,7 @@ app_logger.info("Graceful shutdown handling initialized")
 try:
     from database import engine
     from services.database_pool_service import init_pool_monitoring
+
     pool_monitor = init_pool_monitoring(engine, start_background=True)
     app_logger.info("Database pool monitoring initialized")
 except Exception as e:
@@ -314,7 +316,10 @@ except Exception as e:
     app_logger.warning(f"Could not initialize rate limit monitoring: {e}")
 
 # Initialize request ID tracking
-from services.request_id_service import init_request_id_middleware, configure_logging_with_request_id
+from services.request_id_service import (
+    configure_logging_with_request_id,
+    init_request_id_middleware,
+)
 
 init_request_id_middleware(app)
 configure_logging_with_request_id()
@@ -1943,10 +1948,12 @@ def health_pool():
 
     monitor = get_pool_monitor()
     if monitor is None:
-        return jsonify({
-            "status": "unavailable",
-            "error": "Pool monitoring not initialized"
-        }), 503
+        return (
+            jsonify(
+                {"status": "unavailable", "error": "Pool monitoring not initialized"}
+            ),
+            503,
+        )
 
     metrics = monitor.get_metrics()
     history = monitor.get_history(limit=10)
@@ -1962,15 +1969,17 @@ def health_pool():
         status = "healthy"
         status_code = 200
 
-    return jsonify({
-        "status": status,
-        "metrics": metrics.to_dict(),
-        "history": history,
-        "thresholds": {
-            "warning": 80,
-            "critical": 90
-        }
-    }), status_code
+    return (
+        jsonify(
+            {
+                "status": status,
+                "metrics": metrics.to_dict(),
+                "history": history,
+                "thresholds": {"warning": 80, "critical": 90},
+            }
+        ),
+        status_code,
+    )
 
 
 @app.route("/metrics")
@@ -2055,6 +2064,7 @@ def prometheus_metrics():
     # Database pool metrics (enhanced)
     try:
         from services.database_pool_service import get_pool_monitor
+
         pool_monitor = get_pool_monitor()
         if pool_monitor:
             pool_metrics = pool_monitor.get_metrics()
@@ -2062,7 +2072,9 @@ def prometheus_metrics():
             metrics.append("# TYPE db_pool_size gauge")
             metrics.append(f"db_pool_size {pool_metrics.pool_size}")
 
-            metrics.append("# HELP db_pool_checked_out Database connections currently in use")
+            metrics.append(
+                "# HELP db_pool_checked_out Database connections currently in use"
+            )
             metrics.append("# TYPE db_pool_checked_out gauge")
             metrics.append(f"db_pool_checked_out {pool_metrics.checked_out}")
 
@@ -2070,7 +2082,9 @@ def prometheus_metrics():
             metrics.append("# TYPE db_pool_overflow gauge")
             metrics.append(f"db_pool_overflow {pool_metrics.overflow}")
 
-            metrics.append("# HELP db_pool_usage_percent Database pool usage percentage")
+            metrics.append(
+                "# HELP db_pool_usage_percent Database pool usage percentage"
+            )
             metrics.append("# TYPE db_pool_usage_percent gauge")
             metrics.append(f"db_pool_usage_percent {pool_metrics.usage_percent:.2f}")
 
@@ -2078,9 +2092,13 @@ def prometheus_metrics():
             metrics.append("# TYPE db_pool_checkouts_total counter")
             metrics.append(f"db_pool_checkouts_total {pool_metrics.total_checkouts}")
 
-            metrics.append("# HELP db_pool_invalidations_total Total connection invalidations")
+            metrics.append(
+                "# HELP db_pool_invalidations_total Total connection invalidations"
+            )
             metrics.append("# TYPE db_pool_invalidations_total counter")
-            metrics.append(f"db_pool_invalidations_total {pool_metrics.total_invalidations}")
+            metrics.append(
+                f"db_pool_invalidations_total {pool_metrics.total_invalidations}"
+            )
 
             metrics.append("# HELP db_pool_timeouts_total Total pool timeout errors")
             metrics.append("# TYPE db_pool_timeouts_total counter")
@@ -2091,7 +2109,9 @@ def prometheus_metrics():
             metrics.append("# TYPE db_pool_size gauge")
             metrics.append(f"db_pool_size {db_pool_size}")
 
-            metrics.append("# HELP db_pool_checked_out Database connections currently in use")
+            metrics.append(
+                "# HELP db_pool_checked_out Database connections currently in use"
+            )
             metrics.append("# TYPE db_pool_checked_out gauge")
             metrics.append(f"db_pool_checked_out {db_pool_checked_out}")
     except Exception:
@@ -2100,7 +2120,9 @@ def prometheus_metrics():
         metrics.append("# TYPE db_pool_size gauge")
         metrics.append(f"db_pool_size {db_pool_size}")
 
-        metrics.append("# HELP db_pool_checked_out Database connections currently in use")
+        metrics.append(
+            "# HELP db_pool_checked_out Database connections currently in use"
+        )
         metrics.append("# TYPE db_pool_checked_out gauge")
         metrics.append(f"db_pool_checked_out {db_pool_checked_out}")
 
@@ -2111,13 +2133,21 @@ def prometheus_metrics():
         rl_monitor = get_rate_limit_monitor()
         if rl_monitor:
             rl_stats = rl_monitor.get_stats()
-            metrics.append("# HELP rate_limit_violations_total Total rate limit violations")
+            metrics.append(
+                "# HELP rate_limit_violations_total Total rate limit violations"
+            )
             metrics.append("# TYPE rate_limit_violations_total counter")
-            metrics.append(f"rate_limit_violations_total {rl_stats['total_violations']}")
+            metrics.append(
+                f"rate_limit_violations_total {rl_stats['total_violations']}"
+            )
 
-            metrics.append("# HELP rate_limit_violations_window Violations in current window")
+            metrics.append(
+                "# HELP rate_limit_violations_window Violations in current window"
+            )
             metrics.append("# TYPE rate_limit_violations_window gauge")
-            metrics.append(f"rate_limit_violations_window {rl_stats['violations_in_window']}")
+            metrics.append(
+                f"rate_limit_violations_window {rl_stats['violations_in_window']}"
+            )
 
             metrics.append("# HELP rate_limit_blocked_ips Currently blocked IPs")
             metrics.append("# TYPE rate_limit_blocked_ips gauge")
@@ -2158,9 +2188,13 @@ def prometheus_metrics():
         metrics.append("# TYPE cache_expired_total counter")
         metrics.append(f"cache_expired_total {cache_stats.get('expired_count', 0)}")
 
-        metrics.append("# HELP cache_memory_bytes Estimated cache memory usage in bytes")
+        metrics.append(
+            "# HELP cache_memory_bytes Estimated cache memory usage in bytes"
+        )
         metrics.append("# TYPE cache_memory_bytes gauge")
-        metrics.append(f"cache_memory_bytes {int(cache_stats.get('memory_estimate_kb', 0) * 1024)}")
+        metrics.append(
+            f"cache_memory_bytes {int(cache_stats.get('memory_estimate_kb', 0) * 1024)}"
+        )
     except Exception:
         pass
 
@@ -2197,10 +2231,15 @@ def health_ratelimit():
 
     monitor = get_rate_limit_monitor()
     if monitor is None:
-        return jsonify({
-            "status": "unavailable",
-            "error": "Rate limit monitoring not initialized"
-        }), 503
+        return (
+            jsonify(
+                {
+                    "status": "unavailable",
+                    "error": "Rate limit monitoring not initialized",
+                }
+            ),
+            503,
+        )
 
     stats = monitor.get_stats()
     blocked_ips = monitor.get_blocked_ips()
@@ -2218,13 +2257,18 @@ def health_ratelimit():
         status = "healthy"
         status_code = 200
 
-    return jsonify({
-        "status": status,
-        "stats": stats,
-        "blocked_ips": blocked_ips,
-        "top_offenders": top_offenders,
-        "recent_violations": recent_violations,
-    }), status_code
+    return (
+        jsonify(
+            {
+                "status": status,
+                "stats": stats,
+                "blocked_ips": blocked_ips,
+                "top_offenders": top_offenders,
+                "recent_violations": recent_violations,
+            }
+        ),
+        status_code,
+    )
 
 
 @app.route("/health/circuits")
@@ -2251,8 +2295,8 @@ def health_circuits():
                   type: array
     """
     from services.circuit_breaker_service import (
-        get_circuit_health_summary,
         get_all_circuit_status,
+        get_circuit_health_summary,
     )
 
     summary = get_circuit_health_summary()
@@ -2269,11 +2313,16 @@ def health_circuits():
         status = "healthy"
         status_code = 200
 
-    return jsonify({
-        "status": status,
-        "summary": summary,
-        "circuits": all_status,
-    }), status_code
+    return (
+        jsonify(
+            {
+                "status": status,
+                "summary": summary,
+                "circuits": all_status,
+            }
+        ),
+        status_code,
+    )
 
 
 @app.route("/api/circuits/<name>/reset", methods=["POST"])
@@ -2297,20 +2346,27 @@ def reset_circuit_breaker(name):
       404:
         description: Circuit not found
     """
-    from services.circuit_breaker_service import reset_circuit, get_circuit_breaker
+    from services.circuit_breaker_service import get_circuit_breaker, reset_circuit
 
     success = reset_circuit(name)
     if success:
-        return jsonify({
-            "success": True,
-            "message": f"Circuit breaker '{name}' reset to closed state",
-            "status": get_circuit_breaker(name).get_status(),
-        })
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Circuit breaker '{name}' reset to closed state",
+                "status": get_circuit_breaker(name).get_status(),
+            }
+        )
     else:
-        return jsonify({
-            "success": False,
-            "error": f"Circuit breaker '{name}' not found",
-        }), 404
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"Circuit breaker '{name}' not found",
+                }
+            ),
+            404,
+        )
 
 
 @app.route("/api/circuits/reset-all", methods=["POST"])
@@ -2329,11 +2385,13 @@ def reset_all_circuit_breakers():
     from services.circuit_breaker_service import reset_all_circuits
 
     count = reset_all_circuits()
-    return jsonify({
-        "success": True,
-        "message": f"Reset {count} circuit breaker(s) to closed state",
-        "count": count,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "message": f"Reset {count} circuit breaker(s) to closed state",
+            "count": count,
+        }
+    )
 
 
 # =============================================================================
@@ -2348,7 +2406,7 @@ def feature_flags_dashboard():
     Feature flags management dashboard.
     Admin-only access.
     """
-    from services.feature_flag_service import get_feature_flag_service, FLAG_CATEGORIES
+    from services.feature_flag_service import FLAG_CATEGORIES, get_feature_flag_service
 
     service = get_feature_flag_service()
     flags = service.get_all_flags()
@@ -2387,11 +2445,13 @@ def api_get_feature_flags():
     service = get_feature_flag_service()
     flags = service.get_all_flags(category=category)
 
-    return jsonify({
-        "success": True,
-        "flags": flags,
-        "count": len(flags),
-    })
+    return jsonify(
+        {
+            "success": True,
+            "flags": flags,
+            "count": len(flags),
+        }
+    )
 
 
 @app.route("/api/feature-flags/<key>")
@@ -2590,12 +2650,14 @@ def api_toggle_feature_flag(key):
     if new_state is None:
         return jsonify({"success": False, "error": "Flag not found"}), 404
 
-    return jsonify({
-        "success": True,
-        "key": key,
-        "enabled": new_state,
-        "message": f"Flag '{key}' is now {'enabled' if new_state else 'disabled'}",
-    })
+    return jsonify(
+        {
+            "success": True,
+            "key": key,
+            "enabled": new_state,
+            "message": f"Flag '{key}' is now {'enabled' if new_state else 'disabled'}",
+        }
+    )
 
 
 @app.route("/api/feature-flags/check/<key>")
@@ -2629,10 +2691,12 @@ def api_check_feature_flag(key):
 
     enabled = is_enabled(key, user_id=user_id, user_role=user_role, default=False)
 
-    return jsonify({
-        "key": key,
-        "enabled": enabled,
-    })
+    return jsonify(
+        {
+            "key": key,
+            "enabled": enabled,
+        }
+    )
 
 
 @app.route("/api/feature-flags/stats")
@@ -2672,11 +2736,13 @@ def api_initialize_feature_flags():
     service = get_feature_flag_service()
     count = service.initialize_default_flags()
 
-    return jsonify({
-        "success": True,
-        "message": f"Initialized {count} default feature flags",
-        "count": count,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "message": f"Initialized {count} default feature flags",
+            "count": count,
+        }
+    )
 
 
 # =============================================================================
@@ -2692,11 +2758,11 @@ def scheduled_reports_dashboard():
     Admin-only access.
     """
     from services.scheduled_reports_service import (
-        get_scheduled_reports_service,
+        DAYS_OF_WEEK,
         REPORT_TYPES,
         SCHEDULE_TYPES,
-        DAYS_OF_WEEK,
         TIMEZONES,
+        get_scheduled_reports_service,
     )
 
     service = get_scheduled_reports_service()
@@ -2746,11 +2812,13 @@ def api_get_scheduled_reports():
     service = get_scheduled_reports_service()
     reports = service.get_all_reports(is_active=is_active, report_type=report_type)
 
-    return jsonify({
-        "success": True,
-        "reports": reports,
-        "count": len(reports),
-    })
+    return jsonify(
+        {
+            "success": True,
+            "reports": reports,
+            "count": len(reports),
+        }
+    )
 
 
 @app.route("/api/scheduled-reports/<int:report_id>")
@@ -2819,7 +2887,10 @@ def api_create_scheduled_report():
     if not data.get("schedule_type"):
         return jsonify({"success": False, "error": "Schedule type is required"}), 400
     if not data.get("recipients"):
-        return jsonify({"success": False, "error": "At least one recipient is required"}), 400
+        return (
+            jsonify({"success": False, "error": "At least one recipient is required"}),
+            400,
+        )
 
     service = get_scheduled_reports_service()
 
@@ -2941,11 +3012,13 @@ def api_toggle_scheduled_report(report_id):
     if new_status is None:
         return jsonify({"success": False, "error": "Report not found"}), 404
 
-    return jsonify({
-        "success": True,
-        "is_active": new_status,
-        "message": f"Report {'activated' if new_status else 'deactivated'}",
-    })
+    return jsonify(
+        {
+            "success": True,
+            "is_active": new_status,
+            "message": f"Report {'activated' if new_status else 'deactivated'}",
+        }
+    )
 
 
 @app.route("/api/scheduled-reports/<int:report_id>/run", methods=["POST"])
@@ -2991,10 +3064,12 @@ def api_run_due_scheduled_reports():
     service = get_scheduled_reports_service()
     results = service.run_due_reports()
 
-    return jsonify({
-        "success": True,
-        **results,
-    })
+    return jsonify(
+        {
+            "success": True,
+            **results,
+        }
+    )
 
 
 @app.route("/api/scheduled-reports/stats")
@@ -3030,19 +3105,21 @@ def api_get_scheduled_report_types():
         description: Report types
     """
     from services.scheduled_reports_service import (
+        DAYS_OF_WEEK,
         REPORT_TYPES,
         SCHEDULE_TYPES,
-        DAYS_OF_WEEK,
         TIMEZONES,
     )
 
-    return jsonify({
-        "success": True,
-        "report_types": REPORT_TYPES,
-        "schedule_types": SCHEDULE_TYPES,
-        "days_of_week": DAYS_OF_WEEK,
-        "timezones": TIMEZONES,
-    })
+    return jsonify(
+        {
+            "success": True,
+            "report_types": REPORT_TYPES,
+            "schedule_types": SCHEDULE_TYPES,
+            "days_of_week": DAYS_OF_WEEK,
+            "timezones": TIMEZONES,
+        }
+    )
 
 
 @app.route("/api/cron/scheduled-reports", methods=["GET", "POST"])
@@ -3064,10 +3141,12 @@ def cron_run_scheduled_reports():
     service = get_scheduled_reports_service()
     results = service.run_due_reports()
 
-    return jsonify({
-        "success": True,
-        **results,
-    })
+    return jsonify(
+        {
+            "success": True,
+            **results,
+        }
+    )
 
 
 # =============================================================================
@@ -3254,7 +3333,7 @@ def home():
         document.getElementById('disputeRound').addEventListener('change', function() {
             const round = parseInt(this.value);
             const existingFields = document.getElementById('existingClientFields');
-            
+
             if (round > 1) {
                 existingFields.style.display = 'block';
             } else {
@@ -3342,9 +3421,7 @@ def clean_credit_report_html(html):
 
     # If cleaning destroys everything (>99% reduction), return original HTML instead
     if len(text) < len(html) * 0.01:
-        print(
-            f"⚠️  Aggressive cleaning destroyed content! Using original HTML instead."
-        )
+        print(f"⚠️  Aggressive cleaning destroyed content! Using original HTML instead.")
         text = html
 
     print(f"✂️ Cleaned size: {len(text):,} characters")
@@ -3740,7 +3817,7 @@ MATERIALITY THRESHOLD: Only report if difference is SUBSTANTIVE (affects credit 
 DETECTION STEPS:
 1. For EACH account, extract: Date Last Active, Last Reported, Balance, Payment Status from TU/EX/EQ
 2. Compare Date Last Active between TU vs EX vs EQ - MATERIAL difference (30+ days) = violation
-3. Compare Last Reported dates - MATERIAL difference (30+ days) = violation  
+3. Compare Last Reported dates - MATERIAL difference (30+ days) = violation
 4. Compare Balance amounts - MATERIAL difference ($100+ or 10%+) = violation
 5. Compare Payment Status text - CONTRADICTORY status = violation (not just wording differences)
 6. Check if account appears on some bureaus but NOT others = ghost account violation
@@ -9931,28 +10008,28 @@ def api_portal_forgot_password():
                     <div style="text-align: center; margin-bottom: 30px;">
                         <h1 style="color: #1a1a2e;">Brightpath Ascend Group</h1>
                     </div>
-                    
+
                     <h2 style="color: #333;">Password Reset Request</h2>
-                    
+
                     <p>Hello {client.first_name or client.name},</p>
-                    
+
                     <p>We received a request to reset your password for your Client Portal account.</p>
-                    
+
                     <p>Click the button below to reset your password:</p>
-                    
+
                     <div style="text-align: center; margin: 30px 0;">
                         <a href="{reset_url}" style="background: linear-gradient(135deg, #84cc16, #22c55e); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Reset Password</a>
                     </div>
-                    
+
                     <p>Or copy and paste this link into your browser:</p>
                     <p style="word-break: break-all; color: #3b82f6;">{reset_url}</p>
-                    
+
                     <p><strong>This link will expire in 24 hours.</strong></p>
-                    
+
                     <p>If you didn't request this password reset, you can safely ignore this email.</p>
-                    
+
                     <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-                    
+
                     <p style="color: #64748b; font-size: 12px;">
                         Brightpath Ascend Group<br>
                         Credit Repair & FCRA Litigation Services
@@ -17004,7 +17081,10 @@ def api_bulk_assign_tag():
     tag_id = data.get("tag_id")
 
     if not client_ids or not tag_id:
-        return jsonify({"success": False, "error": "client_ids and tag_id required"}), 400
+        return (
+            jsonify({"success": False, "error": "client_ids and tag_id required"}),
+            400,
+        )
 
     service = ClientTagService()
     try:
@@ -17025,7 +17105,10 @@ def api_bulk_remove_tag():
     tag_id = data.get("tag_id")
 
     if not client_ids or not tag_id:
-        return jsonify({"success": False, "error": "client_ids and tag_id required"}), 400
+        return (
+            jsonify({"success": False, "error": "client_ids and tag_id required"}),
+            400,
+        )
 
     service = ClientTagService()
     try:
@@ -17084,7 +17167,7 @@ def dashboard_client_tags():
 @app.route("/api/email/track/open/<tracking_id>")
 def api_email_track_open(tracking_id):
     """Tracking pixel endpoint - records email open."""
-    from services.email_tracking_service import EmailTrackingService, TRACKING_PIXEL
+    from services.email_tracking_service import TRACKING_PIXEL, EmailTrackingService
 
     service = EmailTrackingService()
     try:
@@ -17107,8 +17190,9 @@ def api_email_track_open(tracking_id):
 @app.route("/api/email/track/click/<tracking_id>")
 def api_email_track_click(tracking_id):
     """Click redirect endpoint - records click then redirects."""
-    from services.email_tracking_service import EmailTrackingService
     from urllib.parse import unquote
+
+    from services.email_tracking_service import EmailTrackingService
 
     original_url = unquote(request.args.get("url", ""))
     if not original_url:
@@ -21927,7 +22011,7 @@ self.addEventListener('activate', event => {
 // Fetch event - network first, cache fallback
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
-    
+
     event.respondWith(
         fetch(event.request)
             .then(response => {
@@ -21956,7 +22040,7 @@ self.addEventListener('push', event => {
             { action: 'dismiss', title: 'Dismiss' }
         ]
     };
-    
+
     event.waitUntil(
         self.registration.showNotification(title, options)
     );
@@ -21965,9 +22049,9 @@ self.addEventListener('push', event => {
 // Notification click event
 self.addEventListener('notificationclick', event => {
     event.notification.close();
-    
+
     if (event.action === 'dismiss') return;
-    
+
     event.waitUntil(
         clients.openWindow(event.notification.data)
     );
@@ -29316,7 +29400,7 @@ def api_instant_preview():
         text_content = text_content[:50000]
 
         preview_prompt = """You are an FCRA expert analyzing a credit report for potential violations.
-        
+
 Analyze this credit report and identify the TOP 5-10 most actionable FCRA violations.
 Focus on HIGH-VALUE violations that would be most likely to succeed in litigation.
 
@@ -35720,6 +35804,7 @@ def api_performance_cleanup():
 def handle_500_error(error):
     """Handle any unhandled server errors and return sanitized JSON"""
     from services.error_sanitizer_service import handle_exception
+
     return handle_exception(error, status_code=500)
 
 
@@ -36378,9 +36463,12 @@ def api_delete_credit_import_credential(id):
 @app.route("/api/credit-import/trigger/<int:client_id>", methods=["POST"])
 @require_staff(roles=["admin", "paralegal", "attorney"])
 def api_trigger_credit_import(client_id):
-    """Trigger manual credit report import for a client using browser automation"""
-    from services.credit_import_automation import run_import_sync
+    """Trigger credit report import - uses cache if available, otherwise runs in background"""
+    from services.credit_import_automation import check_cached_report, run_import_async
     from services.encryption import decrypt_value
+
+    # Check if force_refresh is requested (skip cache)
+    force_refresh = request.args.get("force", "").lower() == "true"
 
     db = get_db()
     try:
@@ -36403,12 +36491,8 @@ def api_trigger_credit_import(client_id):
 
         results = []
         for cred in credentials:
-            cred.last_import_status = "pending"
-            cred.last_import_error = None
-            db.commit()
-
             print(
-                f"📥 Starting credit import for client {client_id}, service: {cred.service_name}"
+                f"📥 Credit import for client {client_id}, service: {cred.service_name}"
             )
 
             try:
@@ -36419,7 +36503,8 @@ def api_trigger_credit_import(client_id):
                     else ""
                 )
 
-                result = run_import_sync(
+                # Use async import with caching
+                result = run_import_async(
                     service_name=cred.service_name,
                     username=cred.username,
                     password=password,
@@ -36428,29 +36513,44 @@ def api_trigger_credit_import(client_id):
                     client_name=(
                         cred.client.name if cred.client else f"Client {client_id}"
                     ),
+                    credential_id=cred.id,
+                    use_cache=not force_refresh,
                 )
 
-                if result["success"]:
+                # If cached, update status immediately
+                if result.get("cached"):
                     cred.last_import_status = "success"
-                    cred.last_import_at = datetime.utcnow()
                     cred.last_import_error = None
-                    cred.last_report_path = result.get("report_path")
-                    print(f"✅ Import successful for {cred.service_name}")
-                else:
-                    cred.last_import_status = "failed"
-                    cred.last_import_error = result.get("error", "Unknown error")
-                    print(
-                        f"❌ Import failed for {cred.service_name}: {result.get('error')}"
+                    print(f"⚡ Using cached report for {cred.service_name}")
+                    results.append(
+                        {
+                            "service": cred.service_name,
+                            "success": True,
+                            "cached": True,
+                            "scores": result.get("scores"),
+                            "report_path": result.get("report_path"),
+                        }
                     )
-
-                results.append(
-                    {
-                        "service": cred.service_name,
-                        "success": result["success"],
-                        "error": result.get("error"),
-                        "report_path": result.get("report_path"),
-                    }
-                )
+                elif result.get("processing"):
+                    cred.last_import_status = "pending"
+                    cred.last_import_error = None
+                    print(f"🔄 Import running in background for {cred.service_name}")
+                    results.append(
+                        {
+                            "service": cred.service_name,
+                            "success": True,
+                            "processing": True,
+                            "message": "Running in background - check back in 1-2 minutes",
+                        }
+                    )
+                else:
+                    results.append(
+                        {
+                            "service": cred.service_name,
+                            "success": result.get("success", False),
+                            "error": result.get("error"),
+                        }
+                    )
 
             except Exception as e:
                 cred.last_import_status = "failed"
@@ -36461,13 +36561,23 @@ def api_trigger_credit_import(client_id):
 
             db.commit()
 
-        success_count = sum(1 for r in results if r["success"])
+        cached_count = sum(1 for r in results if r.get("cached"))
+        processing_count = sum(1 for r in results if r.get("processing"))
+
+        if cached_count > 0:
+            message = f"⚡ Instant! Using cached report (pulled within last 12 hours)"
+        elif processing_count > 0:
+            message = f"🔄 Import started in background. Check back in 1-2 minutes."
+        else:
+            message = "Import status unknown"
 
         return jsonify(
             {
-                "success": success_count > 0,
-                "message": f"Import completed: {success_count}/{len(results)} successful",
+                "success": True,
+                "message": message,
                 "results": results,
+                "cached": cached_count > 0,
+                "processing": processing_count > 0,
             }
         )
     except Exception as e:
@@ -36650,7 +36760,248 @@ def api_view_credit_import_report(credential_id):
         if not os.path.exists(report_path):
             return jsonify({"success": False, "error": "Report file not found"}), 404
 
-        parsed_data = parse_credit_report(report_path, cred.service_name)
+        # Prefer JSON file if it exists (has full extracted data from automation)
+        import json
+
+        json_path = report_path.replace(".html", ".json")
+        xhr_json_path = report_path.replace(".html", "_xhr.json")
+        parsed_data = None
+
+        if os.path.exists(json_path):
+            with open(json_path, "r") as f:
+                parsed_data = json.load(f)
+
+        # If main JSON has empty data, try parsing XHR JSON
+        if (
+            parsed_data
+            and not parsed_data.get("accounts")
+            and os.path.exists(xhr_json_path)
+        ):
+            try:
+                with open(xhr_json_path, "r") as f:
+                    xhr_data = json.load(f)
+
+                # Helper to convert timestamp to date string
+                def ts_to_date(ts):
+                    if not ts:
+                        return ""
+                    try:
+                        from datetime import datetime
+
+                        if isinstance(ts, (int, float)):
+                            return datetime.fromtimestamp(ts / 1000).strftime(
+                                "%-m/%-d/%Y"
+                            )
+                        return str(ts)
+                    except:
+                        return ""
+
+                # Helper to format currency
+                def format_currency(val):
+                    if not val:
+                        return ""
+                    try:
+                        return f"${int(val):,}"
+                    except:
+                        return str(val)
+
+                # Account type mapping
+                acct_types = {
+                    "O": "Open",
+                    "C": "Closed",
+                    "R": "Revolving",
+                    "I": "Installment",
+                    "M": "Mortgage",
+                    "BC": "Bank Card",
+                    "AU": "Authorized User",
+                }
+
+                # Rating mapping
+                ratings = {
+                    "01": "Current",
+                    "1": "Current",
+                    "00": "Current",
+                    "02": "30 Days Late",
+                    "2": "30 Days Late",
+                    "03": "60 Days Late",
+                    "3": "60 Days Late",
+                    "04": "90 Days Late",
+                    "4": "90 Days Late",
+                    "05": "120 Days Late",
+                    "5": "120 Days Late",
+                    "07": "Wage Earner",
+                    "08": "Repossession",
+                    "09": "Charge Off",
+                }
+
+                # Parse XHR data for MyFreeScoreNow format
+                accounts = []
+                for resp in xhr_data:
+                    data = resp.get("data", {})
+                    if isinstance(data, dict) and "trades" in data:
+                        for trade in data.get("trades", []):
+                            name = trade.get("memberCodeShortName", "")
+                            if not name:
+                                member_account = trade.get("memberCodeAccount", {})
+                                creditor_contact = member_account.get(
+                                    "creditorContact", {}
+                                )
+                                name = creditor_contact.get("memberCodeLongName", "")
+                            if name:
+                                # Get account type description
+                                portfolio = trade.get("portfolioType", "")
+                                industry = trade.get("industryCode", "")
+                                acct_type_desc = acct_types.get(portfolio, portfolio)
+                                if industry == "BC":
+                                    acct_type_desc = "Bank Card"
+                                elif industry == "FM" or industry == "RE":
+                                    acct_type_desc = "Real estate mortgage"
+                                elif industry == "AU":
+                                    acct_type_desc = "Auto Loan"
+
+                                # Determine open/closed status
+                                closed_date = trade.get("closedDate")
+                                rating = trade.get("currentAccountRating", "")
+                                status = "Closed" if closed_date else "Open"
+                                payment_status = ratings.get(
+                                    rating,
+                                    (
+                                        "Current"
+                                        if rating in ["01", "1", "00", ""]
+                                        else rating
+                                    ),
+                                )
+
+                                account = {
+                                    "creditor": name.strip(),
+                                    "account_number": trade.get(
+                                        "maskedAccountNumber", ""
+                                    ),
+                                    "account_type": acct_type_desc,
+                                    "status": status,
+                                    "payment_status": payment_status,
+                                    "balance": format_currency(
+                                        trade.get("currentBalanceAmount")
+                                    ),
+                                    "high_credit": format_currency(
+                                        trade.get("highCreditAmount")
+                                    ),
+                                    "credit_limit": format_currency(
+                                        trade.get("creditLimitAmount")
+                                    ),
+                                    "monthly_payment": format_currency(
+                                        trade.get("termsMonthlyPayment")
+                                    ),
+                                    "past_due": format_currency(
+                                        trade.get("pastDueAmount", "0")
+                                    ),
+                                    "date_opened": ts_to_date(trade.get("openDate")),
+                                    "date_closed": ts_to_date(trade.get("closedDate")),
+                                    "last_reported": ts_to_date(
+                                        trade.get("effectiveDate")
+                                    ),
+                                    "last_active": ts_to_date(
+                                        trade.get("effectiveDate")
+                                    ),
+                                    "last_payment": ts_to_date(
+                                        trade.get("lastPaymentDate")
+                                    ),
+                                    "bureaus": {
+                                        "transunion": True,
+                                        "experian": True,
+                                        "equifax": True,
+                                    },
+                                    "payment_history": [],
+                                }
+
+                                # Parse payment history pattern
+                                pattern = trade.get("paymentPattern", "")
+                                if pattern:
+                                    history = []
+                                    for char in pattern[:24]:
+                                        if char == "1":
+                                            history.append(
+                                                {"status": "OK", "badge": "OK"}
+                                            )
+                                        elif char == "2":
+                                            history.append(
+                                                {"status": "30", "badge": "30"}
+                                            )
+                                        elif char == "3":
+                                            history.append(
+                                                {"status": "60", "badge": "60"}
+                                            )
+                                        elif char == "4":
+                                            history.append(
+                                                {"status": "90", "badge": "90"}
+                                            )
+                                        elif char == "5":
+                                            history.append(
+                                                {"status": "120", "badge": "120"}
+                                            )
+                                        elif char in ["9", "C"]:
+                                            history.append(
+                                                {"status": "CO", "badge": "CO"}
+                                            )
+                                        else:
+                                            history.append(
+                                                {"status": "-", "badge": "-"}
+                                            )
+                                    account["payment_history"] = history
+
+                                accounts.append(account)
+                if accounts:
+                    parsed_data["accounts"] = accounts
+            except Exception as e:
+                app.logger.warning(f"Failed to parse XHR data: {e}")
+
+        if not parsed_data:
+            parsed_data = parse_credit_report(report_path, cred.service_name)
+
+        # Transform personal_info arrays to flat fields for template
+        personal_info = parsed_data.get("personal_info", {})
+        if "names" in personal_info and isinstance(personal_info["names"], list):
+            personal_info["name"] = (
+                personal_info["names"][0] if personal_info["names"] else None
+            )
+        if "addresses" in personal_info and isinstance(
+            personal_info["addresses"], list
+        ):
+            personal_info["address"] = (
+                personal_info["addresses"][0] if personal_info["addresses"] else None
+            )
+        parsed_data["personal_info"] = personal_info
+
+        # Transform payment_history from {transunion:[], experian:[], equifax:[]} to flat list
+        accounts = parsed_data.get("accounts", [])
+        for account in accounts:
+            ph = account.get("payment_history", {})
+            if isinstance(ph, dict) and "transunion" in ph:
+                # Convert bureau-specific arrays to flat list with combined entries
+                tu_hist = ph.get("transunion", [])
+                ex_hist = ph.get("experian", [])
+                eq_hist = ph.get("equifax", [])
+                max_len = max(len(tu_hist), len(ex_hist), len(eq_hist), 0)
+                flat_history = []
+                for i in range(min(max_len, 24)):
+                    entry = {
+                        "month": (
+                            tu_hist[i].get("month", "") if i < len(tu_hist) else ""
+                        ),
+                        "transunion": (
+                            tu_hist[i].get("badge", "-") if i < len(tu_hist) else "-"
+                        ),
+                        "experian": (
+                            ex_hist[i].get("badge", "-") if i < len(ex_hist) else "-"
+                        ),
+                        "equifax": (
+                            eq_hist[i].get("badge", "-") if i < len(eq_hist) else "-"
+                        ),
+                    }
+                    flat_history.append(entry)
+                account["payment_history"] = flat_history
+            elif not isinstance(ph, list):
+                account["payment_history"] = []
 
         client_name = cred.client.name if cred.client else f"Client {cred.client_id}"
         report_date = (
@@ -36659,13 +37010,42 @@ def api_view_credit_import_report(credential_id):
             else "Unknown"
         )
 
+        # Process personal_info to set singular fields from arrays
+        personal_info = parsed_data.get("personal_info", {})
+        if personal_info:
+            # Set 'name' from first item in 'names' array
+            names = personal_info.get("names", [])
+            if names and not personal_info.get("name"):
+                personal_info["name"] = names[0] if names else "N/A"
+
+            # Set 'address' from first item in 'addresses' array
+            addresses = personal_info.get("addresses", [])
+            if addresses and not personal_info.get("address"):
+                personal_info["address"] = addresses[0] if addresses else "N/A"
+
+            # Format employers for display if they're dicts
+            employers = personal_info.get("employers", [])
+            if employers:
+                formatted_employers = []
+                for emp in employers:
+                    if isinstance(emp, dict):
+                        name = emp.get("name", "")
+                        date = emp.get("date_updated") or emp.get("date")
+                        if date:
+                            formatted_employers.append(f"{name} (Updated: {date})")
+                        else:
+                            formatted_employers.append(name)
+                    else:
+                        formatted_employers.append(str(emp))
+                personal_info["employers_formatted"] = formatted_employers
+
         return render_template(
-            "credit_report_view.html",
+            "credit_report_simple.html",
             client_name=client_name,
             service_name=cred.service_name,
             report_date=report_date,
             scores=parsed_data.get("scores", {}),
-            personal_info=parsed_data.get("personal_info", {}),
+            personal_info=personal_info,
             accounts=parsed_data.get("accounts", []),
             inquiries=parsed_data.get("inquiries", []),
             collections=parsed_data.get("collections", []),

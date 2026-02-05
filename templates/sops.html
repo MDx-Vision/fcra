@@ -13,7 +13,7 @@
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -27,7 +27,7 @@
             font-weight: 700;
             color: #1a1a2e;
         }
-        
+
         .search-box {
             display: flex;
             align-items: center;
@@ -46,7 +46,7 @@
             margin-left: 10px;
         }
         .search-box svg { color: #64748b; }
-        
+
         .stats-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -70,7 +70,7 @@
             font-size: 13px;
             margin-top: 4px;
         }
-        
+
         .filters {
             display: flex;
             gap: 10px;
@@ -90,9 +90,9 @@
             font-size: 14px;
         }
         .filter-btn:hover { border-color: #319795; }
-        .filter-btn.active { 
-            background: linear-gradient(135deg, #319795 0%, #84cc16 100%); 
-            color: #1a1a2e; 
+        .filter-btn.active {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
             border-color: transparent;
         }
         .filter-btn .count {
@@ -103,13 +103,13 @@
             font-size: 12px;
             margin-left: 8px;
         }
-        
+
         .sop-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
             gap: 20px;
         }
-        
+
         .sop-card {
             background: white;
             border-radius: 16px;
@@ -121,7 +121,7 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(0,0,0,0.1);
         }
-        
+
         .sop-header {
             padding: 20px 24px;
             border-bottom: 1px solid #f1f5f9;
@@ -140,7 +140,7 @@
             background: linear-gradient(135deg, #319795 0%, #0d9488 100%);
         }
         .sop-icon svg { width: 24px; height: 24px; color: white; }
-        
+
         .sop-title-block {
             flex: 1;
         }
@@ -159,7 +159,7 @@
             font-size: 12px;
             font-weight: 500;
         }
-        
+
         .sop-meta {
             display: flex;
             gap: 15px;
@@ -176,7 +176,7 @@
             width: 14px;
             height: 14px;
         }
-        
+
         .sop-body {
             padding: 20px 24px;
         }
@@ -186,7 +186,7 @@
             line-height: 1.6;
             margin-bottom: 15px;
         }
-        
+
         .sop-steps {
             margin-top: 15px;
         }
@@ -224,7 +224,7 @@
             font-size: 13px;
             line-height: 1.5;
         }
-        
+
         .sop-footer {
             padding: 15px 24px;
             background: #f8fafc;
@@ -250,7 +250,7 @@
             color: #84cc16;
             font-family: monospace;
         }
-        
+
         .view-btn {
             padding: 8px 16px;
             background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
@@ -266,7 +266,7 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4);
         }
-        
+
         .difficulty-badge {
             display: inline-block;
             padding: 3px 10px;
@@ -278,7 +278,7 @@
         .difficulty-badge.standard { background: #dbeafe; color: #1d4ed8; }
         .difficulty-badge.advanced { background: #fef3c7; color: #ca8a04; }
         .difficulty-badge.expert { background: #fee2e2; color: #dc2626; }
-        
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -300,7 +300,7 @@
         .empty-state p {
             color: #64748b;
         }
-        
+
         .error-banner {
             background: #fee2e2;
             border: 1px solid #fecaca;
@@ -309,7 +309,7 @@
             border-radius: 12px;
             margin-bottom: 20px;
         }
-        
+
         .modal {
             display: none;
             position: fixed;
@@ -373,13 +373,13 @@
                 <input type="text" name="search" placeholder="Search procedures..." value="{{ search_query or '' }}">
             </form>
         </div>
-        
+
         {% if error %}
         <div class="error-banner">
             <strong>Error:</strong> {{ error }}
         </div>
         {% endif %}
-        
+
         <div class="stats-row">
             <div class="stat-card">
                 <div class="stat-value">{{ total_sops or 0 }}</div>
@@ -392,7 +392,7 @@
             </div>
             {% endfor %}
         </div>
-        
+
         <div class="filters">
             <a href="?category=all{% if search_query %}&search={{ search_query }}{% endif %}" class="filter-btn {% if current_category == 'all' %}active{% endif %}">
                 All Categories
@@ -404,7 +404,7 @@
             </a>
             {% endfor %}
         </div>
-        
+
         <div class="sop-grid">
             {% if sops %}
                 {% for sop in sops %}
@@ -418,12 +418,12 @@
                             <span class="sop-category">{{ sop.category|title|replace('_', ' ') }}</span>
                         </div>
                     </div>
-                    
+
                     <div class="sop-body">
                         {% if sop.description %}
                         <div class="sop-description">{{ sop.description }}</div>
                         {% endif %}
-                        
+
                         <div class="sop-meta">
                             {% if sop.timeline_days %}
                             <div class="sop-meta-item">
@@ -441,7 +441,7 @@
                             </div>
                             {% endif %}
                         </div>
-                        
+
                         {% if sop.steps %}
                         <div class="sop-steps">
                             <div class="sop-steps-title">Key Steps:</div>
@@ -460,7 +460,7 @@
                         </div>
                         {% endif %}
                     </div>
-                    
+
                     <div class="sop-footer">
                         <div class="sop-tags">
                             {% if sop.related_statutes %}
@@ -502,17 +502,17 @@
             const modal = document.getElementById('sopModal');
             const modalBody = document.getElementById('modalBody');
             const modalTitle = document.getElementById('modalTitle');
-            
+
             modalBody.innerHTML = 'Loading...';
             modal.classList.add('active');
-            
+
             fetch(`/api/sops/${sopId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.sop) {
                         const sop = data.sop;
                         modalTitle.textContent = sop.title;
-                        
+
                         let stepsHtml = '';
                         if (sop.steps && sop.steps.length > 0) {
                             stepsHtml = `
@@ -522,7 +522,7 @@
                                 </ol>
                             `;
                         }
-                        
+
                         let checklistHtml = '';
                         if (sop.checklist_items && sop.checklist_items.length > 0) {
                             checklistHtml = `
@@ -532,7 +532,7 @@
                                 </ul>
                             `;
                         }
-                        
+
                         let tipsHtml = '';
                         if (sop.tips && sop.tips.length > 0) {
                             tipsHtml = `
@@ -542,7 +542,7 @@
                                 </ul>
                             `;
                         }
-                        
+
                         let warningsHtml = '';
                         if (sop.warnings && sop.warnings.length > 0) {
                             warningsHtml = `
@@ -552,7 +552,7 @@
                                 </ul>
                             `;
                         }
-                        
+
                         modalBody.innerHTML = `
                             <p style="color: #64748b; margin-bottom: 15px;">${sop.description || ''}</p>
                             <div style="color: #475569; line-height: 1.7;">${sop.content || ''}</div>
@@ -569,11 +569,11 @@
                     modalBody.innerHTML = '<p style="color: #dc2626;">Error loading SOP details.</p>';
                 });
         }
-        
+
         function closeModal() {
             document.getElementById('sopModal').classList.remove('active');
         }
-        
+
         document.getElementById('sopModal').addEventListener('click', function(e) {
             if (e.target === this) closeModal();
         });

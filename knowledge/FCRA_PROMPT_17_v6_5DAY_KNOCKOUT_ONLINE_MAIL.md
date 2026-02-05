@@ -1,11 +1,11 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# FCRA PROMPT 17 v6.0 - 5-DAY KNOCKOUT (ONLINE + MAIL METHODS)
+# FCRA PROMPT 17 v6.2 - 5-DAY KNOCKOUT (ONLINE + MAIL METHODS)
 # ═══════════════════════════════════════════════════════════════════════════════
-# PHASE 1: Credit report → Police report prep + account extraction
-# PHASE 2: Police case # → Generate ALL remaining documents
+# PHASE 1: Credit report → FTC script + Police report + Affidavit (4 files)
+# PHASE 2: FTC # + Police # + Affidavit → Bureau letters & submission (10 files)
 # METHODS: Online submission (fastest) OR Certified mail (strongest)
 # INCLUDES: Third-party freeze numbers, notarylive.com, call scripts
-# UPDATED: 2026-01-22 from Legacy Strong Notion documentation
+# UPDATED: 2026-02-03 - FTC script + Affidavit now in Phase 1
 # ═══════════════════════════════════════════════════════════════════════════════
 
 ## TRIGGER PHRASES
@@ -110,32 +110,89 @@ ACCOUNT #[X]:
 
 ---
 
-### FILE 2: Police_Report_Instructions_[CLIENT].md
+### FILE 2: FTC_And_Police_Report_Instructions_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 1: FILE POLICE REPORT
+# STEP 1: FTC REPORT + POLICE REPORT INSTRUCTIONS
 # ═══════════════════════════════════════════════════════════════════════════════
 # Client: [CLIENT NAME]
 # Location: [CITY], [STATE]
 # ═══════════════════════════════════════════════════════════════════════════════
 
-## 🎯 GOAL: Get a CASE NUMBER only (5-10 minutes)
+## 🎯 GOAL: Complete FTC Report + Get Police CASE NUMBER (Total: ~20-25 min)
 
 ---
 
-## OPTION A: FILE ONLINE (Fastest)
+## ⚡ STEP 1: FILE FTC REPORT FIRST (10-15 min)
+
+The FTC report is **REQUIRED** before police will accept your identity theft report.
+
+🔗 **Go to: https://www.identitytheft.gov**
+- Takes 10-15 minutes
+- Generates affidavit accepted by all bureaus
+- Get your FTC Report Number
+
+---
+
+## 📋 FTC FORM - COPY/PASTE SCRIPT
+
+### Step 1: "Which statement best describes your situation?"
+→ **I want to report identity theft**
+
+### Step 2: "What did the identity thief do?"
+→ **Credit Card Accounts** (or select the type that matches your account)
+
+### Step 3: "Tell us how your information was misused"
+→ **To open a fraudulent credit card account**
+
+### Step 4: Click **Continue**
+
+### Step 5: Enter account details:
+
+**ACCOUNT 1:**
+| Field | Enter This |
+|-------|------------|
+| Company | **[CREDITOR NAME FROM TABLE BELOW]** |
+| When did you notice | **[LAST MONTH]** |
+| When was account opened | **[DATE OPENED FROM TABLE]** |
+| Account Number | **[ACCOUNT # FROM TABLE]** |
+
+### Step 6: Continue through personal info screens
+
+### Step 7: "Have you contacted your local police department?"
+→ **No** (You'll do this AFTER the FTC report)
+
+### Step 8: Data breach history:
+→ **Yes** → Check all 3 boxes
+
+### Step 9: "Tell us in your own words" - PASTE THIS:
+
+```
+These accounts do not belong to me. I did not authorize anyone to open these accounts in my name. This is identity theft. I am filing this report with the FTC and will also be filing a police report. Please remove all fraudulent accounts from my credit report immediately.
+```
+
+### Step 10: Submit → **DOWNLOAD PDF IMMEDIATELY**
+
+⚠️ **CRITICAL: Download the FTC Report PDF - you cannot go back!**
+
+### ✅ SAVE THIS INFO:
+- FTC Report Number: _________________
+- PDF Downloaded: ☐ Yes
+- Save as: FTC_Report_[YOUR NAME].pdf
+
+---
+
+## ⚡ STEP 2: FILE POLICE REPORT (5-10 min)
+
+Now that you have your FTC Report Number, file a police report.
+
+### OPTION A: FILE ONLINE (Fastest)
 
 ### Google Search:
 "Report identity theft police report [STATE]"
 OR
 "Online police report [CITY] [STATE]"
-
-### FIRST: File FTC Identity Theft Report (Required)
-🔗 **https://www.identitytheft.gov** - Creates official FTC Identity Theft Report
-- Takes 10-15 minutes
-- Generates affidavit accepted by all bureaus
-- Get your FTC Report Number
 
 ### [STATE]-Specific Police Resources:
 
@@ -163,8 +220,9 @@ OR
 
 ### Online Steps:
 1. Find portal with "Identity Theft" or "Fraud" category
-2. Complete form using script below
-3. **SAVE THE CASE NUMBER** (screenshot confirmation)
+2. Enter your FTC Report Number when asked
+3. List the fraudulent accounts from the table below
+4. **SAVE THE CASE NUMBER** (screenshot confirmation)
 
 ---
 
@@ -177,14 +235,15 @@ OR
 
 ### Bring:
 ✅ Photo ID (Driver's License)
+✅ FTC Identity Theft Report PDF (from Step 1)
 ✅ Credit report page with items circled (see below)
 
 ### Say This (EXACT SCRIPT):
-> "I'm working with the Federal Trade Commission to remove items we believe
-> are fraudulent. They instructed me to file an identity-theft report so I
-> just need a case-number in the system. Here are the accounts I don't recognize."
+> "I already filed an FTC Identity Theft Report (show them the PDF).
+> I need to file a police report for identity theft. Here are the
+> fraudulent accounts I don't recognize. I just need a case number."
 
-Hand them the highlighted page. Get case number. Done.
+Hand them the highlighted credit report page + FTC Report PDF. Get case number. Done.
 
 ---
 
@@ -201,6 +260,14 @@ Hand them the highlighted page. Get case number. Done.
 
 ## ✅ AFTER FILING - WRITE THIS DOWN:
 
+### FTC Report (from Step 1):
+| Field | Your Info |
+|-------|-----------|
+| FTC Report Number | ___________________ |
+| Date Filed | ___________________ |
+| PDF Downloaded | ☐ Yes |
+
+### Police Report (from Step 2):
 | Field | Your Info |
 |-------|-----------|
 | Case Number | ___________________ |
@@ -287,152 +354,16 @@ Before returning for Phase 2, have ready:
 ---
 
 ## 👉 NEXT STEP
-File police report → Return with case number → Get all remaining documents
+Complete FTC Report + Police Report + Affidavit → Return for bureau letters
 ```
 
 ---
 
-## PHASE 1 RESPONSE TO CLIENT:
-
-```
-I've analyzed your credit report and prepared your Phase 1 documents:
-
-📁 **3 Files Generated:**
-1. Third_Party_Freeze_Instructions.md - Do these freezes FIRST
-2. Police_Report_Instructions_[NAME].md - Step-by-step with your state's resources
-3. Account_Summary_[NAME].md - All extracted info ready for Phase 2
-
-**YOUR NEXT STEPS:**
-1. ✅ Complete third-party freezes (15 min)
-2. ✅ File police report online or in-person (10-20 min)
-3. ✅ Come back with your CASE NUMBER
-
-Once you have the police case number, I'll generate:
-- FTC Report instructions (pre-filled)
-- FTC Affidavit (pre-filled)
-- Bureau letters (all 3)
-- Online portal dispute templates
-- Envelope checklist
-- Phone follow-up scripts
-- Master tracking sheet
-- Reinsertion dispute (if items come back)
-- BBB dispute strategy (for collections)
-
-👉 **Reply with:** "Phase 2 - Case #[YOUR NUMBER] from [DEPARTMENT] filed [DATE]"
-```
-
----
-
-# ███████████████████████████████████████████████████████████████████████████████
-# PHASE 2: GENERATE ALL REMAINING DOCUMENTS
-# ███████████████████████████████████████████████████████████████████████████████
-# INPUT: Police case number + department + date
-# OUTPUT: 12+ files to complete entire 5DKO
-# ███████████████████████████████████████████████████████████████████████████████
-
-## PHASE 2 TRIGGER
-Client returns with: "Phase 2" + case number + department + date
-OR provides police report details in any format
-
----
-
-## PHASE 2 - CAPTURE POLICE INFO:
-
-```
-POLICE REPORT:
-├─ Case Number: [FROM CLIENT]
-├─ Department Name: [FROM CLIENT]
-├─ Date Filed: [FROM CLIENT]
-├─ Method: [Online / In-Person]
-```
-
----
-
-## PHASE 2 - GENERATE 12 FILES:
-
-### FILE 4: FTC_Report_Instructions_[CLIENT].md
+### FILE 4: FTC_Affidavit_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 2: FILE FTC IDENTITY THEFT REPORT
-# ═══════════════════════════════════════════════════════════════════════════════
-# Client: [CLIENT NAME]
-# Website: https://www.IdentityTheft.gov
-# ═══════════════════════════════════════════════════════════════════════════════
-
-## YOUR POLICE INFO (Already have this):
-- Case Number: **[CASE NUMBER]**
-- Department: **[DEPARTMENT NAME]**
-- Date Filed: **[DATE]**
-
----
-
-## STEP-BY-STEP (Follow EXACTLY)
-
-### 1. Go to: https://www.IdentityTheft.gov
-
-### 2. "Which statement best describes your situation?"
-→ **I want to report identity theft**
-
-### 3. "What did the identity thief do?"
-→ **Credit Card Accounts** (or appropriate type)
-
-### 4. "Tell us how your information was misused"
-→ **To open a fraudulent credit card account**
-
-### 5. Click: **Continue**
-
-### 6. Enter account details:
-
-**ACCOUNT 1:**
-| Field | Enter This |
-|-------|------------|
-| Company | **[CREDITOR NAME]** |
-| When did you notice | **[LAST MONTH]** |
-| When was account opened | **[DATE OPENED]** |
-| Account Number | **[ACCOUNT # WITH XXX]** |
-
-### 7. Continue through personal info screens
-
-### 8. "Have you contacted your local police department?"
-→ **Yes**
-
-### 9. Police department information:
-| Field | Enter This |
-|-------|------------|
-| Department Name | **[DEPARTMENT NAME]** |
-| State | **[STATE]** |
-
-### 10. Data breach history:
-→ **Yes** → Check all 3 boxes
-
-### 11. "Tell us in your own words" - PASTE THIS:
-
-```
-I submitted a police report with [DEPARTMENT NAME] and the report number is: [CASE NUMBER].
-
-These accounts do not belong to me. I did not authorize anyone to open these accounts in my name. This is identity theft. Please remove all fraudulent accounts from my credit report immediately.
-```
-
-### 12. Submit → Download PDF immediately
-
-⚠️ **CRITICAL: Download the FTC Report PDF - you cannot go back!**
-
----
-
-## ✅ AFTER COMPLETING:
-- FTC Report Number: _________________
-- PDF Downloaded: ☐ Yes
-- Save as: FTC_Report_[NAME].pdf
-```
-
----
-
-### FILE 5: FTC_Affidavit_[CLIENT].md
-
-```markdown
-# ═══════════════════════════════════════════════════════════════════════════════
-# STEP 3: FTC IDENTITY THEFT AFFIDAVIT
+# FTC IDENTITY THEFT AFFIDAVIT
 # ═══════════════════════════════════════════════════════════════════════════════
 # Client: [CLIENT NAME]
 # Form: https://ftc-identity-theft-affidavit.pdffiller.com/
@@ -534,7 +465,70 @@ If Target shows on Experian and TransUnion:
 
 ---
 
-### FILE 6: Bureau_Letter_TransUnion_[CLIENT].md
+## PHASE 1 RESPONSE TO CLIENT:
+
+```
+I've analyzed your credit report and prepared your Phase 1 documents:
+
+📁 **4 Files Generated:**
+1. Third_Party_Freeze_Instructions.md - Do these freezes FIRST
+2. FTC_And_Police_Report_Instructions_[NAME].md - FTC copy/paste script + Police report steps
+3. Account_Summary_[NAME].md - All extracted info
+4. FTC_Affidavit_[NAME].md - Pre-filled affidavit (MUST BE NOTARIZED)
+
+**YOUR NEXT STEPS:**
+1. ✅ Complete third-party freezes (15 min)
+2. ✅ File FTC Report at identitytheft.gov (10-15 min) - USE THE COPY/PASTE SCRIPT
+3. ✅ File police report online or in-person (5-10 min)
+4. ✅ Complete & notarize affidavit(s) - use notarylive.com ($25) or your bank (FREE)
+5. ✅ Come back with your FTC #, POLICE CASE #, and NOTARIZED AFFIDAVIT(S)
+
+Once you have everything, I'll generate:
+- Bureau letters (all 3)
+- Online portal dispute templates
+- Envelope checklist
+- Phone follow-up scripts
+- Master tracking sheet
+- Reinsertion dispute (if items come back)
+- BBB dispute strategy (for collections)
+
+👉 **Reply with:** "Phase 2 - FTC #[FTC NUMBER] + Case #[POLICE NUMBER] from [DEPARTMENT] filed [DATE]"
+```
+
+---
+
+# ███████████████████████████████████████████████████████████████████████████████
+# PHASE 2: GENERATE ALL REMAINING DOCUMENTS
+# ███████████████████████████████████████████████████████████████████████████████
+# INPUT: Police case number + department + date
+# OUTPUT: 12+ files to complete entire 5DKO
+# ███████████████████████████████████████████████████████████████████████████████
+
+## PHASE 2 TRIGGER
+Client returns with: "Phase 2" + FTC number + police case number + department + date
+OR provides both report details in any format
+
+---
+
+## PHASE 2 - CAPTURE REPORT INFO:
+
+```
+FTC REPORT (from Phase 1):
+├─ FTC Report Number: [FROM CLIENT]
+├─ Date Filed: [FROM CLIENT]
+
+POLICE REPORT (from Phase 1):
+├─ Case Number: [FROM CLIENT]
+├─ Department Name: [FROM CLIENT]
+├─ Date Filed: [FROM CLIENT]
+├─ Method: [Online / In-Person]
+```
+
+---
+
+## PHASE 2 - GENERATE 10 FILES:
+
+### FILE 5: Bureau_Letter_TransUnion_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -579,7 +573,7 @@ Sincerely,
 
 ---
 
-### FILE 7: Bureau_Letter_Experian_[CLIENT].md
+### FILE 6: Bureau_Letter_Experian_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -623,7 +617,7 @@ Sincerely,
 
 ---
 
-### FILE 8: Bureau_Letter_Equifax_[CLIENT].md
+### FILE 7: Bureau_Letter_Equifax_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -667,7 +661,7 @@ Sincerely,
 
 ---
 
-### FILE 9: Online_Submission_Instructions_[CLIENT].md
+### FILE 8: Online_Submission_Instructions_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -789,7 +783,7 @@ I am a victim of identity theft. This account was opened fraudulently without my
 
 ---
 
-### FILE 10: Envelope_Checklist_[CLIENT].md
+### FILE 9: Envelope_Checklist_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -855,7 +849,7 @@ Keep ALL tracking numbers!
 
 ---
 
-### FILE 11: Phone_Scripts_[CLIENT].md
+### FILE 10: Phone_Scripts_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -969,7 +963,7 @@ Have all account info and documents ready.
 
 ---
 
-### FILE 12: Master_Tracking_[CLIENT].md
+### FILE 11: Master_Tracking_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1036,15 +1030,15 @@ Have all account info and documents ready.
 ---
 
 ## IF ITEM COMES BACK:
-→ Use FILE 14: Reinsertion_Law_Dispute
+→ Use FILE 13: Reinsertion_Law_Dispute
 
 ## IF COLLECTION ACCOUNT:
-→ Use FILE 15: BBB_Dispute_Strategy
+→ Use FILE 14: BBB_Dispute_Strategy
 ```
 
 ---
 
-### FILE 13: CFPB_Complaint_[CLIENT].md (If needed - Day 7+)
+### FILE 12: CFPB_Complaint_[CLIENT].md (If needed - Day 7+)
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1090,7 +1084,7 @@ Delete account [CREDITOR NAME] #[ACCOUNT NUMBER] immediately.
 
 ---
 
-### FILE 14: Reinsertion_Law_Dispute_[CLIENT].md (NEW - FROM NOTION)
+### FILE 13: Reinsertion_Law_Dispute_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1219,7 +1213,7 @@ If still not removed:
 
 ---
 
-### FILE 15: BBB_Dispute_Strategy_[CLIENT].md (NEW - FROM NOTION)
+### FILE 14: BBB_Dispute_Strategy_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1340,35 +1334,31 @@ I am not liable for this debt with [ORIGINAL CREDITOR NAME]. I do not have a con
 ```
 Your Phase 2 documents are ready!
 
-📁 **12 Files Generated:**
-4. FTC_Report_Instructions - Pre-filled with your police info
-5. FTC_Affidavit - Pre-filled, ready to notarize
-6. Bureau_Letter_TransUnion
-7. Bureau_Letter_Experian
-8. Bureau_Letter_Equifax
-9. Online_Portal_Disputes - Quick Cushman templates
-10. Envelope_Checklist - Everything to include
-11. Phone_Scripts - All 3 bureaus with navigation
-12. Master_Tracking - Timeline & deadlines
-13. CFPB_Complaint - If needed after Day 7
-14. Reinsertion_Law_Dispute - If item comes back (NEW!)
-15. BBB_Dispute_Strategy - For collection accounts (NEW!)
+📁 **10 Files Generated:**
+5. Bureau_Letter_TransUnion
+6. Bureau_Letter_Experian
+7. Bureau_Letter_Equifax
+8. Online_Submission_Instructions - Bureau portal templates
+9. Envelope_Checklist - Everything to include (for mail)
+10. Phone_Scripts - All 3 bureaus with navigation
+11. Master_Tracking - Timeline & deadlines
+12. CFPB_Complaint - If needed after Day 7
+13. Reinsertion_Law_Dispute - If item comes back
+14. BBB_Dispute_Strategy - For collection accounts
 
 **EXECUTION ORDER:**
-1. ✅ File FTC Report online → Download PDF immediately
-2. ✅ Complete & notarize affidavit(s)
-3. ✅ CHOOSE ONE:
-   - **Fast path:** Submit online portal disputes (File 9)
-   - **Strong path:** Send certified mail packages (File 10)
-4. ✅ Wait 4-5 business days
-5. ✅ Phone follow-up if not removed (File 11)
-6. ✅ CFPB complaint if still not removed (File 13)
+1. ✅ CHOOSE ONE:
+   - **Fast path:** Submit online portal disputes (File 8)
+   - **Strong path:** Send certified mail packages (File 9)
+2. ✅ Wait 4-5 business days
+3. ✅ Phone follow-up if not removed (File 10)
+4. ✅ CFPB complaint if still not removed (File 12)
 
 **IF COLLECTION ACCOUNT:**
-→ Also use BBB Dispute Strategy (File 15) - can remove in 24hrs!
+→ Also use BBB Dispute Strategy (File 14) - can remove in 24hrs!
 
 **IF ITEM COMES BACK LATER:**
-→ Use Reinsertion Law Dispute (File 14) - violation = automatic removal
+→ Use Reinsertion Law Dispute (File 13) - violation = automatic removal
 
 ⏱️ **4 Business Day Deadline** - Bureaus MUST block under 605B
 ```
@@ -1376,7 +1366,7 @@ Your Phase 2 documents are ready!
 ---
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SUMMARY: 2-PHASE SYSTEM (v6.0 - ONLINE + MAIL METHODS)
+# SUMMARY: 2-PHASE SYSTEM (v6.2 - FTC + AFFIDAVIT IN PHASE 1)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 ## PRE-REQUISITE: FREEZE THIRD-PARTY BUREAUS FIRST!
@@ -1388,53 +1378,55 @@ Your Phase 2 documents are ready!
 
 ## PHASE 1 (Credit Report Only)
 **Input:** Credit report
-**Output:** 3 files
+**Output:** 4 files
 1. Third_Party_Freeze_Instructions.md (with phone numbers!)
-2. Police_Report_Instructions_[CLIENT].md (online + in-person options)
+2. FTC_And_Police_Report_Instructions_[CLIENT].md (FTC copy/paste script + police steps)
 3. Account_Summary_[CLIENT].md
+4. FTC_Affidavit_[CLIENT].md (pre-filled, needs notary)
 
 **Client Action:**
 1. Freeze third-party bureaus (20-30 min)
-2. File police report (online or in-person)
-3. Return with case #
+2. File FTC Report at identitytheft.gov (10-15 min) - COPY/PASTE SCRIPT INCLUDED
+3. File police report (online or in-person) (5-10 min)
+4. Complete & notarize affidavit(s) - notarylive.com or bank
+5. Return with FTC # + Police case # + Notarized affidavit(s)
 
 ---
 
-## PHASE 2 (Police Info Added)
-**Input:** Case # + Department + Date + Submission Method (online/mail)
-**Output:** 12 files
+## PHASE 2 (FTC + Police + Affidavit Ready)
+**Input:** FTC # + Case # + Department + Date + Submission Method (online/mail)
+**Output:** 10 files
 
-### Documents for BOTH Methods:
-4. FTC_Report_Instructions_[CLIENT].md
-5. FTC_Affidavit_[CLIENT].md (with notarylive.com option!)
-6. Bureau_Letter_TransUnion_[CLIENT].md
-7. Bureau_Letter_Experian_[CLIENT].md
-8. Bureau_Letter_Equifax_[CLIENT].md
+### Bureau Letters:
+5. Bureau_Letter_TransUnion_[CLIENT].md
+6. Bureau_Letter_Experian_[CLIENT].md
+7. Bureau_Letter_Equifax_[CLIENT].md
 
 ### For ONLINE Method (Fastest - 24hrs to 30 days):
-9. Online_Submission_Instructions_[CLIENT].md (NEW!)
+8. Online_Submission_Instructions_[CLIENT].md
    - Experian: experian.com/upload
    - Equifax: equifax.com/personal/disputes
    - TransUnion: transunion.com/dispute
 
 ### For MAIL Method (Strongest paper trail):
-10. Envelope_Checklist_[CLIENT].md
+9. Envelope_Checklist_[CLIENT].md
 
 ### For BOTH Methods:
-11. Phone_Scripts_[CLIENT].md (detailed navigation!)
-12. Master_Tracking_[CLIENT].md
-13. CFPB_Complaint_[CLIENT].md (if needed after 7 days)
-14. Reinsertion_Law_Dispute_[CLIENT].md (if item returns)
-15. BBB_Dispute_Strategy_[CLIENT].md (for collections)
+10. Phone_Scripts_[CLIENT].md (detailed navigation!)
+11. Master_Tracking_[CLIENT].md
+12. CFPB_Complaint_[CLIENT].md (if needed after 7 days)
+13. Reinsertion_Law_Dispute_[CLIENT].md (if item returns)
+14. BBB_Dispute_Strategy_[CLIENT].md (for collections)
 
 ---
 
 ## ⚠️ KEY REMINDERS:
 1. **FREEZE third-party bureaus BEFORE disputing**
-2. **SEPARATE FTC complaint for EACH account + EACH bureau**
-3. **SEPARATE affidavit for EACH account + EACH bureau**
-4. **Wait 5 business days, then CALL each bureau**
-5. **Online method often faster but mail has stronger paper trail**
+2. **FILE FTC FIRST (Phase 1) using the copy/paste script**
+3. **NOTARIZE AFFIDAVIT (Phase 1) - notarylive.com or bank**
+4. **SEPARATE affidavit for EACH account + EACH bureau**
+5. **Wait 5 business days, then CALL each bureau**
+6. **Online method often faster but mail has stronger paper trail**
 
 ---
 
@@ -1446,5 +1438,6 @@ Your Phase 2 documents are ready!
 ---
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# END OF PROMPT 17 v6.0 - 5-DAY KNOCKOUT WITH ONLINE + MAIL METHODS
+# END OF PROMPT 17 v6.2 - 5-DAY KNOCKOUT WITH ONLINE + MAIL METHODS
+# FTC script + Affidavit now in Phase 1 for immediate client use
 # ═══════════════════════════════════════════════════════════════════════════════

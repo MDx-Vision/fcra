@@ -653,14 +653,14 @@
             <a href="tel:9179094051">Call Us</a>
         </div>
     </header>
-    
+
     <div class="container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 1200px;">
         <div style="grid-column: 1 / -1;">
             <div class="hero">
                 <h1>Start Your Credit Restoration Journey</h1>
                 <p>Complete the form below to begin working with our team. We'll review your credit and create a personalized plan of action.</p>
             </div>
-            
+
             <div class="progress-bar">
             <div class="progress-step active" id="step1-indicator">
                 <span class="step-number">1</span>
@@ -680,13 +680,13 @@
             </div>
             </div>
         </div>
-        
+
         <div class="form-card">
             <form id="signupForm">
                 <!-- Step 1: Personal Information -->
                 <div class="form-section active" id="step1">
                     <h2 class="section-title">Personal Information</h2>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="firstName">First Name <span class="required">*</span></label>
@@ -699,7 +699,7 @@
                             <span class="error-message">Last name is required</span>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="email">Email Address <span class="required">*</span></label>
@@ -712,14 +712,14 @@
                             <span class="error-message">Phone number is required</span>
                         </div>
                     </div>
-                    
+
                     <div class="form-row single">
                         <div class="form-group">
                             <label for="addressStreet">Street Address <span class="required">*</span></label>
                             <input type="text" id="addressStreet" name="addressStreet" required>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="addressCity">City <span class="required">*</span></label>
@@ -783,7 +783,7 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="addressZip">ZIP Code <span class="required">*</span></label>
@@ -794,7 +794,7 @@
                             <input type="date" id="dateOfBirth" name="dateOfBirth" required>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label>Last 4 of SSN <span class="required">*</span></label>
@@ -815,19 +815,19 @@
                         </div>
                         <div class="form-group"></div>
                     </div>
-                    
+
                     <div class="button-row">
                         <div></div>
                         <button type="button" class="btn btn-primary" onclick="nextStep(2)">Continue to Credit Access</button>
                     </div>
                 </div>
-                
+
                 <!-- Step 2: Credit Monitoring Access -->
                 <div class="form-section" id="step2">
                     <h2 class="section-title">Credit Monitoring Access</h2>
-                    
+
                     <p style="color: #6b7280; margin-bottom: 25px;">Select your credit monitoring service and provide your login credentials. This allows us to pull your credit report and begin our analysis.</p>
-                    
+
                     <div class="credit-service-grid">
                         <label class="credit-service-option">
                             <input type="radio" name="creditService" value="IdentityIQ.com">
@@ -874,7 +874,7 @@
                             <span class="service-name">Other</span>
                         </label>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label>Credit Monitoring Username <span class="required">*</span></label>
@@ -886,19 +886,19 @@
                             <span class="help-text">Your credentials are encrypted and only used to pull your credit report</span>
                         </div>
                     </div>
-                    
+
                     <div class="button-row">
                         <button type="button" class="btn btn-secondary" onclick="prevStep(1)">Back</button>
                         <button type="button" class="btn btn-primary" onclick="nextStep(3)">Continue to Plan Selection</button>
                     </div>
                 </div>
-                
+
                 <!-- Step 3: Plan & Payment -->
                 <div class="form-section" id="step3">
                     <h2 class="section-title">Choose Your Plan</h2>
-                    
+
                     <p style="color: #6b7280; margin-bottom: 25px;">Select the credit restoration plan that best fits your needs. All plans include FCRA analysis, dispute letter generation, and ongoing support.</p>
-                    
+
                     <div class="pricing-grid" id="pricingGrid">
                         <label class="pricing-option free-tier" data-tier="free" id="freeTierOption">
                             <input type="radio" name="planTier" value="free">
@@ -909,7 +909,7 @@
                             </div>
                             <p class="plan-desc">Free credit analysis of negatives only - identify problem areas</p>
                         </label>
-                        
+
                         <label class="pricing-option" data-tier="tier1">
                             <input type="radio" name="planTier" value="tier1">
                             <div class="plan-header">
@@ -918,7 +918,7 @@
                             </div>
                             <p class="plan-desc">Full FCRA analysis + Round 1 dispute letters</p>
                         </label>
-                        
+
                         <label class="pricing-option" data-tier="tier2">
                             <input type="radio" name="planTier" value="tier2">
                             <div class="plan-header">
@@ -927,7 +927,7 @@
                             </div>
                             <p class="plan-desc">Full analysis + Rounds 1-2 + violation documentation</p>
                         </label>
-                        
+
                         <label class="pricing-option popular" data-tier="tier3">
                             <input type="radio" name="planTier" value="tier3" checked>
                             <span class="popular-badge">Most Popular</span>
@@ -937,7 +937,7 @@
                             </div>
                             <p class="plan-desc">Litigation-ready: Rounds 1-3 + willfulness + damages calc</p>
                         </label>
-                        
+
                         <label class="pricing-option" data-tier="tier4">
                             <input type="radio" name="planTier" value="tier4">
                             <div class="plan-header">
@@ -946,7 +946,7 @@
                             </div>
                             <p class="plan-desc">Full litigation package: All 4 rounds + settlement demand</p>
                         </label>
-                        
+
                         <label class="pricing-option" data-tier="tier5">
                             <input type="radio" name="planTier" value="tier5">
                             <div class="plan-header">
@@ -956,7 +956,7 @@
                             <p class="plan-desc">Maximum recovery: Attorney coordination + VIP support</p>
                         </label>
                     </div>
-                    
+
                     <div class="payment-methods" id="paymentMethodsSection">
                         <div class="payment-methods-title">Select Payment Method</div>
                         <div class="payment-methods-grid">
@@ -991,37 +991,37 @@
                                 <div class="payment-name">Pay Later</div>
                             </label>
                         </div>
-                        
+
                         <div class="manual-payment-info" id="cashappInfo">
                             <h4>Send Payment via Cash App</h4>
                             <div class="payment-handle" id="cashappHandle">$cashtag</div>
                             <p>Send <strong id="cashappAmount">$0</strong> to the Cash App above, then complete your signup. We'll confirm your payment manually.</p>
                         </div>
-                        
+
                         <div class="manual-payment-info" id="venmoInfo">
                             <h4>Send Payment via Venmo</h4>
                             <div class="payment-handle" id="venmoHandle">@username</div>
                             <p>Send <strong id="venmoAmount">$0</strong> to the Venmo above, then complete your signup. We'll confirm your payment manually.</p>
                         </div>
-                        
+
                         <div class="manual-payment-info" id="zelleInfo">
                             <h4>Send Payment via Zelle</h4>
                             <div class="payment-handle" id="zelleHandle">email@example.com</div>
                             <p>Send <strong id="zelleAmount">$0</strong> to the Zelle above, then complete your signup. We'll confirm your payment manually.</p>
                         </div>
-                        
+
                         <div class="manual-payment-info" id="paypalInfo">
                             <h4>Send Payment via PayPal</h4>
                             <div class="payment-handle" id="paypalHandle">email@paypal.com</div>
                             <p>Send <strong id="paypalAmount">$0</strong> to the PayPal above, then complete your signup. We'll confirm your payment manually.</p>
                         </div>
-                        
+
                         <div class="pay-later-info" id="paylaterInfo">
                             <h4>Pay Later</h4>
                             <p>You can complete your signup now and pay later. We'll contact you to arrange payment before starting your case.</p>
                         </div>
                     </div>
-                    
+
                     <div class="plan-features">
                         <h4>All plans include:</h4>
                         <ul>
@@ -1032,50 +1032,50 @@
                             <li>Expert guidance throughout the process</li>
                         </ul>
                     </div>
-                    
+
                     <div class="button-row">
                         <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>
                         <button type="button" class="btn btn-primary" onclick="nextStep(4)">Continue to Agreement</button>
                     </div>
                 </div>
-                
+
                 <!-- Step 4: Service Agreement -->
                 <div class="form-section" id="step4">
                     <h2 class="section-title">Service Agreement</h2>
-                    
+
                     <div class="agreement-section">
                         <h3>Credit Repair Organization Authorization</h3>
                         <div class="agreement-text">
                             <p><strong>AUTHORIZATION AND AGREEMENT</strong></p>
                             <p style="margin-top: 10px;">By signing this agreement, you authorize Brightpath Ascend Group to act on your behalf in disputing inaccurate, misleading, or unverifiable information on your credit reports with the three major credit bureaus: Equifax, Experian, and TransUnion.</p>
-                            
+
                             <p style="margin-top: 15px;"><strong>1. Services Provided</strong></p>
                             <p>We will review your credit reports, identify potentially disputable items, prepare and send dispute letters to credit bureaus and/or creditors, track responses, and provide ongoing guidance throughout the credit restoration process.</p>
-                            
+
                             <p style="margin-top: 15px;"><strong>2. Your Rights Under FCRA</strong></p>
                             <p>You have the right to dispute inaccurate information in your credit report by contacting the credit bureau directly for free. You are entitled to a free credit report annually from each of the three major bureaus at www.annualcreditreport.com.</p>
-                            
+
                             <p style="margin-top: 15px;"><strong>3. No Guarantees</strong></p>
                             <p>We do not guarantee specific results. The outcome of disputes depends on the accuracy and completeness of information provided by creditors and credit bureaus.</p>
-                            
+
                             <p style="margin-top: 15px;"><strong>4. Cancellation Policy</strong></p>
                             <p>You may cancel this agreement at any time by providing written notice. You will not be charged for services not yet performed.</p>
-                            
+
                             <p style="margin-top: 15px;"><strong>5. Privacy Policy</strong></p>
                             <p>Your personal information will be kept confidential and used only for the purpose of providing credit repair services. We will not sell or share your information with third parties except as necessary to perform our services.</p>
                         </div>
-                        
+
                         <div class="checkbox-group">
                             <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
                             <label for="agreeTerms">I have read, understand, and agree to the terms and conditions of this service agreement. I authorize Brightpath Ascend Group to act on my behalf.</label>
                         </div>
                     </div>
-                    
+
                     <div class="checkbox-group" style="margin-bottom: 20px;">
                         <input type="checkbox" id="agreeComms" name="agreeComms">
                         <label for="agreeComms">I agree to receive email and SMS communications about my case status (optional)</label>
                     </div>
-                    
+
                     <div class="button-row">
                         <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Back</button>
                         <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -1084,7 +1084,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Success Message -->
                 <div class="success-message" id="successMessage">
                     <div class="success-icon">
@@ -1094,24 +1094,24 @@
                     </div>
                     <h2>Welcome to Brightpath Ascend Group!</h2>
                     <p>Your registration is complete. We'll pull your credit report and send your personalized credit analysis within 24-48 hours.</p>
-                    
+
                     <div class="referral-code">
                         <label>Your Referral Code</label>
                         <div class="code" id="clientReferralCode">-</div>
                         <p style="font-size: 12px; color: #6b7280; margin-top: 5px;">Share this code with friends and family</p>
                     </div>
-                    
+
                     <a href="/portal" class="btn btn-primary" style="display: inline-block; text-decoration: none;">Go to Client Portal</a>
                 </div>
             </form>
         </div>
-        
+
         <!-- Sample Analysis Panel -->
         <div class="sample-section">
             <div class="sample-card">
                 <div class="sample-title">📊 Sample Analysis</div>
                 <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 20px;">See what your credit analysis could reveal</p>
-                
+
                 <div style="margin-bottom: 20px;">
                     <div class="sample-title" style="margin-bottom: 12px;">Violations Detected</div>
                     <div class="violation-item">
@@ -1128,7 +1128,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="sample-card">
                 <div class="sample-title">💰 Potential Damages</div>
                 <div class="damages-grid">
@@ -1146,13 +1146,13 @@
                     <div class="damage-amount" style="color: #f97316;">$2,500</div>
                 </div>
             </div>
-            
+
             <div class="estimate-box">
                 <div class="estimate-label">ESTIMATED CASE VALUE</div>
                 <div class="estimate-amount">$6,350</div>
                 <div class="estimate-note">Based on 3+ violations with willful conduct</div>
             </div>
-            
+
             <div class="sample-card" style="background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.3);">
                 <div style="color: #86efac; font-size: 12px; line-height: 1.6;">
                     <strong style="display: block; margin-bottom: 8px;">✓ Disputed Items: 3</strong>
@@ -1162,7 +1162,7 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         // Payment settings loaded from server
         let paymentSettings = {
@@ -1178,7 +1178,7 @@
             payment_paypal: '',
             tier_free_enabled: true
         };
-        
+
         const tierPrices = {
             'free': 0,
             'tier1': 300,
@@ -1187,7 +1187,7 @@
             'tier4': 1200,
             'tier5': 1500
         };
-        
+
         // Load settings from server
         async function loadPaymentSettings() {
             try {
@@ -1202,14 +1202,14 @@
                 console.log('Using default settings');
             }
         }
-        
+
         function updateFreeTierVisibility() {
             const freeTierOption = document.getElementById('freeTierOption');
             if (freeTierOption) {
                 freeTierOption.style.display = paymentSettings.tier_free_enabled ? '' : 'none';
             }
         }
-        
+
         function updatePaymentMethodsVisibility() {
             if (paymentSettings.payment_stripe_enabled) {
                 document.querySelector('[data-method="stripe"]').style.display = '';
@@ -1234,26 +1234,26 @@
                 document.getElementById('paylaterOption').style.display = '';
             }
         }
-        
+
         function updatePaymentAmounts() {
             const selectedPlan = document.querySelector('input[name="planTier"]:checked');
             if (!selectedPlan) return;
-            
+
             const price = tierPrices[selectedPlan.value] || 0;
             const priceFormatted = '$' + price;
-            
+
             document.getElementById('cashappAmount').textContent = priceFormatted;
             document.getElementById('venmoAmount').textContent = priceFormatted;
             document.getElementById('zelleAmount').textContent = priceFormatted;
             document.getElementById('paypalAmount').textContent = priceFormatted;
         }
-        
+
         function hideAllPaymentInfos() {
             document.querySelectorAll('.manual-payment-info, .pay-later-info').forEach(el => {
                 el.classList.remove('active');
             });
         }
-        
+
         function showPaymentInfo(method) {
             hideAllPaymentInfos();
             const infoEl = document.getElementById(method + 'Info');
@@ -1261,7 +1261,7 @@
                 infoEl.classList.add('active');
             }
         }
-        
+
         // Initialize credit service selection
         document.querySelectorAll('.credit-service-option').forEach(option => {
             option.addEventListener('click', function() {
@@ -1270,14 +1270,14 @@
                 this.querySelector('input').checked = true;
             });
         });
-        
+
         // Initialize pricing tier selection
         document.querySelectorAll('.pricing-option').forEach(option => {
             option.addEventListener('click', function() {
                 document.querySelectorAll('.pricing-option').forEach(o => o.classList.remove('selected'));
                 this.classList.add('selected');
                 this.querySelector('input').checked = true;
-                
+
                 // Check if free tier selected - hide payment methods
                 const selectedValue = this.querySelector('input').value;
                 const paymentSection = document.getElementById('paymentMethodsSection');
@@ -1293,14 +1293,14 @@
                 option.classList.add('selected');
             }
         });
-        
+
         // Initialize payment method selection
         document.querySelectorAll('.payment-option').forEach(option => {
             option.addEventListener('click', function() {
                 document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
                 this.classList.add('selected');
                 this.querySelector('input').checked = true;
-                
+
                 const method = this.dataset.method;
                 if (['cashapp', 'venmo', 'zelle', 'paypal', 'paylater'].includes(method)) {
                     showPaymentInfo(method);
@@ -1309,21 +1309,21 @@
                 }
             });
         });
-        
+
         // Load settings on page load
         loadPaymentSettings();
-        
+
         // Phone number formatting
         document.getElementById('phone').addEventListener('input', function(e) {
             let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
             e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
         });
-        
+
         function validateStep(step) {
             let valid = true;
             const section = document.getElementById('step' + step);
             const inputs = section.querySelectorAll('input[required], select[required]');
-            
+
             inputs.forEach(input => {
                 if (!input.value.trim()) {
                     input.classList.add('error');
@@ -1332,7 +1332,7 @@
                     input.classList.remove('error');
                 }
             });
-            
+
             // Step 2: Check credit service selection
             if (step === 2) {
                 const serviceSelected = document.querySelector('input[name="creditService"]:checked');
@@ -1341,7 +1341,7 @@
                     valid = false;
                 }
             }
-            
+
             // Step 3: Check plan selection
             if (step === 3) {
                 const planSelected = document.querySelector('input[name="planTier"]:checked');
@@ -1350,7 +1350,7 @@
                     valid = false;
                 }
             }
-            
+
             // Step 4: Check agreement
             if (step === 4) {
                 if (!document.getElementById('agreeTerms').checked) {
@@ -1358,54 +1358,54 @@
                     valid = false;
                 }
             }
-            
+
             return valid;
         }
-        
+
         function nextStep(step) {
             if (!validateStep(step - 1)) return;
-            
+
             // Update progress indicators
             document.getElementById('step' + (step - 1) + '-indicator').classList.remove('active');
             document.getElementById('step' + (step - 1) + '-indicator').classList.add('completed');
             document.getElementById('step' + step + '-indicator').classList.add('active');
-            
+
             // Show new section
             document.getElementById('step' + (step - 1)).classList.remove('active');
             document.getElementById('step' + step).classList.add('active');
-            
+
             window.scrollTo(0, 0);
         }
-        
+
         function prevStep(step) {
             const currentStep = step + 1;
-            
+
             // Update progress indicators
             document.getElementById('step' + currentStep + '-indicator').classList.remove('active');
             document.getElementById('step' + step + '-indicator').classList.remove('completed');
             document.getElementById('step' + step + '-indicator').classList.add('active');
-            
+
             // Show previous section
             document.getElementById('step' + currentStep).classList.remove('active');
             document.getElementById('step' + step).classList.add('active');
-            
+
             window.scrollTo(0, 0);
         }
-        
+
         document.getElementById('signupForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             if (!validateStep(4)) return;
-            
+
             const submitBtn = document.getElementById('submitBtn');
             const spinner = document.getElementById('loadingSpinner');
-            
+
             submitBtn.disabled = true;
             spinner.style.display = 'inline-block';
-            
+
             const selectedPlan = document.querySelector('input[name="planTier"]:checked').value;
             const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'stripe';
-            
+
             const formData = {
                 firstName: document.getElementById('firstName').value,
                 lastName: document.getElementById('lastName').value,
@@ -1426,7 +1426,7 @@
                 agreeTerms: document.getElementById('agreeTerms').checked,
                 agreeComms: document.getElementById('agreeComms').checked
             };
-            
+
             try {
                 // Step 1: Create signup draft
                 const draftResponse = await fetch('/api/client/signup/draft', {
@@ -1434,16 +1434,16 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
-                
+
                 const draftResult = await draftResponse.json();
-                
+
                 if (!draftResult.success) {
                     alert('Error: ' + (draftResult.error || 'Failed to save your information'));
                     submitBtn.disabled = false;
                     spinner.style.display = 'none';
                     return;
                 }
-                
+
                 // Handle different payment flows
                 if (selectedPlan === 'free') {
                     // Free tier - complete immediately
@@ -1452,9 +1452,9 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ draftId: draftResult.draftId })
                     });
-                    
+
                     const completeResult = await completeResponse.json();
-                    
+
                     if (completeResult.success) {
                         showSuccessMessage(completeResult.referralCode, false, completeResult.passwordResetToken);
                     } else {
@@ -1467,14 +1467,14 @@
                     const completeResponse = await fetch('/api/client/signup/complete-manual', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
+                        body: JSON.stringify({
                             draftId: draftResult.draftId,
                             paymentMethod: selectedPaymentMethod
                         })
                     });
-                    
+
                     const completeResult = await completeResponse.json();
-                    
+
                     if (completeResult.success) {
                         showSuccessMessage(completeResult.referralCode, true, completeResult.passwordResetToken);
                     } else {
@@ -1489,9 +1489,9 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ draftId: draftResult.draftId })
                     });
-                    
+
                     const checkoutResult = await checkoutResponse.json();
-                    
+
                     if (checkoutResult.success && checkoutResult.checkoutUrl) {
                         window.location.href = checkoutResult.checkoutUrl;
                     } else {
@@ -1507,7 +1507,7 @@
                 spinner.style.display = 'none';
             }
         });
-        
+
         function showSuccessMessage(referralCode, isPending = false, passwordResetToken = null) {
             // Redirect to the welcome page instead of showing inline success
             let welcomeUrl = '/signup/welcome';
@@ -1526,13 +1526,13 @@
             }
             window.location.href = welcomeUrl;
         }
-        
+
         // Handle success/cancel from URL params
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('cancelled') === 'true') {
             alert('Payment was cancelled. You can try again when ready.');
         }
-        
+
         // Check for success state passed from server - redirect to welcome page
         {% if success %}
             let welcomeUrl = '/signup/welcome';

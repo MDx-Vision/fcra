@@ -1,9 +1,9 @@
 # FCRA PROMPT 10: COLLECTION VALIDATION (SEPARATE FILES)
 ## Upload â†’ Analyze â†’ Generate Separate File Per Collector
 
-**Version:** 2.0 (Separate File Output)  
-**Created:** November 24, 2025  
-**Output:** One file per debt collector  
+**Version:** 2.0 (Separate File Output)
+**Created:** November 24, 2025
+**Output:** One file per debt collector
 
 ---
 
@@ -137,7 +137,7 @@ SECTION 4: CONSEQUENCES
 Non-compliance results in:
 
 - CFPB complaint
-- FTC complaint  
+- FTC complaint
 - State AG complaint
 - FDCPA/FCRA legal action
 - Statutory damages: $1,000 per violation

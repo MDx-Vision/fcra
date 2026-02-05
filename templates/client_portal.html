@@ -586,7 +586,7 @@
             .nav-tabs { overflow-x: auto; }
             .header { flex-direction: column; gap: 15px; }
         }
-        
+
         /* Status Badge Styles */
         .status-badge {
             display: inline-block;
@@ -611,7 +611,7 @@
         .status-badge.status-frozen { background: #dbeafe; color: #1e40af; }
         .status-badge.status-pending { background: #fef3c7; color: #92400e; }
         .status-badge.status-not_frozen { background: #fecaca; color: #991b1b; }
-        
+
         .comment-input {
             width: 100%;
             padding: 6px 8px;
@@ -623,7 +623,7 @@
             outline: none;
             border-color: #84cc16;
         }
-        
+
         .bureau-section {
             border-left: 4px solid #e5e7eb;
         }
@@ -672,7 +672,7 @@
             <a href="/portal/logout" style="margin-left: 15px; padding: 8px 16px; background: #f1f5f9; color: #475569; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 500; transition: all 0.2s;">Logout</a>
         </div>
     </header>
-    
+
     <nav class="nav-tabs" role="navigation">
         <a href="javascript:void(0)" class="nav-tab active" onclick="switchTab('summary', this)">Summary</a>
         <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('progress', this)">Score Progress</a>
@@ -685,7 +685,7 @@
         <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('contact', this)">Contact Us</a>
         <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('referral', this)">Refer a Friend</a>
     </nav>
-    
+
     <div class="container">
         <!-- Summary Tab -->
         <div class="tab-content active" id="summary">
@@ -705,7 +705,7 @@
                 <p>We're getting started on your case. Check back soon for updates!</p>
             </div>
             {% endif %}
-            
+
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-value">{{ violations|length if violations else 0 }}</div>
@@ -724,7 +724,7 @@
                     <div class="stat-label">Potential Recovery</div>
                 </div>
             </div>
-            
+
             {% if violations %}
             <div class="card">
                 <div class="card-title">Violations Identified</div>
@@ -743,7 +743,7 @@
                 {% endif %}
             </div>
             {% endif %}
-            
+
             <!-- ROI Dashboard Section -->
             <div class="card" style="margin-top: 20px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white;">
                 <div class="card-title" style="color: #84cc16; border-bottom-color: #334155;">Your Case Value Analysis</div>
@@ -754,27 +754,27 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Score Progress Tab -->
         <div class="tab-content" id="progress">
             <div class="card" style="margin-bottom: 20px;">
                 <div class="card-title">Your Credit Score Journey</div>
                 <p style="color: #64748b; margin-bottom: 20px;">Track your credit score improvement from start to finish as we remove negative items from your report.</p>
-                
+
                 <div id="scoreProgressContent">
                     <div style="text-align: center; padding: 40px; color: #64748b;">
                         <div style="font-size: 24px; margin-bottom: 10px;">Loading your progress...</div>
                     </div>
                 </div>
             </div>
-            
+
             <div class="card" style="margin-bottom: 20px;">
                 <div class="card-title">Score Timeline</div>
                 <div style="height: 300px; position: relative;">
                     <canvas id="clientScoreChart"></canvas>
                 </div>
             </div>
-            
+
             <div class="card">
                 <div class="card-title">Projected Improvement</div>
                 <div id="projectionContent">
@@ -784,13 +784,13 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Dispute Timeline Tab -->
         <div class="tab-content" id="timeline">
             <div class="card" style="margin-bottom: 20px;">
                 <div class="card-title">Your Dispute Journey</div>
                 <p style="color: #64748b; margin-bottom: 20px;">Track every step of your credit dispute process from start to finish.</p>
-                
+
                 <div id="timelineSummary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
                     <div style="background: #dbeafe; padding: 15px; border-radius: 10px; text-align: center;">
                         <div style="font-size: 24px; font-weight: 700; color: #1e40af;" id="lettersSentCount">-</div>
@@ -810,7 +810,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <div class="card-title" style="margin: 0; border: none; padding: 0;">Timeline</div>
@@ -822,7 +822,7 @@
                         <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #64748b;"><span style="width: 10px; height: 10px; background: #6b7280; border-radius: 50%;"></span>Milestone</span>
                     </div>
                 </div>
-                
+
                 <div id="timelineContainer" style="position: relative; padding-left: 30px;">
                     <div style="position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #e5e7eb 0%, #e5e7eb 100%);"></div>
                     <div style="text-align: center; padding: 40px; color: #64748b;">
@@ -831,7 +831,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Status Tab -->
         <div class="tab-content" id="status">
             <div class="card" style="margin-bottom: 15px;">
@@ -847,7 +847,7 @@
                 </p>
                 <a href="#legend" style="color: #3b82f6; font-size: 13px; text-decoration: underline;">How to use the Status Area?</a>
             </div>
-            
+
             <!-- EQUIFAX Section -->
             <div class="card bureau-section" style="margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
@@ -893,13 +893,13 @@
                 </div>
                 {% if equifax_items %}
                 <div style="margin-top: 10px; font-size: 12px; color: #64748b;">
-                    Total Items: {{ equifax_items|length }} | 
+                    Total Items: {{ equifax_items|length }} |
                     Deleted: {{ equifax_items|selectattr('status', 'equalto', 'deleted')|list|length }} |
                     In Progress: {{ equifax_items|selectattr('status', 'equalto', 'in_progress')|list|length }}
                 </div>
                 {% endif %}
             </div>
-            
+
             <!-- EXPERIAN Section -->
             <div class="card bureau-section" style="margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
@@ -945,13 +945,13 @@
                 </div>
                 {% if experian_items %}
                 <div style="margin-top: 10px; font-size: 12px; color: #64748b;">
-                    Total Items: {{ experian_items|length }} | 
+                    Total Items: {{ experian_items|length }} |
                     Deleted: {{ experian_items|selectattr('status', 'equalto', 'deleted')|list|length }} |
                     In Progress: {{ experian_items|selectattr('status', 'equalto', 'in_progress')|list|length }}
                 </div>
                 {% endif %}
             </div>
-            
+
             <!-- TRANSUNION Section -->
             <div class="card bureau-section" style="margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
@@ -997,13 +997,13 @@
                 </div>
                 {% if transunion_items %}
                 <div style="margin-top: 10px; font-size: 12px; color: #64748b;">
-                    Total Items: {{ transunion_items|length }} | 
+                    Total Items: {{ transunion_items|length }} |
                     Deleted: {{ transunion_items|selectattr('status', 'equalto', 'deleted')|list|length }} |
                     In Progress: {{ transunion_items|selectattr('status', 'equalto', 'in_progress')|list|length }}
                 </div>
                 {% endif %}
             </div>
-            
+
             <!-- Secondary Bureaus Freeze Section -->
             <div class="card" style="margin-bottom: 20px; border: 2px solid #e5e7eb;">
                 <div class="card-title" style="color: #1a1a2e;">Secondary Bureaus Freeze</div>
@@ -1060,7 +1060,7 @@
                     <button onclick="submitFreezeChanges()" class="submit-btn" style="padding: 10px 25px;">Submit changes</button>
                 </div>
             </div>
-            
+
             <!-- Status Legend -->
             <div class="card" id="legend">
                 <div class="card-title">Legend</div>
@@ -1108,7 +1108,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Attachments Tab -->
         <div class="tab-content" id="attachments">
             <div class="card">
@@ -1136,7 +1136,7 @@
                 </p>
                 {% endif %}
             </div>
-            
+
             <div class="card">
                 <div class="card-title">Upload Bureau Response Letters</div>
                 <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">
@@ -1148,7 +1148,7 @@
                     <div class="upload-hint">PDF, JPG, or PNG (max 10MB)</div>
                 </div>
                 <input type="file" id="fileUpload" style="display: none;" accept=".pdf,.jpg,.jpeg,.png">
-                
+
                 <div class="response-list" id="responseList">
                     {% if cra_responses %}
                         {% for response in cra_responses %}
@@ -1168,12 +1168,12 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Profile Tab -->
         <div class="tab-content" id="profile">
             <div class="card">
                 <div class="card-title">My Profile</div>
-                
+
                 <div class="avatar-upload-section">
                     <div class="avatar-preview" id="avatarPreview">
                         {% if client and client.avatar_filename %}
@@ -1192,7 +1192,7 @@
                         <input type="file" id="avatarUpload" style="display: none;" accept="image/*">
                     </div>
                 </div>
-                
+
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
                     <div class="form-group">
                         <label>Full Name</label>
@@ -1211,12 +1211,12 @@
                         <input type="text" value="Round {{ client.current_dispute_round if client and client.current_dispute_round else 1 }}" readonly style="background: #f8fafc;">
                     </div>
                 </div>
-                
+
                 <p style="color: #64748b; font-size: 13px; margin-top: 15px;">
                     Need to update your contact information? Please reach out to our support team.
                 </p>
             </div>
-            
+
             <div class="card">
                 <div class="card-title">Password & Security</div>
                 <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">
@@ -1226,7 +1226,7 @@
                     Set up a password to log in with your email and password instead of using the access link.
                     {% endif %}
                 </p>
-                
+
                 <div id="passwordSetupForm">
                     {% if client and client.portal_password_hash %}
                     <div class="form-group" style="margin-bottom: 15px;">
@@ -1234,31 +1234,31 @@
                         <input type="password" id="currentPassword" placeholder="Enter current password" style="width: 100%; max-width: 350px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
                     </div>
                     {% endif %}
-                    
+
                     <div class="form-group" style="margin-bottom: 15px;">
                         <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">{{ 'New Password' if client and client.portal_password_hash else 'Password' }}</label>
                         <input type="password" id="newPassword" placeholder="At least 8 characters" minlength="8" style="width: 100%; max-width: 350px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
                     </div>
-                    
+
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Confirm Password</label>
                         <input type="password" id="confirmPassword" placeholder="Confirm your password" style="width: 100%; max-width: 350px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
                     </div>
-                    
+
                     <div id="passwordMessage" style="display: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; max-width: 350px;"></div>
-                    
+
                     <button type="button" onclick="setPassword()" style="padding: 12px 24px; background: linear-gradient(135deg, #84cc16, #22c55e); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
                         {{ 'Update Password' if client and client.portal_password_hash else 'Set Password' }}
                     </button>
                 </div>
-                
+
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
                     <p style="color: #64748b; font-size: 13px;">
                         <strong>Login URL:</strong> <a href="/portal/login" style="color: #3b82f6;">/portal/login</a>
                     </p>
                 </div>
             </div>
-            
+
             <div class="card">
                 <div class="card-title">Account Status</div>
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
@@ -1277,7 +1277,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Contact Us Tab -->
         <div class="tab-content" id="contact">
             <div class="card">
@@ -1300,7 +1300,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="card">
                 <div class="card-title">Send Us a Message</div>
                 <form id="contactForm">
@@ -1316,11 +1316,11 @@
                 </form>
             </div>
         </div>
-        
+
         <!-- Education Tab -->
         <!-- Education/Learn Tab - ENHANCED VERSION -->
         <div class="tab-content" id="education">
-            
+
             <!-- Hero Section -->
             <div class="card" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%) !important; color: white; text-align: center; padding: 40px;">
                 <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 500; margin-bottom: 12px;">Understanding Your Rights</h2>
@@ -1377,7 +1377,7 @@
             <div class="card">
                 <div class="card-title">🔍 Types of Violations We Find</div>
                 <p style="color: #6b7280; margin-bottom: 24px;">These are the most common FCRA violations we identify in credit reports. Each one can result in damages.</p>
-                
+
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
                     <!-- Impossible Contradictions -->
                     <div style="background: #f9fafb; border-radius: 12px; padding: 24px; border-left: 4px solid #dc2626;">
@@ -1389,7 +1389,7 @@
                             <strong>Value:</strong> $5,000 – $15,000 per violation
                         </div>
                     </div>
-                    
+
                     <!-- Balance Discrepancies -->
                     <div style="background: #f9fafb; border-radius: 12px; padding: 24px; border-left: 4px solid #f59e0b;">
                         <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin-bottom: 8px;">💰 Balance Discrepancies</h4>
@@ -1400,7 +1400,7 @@
                             <strong>Value:</strong> $3,000 – $8,000 per violation
                         </div>
                     </div>
-                    
+
                     <!-- Date Errors -->
                     <div style="background: #f9fafb; border-radius: 12px; padding: 24px; border-left: 4px solid #3b82f6;">
                         <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin-bottom: 8px;">📅 Date Errors</h4>
@@ -1411,7 +1411,7 @@
                             <strong>Value:</strong> $2,000 – $6,000 per violation
                         </div>
                     </div>
-                    
+
                     <!-- Re-aging -->
                     <div style="background: #f9fafb; border-radius: 12px; padding: 24px; border-left: 4px solid #8b5cf6;">
                         <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin-bottom: 8px;">🔄 Re-aging Accounts</h4>
@@ -1422,7 +1422,7 @@
                             <strong>Value:</strong> $4,000 – $12,000 per violation
                         </div>
                     </div>
-                    
+
                     <!-- Mixed Files -->
                     <div style="background: #f9fafb; border-radius: 12px; padding: 24px; border-left: 4px solid #ec4899;">
                         <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin-bottom: 8px;">👥 Mixed Files</h4>
@@ -1433,7 +1433,7 @@
                             <strong>Value:</strong> $8,000 – $25,000+ per violation
                         </div>
                     </div>
-                    
+
                     <!-- Failure to Investigate -->
                     <div style="background: #f9fafb; border-radius: 12px; padding: 24px; border-left: 4px solid #0d9488;">
                         <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin-bottom: 8px;">⏱️ Failure to Investigate</h4>
@@ -1451,11 +1451,11 @@
             <div class="card">
                 <div class="card-title">⚡ How The Dispute Process Works</div>
                 <p style="color: #6b7280; margin-bottom: 32px;">Our strategic approach follows a proven escalation path to maximize your results.</p>
-                
+
                 <div style="position: relative; padding-left: 40px;">
                     <!-- Vertical Line -->
                     <div style="position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #0d9488 0%, #1e3a5f 100%);"></div>
-                    
+
                     <!-- Step 1 -->
                     <div style="position: relative; margin-bottom: 32px;">
                         <div style="position: absolute; left: -40px; width: 32px; height: 32px; background: #0d9488; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">1</div>
@@ -1465,7 +1465,7 @@
                             <span style="font-size: 12px; color: #0d9488; font-weight: 600;">Timeline: Days 1-7 • Response Due: 30 days</span>
                         </div>
                     </div>
-                    
+
                     <!-- Step 2 -->
                     <div style="position: relative; margin-bottom: 32px;">
                         <div style="position: absolute; left: -40px; width: 32px; height: 32px; background: #0d9488; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">2</div>
@@ -1475,7 +1475,7 @@
                             <span style="font-size: 12px; color: #0d9488; font-weight: 600;">Timeline: Days 37-45 • Creates legal pressure</span>
                         </div>
                     </div>
-                    
+
                     <!-- Step 3 -->
                     <div style="position: relative; margin-bottom: 32px;">
                         <div style="position: absolute; left: -40px; width: 32px; height: 32px; background: #1e3a5f; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">3</div>
@@ -1485,7 +1485,7 @@
                             <span style="font-size: 12px; color: #1e3a5f; font-weight: 600;">Timeline: Days 45-55 • Government oversight engaged</span>
                         </div>
                     </div>
-                    
+
                     <!-- Step 4 -->
                     <div style="position: relative;">
                         <div style="position: absolute; left: -40px; width: 32px; height: 32px; background: #1e3a5f; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">4</div>
@@ -1502,7 +1502,7 @@
             <div class="card">
                 <div class="card-title">📖 Glossary of Terms</div>
                 <p style="color: #6b7280; margin-bottom: 24px;">Common terms you'll encounter during your case.</p>
-                
+
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
                     <div style="padding: 16px; background: #f9fafb; border-radius: 8px;">
                         <strong style="color: #1e3a5f;">CRA (Credit Reporting Agency)</strong>
@@ -1542,7 +1542,7 @@
             <!-- FAQ Section -->
             <div class="card">
                 <div class="card-title">❓ Frequently Asked Questions</div>
-                
+
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                     <details style="padding: 20px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
                         <summary style="font-weight: 600; cursor: pointer; color: #1e3a5f; font-size: 15px;">How long does the dispute process take?</summary>
@@ -1550,49 +1550,49 @@
                             Credit bureaus have 30 days to investigate and respond to disputes. The complete process typically takes 60-90 days for most cases, though complex cases with multiple violations may take 3-6 months. We'll keep you updated at every stage through your portal.
                         </p>
                     </details>
-                    
+
                     <details style="padding: 20px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
                         <summary style="font-weight: 600; cursor: pointer; color: #1e3a5f; font-size: 15px;">What happens if the bureau doesn't respond in 30 days?</summary>
                         <p style="margin-top: 16px; color: #4b5563; font-size: 14px; line-height: 1.7;">
                             If a bureau fails to respond within 30 days, they must remove the disputed item from your credit report. This is also a violation of FCRA § 1681i that we can use to strengthen your case for damages.
                         </p>
                     </details>
-                    
+
                     <details style="padding: 20px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
                         <summary style="font-weight: 600; cursor: pointer; color: #1e3a5f; font-size: 15px;">What are "statutory damages" vs "actual damages"?</summary>
                         <p style="margin-top: 16px; color: #4b5563; font-size: 14px; line-height: 1.7;">
                             <strong>Statutory damages</strong> are fixed amounts ($100-$1,000 per violation) you can recover regardless of proving specific harm. <strong>Actual damages</strong> require proof of real financial harm (denied credit, lost job, emotional distress). Our approach documents both to maximize your recovery.
                         </p>
                     </details>
-                    
+
                     <details style="padding: 20px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
                         <summary style="font-weight: 600; cursor: pointer; color: #1e3a5f; font-size: 15px;">Can I dispute items myself for free?</summary>
                         <p style="margin-top: 16px; color: #4b5563; font-size: 14px; line-height: 1.7;">
                             Yes, you have the right to dispute items directly with credit bureaus for free. However, generic disputes often receive automated responses. Our expertise in FCRA law, strategic bundling of violations, and regulatory escalation paths typically achieve better and faster results — with potential monetary recovery.
                         </p>
                     </details>
-                    
+
                     <details style="padding: 20px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
                         <summary style="font-weight: 600; cursor: pointer; color: #1e3a5f; font-size: 15px;">What if the bureau says my dispute is "frivolous"?</summary>
                         <p style="margin-top: 16px; color: #4b5563; font-size: 14px; line-height: 1.7;">
                             Bureaus sometimes label disputes as "frivolous" to avoid investigation. However, they can only do this if your dispute doesn't identify the specific information being disputed. Our letters are detailed and specific, making frivolous claims much harder — and when they do, it often becomes evidence of willful non-compliance.
                         </p>
                     </details>
-                    
+
                     <details style="padding: 20px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
                         <summary style="font-weight: 600; cursor: pointer; color: #1e3a5f; font-size: 15px;">How is this different from "credit repair"?</summary>
                         <p style="margin-top: 16px; color: #4b5563; font-size: 14px; line-height: 1.7;">
                             Traditional credit repair sends generic dispute letters hoping items get deleted. We're building federal litigation cases with documented violations, calculated damages, and regulatory paper trails. This positions you for settlements in the $12,000-$85,000 range, not just item deletions.
                         </p>
                     </details>
-                    
+
                     <details style="padding: 20px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
                         <summary style="font-weight: 600; cursor: pointer; color: #1e3a5f; font-size: 15px;">Will this hurt my credit score?</summary>
                         <p style="margin-top: 16px; color: #4b5563; font-size: 14px; line-height: 1.7;">
                             No. Disputing inaccurate information does not hurt your credit score. In fact, when inaccurate negative items are removed or corrected, your score typically improves. The dispute process itself has no negative impact on your credit.
                         </p>
                     </details>
-                    
+
                     <details style="padding: 20px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
                         <summary style="font-weight: 600; cursor: pointer; color: #1e3a5f; font-size: 15px;">What should I do if I receive mail from a credit bureau?</summary>
                         <p style="margin-top: 16px; color: #4b5563; font-size: 14px; line-height: 1.7;">
@@ -1645,11 +1645,11 @@
                     </a>
                 </div>
             </div>
-            
+
             <div class="card">
                 <div class="card-title">Upload Documents</div>
                 <p style="color: #64748b; margin-bottom: 25px;">Or upload files directly from your device. Select the document type first, then provide the details and upload your file.</p>
-                
+
                 <div id="uploadSteps">
                     <div id="categoryStep">
                         <h4 style="margin-bottom: 15px; color: #1a1a2e;">Step 1: Select Document Category</h4>
@@ -1680,19 +1680,19 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <div id="typeStep" style="display: none;">
                         <h4 style="margin-bottom: 15px; color: #1a1a2e;">Step 2: Select Document Type</h4>
                         <div id="docTypeGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;"></div>
                         <button type="button" onclick="showCategoryStep()" style="margin-top: 15px; padding: 8px 16px; background: #f1f5f9; border: none; border-radius: 6px; cursor: pointer;">← Back</button>
                     </div>
-                    
+
                     <div id="detailsStep" style="display: none;">
                         <h4 style="margin-bottom: 15px; color: #1a1a2e;">Step 3: Additional Details</h4>
                         <div id="docDetailsForm"></div>
                         <button type="button" onclick="showTypeStep()" style="margin-top: 15px; padding: 8px 16px; background: #f1f5f9; border: none; border-radius: 6px; cursor: pointer;">← Back</button>
                     </div>
-                    
+
                     <div id="uploadStep" style="display: none;">
                         <h4 style="margin-bottom: 15px; color: #1a1a2e;">Step 4: Upload File</h4>
                         <form id="docUploadForm" enctype="multipart/form-data">
@@ -1726,7 +1726,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="card">
                 <div class="card-title">My Uploaded Documents</div>
                 <div id="myUploadsTable">
@@ -1734,7 +1734,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Refer a Friend Tab -->
         <div class="tab-content" id="referral">
             <div class="referral-section">
@@ -1749,7 +1749,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="referral-form">
                 <div class="card-title">Refer a Friend</div>
                 <form id="referralForm">
@@ -1782,7 +1782,7 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         // Tab switching function
         function switchTab(tabId, clickedTab) {
@@ -1795,22 +1795,22 @@
             // Show target content
             document.getElementById(tabId).classList.add('active');
         }
-        
+
         document.getElementById('contactForm')?.addEventListener('submit', function(e) {
             e.preventDefault();
             alert('Message sent! We will get back to you soon.');
             this.reset();
         });
-        
+
         // Password Setup Function
         async function setPassword() {
             const currentPasswordEl = document.getElementById('currentPassword');
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             const messageDiv = document.getElementById('passwordMessage');
-            
+
             messageDiv.style.display = 'none';
-            
+
             if (!newPassword || newPassword.length < 8) {
                 messageDiv.style.display = 'block';
                 messageDiv.style.background = '#fef2f2';
@@ -1818,7 +1818,7 @@
                 messageDiv.textContent = 'Password must be at least 8 characters.';
                 return;
             }
-            
+
             if (newPassword !== confirmPassword) {
                 messageDiv.style.display = 'block';
                 messageDiv.style.background = '#fef2f2';
@@ -1826,12 +1826,12 @@
                 messageDiv.textContent = 'Passwords do not match.';
                 return;
             }
-            
+
             const payload = {
                 token: portalToken,
                 password: newPassword
             };
-            
+
             if (currentPasswordEl) {
                 payload.current_password = currentPasswordEl.value;
                 if (!currentPasswordEl.value) {
@@ -1842,16 +1842,16 @@
                     return;
                 }
             }
-            
+
             try {
                 const response = await fetch('/api/portal/set-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                
+
                 const data = await response.json();
-                
+
                 messageDiv.style.display = 'block';
                 if (data.success) {
                     messageDiv.style.background = '#f0fdf4';
@@ -1872,27 +1872,27 @@
                 messageDiv.textContent = 'Connection error. Please try again.';
             }
         }
-        
+
         // Avatar Upload Handling
         const portalToken = '{{ token }}';
-        
+
         document.getElementById('avatarUpload')?.addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            
+
             // Check file size (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
                 alert('Image is too large. Please select an image under 5MB.');
                 return;
             }
-            
+
             // Show preview immediately
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById('avatarPreview');
                 const initial = document.getElementById('avatarInitial');
                 if (initial) initial.remove();
-                
+
                 let img = document.getElementById('avatarPreviewImg');
                 if (!img) {
                     img = document.createElement('img');
@@ -1901,7 +1901,7 @@
                     preview.appendChild(img);
                 }
                 img.src = e.target.result;
-                
+
                 // Also update header avatar
                 const headerAvatar = document.getElementById('headerAvatar');
                 if (headerAvatar) {
@@ -1909,17 +1909,17 @@
                 }
             };
             reader.readAsDataURL(file);
-            
+
             // Upload to server
             const formData = new FormData();
             formData.append('avatar', file);
-            
+
             try {
                 const response = await fetch(`/api/portal/${portalToken}/avatar`, {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('removeAvatarBtn').style.display = 'inline-block';
@@ -1931,34 +1931,34 @@
                 alert('Failed to upload avatar. Please try again.');
             }
         });
-        
+
         async function removeAvatar() {
             if (!confirm('Remove your profile photo?')) return;
-            
+
             try {
                 const response = await fetch(`/api/portal/${portalToken}/avatar`, {
                     method: 'DELETE'
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
                     const preview = document.getElementById('avatarPreview');
                     const img = document.getElementById('avatarPreviewImg');
                     if (img) img.remove();
-                    
+
                     const clientName = '{{ client.name if client else "C" }}';
                     const initial = clientName.charAt(0).toUpperCase();
                     const span = document.createElement('span');
                     span.id = 'avatarInitial';
                     span.textContent = initial;
                     preview.appendChild(span);
-                    
+
                     // Update header avatar
                     const headerAvatar = document.getElementById('headerAvatar');
                     if (headerAvatar) {
                         headerAvatar.innerHTML = initial;
                     }
-                    
+
                     document.getElementById('removeAvatarBtn').style.display = 'none';
                 } else {
                     alert('Failed to remove avatar: ' + (result.error || 'Unknown error'));
@@ -1968,10 +1968,10 @@
                 alert('Failed to remove avatar. Please try again.');
             }
         }
-        
+
         document.getElementById('referralForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const data = {
                 referredName: document.getElementById('refName').value,
                 referredEmail: document.getElementById('refEmail').value,
@@ -1979,14 +1979,14 @@
                 comments: document.getElementById('refComments').value,
                 referringClientId: {{ client.id if client else 0 }}
             };
-            
+
             try {
                 const response = await fetch('/api/referral', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
+
                 if (response.ok) {
                     alert('Thank you for your referral! We will reach out to them soon.');
                     this.reset();
@@ -1998,17 +1998,17 @@
                 alert('Connection error. Please try again.');
             }
         });
-        
+
         document.getElementById('fileUpload')?.addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            
+
             const bureau = prompt('Which bureau is this response from? (Experian, TransUnion, or Equifax)');
             if (!bureau) return;
-            
+
             const responseType = prompt('What type of response is this? (verified, deleted, updated, investigating, no_response)');
             if (!responseType) return;
-            
+
             const formData = new FormData();
             formData.append('file', file);
             formData.append('clientId', '{{ client.id if client else 0 }}');
@@ -2016,13 +2016,13 @@
             formData.append('bureau', bureau);
             formData.append('disputeRound', '{{ client.current_dispute_round if client and client.current_dispute_round else 1 }}');
             formData.append('responseType', responseType);
-            
+
             try {
                 const response = await fetch('/api/cra-response/upload', {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
                     alert('Response uploaded successfully!');
@@ -2035,14 +2035,14 @@
                 alert('Connection error. Please try again.');
             }
         });
-        
+
         // Status tab functions
         function showAllItems() {
             document.querySelectorAll('.bureau-section').forEach(section => {
                 section.style.display = 'block';
             });
         }
-        
+
         async function submitStatusChanges() {
             const updates = [];
             document.querySelectorAll('.comment-input').forEach(input => {
@@ -2052,19 +2052,19 @@
                     updates.push({ id: parseInt(id), comments: value });
                 }
             });
-            
+
             if (updates.length === 0) {
                 alert('No changes to submit.');
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/dispute-items/batch-update', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ updates })
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
                     alert('Changes saved successfully!');
@@ -2077,32 +2077,32 @@
                 alert('Connection error. Please try again.');
             }
         }
-        
+
         async function uploadFreezeDoc(input) {
             const freezeId = input.dataset.id;
             const bureauName = input.dataset.bureau;
             const file = input.files[0];
-            
+
             if (!file) return;
-            
+
             const formData = new FormData();
             formData.append('file', file);
             formData.append('freeze_id', freezeId);
             formData.append('bureau_name', bureauName);
             formData.append('category', 'cra_response');
             formData.append('document_type', 'freeze_confirmation');
-            
+
             const label = input.parentElement;
             const statusSpan = document.querySelector(`.freeze-upload-status[data-id="${freezeId}"]`);
-            
+
             label.innerHTML = '<span style="font-size: 12px;">⏳</span>';
-            
+
             try {
                 const response = await fetch('/api/portal/{{ case.portal_token if case else "" }}/upload', {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
                     label.innerHTML = '<span style="font-size: 16px; color: #22c55e;">✓</span>';
@@ -2120,10 +2120,10 @@
                 alert('Upload error: ' + err.message);
             }
         }
-        
+
         async function submitFreezeChanges() {
             const updates = [];
-            
+
             document.querySelectorAll('.freeze-status-select').forEach(select => {
                 const id = select.dataset.id;
                 const commentInput = document.querySelector(`.freeze-comment-input[data-id="${id}"]`);
@@ -2133,19 +2133,19 @@
                     comments: commentInput ? commentInput.value : ''
                 });
             });
-            
+
             if (updates.length === 0) {
                 alert('No changes to submit.');
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/secondary-freezes/batch-update', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ updates })
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
                     alert('Freeze status changes saved successfully!');
@@ -2158,10 +2158,10 @@
                 alert('Connection error. Please try again.');
             }
         }
-        
+
         let docSelectedCategory = '';
         let docSelectedType = '';
-        
+
         const docTypesByCategory = {
             cra_response: [
                 { value: 'deleted', label: 'Items Deleted' },
@@ -2205,42 +2205,42 @@
                 { value: 'misc', label: 'Miscellaneous' }
             ]
         };
-        
+
         function showCategoryStep() {
             document.getElementById('categoryStep').style.display = 'block';
             document.getElementById('typeStep').style.display = 'none';
             document.getElementById('detailsStep').style.display = 'none';
             document.getElementById('uploadStep').style.display = 'none';
         }
-        
+
         function showTypeStep() {
             document.getElementById('categoryStep').style.display = 'none';
             document.getElementById('typeStep').style.display = 'block';
             document.getElementById('detailsStep').style.display = 'none';
             document.getElementById('uploadStep').style.display = 'none';
         }
-        
+
         function showDetailsStep() {
             document.getElementById('categoryStep').style.display = 'none';
             document.getElementById('typeStep').style.display = 'none';
             document.getElementById('detailsStep').style.display = 'block';
             document.getElementById('uploadStep').style.display = 'none';
         }
-        
+
         function showUploadStep() {
             document.getElementById('categoryStep').style.display = 'none';
             document.getElementById('typeStep').style.display = 'none';
             document.getElementById('detailsStep').style.display = 'none';
             document.getElementById('uploadStep').style.display = 'block';
         }
-        
+
         function populateDocTypes() {
             const grid = document.getElementById('docTypeGrid');
             const types = docTypesByCategory[docSelectedCategory] || [];
-            grid.innerHTML = types.map(t => 
+            grid.innerHTML = types.map(t =>
                 `<button type="button" class="doc-type-btn" data-type="${t.value}" style="padding: 12px 15px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; text-align: left;">${t.label}</button>`
             ).join('');
-            
+
             grid.querySelectorAll('.doc-type-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     grid.querySelectorAll('.doc-type-btn').forEach(b => { b.style.borderColor = '#e2e8f0'; b.style.background = '#f8fafc'; });
@@ -2253,11 +2253,11 @@
                 });
             });
         }
-        
+
         function populateDocDetails() {
             const form = document.getElementById('docDetailsForm');
             let html = '';
-            
+
             if (docSelectedCategory === 'cra_response') {
                 html = `
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px;">
@@ -2340,7 +2340,7 @@
             }
             form.innerHTML = html;
         }
-        
+
         document.querySelectorAll('.doc-category-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.doc-category-btn').forEach(b => { b.style.borderColor = '#e2e8f0'; b.style.background = '#f8fafc'; });
@@ -2352,10 +2352,10 @@
                 showTypeStep();
             });
         });
-        
+
         const docDropzone = document.getElementById('docDropzone');
         const docFileInput = document.getElementById('docFileInput');
-        
+
         if (docDropzone) {
             docDropzone.addEventListener('click', () => docFileInput.click());
             docDropzone.addEventListener('dragover', (e) => { e.preventDefault(); docDropzone.style.borderColor = '#4ade80'; docDropzone.style.background = '#f0fdf4'; });
@@ -2369,7 +2369,7 @@
                 }
             });
         }
-        
+
         if (docFileInput) {
             docFileInput.addEventListener('change', (e) => {
                 if (e.target.files.length) {
@@ -2377,7 +2377,7 @@
                 }
             });
         }
-        
+
         function showDocFilePreview(file) {
             const preview = document.getElementById('docFilePreview');
             const ext = file.name.split('.').pop().toUpperCase();
@@ -2395,39 +2395,39 @@
             preview.style.display = 'block';
             docDropzone.style.display = 'none';
         }
-        
+
         function removeDocFile() {
             docFileInput.value = '';
             document.getElementById('docFilePreview').style.display = 'none';
             docDropzone.style.display = 'block';
         }
-        
+
         document.getElementById('docUploadForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const formData = new FormData(this);
             formData.set('category', docSelectedCategory);
             formData.set('document_type', docSelectedType);
-            
+
             const detailsForm = document.getElementById('docDetailsForm');
             detailsForm.querySelectorAll('input, select').forEach(input => {
                 if (input.name && input.value) {
                     formData.set(input.name, input.value);
                 }
             });
-            
+
             if (!formData.get('file') || !formData.get('file').name) {
                 alert('Please select a file to upload');
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/portal/' + portalToken + '/upload', {
                     method: 'POST',
                     body: formData
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     alert('Document uploaded successfully!');
                     showCategoryStep();
@@ -2442,13 +2442,13 @@
                 alert('Upload error: ' + error.message);
             }
         });
-        
+
         async function loadMyUploads() {
             try {
                 const response = await fetch('/api/portal/' + portalToken + '/uploads');
                 const data = await response.json();
                 const container = document.getElementById('myUploadsTable');
-                
+
                 if (data.success && data.uploads && data.uploads.length > 0) {
                     container.innerHTML = `
                         <table style="width: 100%; border-collapse: collapse;">
@@ -2483,29 +2483,29 @@
                 console.error('Error loading uploads:', error);
             }
         }
-        
+
         if (portalToken) {
             loadMyUploads();
         }
-        
+
         // Credit Score Progress Functions
         const clientId = {{ client.id if client else 0 }};
         let scoreChart = null;
-        
+
         async function loadScoreProgress() {
             if (!clientId) return;
-            
+
             try {
                 const response = await fetch(`/api/credit-score/summary/${clientId}`);
                 const data = await response.json();
-                
+
                 const container = document.getElementById('scoreProgressContent');
-                
+
                 if (data.success && data.data.has_data) {
                     const s = data.data;
                     const gainClass = s.points_gained > 0 ? 'color: #22c55e;' : (s.points_gained < 0 ? 'color: #ef4444;' : '');
                     const gainPrefix = s.points_gained >= 0 ? '+' : '';
-                    
+
                     container.innerHTML = `
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
                             <div style="background: linear-gradient(135deg, #fef2f2, #fee2e2); padding: 25px; border-radius: 12px; text-align: center;">
@@ -2547,16 +2547,16 @@
                 console.error('Error loading score progress:', error);
             }
         }
-        
+
         async function loadScoreProjection() {
             if (!clientId) return;
-            
+
             try {
                 const response = await fetch(`/api/credit-score/projection/${clientId}`);
                 const data = await response.json();
-                
+
                 const container = document.getElementById('projectionContent');
-                
+
                 if (data.success && data.data) {
                     const p = data.data;
                     container.innerHTML = `
@@ -2589,14 +2589,14 @@
                 console.error('Error loading projection:', error);
             }
         }
-        
+
         async function loadScoreTimeline() {
             if (!clientId) return;
-            
+
             try {
                 const response = await fetch(`/api/credit-score/timeline/${clientId}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.data && data.data.length > 0) {
                     renderClientScoreChart(data.data);
                 }
@@ -2604,17 +2604,17 @@
                 console.error('Error loading timeline:', error);
             }
         }
-        
+
         function renderClientScoreChart(timeline) {
             const ctx = document.getElementById('clientScoreChart');
             if (!ctx) return;
-            
+
             if (scoreChart) {
                 scoreChart.destroy();
             }
-            
+
             const labels = timeline.map(t => new Date(t.date).toLocaleDateString());
-            
+
             scoreChart = new Chart(ctx.getContext('2d'), {
                 type: 'line',
                 data: {
@@ -2667,26 +2667,26 @@
                 }
             });
         }
-        
+
         // Load score data when page loads
         loadScoreProgress();
         loadScoreProjection();
         loadScoreTimeline();
-        
+
         // Dispute Timeline Functions
         async function loadDisputeTimeline() {
             if (!clientId) return;
-            
+
             try {
                 const response = await fetch(`/api/client/${clientId}/timeline`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     document.getElementById('lettersSentCount').textContent = data.summary.letters_sent;
                     document.getElementById('responsesCount').textContent = data.summary.responses_received;
                     document.getElementById('deletedCount').textContent = data.summary.items_deleted + data.summary.items_updated;
                     document.getElementById('overdueCount').textContent = data.summary.overdue_deadlines;
-                    
+
                     renderTimeline(data.events);
                 } else {
                     document.getElementById('timelineContainer').innerHTML = `
@@ -2706,7 +2706,7 @@
                 `;
             }
         }
-        
+
         function getTimelineColor(color) {
             const colors = {
                 'blue': '#3b82f6',
@@ -2717,10 +2717,10 @@
             };
             return colors[color] || colors.gray;
         }
-        
+
         function renderTimeline(events) {
             const container = document.getElementById('timelineContainer');
-            
+
             if (!events || events.length === 0) {
                 container.innerHTML = `
                     <div style="position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #e5e7eb;"></div>
@@ -2732,13 +2732,13 @@
                 `;
                 return;
             }
-            
+
             let html = '<div style="position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #3b82f6 0%, #22c55e 50%, #6b7280 100%);"></div>';
-            
+
             events.forEach((event, index) => {
                 const isRight = index % 2 === 0;
                 const color = getTimelineColor(event.color);
-                
+
                 html += `
                     <div class="timeline-event" style="position: relative; margin-bottom: 25px; padding-left: 25px;">
                         <div style="position: absolute; left: 0; top: 5px; width: 20px; height: 20px; background: ${color}; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; font-size: 10px;">${event.icon || ''}</div>
@@ -2760,36 +2760,36 @@
                     </div>
                 `;
             });
-            
+
             container.innerHTML = html;
         }
-        
+
         function toggleTimelineDetails(element) {
             const details = element.querySelector('.timeline-details');
             if (details) {
                 details.style.display = details.style.display === 'none' ? 'block' : 'none';
             }
         }
-        
+
         // Load timeline when tab is clicked
         document.addEventListener('DOMContentLoaded', function() {
             const timelineTab = document.querySelector('[onclick*="timeline"]');
             if (timelineTab) {
                 timelineTab.addEventListener('click', loadDisputeTimeline);
             }
-            
+
             // Load ROI Dashboard
             loadROIDashboard();
         });
-        
+
         // ROI Dashboard Functions
         async function loadROIDashboard() {
             if (!clientId) return;
-            
+
             try {
                 const response = await fetch(`/api/client/${clientId}/roi-summary`);
                 const data = await response.json();
-                
+
                 if (data.success && data.data.has_analysis) {
                     renderROIDashboard(data.data);
                 } else {
@@ -2809,7 +2809,7 @@
                 `;
             }
         }
-        
+
         function renderROIDashboard(data) {
             const strengthColors = {
                 'Strong': { bg: '#166534', text: '#22c55e' },
@@ -2817,7 +2817,7 @@
                 'Weak': { bg: '#991b1b', text: '#ef4444' }
             };
             const strength = strengthColors[data.case_metrics?.case_strength] || strengthColors['Moderate'];
-            
+
             const html = `
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px;">
                     <div style="background: linear-gradient(135deg, #166534 0%, #15803d 100%); border-radius: 12px; padding: 20px; text-align: center;">
@@ -2833,7 +2833,7 @@
                         <div style="font-size: 32px; font-weight: 700; color: white;">$${data.financials.total_exposure.toLocaleString()}</div>
                     </div>
                 </div>
-                
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <div style="background: #1e293b; border-radius: 12px; padding: 20px;">
                         <div style="font-size: 14px; color: #94a3b8; margin-bottom: 15px;">Settlement Probability</div>
@@ -2854,7 +2854,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="background: #1e293b; border-radius: 12px; padding: 20px;">
                     <div style="font-size: 14px; color: #94a3b8; margin-bottom: 12px;">How Your Case Compares</div>
                     <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
@@ -2874,7 +2874,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
                     <div style="background: #334155; border-radius: 8px; padding: 15px; text-align: center;">
                         <div style="font-size: 24px; font-weight: 700; color: #f87171;">${data.violations.breakdown.high_value}</div>
@@ -2893,7 +2893,7 @@
                         <div style="font-size: 11px; color: #94a3b8;">Items Deleted</div>
                     </div>
                 </div>
-                
+
                 <div style="margin-top: 20px; padding: 15px; background: rgba(132, 204, 22, 0.1); border: 1px solid rgba(132, 204, 22, 0.3); border-radius: 8px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span style="font-size: 20px;">📅</span>
@@ -2904,7 +2904,7 @@
                     </div>
                 </div>
             `;
-            
+
             document.getElementById('roiDashboard').innerHTML = html;
         }
     </script>

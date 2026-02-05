@@ -12,7 +12,7 @@
             </span>
         </button>
     </div>
-    
+
     <div class="sidebar-nav">
         <!-- Pinned Dashboard Link (always visible) -->
         <a href="/dashboard" class="nav-item pinned {% if active_page == 'dashboard' %}active{% endif %}">
@@ -99,7 +99,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <div class="nav-section" data-section="workflow">
             <div class="nav-section-title">
                 <span>Case Workflow</span>
@@ -146,7 +146,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         {% if staff_role in ['admin', 'attorney', 'paralegal'] %}
         <div class="nav-section" data-section="legal-tools">
             <div class="nav-section-title">
@@ -274,7 +274,7 @@
             </div>
         </div>
         {% endif %}
-        
+
         {% if staff_role in ['admin', 'attorney'] %}
         <div class="nav-section" data-section="automation">
             <div class="nav-section-title">
@@ -317,7 +317,7 @@
             </div>
         </div>
         {% endif %}
-        
+
         {% if staff_role == 'admin' %}
         <div class="nav-section" data-section="enterprise">
             <div class="nav-section-title">
@@ -340,7 +340,7 @@
             </div>
         </div>
         {% endif %}
-        
+
         <div class="nav-section" data-section="settings">
             <div class="nav-section-title">
                 <span>Settings</span>
@@ -376,7 +376,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="sidebar-user">
         <div class="sidebar-user-container">
             <div class="sidebar-user-card">

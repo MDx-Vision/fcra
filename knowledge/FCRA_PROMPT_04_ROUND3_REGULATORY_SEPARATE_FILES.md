@@ -1,10 +1,10 @@
 # FCRA PROMPT 04: ROUND 3 â€” REGULATORY COMPLAINTS (SEPARATE FILES)
 ## CFPB + FTC + State AG Complaints + Defendant Notices
 
-**Version:** 2.0 (Separate File Output)  
-**Created:** November 24, 2025  
-**Use Case:** Round 3 escalation â€” File complaints + notify defendants  
-**Output:** Each complaint/notice saved as separate downloadable file  
+**Version:** 2.0 (Separate File Output)
+**Created:** November 24, 2025
+**Use Case:** Round 3 escalation â€” File complaints + notify defendants
+**Output:** Each complaint/notice saved as separate downloadable file
 **Deadline:** 10 days for defendants to respond before arbitration
 
 ---
@@ -109,8 +109,8 @@ TEMPLATE 1: CFPB COMPLAINT
 
 **COMPLAINT NARRATIVE:**
 
-I have been disputing inaccurate information with [Company Name] since [Date]. 
-Despite multiple formal disputes under FCRA Â§ 1681i, they continue to report 
+I have been disputing inaccurate information with [Company Name] since [Date].
+Despite multiple formal disputes under FCRA Â§ 1681i, they continue to report
 inaccurate information.
 
 **Timeline:**
@@ -176,14 +176,14 @@ TEMPLATE 2: FTC COMPLAINT
 
 **COMPLAINT:**
 
-I am filing a formal complaint against [Company] for violations of the Fair 
+I am filing a formal complaint against [Company] for violations of the Fair
 Credit Reporting Act.
 
 [Use same narrative structure as CFPB complaint]
 
 **FTC Authority:**
 
-The FTC has enforcement authority over credit reporting agencies and furnishers 
+The FTC has enforcement authority over credit reporting agencies and furnishers
 under FCRA. I request the FTC investigate [Company]'s systematic failure to:
 
 1. Maintain accurate information (Â§ 1681e(b))
@@ -217,14 +217,14 @@ Consumer Protection Division
 
 Dear Attorney General:
 
-I am a resident of [State] filing a formal complaint against [Company] for 
+I am a resident of [State] filing a formal complaint against [Company] for
 violations of federal and state consumer protection laws.
 
 [Same narrative as CFPB/FTC]
 
 **State Law Violations:**
 
-[In addition to FCRA, [Company] may have violated [State] consumer 
+[In addition to FCRA, [Company] may have violated [State] consumer
 protection statutes regarding deceptive practices and credit reporting.]
 
 **Relief Requested:**
@@ -266,7 +266,7 @@ TEMPLATE 4: NOTICE TO DEFENDANT
 
 Dear Sir or Madam:
 
-**You are hereby notified that formal regulatory complaints have been filed 
+**You are hereby notified that formal regulatory complaints have been filed
 against [Defendant Name] with the following agencies:**
 
 1. **Consumer Financial Protection Bureau (CFPB)**
@@ -315,7 +315,7 @@ This is your **FINAL OPPORTUNITY** to comply before arbitration proceedings.
 2. **PROVIDE** documentary evidence per Cushman standard, OR
 3. **SETTLE** this matter for deletion + monetary compensation
 
-**If no response within 10 days, I will proceed with arbitration under 
+**If no response within 10 days, I will proceed with arbitration under
 the original creditor agreement (if applicable) or file federal lawsuit.**
 
 ---------------------------------------------------------------------------
@@ -329,7 +329,7 @@ The CFPB, FTC, and State AG now have jurisdiction to:
 - Order systemic changes
 - Publish enforcement actions
 
-**Your continued non-compliance is now documented with federal and state 
+**Your continued non-compliance is now documented with federal and state
 regulators.**
 
 ---------------------------------------------------------------------------

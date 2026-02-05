@@ -7,9 +7,13 @@ Supports: IdentityIQ, MyScoreIQ, SmartCredit, MyFreeScoreNow, and more.
 import asyncio
 import logging
 import os
-from datetime import datetime
+import threading
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
+
+# Cache duration for recent reports (reuse instead of re-pulling)
+CACHE_HOURS = 12  # Reuse reports pulled within last 12 hours
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +134,7 @@ class CreditImportAutomation:
         )
 
     async def _init_browser(self):
-        """Initialize headless browser."""
+        """Initialize headless browser with speed optimizations."""
         try:
             from playwright.async_api import async_playwright
 
@@ -144,13 +148,31 @@ class CreditImportAutomation:
                     "--disable-accelerated-2d-canvas",
                     "--disable-gpu",
                     "--single-process",
+                    # Speed optimizations
+                    "--disable-images",
+                    "--blink-settings=imagesEnabled=false",
+                    "--disable-extensions",
+                    "--disable-plugins",
+                    "--disable-sync",
+                    "--disable-translate",
+                    "--disable-background-networking",
+                    "--disable-default-apps",
                 ],
             )
             self.context = await self.browser.new_context(
                 viewport={"width": 1920, "height": 1080},
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                # Block images and other resources for speed
+                bypass_csp=True,
             )
             self.page = await self.context.new_page()
+
+            # Note: Don't block images - "View Report" buttons may be image-based
+            # Only block fonts and large non-essential resources
+            await self.page.route(
+                "**/*.{woff,woff2,ttf,eot}", lambda route: route.abort()
+            )
+
             return True
         except Exception as e:
             logger.error(f"Failed to initialize browser: {e}")
@@ -269,7 +291,7 @@ class CreditImportAutomation:
                 client_id=client_id,
                 status="success",
             )
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)  # Reduced from 3s
 
             log_activity(
                 "Download Report",
@@ -310,20 +332,20 @@ class CreditImportAutomation:
         try:
             logger.info(f"Navigating to {config['login_url']}")
             await self.page.goto(
-                config["login_url"], wait_until="domcontentloaded", timeout=60000
+                config["login_url"], wait_until="domcontentloaded", timeout=30000
             )
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)  # Reduced from 3s
 
             # Wait for visible input fields (not hidden CSRF tokens)
             try:
                 await self.page.wait_for_selector(
                     'input[type="email"]:visible, input[type="password"]:visible, input[name="email"]:visible, input[name="username"]:visible',
-                    timeout=15000,
+                    timeout=10000,
                 )
             except:
                 # Fallback to any visible input
-                await self.page.wait_for_selector("input:visible", timeout=15000)
-            await asyncio.sleep(2)
+                await self.page.wait_for_selector("input:visible", timeout=10000)
+            await asyncio.sleep(0.5)  # Reduced from 2s
 
             # Handle comma-separated selectors in config
             config_username_selectors = []
@@ -454,14 +476,14 @@ class CreditImportAutomation:
                 except:
                     continue
 
-            await asyncio.sleep(5)
+            await asyncio.sleep(2)  # Reduced from 5s
 
             try:
                 await self.page.wait_for_load_state("networkidle", timeout=30000)
             except:
                 pass
 
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)  # Reduced from 3s
 
             current_url = self.page.url.lower()
             page_content = await self.page.content()
@@ -526,13 +548,13 @@ class CreditImportAutomation:
                     except:
                         continue
 
-                await asyncio.sleep(5)
+                await asyncio.sleep(2)  # Reduced from 5s
                 try:
                     await self.page.wait_for_load_state("networkidle", timeout=30000)
                 except:
                     pass
 
-                await asyncio.sleep(3)
+                await asyncio.sleep(1)  # Reduced from 3s
                 screenshot_path2 = (
                     REPORTS_DIR
                     / f"after_security_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.png"
@@ -553,8 +575,40 @@ class CreditImportAutomation:
                 "access denied",
             ]
 
+            # Check for site maintenance/downtime - require BOTH a maintenance keyword AND context
             page_content = await self.page.content()
             page_lower = page_content.lower()
+
+            # Only flag as maintenance if we see clear maintenance page indicators
+            # Must have BOTH a status word AND a time-related word to avoid false positives
+            is_maintenance_page = False
+            if "maintenance" in page_lower or "upgrade in progress" in page_lower:
+                if any(
+                    w in page_lower
+                    for w in [
+                        "scheduled",
+                        "performing",
+                        "please check back",
+                        "temporarily",
+                        "we'll be back",
+                    ]
+                ):
+                    is_maintenance_page = True
+
+            # Also check for server errors
+            if (
+                "503 service" in page_lower
+                or "502 bad gateway" in page_lower
+                or "site is down" in page_lower
+            ):
+                is_maintenance_page = True
+
+            if is_maintenance_page:
+                logger.error("SITE DOWN - Maintenance page detected")
+                logger.error(
+                    "Credit monitoring site is under maintenance. Try again later."
+                )
+                return False
 
             for indicator in error_indicators:
                 if indicator in page_lower:
@@ -577,7 +631,20 @@ class CreditImportAutomation:
                 logger.info("Login appears successful - in member area")
                 return True
 
-            logger.info(f"Login status unclear, URL: {current_url} - proceeding anyway")
+            # Get page title for better logging
+            page_title = await self.page.title()
+            logger.warning(
+                f"Login status unclear - URL: {current_url}, Title: '{page_title}'"
+            )
+            logger.warning(f"Page content length: {len(page_content)} bytes")
+
+            # If still on login page, login likely failed
+            if "login" in current_url.lower():
+                logger.error(
+                    f"Still on login page after login attempt - check credentials"
+                )
+                return False
+
             return True
 
         except Exception as e:
@@ -646,7 +713,8 @@ class CreditImportAutomation:
                 max_attempts = 15
                 for attempt in range(max_attempts):
                     try:
-                        score_count = await self.page.evaluate("""() => {
+                        score_count = await self.page.evaluate(
+                            """() => {
                             const tds = document.querySelectorAll('td.info.ng-binding');
                             let count = 0;
                             tds.forEach(td => {
@@ -656,7 +724,8 @@ class CreditImportAutomation:
                                 }
                             });
                             return count;
-                        }""")
+                        }"""
+                        )
                         logger.info(
                             f"Attempt {attempt + 1}: Found {score_count} score values"
                         )
@@ -665,101 +734,58 @@ class CreditImportAutomation:
                             break
                     except Exception as e:
                         logger.warning(f"Score check attempt {attempt + 1} failed: {e}")
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(1)  # Reduced from 3s
 
-                await asyncio.sleep(3)
+                await asyncio.sleep(1)  # Reduced from 3s
 
                 try:
                     show_all = await self.page.query_selector('a:has-text("Show All")')
                     if show_all:
                         await show_all.click()
-                        await asyncio.sleep(3)
+                        await asyncio.sleep(1)  # Reduced from 3s
                 except:
                     pass
 
             elif flow == "myfreescorenow":
-                logger.info(
-                    "MyFreeScoreNow: Looking for 3B Report link on dashboard..."
+                logger.info("MyFreeScoreNow: Navigating directly to 3B Report page...")
+
+                # DIRECT NAVIGATION to 3B page (has all 3 bureau scores)
+                # This is more reliable than clicking links
+                three_b_url = (
+                    "https://member.myfreescorenow.com/member/credit-report/smart-3b/"
                 )
+                logger.info(f"Navigating directly to: {three_b_url}")
 
-                # Wait for dashboard to load after login
-                await asyncio.sleep(5)
-
-                # Click on 3B Report section - try multiple approaches
-                # The dashboard shows "3B Report & Scores" section with clickable elements
-                report_selectors = [
-                    # Click on the 3B Report section header or link
-                    'a:has-text("3B Report")',
-                    'a:has-text("3B Report & Scores")',
-                    ':has-text("3B Report & Scores") >> a',
-                    'a:has-text("View Last Update")',
-                    # Try clicking on bureau logos/links in the 3B section
-                    'a[href*="credit-report/3b"]',
-                    'a[href*="3b-report"]',
-                    'a[href*="/3b"]',
-                    # Try the Reports menu
-                    'a:has-text("Reports")',
-                    '[data-testid*="reports"]',
-                    # Fallback button clicks
-                    'button:has-text("3B Report")',
-                    'button:has-text("View Report")',
-                ]
-
-                report_found = False
-                for selector in report_selectors:
-                    try:
-                        link = await self.page.query_selector(selector)
-                        if link:
-                            logger.info(f"Found 3B report element: {selector}")
-                            await link.click()
-                            await asyncio.sleep(3)
-                            await self.page.wait_for_load_state(
-                                "networkidle", timeout=30000
-                            )
-
-                            # Check if we're on the 3B report page now
-                            current_url = self.page.url.lower()
-                            page_title = await self.page.title()
-                            if (
-                                "3b" in current_url
-                                or "3b" in page_title.lower()
-                                or "bureau" in page_title.lower()
-                            ):
-                                logger.info(
-                                    f"Successfully navigated to 3B Report page: {page_title}"
-                                )
-                                report_found = True
-                                break
-                    except Exception as e:
-                        logger.debug(f"Selector {selector} failed: {e}")
-                        continue
-
-                # If clicking didn't work, try direct URL navigation
-                if not report_found:
-                    logger.warning(
-                        "Could not find 3B report link, trying direct URL..."
+                try:
+                    await self.page.goto(
+                        three_b_url, wait_until="domcontentloaded", timeout=30000
                     )
-                    direct_urls = [
-                        "https://member.myfreescorenow.com/member/credit-report/3b",
-                        "https://member.myfreescorenow.com/credit-report/3b",
-                        "https://member.myfreescorenow.com/3b-report",
-                        "https://member.myfreescorenow.com/reports/3b",
-                    ]
-                    for url in direct_urls:
-                        try:
-                            logger.info(f"Trying direct navigation to: {url}")
-                            await self.page.goto(
-                                url, wait_until="networkidle", timeout=30000
-                            )
-                            page_title = await self.page.title()
-                            if "not found" not in page_title.lower():
-                                logger.info(f"Found report page at: {url}")
-                                break
-                        except:
-                            continue
+                    await asyncio.sleep(2)  # Wait for Vue.js to initialize
+                    await self.page.wait_for_load_state("networkidle", timeout=30000)
+
+                    page_title = await self.page.title()
+                    current_url = self.page.url
+                    logger.info(f"Navigated to: {page_title} at {current_url}")
+
+                    # Take debug screenshot of 3B page
+                    debug_path = f"uploads/credit_reports/debug_3b_{client_id}.png"
+                    await self.page.screenshot(path=debug_path, full_page=True)
+                    logger.info(f"Saved 3B page screenshot to {debug_path}")
+
+                except Exception as e:
+                    logger.warning(
+                        f"Direct 3B navigation failed: {e}, trying Smart Credit Report..."
+                    )
+                    # Fallback to Smart Credit Report
+                    fallback_url = "https://member.myfreescorenow.com/member/smart-credit-report.htm"
+                    await self.page.goto(
+                        fallback_url, wait_until="networkidle", timeout=30000
+                    )
+
+                report_found = True
 
                 logger.info("Waiting for credit report page to load...")
-                await asyncio.sleep(5)
+                await asyncio.sleep(2)  # Reduced from 5s
 
                 # MyFreeScoreNow uses Vue.js with client-side rendering
                 # We MUST wait for Vue to render content inside #smartcredit-app
@@ -780,7 +806,8 @@ class CreditImportAutomation:
                 for attempt in range(max_vue_attempts):
                     try:
                         # Check if Vue has rendered content inside #smartcredit-app
-                        has_content = await self.page.evaluate("""() => {
+                        has_content = await self.page.evaluate(
+                            """() => {
                             const app = document.querySelector('#smartcredit-app');
                             if (!app) return false;
 
@@ -794,7 +821,8 @@ class CreditImportAutomation:
                             const hasReportData = app.querySelectorAll('[data-test-account-name]').length > 0;
 
                             return hasAccounts || hasScores || hasReportData || innerContent.length > 500;
-                        }""")
+                        }"""
+                        )
 
                         if has_content:
                             logger.info(
@@ -809,7 +837,7 @@ class CreditImportAutomation:
                     except Exception as e:
                         logger.warning(f"Vue check attempt {attempt + 1} failed: {e}")
 
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(1)  # Reduced from 3s
 
                 if not vue_rendered:
                     logger.warning(
@@ -817,7 +845,7 @@ class CreditImportAutomation:
                     )
 
                 # Additional wait for any lazy-loaded content
-                await asyncio.sleep(3)
+                await asyncio.sleep(1)  # Reduced from 3s
 
                 # MyFreeScoreNow uses modern React/Vue, different selectors than Angular
                 score_selectors = [
@@ -853,7 +881,8 @@ class CreditImportAutomation:
                 max_attempts = 15
                 for attempt in range(max_attempts):
                     try:
-                        score_count = await self.page.evaluate("""() => {
+                        score_count = await self.page.evaluate(
+                            """() => {
                             // Try multiple patterns to find scores
                             const allText = document.body.innerText;
                             const scorePattern = /\\b([3-8]\\d{2})\\b/g;
@@ -864,7 +893,8 @@ class CreditImportAutomation:
                                 return num >= 300 && num <= 850;
                             });
                             return validScores.length >= 3 ? 3 : validScores.length;
-                        }""")
+                        }"""
+                        )
                         logger.info(
                             f"Attempt {attempt + 1}: Found {score_count} score values"
                         )
@@ -873,9 +903,9 @@ class CreditImportAutomation:
                             break
                     except Exception as e:
                         logger.warning(f"Score check attempt {attempt + 1} failed: {e}")
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(1)  # Reduced from 3s
 
-                await asyncio.sleep(3)
+                await asyncio.sleep(1)  # Reduced from 3s
 
                 # Try to expand all account details
                 try:
@@ -929,24 +959,87 @@ class CreditImportAutomation:
                     except:
                         continue
 
-            await asyncio.sleep(5)
-            # Scroll to load all lazy-loaded accounts
-            logger.info("Scrolling page to load all accounts...")
+            await asyncio.sleep(2)  # Reduced from 5s
+
+            # MyFreeScoreNow: Try to switch to Classic View which shows ALL data including inquiries/contacts
+            try:
+                classic_btn = await self.page.query_selector(
+                    'button:has-text("Classic View"), button:has-text("Switch to Classic")'
+                )
+                if classic_btn:
+                    logger.info(
+                        "Found 'Switch to Classic View' button - clicking to load full report..."
+                    )
+                    await classic_btn.click()
+                    await asyncio.sleep(5)  # Wait for classic view to load
+                    # Wait for the classic report format to render
+                    await self.page.wait_for_selector(
+                        ".rpt_content_wrapper, #CreditorContacts, #Inquiries, table.rpt_content_header",
+                        timeout=10000,
+                    )
+                    logger.info("Switched to Classic View successfully")
+            except Exception as e:
+                logger.info(f"Classic view switch not available or failed: {e}")
+
+            # Scroll to load ALL sections including Inquiries and Creditor Contacts at bottom
+            logger.info(
+                "Scrolling page to load ALL sections (accounts, inquiries, contacts)..."
+            )
             try:
                 previous_height = 0
-                for attempt in range(10):
+                # Scroll more aggressively to ensure we get to the bottom
+                for attempt in range(20):  # Increased from 10
                     await self.page.evaluate(
                         "window.scrollTo(0, document.body.scrollHeight)"
                     )
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(1.5)  # Faster scrolling
                     new_height = await self.page.evaluate("document.body.scrollHeight")
                     if new_height == previous_height:
-                        logger.info(f"Scrolling complete after {attempt + 1} attempts")
-                        break
+                        # Double-check by trying to scroll again
+                        await asyncio.sleep(2)
+                        await self.page.evaluate(
+                            "window.scrollTo(0, document.body.scrollHeight)"
+                        )
+                        await asyncio.sleep(1)
+                        final_height = await self.page.evaluate(
+                            "document.body.scrollHeight"
+                        )
+                        if final_height == new_height:
+                            logger.info(
+                                f"Scrolling complete after {attempt + 1} attempts"
+                            )
+                            break
+                        new_height = final_height
                     previous_height = new_height
                     logger.info(
                         f"Scroll attempt {attempt + 1}: page height {new_height}px"
                     )
+
+                # Try to scroll to specific sections by clicking nav links
+                try:
+                    inquiries_link = await self.page.query_selector(
+                        "li:has-text('Inquiries')"
+                    )
+                    if inquiries_link:
+                        await inquiries_link.click()
+                        await asyncio.sleep(2)
+                        logger.info("Clicked Inquiries nav link to load section")
+                except:
+                    pass
+
+                try:
+                    contacts_link = await self.page.query_selector(
+                        "li:has-text('Creditor Contacts')"
+                    )
+                    if contacts_link:
+                        await contacts_link.click()
+                        await asyncio.sleep(2)
+                        logger.info(
+                            "Clicked Creditor Contacts nav link to load section"
+                        )
+                except:
+                    pass
+
                 await self.page.evaluate("window.scrollTo(0, 0)")
                 await asyncio.sleep(1)
             except Exception as e:
@@ -966,30 +1059,21 @@ class CreditImportAutomation:
                 )
 
                 # Click each one sequentially using Playwright's native click() method
+                # Limit to first 10 to avoid long waits - the HTML capture will still get all data
+                max_expand = min(10, len(view_more_links))
                 expanded_count = 0
-                for i, link in enumerate(view_more_links):
+                for i, link in enumerate(view_more_links[:max_expand]):
                     try:
-                        # Scroll the link into view and click it
+                        # Scroll the link into view and click it with timeout
                         await link.scroll_into_view_if_needed()
-                        await asyncio.sleep(0.2)
-                        await link.click()
+                        await link.click(timeout=5000)
                         expanded_count += 1
+                        logger.info(f"Expanded {expanded_count}/{max_expand}")
 
-                        # Wait for Vue.js to render the modal content
-                        await asyncio.sleep(0.8)
+                        # Brief wait for Vue.js
+                        await asyncio.sleep(0.3)
 
-                        # Check if payment history appeared in this modal
-                        # MyFreeScoreNow modals might load content dynamically
-                        for wait_attempt in range(3):
-                            modal_count = await self.page.evaluate("""() => {
-                                const modals = document.querySelectorAll('.account-modal .payment-history');
-                                return modals.length;
-                            }""")
-                            if modal_count >= i + 1:
-                                break
-                            await asyncio.sleep(0.5)
-
-                        if (i + 1) % 10 == 0:
+                        if (i + 1) % 5 == 0:
                             logger.info(
                                 f"Expanded {i + 1}/{view_details_count} account details..."
                             )
@@ -1002,17 +1086,118 @@ class CreditImportAutomation:
                         f"Clicked {expanded_count}/{view_details_count} 'View all details' links"
                     )
                     # Final wait for all content to settle
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(1)  # Reduced from 3s
 
                     # Verify payment history sections were loaded
-                    payment_history_count = await self.page.evaluate("""() => {
+                    payment_history_count = await self.page.evaluate(
+                        """() => {
                         return document.querySelectorAll('.account-modal .payment-history').length;
-                    }""")
+                    }"""
+                    )
                     logger.info(
                         f"Found {payment_history_count} payment history sections in modals after expansion"
                     )
             except Exception as e:
                 logger.warning(f"Failed to expand account details: {e}")
+
+            # JavaScript-based modal expansion - more reliable than clicking
+            # This injects CSS/JS to make ALL modals visible regardless of Vue state
+            logger.info(
+                "Force-expanding all account modals via JavaScript injection..."
+            )
+            try:
+                expanded_via_js = await self.page.evaluate(
+                    """() => {
+                    let expandedCount = 0;
+
+                    // Method 1: Click all "View all details" links programmatically
+                    const viewLinks = document.querySelectorAll('.view-more-link, .view-more-link p');
+                    viewLinks.forEach((link, i) => {
+                        try {
+                            link.click();
+                            expandedCount++;
+                        } catch(e) {}
+                    });
+
+                    // Method 2: Force all account-modal elements to be visible via CSS
+                    const modals = document.querySelectorAll('.account-modal, .account-modal-bg');
+                    modals.forEach(modal => {
+                        modal.style.display = 'block';
+                        modal.style.visibility = 'visible';
+                        modal.style.opacity = '1';
+                        modal.style.position = 'relative';
+                        modal.style.height = 'auto';
+                    });
+
+                    // Method 3: Try to trigger Vue component expansion if available
+                    const containers = document.querySelectorAll('.account-container');
+                    containers.forEach(container => {
+                        // Look for Vue instance data
+                        const vueInstance = container.__vue__;
+                        if (vueInstance && typeof vueInstance.showDetails !== 'undefined') {
+                            vueInstance.showDetails = true;
+                        }
+                    });
+
+                    return {
+                        clickedLinks: viewLinks.length,
+                        modalsForced: modals.length,
+                        containers: containers.length
+                    };
+                }"""
+                )
+                logger.info(f"JS modal expansion result: {expanded_via_js}")
+
+                # Wait for Vue to re-render after our changes
+                await asyncio.sleep(2)
+
+                # Verify modals are now visible
+                modal_count = await self.page.evaluate(
+                    """() => {
+                    const visibleModals = document.querySelectorAll('.account-modal');
+                    let visibleCount = 0;
+                    visibleModals.forEach(m => {
+                        const style = window.getComputedStyle(m);
+                        if (style.display !== 'none' && style.visibility !== 'hidden') {
+                            visibleCount++;
+                        }
+                    });
+                    return { total: visibleModals.length, visible: visibleCount };
+                }"""
+                )
+                logger.info(f"After JS expansion: {modal_count}")
+
+            except Exception as e:
+                logger.warning(f"JS modal expansion failed: {e}")
+
+            # Expand Creditor Contacts section if it has a "Show" toggle button
+            try:
+                show_result = await self.page.evaluate(
+                    """() => {
+                    let clicked = false;
+                    // Find the Creditor Contacts section and click the Show button
+                    document.querySelectorAll('h5.fw-bold, h5').forEach(h => {
+                        if (h.textContent.includes('Creditor Contacts')) {
+                            const section = h.closest('section') || h.parentElement?.parentElement;
+                            if (section) {
+                                const showBtn = section.querySelector('.creditor-toggle span, small span');
+                                if (showBtn && showBtn.textContent.trim() === 'Show') {
+                                    showBtn.click();
+                                    clicked = true;
+                                }
+                            }
+                        }
+                    });
+                    return clicked;
+                }"""
+                )
+                if show_result:
+                    logger.info(
+                        "Clicked 'Show' button to expand Creditor Contacts section"
+                    )
+                    await asyncio.sleep(1)
+            except Exception as e:
+                logger.debug(f"Creditor Contacts expansion: {e}")
 
             logger.info(f"Captured {len(captured_data['responses'])} XHR responses")
             for resp in captured_data["responses"]:
@@ -1021,7 +1206,8 @@ class CreditImportAutomation:
             # Final verification: Check that we have rendered content before capturing
             logger.info("Verifying page content before capture...")
             try:
-                content_check = await self.page.evaluate("""() => {
+                content_check = await self.page.evaluate(
+                    """() => {
                     const result = {
                         hasSmartCreditApp: false,
                         appContentLength: 0,
@@ -1040,7 +1226,8 @@ class CreditImportAutomation:
                     }
 
                     return result;
-                }""")
+                }"""
+                )
                 logger.info(f"Content verification: {content_check}")
 
                 # If #smartcredit-app exists but has minimal content, wait more
@@ -1089,6 +1276,488 @@ class CreditImportAutomation:
                 json.dump(captured_data["responses"], f, indent=2)
             logger.info(f"Saved XHR data to {xhr_filepath}")
 
+            # Extract personal info (names, addresses, DOB, employers, inquiries, creditor contacts)
+            personal_info = {}
+            summary_info = {}
+            inquiries = []
+            creditor_contacts = []
+            try:
+                personal_data = await self.page.evaluate(
+                    """() => {
+                    const data = {
+                        names: [],
+                        addresses: [],
+                        dob: null,
+                        employers: [],
+                        ssn_last4: null
+                    };
+                    const summary = {
+                        total_accounts: null,
+                        open_accounts: null,
+                        closed_accounts: null,
+                        delinquent_accounts: null,
+                        derogatory_accounts: null,
+                        total_balances: null,
+                        total_payments: null,
+                        total_inquiries: null
+                    };
+                    const inquiries = [];
+
+                    // Parse Personal Information section
+                    const personalSection = document.querySelector('.attribute-collection');
+                    if (personalSection) {
+                        const rows = personalSection.querySelectorAll('.attribute-row');
+                        rows.forEach(row => {
+                            const label = row.querySelector('.text-gray-900')?.textContent.toLowerCase() || '';
+                            const value = row.querySelector('.display-attribute p')?.textContent.trim();
+
+                            if (label.includes('name') && value) {
+                                data.names.push(value);
+                                // Check for aliases
+                                const aliasLink = row.querySelector('.text-link');
+                                if (aliasLink && aliasLink.textContent.includes('aliases')) {
+                                    // Would need to click to expand - note presence
+                                    data.has_aliases = true;
+                                }
+                            }
+                            if (label.includes('birth') && value) {
+                                data.dob = value;
+                            }
+                            if (label.includes('address') && value) {
+                                data.addresses.push(value.replace(/\\s+/g, ' '));
+                                const priorLink = row.querySelector('.text-link');
+                                if (priorLink && priorLink.textContent.includes('prior')) {
+                                    data.has_prior_addresses = true;
+                                }
+                            }
+                            if (label.includes('employer') && value) {
+                                const empDivs = row.querySelectorAll('.title-case');
+                                empDivs.forEach(e => {
+                                    if (e.textContent.trim()) data.employers.push(e.textContent.trim());
+                                });
+                            }
+                        });
+                    }
+
+                    // Parse Summary section - Modern View
+                    const summaryRows = document.querySelectorAll('.attribute-collection .attribute-row');
+                    summaryRows.forEach(row => {
+                        const label = row.querySelector('.text-gray-900')?.textContent.toLowerCase() || '';
+                        const value = row.querySelector('.display-attribute p')?.textContent.trim();
+                        if (!value) return;
+
+                        if (label.includes('total accounts')) summary.total_accounts = value;
+                        if (label.includes('open accounts')) summary.open_accounts = value;
+                        if (label.includes('closed accounts')) summary.closed_accounts = value;
+                        if (label.includes('delinquent')) summary.delinquent_accounts = value;
+                        if (label.includes('derogatory')) summary.derogatory_accounts = value;
+                        if (label.includes('balances')) summary.total_balances = value;
+                        if (label.includes('payments') && !label.includes('late')) summary.total_payments = value;
+                        if (label.includes('inquiries')) summary.total_inquiries = value;
+                    });
+
+                    // Parse Summary section - Classic/Original View fallback
+                    if (!summary.total_accounts) {
+                        let summarySection = null;
+                        document.querySelectorAll('h5.fw-bold, h5').forEach(h => {
+                            if (h.textContent.trim() === 'Summary' || h.textContent.trim() === ' Summary ') {
+                                summarySection = h.closest('section') || h.parentElement?.parentElement;
+                            }
+                        });
+                        if (summarySection) {
+                            const grid = summarySection.querySelector('.d-grid.grid-cols-4');
+                            if (grid) {
+                                // Labels are in first column, TU values in 2nd column
+                                // But first row is header (bureau names), data starts at row 2
+                                const labels = grid.querySelectorAll('.labels .grid-cell');
+                                const tuDiv = grid.querySelector('.d-contents:nth-child(2)');
+                                if (tuDiv) {
+                                    const tuCells = tuDiv.querySelectorAll('.grid-cell');
+                                    // tuCells[0] is header "transunion", tuCells[1] is Total Accounts value, etc.
+                                    labels.forEach((labelCell, i) => {
+                                        const label = labelCell.textContent.toLowerCase();
+                                        // i+1 because tuCells[0] is the header
+                                        const value = tuCells[i + 1]?.textContent.trim();
+                                        if (!value || value.includes('transunion') || value.includes('experian') || value.includes('equifax')) return;
+                                        if (label.includes('total accounts')) summary.total_accounts = value;
+                                        if (label.includes('open accounts')) summary.open_accounts = value;
+                                        if (label.includes('closed accounts')) summary.closed_accounts = value;
+                                        if (label.includes('delinquent')) summary.delinquent_accounts = value;
+                                        if (label.includes('derogatory')) summary.derogatory_accounts = value;
+                                        if (label.includes('balances')) summary.total_balances = value;
+                                        if (label.includes('payments') && !label.includes('late')) summary.total_payments = value;
+                                        if (label.includes('inquiries')) summary.total_inquiries = value;
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    // Parse Inquiries section - try multiple formats
+                    // Method 1: Classic View format - uses #Inquiries wrapper with table rows
+                    const classicInquiries = document.querySelector('#Inquiries, .rpt_content_wrapper[id*="nquir"]');
+                    if (classicInquiries) {
+                        // Classic view: Table rows with creditor name, date, type columns
+                        const rows = classicInquiries.querySelectorAll('tr, .inquiry-row');
+                        rows.forEach(row => {
+                            const cells = row.querySelectorAll('td');
+                            if (cells.length >= 2) {
+                                const company = cells[0]?.textContent.trim();
+                                const date = cells[1]?.textContent.trim();
+                                const bureau = cells.length > 2 ? cells[2]?.textContent.trim() : null;
+                                if (company && company.length > 2 && !company.includes('Creditor') && !company.includes('Date')) {
+                                    inquiries.push({ company, date, bureau, source: 'classic' });
+                                }
+                            }
+                        });
+                    }
+
+                    // Method 2: Modern 3B View - look for Inquiries headline section
+                    if (inquiries.length === 0) {
+                        let inquirySection = null;
+                        let inquirySectionParent = null;
+                        document.querySelectorAll('h2.headline, h2, h3').forEach(h => {
+                            if (h.textContent.trim() === 'Inquiries' || h.textContent.includes('Inquiries')) {
+                                inquirySection = h;
+                                inquirySectionParent = h.closest('.col-xs-12, .col-lg-8, div');
+                            }
+                        });
+
+                        if (inquirySection && inquirySectionParent) {
+                            const inquiryContainers = inquirySectionParent.querySelectorAll('.inquiry-container, .inquiry-row, .attribute-row, [class*="inquiry"]');
+                            inquiryContainers.forEach(inq => {
+                                const company = inq.querySelector('[data-test-inquiry-name], strong, .creditor, .company-name, .fw-bold, .fw-semi')?.textContent.trim();
+                                const dateEl = inq.querySelector('.date, .inquiry-date, .text-gray-600, small');
+                                const date = dateEl?.textContent.trim();
+                                const tuPresent = !!inq.querySelector('.text-transunion, [class*="transunion"]');
+                                const exPresent = !!inq.querySelector('.text-experian, [class*="experian"]');
+                                const eqPresent = !!inq.querySelector('.text-equifax, [class*="equifax"]');
+
+                                if (company && company.length > 1 && !company.includes('Inquiries')) {
+                                    inquiries.push({
+                                        company,
+                                        date: date || null,
+                                        transunion: tuPresent,
+                                        experian: exPresent,
+                                        equifax: eqPresent,
+                                        source: 'modern'
+                                    });
+                                }
+                            });
+                        }
+                    }
+
+                    // Method 3: Look for inquiry-collection divs (common pattern)
+                    if (inquiries.length === 0) {
+                        document.querySelectorAll('.inquiry-collection .account-container, [class*="inquiry"] .account-heading').forEach(inq => {
+                            const company = inq.querySelector('strong, .fs-16')?.textContent.trim();
+                            const date = inq.querySelector('small, .text-gray-600, p:last-child')?.textContent.trim();
+                            if (company) {
+                                inquiries.push({ company, date, source: 'collection' });
+                            }
+                        });
+                    }
+
+                    // Also try to find inquiries from the account list (some reports list them there)
+                    if (inquiries.length === 0) {
+                        const allAccounts = document.querySelectorAll('.account-container');
+                        allAccounts.forEach(acc => {
+                            const accType = acc.querySelector('.account-type, [class*="type"]')?.textContent.toLowerCase() || '';
+                            if (accType.includes('inquiry') || accType.includes('inq')) {
+                                const company = acc.querySelector('.creditor-name, .company, strong')?.textContent.trim();
+                                const date = acc.querySelector('.date, .inquiry-date')?.textContent.trim();
+                                if (company) {
+                                    inquiries.push({ company, date, type: 'inquiry' });
+                                }
+                            }
+                        });
+                    }
+
+                    // Method 4: Classic/Original View - h5.fw-bold "Inquiries" with .d-grid.grid-cols-3 rows
+                    if (inquiries.length === 0) {
+                        let inquirySection = null;
+                        document.querySelectorAll('h5.fw-bold, h5').forEach(h => {
+                            const text = h.textContent.trim();
+                            if (text === 'Inquiries' || text === ' Inquiries ') {
+                                inquirySection = h.closest('section') || h.parentElement?.parentElement;
+                            }
+                        });
+
+                        if (inquirySection) {
+                            // Get all grid-cols-3 divs (skip first one which is header)
+                            const grids = inquirySection.querySelectorAll('.d-grid.grid-cols-3');
+                            grids.forEach((grid, index) => {
+                                if (index === 0) return; // Skip header row
+                                const cells = grid.querySelectorAll('.grid-cell, p');
+                                if (cells.length >= 3) {
+                                    const company = cells[0]?.textContent.trim();
+                                    const date = cells[1]?.textContent.trim();
+                                    const bureau = cells[2]?.textContent.trim().toLowerCase();
+                                    if (company && company.length > 1 &&
+                                        !company.includes('Creditor') && !company.includes('Date') && !company.includes('Bureau')) {
+                                        inquiries.push({
+                                            company,
+                                            date: date || null,
+                                            bureau: bureau || null,
+                                            transunion: bureau?.includes('transunion'),
+                                            experian: bureau?.includes('experian'),
+                                            equifax: bureau?.includes('equifax'),
+                                            source: 'original-view'
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    // Parse Creditor Contacts section (addresses/phones at bottom of report)
+                    const creditorContacts = [];
+
+                    // Method 1: Classic View - uses #CreditorContacts wrapper with table
+                    const classicContacts = document.querySelector('#CreditorContacts, .rpt_content_wrapper[id*="Creditor"]');
+                    if (classicContacts) {
+                        const rows = classicContacts.querySelectorAll('tr');
+                        rows.forEach(row => {
+                            const cells = row.querySelectorAll('td');
+                            if (cells.length >= 2) {
+                                const name = cells[0]?.textContent.trim();
+                                const address = cells[1]?.textContent.trim();
+                                const phone = cells.length > 2 ? cells[2]?.textContent.trim() : null;
+                                if (name && name.length > 2 && !name.includes('Creditor Name') && !name.includes('Address')) {
+                                    creditorContacts.push({ name, address, phone, source: 'classic' });
+                                }
+                            }
+                        });
+                    }
+
+                    // Method 2: Modern View - look for Creditor Contacts headline
+                    if (creditorContacts.length === 0) {
+                        let contactsSection = null;
+                        document.querySelectorAll('h2.headline, h2, h3').forEach(h => {
+                            if (h.textContent.includes('Creditor Contacts') || h.textContent.includes('Creditor Contact')) {
+                                contactsSection = h.closest('.col-xs-12, .col-lg-8, div');
+                            }
+                        });
+                        if (contactsSection) {
+                            const contactRows = contactsSection.querySelectorAll('.attribute-row, .contact-row, .creditor-contact, tr');
+                            contactRows.forEach(row => {
+                                const name = row.querySelector('strong, .creditor-name, .fw-bold, td:first-child')?.textContent.trim();
+                                const address = row.querySelector('.address, p:nth-child(2), td:nth-child(2)')?.textContent.trim();
+                                const phone = row.querySelector('.phone, [href^="tel:"], td:nth-child(3)')?.textContent.trim();
+                                if (name && name.length > 1 && !name.includes('Creditor')) {
+                                    creditorContacts.push({ name, address, phone, source: 'modern' });
+                                }
+                            });
+                        }
+                    }
+
+                    // Method 3: Fallback - look for any contact-collection divs
+                    if (creditorContacts.length === 0) {
+                        document.querySelectorAll('.contact-collection, .creditor-list').forEach(container => {
+                            container.querySelectorAll('.contact-item, .creditor-item, li').forEach(item => {
+                                const name = item.querySelector('strong, .name')?.textContent.trim();
+                                const address = item.querySelector('.address, p')?.textContent.trim();
+                                if (name) {
+                                    creditorContacts.push({ name, address, source: 'fallback' });
+                                }
+                            });
+                        });
+                    }
+
+                    // Method 4: Classic/Original View - h5.fw-bold "Creditor Contacts" with .d-grid structure
+                    if (creditorContacts.length === 0) {
+                        let contactsSection = null;
+                        document.querySelectorAll('h5.fw-bold, h5').forEach(h => {
+                            const text = h.textContent.trim();
+                            if (text.includes('Creditor Contacts') || text.includes('Creditor Contact')) {
+                                contactsSection = h.closest('section') || h.parentElement?.parentElement;
+                            }
+                        });
+
+                        if (contactsSection) {
+                            // Click the Show button if it exists and content is hidden
+                            const showBtn = contactsSection.querySelector('.creditor-toggle span, small span');
+                            if (showBtn && showBtn.textContent.includes('Show')) {
+                                showBtn.click();
+                            }
+
+                            // Look for creditor contact items - could be in .creditor-contacts or .d-grid
+                            const creditorContainer = contactsSection.querySelector('.creditor-contacts') || contactsSection;
+                            const contactItems = creditorContainer.querySelectorAll('.d-grid, .contact-item, .creditor-row, [class*="contact"]');
+
+                            contactItems.forEach(item => {
+                                // Try to get name and address from grid cells or spans
+                                const cells = item.querySelectorAll('.grid-cell, p, span');
+                                if (cells.length >= 2) {
+                                    const name = cells[0]?.textContent.trim();
+                                    const address = cells[1]?.textContent.trim();
+                                    const phone = cells.length > 2 ? cells[2]?.textContent.trim() : null;
+
+                                    if (name && name.length > 2 && !name.includes('Creditor') && !name.includes('Name')) {
+                                        creditorContacts.push({
+                                            name,
+                                            address: address || null,
+                                            phone: phone || null,
+                                            source: 'original-view'
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    // Also extract Personal Info for Original View - .d-grid.grid-cols-4 with labels and bureau columns
+                    // ORGANIZED BY BUREAU: col-start-2=TransUnion, col-start-3=Experian, col-start-4=Equifax
+                    if (data.names.length === 0) {
+                        // Initialize per-bureau structure
+                        data.transunion = { names: [], dob: null, current_address: null, previous_addresses: [], employers: [] };
+                        data.experian = { names: [], dob: null, current_address: null, previous_addresses: [], employers: [] };
+                        data.equifax = { names: [], dob: null, current_address: null, previous_addresses: [], employers: [] };
+
+                        // Find Personal Information section
+                        let personalSection = null;
+                        document.querySelectorAll('h5.fw-bold, h5.m-0.fw-bold').forEach(h => {
+                            if (h.textContent.includes('Personal Information')) {
+                                personalSection = h.closest('section') || h.parentElement?.parentElement;
+                            }
+                        });
+
+                        if (personalSection) {
+                            const grid = personalSection.querySelector('.d-grid.grid-cols-4');
+                            if (grid) {
+                                // Get all cells and organize by bureau column
+                                const allCells = grid.querySelectorAll('.grid-cell');
+                                allCells.forEach(cell => {
+                                    const className = cell.className || '';
+
+                                    // Determine which bureau based on col-start class
+                                    let bureau = null;
+                                    if (className.includes('col-start-2')) bureau = 'transunion';
+                                    else if (className.includes('col-start-3')) bureau = 'experian';
+                                    else if (className.includes('col-start-4')) bureau = 'equifax';
+
+                                    if (!bureau) return; // Skip label column
+
+                                    const span = cell.querySelector('span');
+                                    if (!span) return;
+
+                                    const html = span.innerHTML;
+                                    const text = span.textContent.trim();
+
+                                    // Extract names - row-start-3 (Name + Also Known As)
+                                    if (className.includes('row-start-3')) {
+                                        const names = html.split(/<br\\s*\\/?>/i)
+                                            .map(n => n.trim())
+                                            .filter(n => n.length > 2 && !n.includes('<'));
+                                        names.forEach(name => {
+                                            if (!data[bureau].names.includes(name)) {
+                                                data[bureau].names.push(name);
+                                            }
+                                            // Also add to flat list for backward compatibility
+                                            if (!data.names.includes(name)) {
+                                                data.names.push(name);
+                                            }
+                                        });
+                                    }
+
+                                    // Extract DOB - row-start-4
+                                    if (className.includes('row-start-4')) {
+                                        const fullDateMatch = text.match(/(\\d{1,2}\\/\\d{1,2}\\/\\d{4})/);
+                                        if (fullDateMatch) {
+                                            data[bureau].dob = fullDateMatch[1];
+                                            if (!data.dob) data.dob = fullDateMatch[1];
+                                        } else {
+                                            const yearMatch = text.match(/(19[4-9]\\d|20[0-2]\\d)/);
+                                            if (yearMatch) {
+                                                data[bureau].dob = yearMatch[1];
+                                                if (!data.dob) data.dob = yearMatch[1];
+                                            }
+                                        }
+                                    }
+
+                                    // Extract Current Address - row-start-5
+                                    if (className.includes('row-start-5')) {
+                                        const addrText = html
+                                            .replace(/<br\\s*\\/?>/gi, ', ')
+                                            .replace(/<[^>]*>/g, '')
+                                            .trim();
+                                        if (addrText && addrText.length > 5) {
+                                            data[bureau].current_address = addrText;
+                                            if (!data.addresses.includes(addrText)) {
+                                                data.addresses.push(addrText);
+                                            }
+                                        }
+                                    }
+
+                                    // Extract Previous Addresses - row-start-6
+                                    if (className.includes('row-start-6')) {
+                                        const addrBlocks = html.split(/<br\\s*\\/?><br\\s*\\/?>/gi);
+                                        addrBlocks.forEach(block => {
+                                            const addr = block
+                                                .replace(/<br\\s*\\/?>/gi, ', ')
+                                                .replace(/<[^>]*>/g, '')
+                                                .trim();
+                                            if (addr && addr.length > 5) {
+                                                if (!data[bureau].previous_addresses.includes(addr)) {
+                                                    data[bureau].previous_addresses.push(addr);
+                                                }
+                                                if (!data.addresses.includes(addr)) {
+                                                    data.addresses.push(addr);
+                                                }
+                                            }
+                                        });
+                                    }
+
+                                    // Extract Employers - row-start-7
+                                    if (className.includes('row-start-7')) {
+                                        const empBlocks = html.split(/<br\\s*\\/?><br\\s*\\/?>/gi);
+                                        empBlocks.forEach(block => {
+                                            const parts = block.split(/<br\\s*\\/?>/i);
+                                            const empName = parts[0].replace(/<[^>]*>/g, '').trim();
+                                            if (empName && empName.length > 1 &&
+                                                !empName.toLowerCase().includes('date updated')) {
+                                                let dateUpdated = null;
+                                                for (const part of parts) {
+                                                    const dateMatch = part.match(/Date Updated:\\s*([\\d\\/]+)/i);
+                                                    if (dateMatch) {
+                                                        dateUpdated = dateMatch[1];
+                                                        break;
+                                                    }
+                                                }
+                                                const empObj = { name: empName, date_updated: dateUpdated };
+                                                // Add to bureau-specific list
+                                                if (!data[bureau].employers.find(e => e.name === empName)) {
+                                                    data[bureau].employers.push(empObj);
+                                                }
+                                                // Add to flat list for backward compatibility
+                                                if (!data.employers.find(e => e.name === empName)) {
+                                                    data.employers.push(empObj);
+                                                }
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                    return { personal: data, summary: summary, inquiries: inquiries, creditor_contacts: creditorContacts };
+                }"""
+                )
+                if personal_data:
+                    personal_info = personal_data.get("personal", {})
+                    summary_info = personal_data.get("summary", {})
+                    inquiries = personal_data.get("inquiries", [])
+                    creditor_contacts = personal_data.get("creditor_contacts", [])
+                    logger.info(
+                        f"Extracted personal info: {len(personal_info.get('names', []))} names, {len(personal_info.get('addresses', []))} addresses"
+                    )
+                    logger.info(
+                        f"Extracted {len(inquiries)} inquiries, {len(creditor_contacts)} creditor contacts"
+                    )
+            except Exception as e:
+                logger.warning(f"Personal info extraction failed: {e}")
+
             json_filename = f"{client_id}_{safe_name}_{timestamp}.json"
             json_filepath = REPORTS_DIR / json_filename
             extracted_data = {
@@ -1096,7 +1765,11 @@ class CreditImportAutomation:
                 "client_name": client_name,
                 "extracted_at": datetime.utcnow().isoformat(),
                 "scores": scores or {},
+                "personal_info": personal_info,
+                "summary": summary_info,
                 "accounts": accounts or [],
+                "inquiries": inquiries,
+                "creditor_contacts": creditor_contacts,
             }
             with open(json_filepath, "w", encoding="utf-8") as f:
                 json.dump(extracted_data, f, indent=2)
@@ -1127,29 +1800,88 @@ class CreditImportAutomation:
             if self.current_flow == "myfreescorenow":
                 logger.info("Using MyFreeScoreNow extraction method")
                 try:
-                    js_scores = await self.page.evaluate("""() => {
-                        // Extract all 3-digit numbers from page that look like credit scores
-                        const allText = document.body.innerText;
-                        const scorePattern = /\\b([3-8]\\d{2})\\b/g;
-                        const matches = allText.match(scorePattern) || [];
-
-                        // Filter to valid score range
-                        const validScores = matches
-                            .map(s => parseInt(s))
-                            .filter(num => num >= 300 && num <= 850);
-
-                        // Remove duplicates and take first 3
-                        const uniqueScores = [...new Set(validScores)].slice(0, 3);
-
+                    js_scores = await self.page.evaluate(
+                        """() => {
                         const scores = {};
-                        if (uniqueScores.length >= 3) {
-                            // Map to bureaus in order: TransUnion, Experian, Equifax
-                            scores.transunion = uniqueScores[0];
-                            scores.experian = uniqueScores[1];
-                            scores.equifax = uniqueScores[2];
+
+                        // Method 1: MyFreeScoreNow 3B page - exact structure
+                        // <div class="bureau-score border-transunion">
+                        //   <h6 class="text-transunion">TransUnion</h6>
+                        //   <h1 class="fw-bold">706</h1>
+                        // </div>
+                        const bureauScoreDivs = document.querySelectorAll('.bureau-score');
+                        for (const div of bureauScoreDivs) {
+                            const className = div.className || '';
+                            const h1 = div.querySelector('h1');
+                            if (!h1) continue;
+
+                            const scoreText = h1.textContent.trim();
+                            const scoreMatch = scoreText.match(/^([3-8]\\d{2})$/);
+                            if (!scoreMatch) continue;
+
+                            const score = parseInt(scoreMatch[1]);
+                            if (className.includes('transunion') || className.includes('border-transunion')) {
+                                scores.transunion = score;
+                            } else if (className.includes('experian') || className.includes('border-experian')) {
+                                scores.experian = score;
+                            } else if (className.includes('equifax') || className.includes('border-equifax')) {
+                                scores.equifax = score;
+                            }
                         }
+
+                        // Method 2: Fallback - look for h6 with bureau name followed by h1 with score
+                        if (Object.keys(scores).length < 3) {
+                            const allH6 = document.querySelectorAll('h6');
+                            for (const h6 of allH6) {
+                                const text = h6.textContent.toLowerCase();
+                                const parent = h6.parentElement;
+                                if (!parent) continue;
+
+                                const h1 = parent.querySelector('h1');
+                                if (!h1) continue;
+
+                                const scoreMatch = h1.textContent.trim().match(/^([3-8]\\d{2})$/);
+                                if (!scoreMatch) continue;
+
+                                const score = parseInt(scoreMatch[1]);
+                                if (text.includes('transunion') && !scores.transunion) {
+                                    scores.transunion = score;
+                                } else if (text.includes('experian') && !scores.experian) {
+                                    scores.experian = score;
+                                } else if (text.includes('equifax') && !scores.equifax) {
+                                    scores.equifax = score;
+                                }
+                            }
+                        }
+
+                        // Method 3: Classic/Original View - dt.bg-bureau with dd containing h5 score
+                        if (Object.keys(scores).length < 3) {
+                            const allDt = document.querySelectorAll('dt.bg-transunion, dt.bg-experian, dt.bg-equifax');
+                            for (const dt of allDt) {
+                                const className = dt.className || '';
+                                const dd = dt.nextElementSibling;
+                                if (!dd) continue;
+
+                                const h5 = dd.querySelector('h5');
+                                if (!h5) continue;
+
+                                const scoreMatch = h5.textContent.trim().match(/^([3-8]\\d{2})$/);
+                                if (!scoreMatch) continue;
+
+                                const score = parseInt(scoreMatch[1]);
+                                if (className.includes('transunion') && !scores.transunion) {
+                                    scores.transunion = score;
+                                } else if (className.includes('experian') && !scores.experian) {
+                                    scores.experian = score;
+                                } else if (className.includes('equifax') && !scores.equifax) {
+                                    scores.equifax = score;
+                                }
+                            }
+                        }
+
                         return scores;
-                    }""")
+                    }"""
+                    )
                     if js_scores and len(js_scores) > 0:
                         scores.update(js_scores)
                         logger.info(f"MyFreeScoreNow extraction successful: {scores}")
@@ -1163,7 +1895,8 @@ class CreditImportAutomation:
             # Fallback to MyScoreIQ-specific JavaScript
             if not scores:
                 try:
-                    js_scores = await self.page.evaluate("""() => {
+                    js_scores = await self.page.evaluate(
+                        """() => {
                         const scores = {};
                         const infoTds = document.querySelectorAll('td.info.ng-binding');
                         const scoreValues = [];
@@ -1180,7 +1913,8 @@ class CreditImportAutomation:
                             scores.equifax = scoreValues[2];
                         }
                         return scores;
-                    }""")
+                    }"""
+                    )
                     if js_scores:
                         scores.update(js_scores)
                 except Exception as e:
@@ -1265,6 +1999,8 @@ class CreditImportAutomation:
                         "CreditAccounts",
                         "tpartitions",
                         "TPartitions",
+                        "trades",  # MyFreeScoreNow format
+                        "Trades",
                     ]:
                         if key in data:
                             items = data[key]
@@ -1312,12 +2048,22 @@ class CreditImportAutomation:
             "Name",
             "CreditorName",
             "accountName",
+            "memberCodeShortName",  # MyFreeScoreNow format
         ]
         name = None
         for key in name_keys:
             if key in item and item[key]:
                 name = str(item[key]).strip()
                 break
+
+        # MyFreeScoreNow nested structure for full creditor name
+        if not name:
+            try:
+                member_account = item.get("memberCodeAccount", {})
+                creditor_contact = member_account.get("creditorContact", {})
+                name = creditor_contact.get("memberCodeLongName", "").strip()
+            except:
+                pass
 
         if not name:
             return None
@@ -1334,7 +2080,13 @@ class CreditImportAutomation:
             "bureaus": {},
         }
 
-        number_keys = ["number", "accountNumber", "AccountNumber", "acctNumber"]
+        number_keys = [
+            "number",
+            "accountNumber",
+            "AccountNumber",
+            "acctNumber",
+            "maskedAccountNumber",
+        ]
         for key in number_keys:
             if key in item and item[key]:
                 account["account_number"] = str(item[key]).strip()
@@ -1358,7 +2110,13 @@ class CreditImportAutomation:
                 account["status"] = str(item[key]).strip()
                 break
 
-        balance_keys = ["balance", "currentBalance", "Balance", "CurrentBalance"]
+        balance_keys = [
+            "balance",
+            "currentBalance",
+            "Balance",
+            "CurrentBalance",
+            "currentBalanceAmount",
+        ]
         for key in balance_keys:
             if key in item and item[key]:
                 try:
@@ -1386,34 +2144,35 @@ class CreditImportAutomation:
         accounts = []
 
         try:
-            js_accounts = await self.page.evaluate("""() => {
+            js_accounts = await self.page.evaluate(
+                """() => {
                 const accounts = [];
-                
+
                 // MyScoreIQ uses Angular with sub_header divs for account names
                 const headers = document.querySelectorAll('.sub_header.ng-binding, div.sub_header');
-                
+
                 headers.forEach((header) => {
                     const creditorName = header.textContent.trim()
                         .replace(/\\s+/g, ' ')
                         .replace(/\\(Original Creditor:.*\\)/gi, '')
                         .trim();
-                    
+
                     // Skip empty or template-only entries
                     if (!creditorName || creditorName.includes('{{') || creditorName.length < 2) {
                         return;
                     }
                     // Skip section headers that aren't actual accounts
-                    const skipHeaders = ['SCORE FACTORS', 'FACTORS', 'SUMMARY', 'INQUIRIES', 
+                    const skipHeaders = ['SCORE FACTORS', 'FACTORS', 'SUMMARY', 'INQUIRIES',
                                         'COLLECTIONS', 'PUBLIC RECORDS', 'PERSONAL INFORMATION',
                                         'ACCOUNT HISTORY', 'CREDITOR CONTACTS'];
                     if (skipHeaders.includes(creditorName.toUpperCase())) {
                         return;
                     }
-                    
+
                     // Find the associated data table
-                    const table = header.closest('ng-include')?.querySelector('table.rpt_content_table') 
+                    const table = header.closest('ng-include')?.querySelector('table.rpt_content_table')
                                || header.nextElementSibling;
-                    
+
                     const account = {
                         creditor: creditorName,
                         account_number: null,
@@ -1427,42 +2186,42 @@ class CreditImportAutomation:
                             equifax: { present: false }
                         }
                     };
-                    
+
                     if (table && table.tagName === 'TABLE') {
                         const rows = table.querySelectorAll('tr');
                         rows.forEach(row => {
                             const label = row.querySelector('td.label');
                             const infoCells = row.querySelectorAll('td.info');
-                            
+
                             if (label && infoCells.length >= 1) {
                                 const labelText = label.textContent.trim().toLowerCase();
-                                
+
                                 // Get values from bureau columns (TU, EXP, EQF)
-                                const values = Array.from(infoCells).map(cell => 
+                                const values = Array.from(infoCells).map(cell =>
                                     cell.textContent.trim().replace(/\\s+/g, ' ')
                                 );
-                                
+
                                 if (labelText.includes('account number') || labelText.includes('number')) {
                                     account.account_number = values.find(v => v && v !== '-') || null;
                                     if (values[0] && values[0] !== '-') account.bureaus.transunion.number = values[0];
                                     if (values[1] && values[1] !== '-') account.bureaus.experian.number = values[1];
                                     if (values[2] && values[2] !== '-') account.bureaus.equifax.number = values[2];
                                 }
-                                
+
                                 if (labelText.includes('classification') || labelText.includes('type')) {
                                     account.account_type = values.find(v => v && v !== '-') || null;
                                     if (values[0] && values[0] !== '-') account.bureaus.transunion.type = values[0];
                                     if (values[1] && values[1] !== '-') account.bureaus.experian.type = values[1];
                                     if (values[2] && values[2] !== '-') account.bureaus.equifax.type = values[2];
                                 }
-                                
+
                                 if (labelText.includes('status') || labelText.includes('condition')) {
                                     account.status = values.find(v => v && v !== '-') || null;
                                     if (values[0] && values[0] !== '-') account.bureaus.transunion.status = values[0];
                                     if (values[1] && values[1] !== '-') account.bureaus.experian.status = values[1];
                                     if (values[2] && values[2] !== '-') account.bureaus.equifax.status = values[2];
                                 }
-                                
+
                                 if (labelText.includes('balance')) {
                                     const balVal = values.find(v => v && v !== '-' && /\\$|\\d/.test(v));
                                     if (balVal) {
@@ -1472,18 +2231,55 @@ class CreditImportAutomation:
                                         if (values[2] && values[2] !== '-') account.bureaus.equifax.balance = values[2];
                                     }
                                 }
-                                
-                                if (labelText.includes('credit limit') || labelText.includes('high credit')) {
+
+                                if (labelText.includes('credit limit') && !labelText.includes('high')) {
                                     const limVal = values.find(v => v && v !== '-' && /\\$|\\d/.test(v));
                                     if (limVal) {
                                         account.credit_limit = limVal;
                                     }
                                 }
-                                
+
+                                if (labelText.includes('high credit') || labelText.includes('high balance')) {
+                                    const highVal = values.find(v => v && v !== '-' && /\\$|\\d/.test(v));
+                                    if (highVal) {
+                                        account.high_credit = highVal;
+                                    }
+                                }
+
                                 if (labelText.includes('payment status')) {
                                     account.payment_status = values.find(v => v && v !== '-') || null;
                                 }
-                                
+
+                                if (labelText.includes('monthly payment') || labelText === 'payment') {
+                                    const payVal = values.find(v => v && v !== '-' && /\\$|\\d/.test(v));
+                                    if (payVal) {
+                                        account.monthly_payment = payVal;
+                                    }
+                                }
+
+                                if (labelText.includes('date opened') || labelText.includes('opened')) {
+                                    account.date_opened = values.find(v => v && v !== '-' && v.includes('/')) || null;
+                                }
+
+                                if (labelText.includes('last reported') || labelText.includes('reported')) {
+                                    account.last_reported = values.find(v => v && v !== '-' && v.includes('/')) || null;
+                                }
+
+                                if (labelText.includes('last active') || labelText.includes('last activity')) {
+                                    account.last_active = values.find(v => v && v !== '-' && v.includes('/')) || null;
+                                }
+
+                                if (labelText.includes('last payment') || labelText.includes('date of last payment')) {
+                                    account.last_payment = values.find(v => v && v !== '-' && v.includes('/')) || null;
+                                }
+
+                                if (labelText.includes('past due')) {
+                                    const dueVal = values.find(v => v && v !== '-' && /\\$|\\d/.test(v));
+                                    if (dueVal) {
+                                        account.past_due = dueVal;
+                                    }
+                                }
+
                                 // Check bureau presence
                                 if (values[0] && values[0] !== '-') account.bureaus.transunion.present = true;
                                 if (values[1] && values[1] !== '-') account.bureaus.experian.present = true;
@@ -1491,12 +2287,13 @@ class CreditImportAutomation:
                             }
                         });
                     }
-                    
+
                     accounts.push(account);
                 });
-                
+
                 return accounts;
-            }""")
+            }"""
+            )
 
             if js_accounts:
                 logger.info(f"Extracted {len(js_accounts)} accounts from DOM")
@@ -1508,7 +2305,8 @@ class CreditImportAutomation:
         # If no accounts found, try MyFreeScoreNow 3B Report structure
         if not accounts:
             try:
-                mfsn_accounts = await self.page.evaluate("""() => {
+                mfsn_accounts = await self.page.evaluate(
+                    """() => {
                     const accounts = [];
 
                     // MyFreeScoreNow 3B Report uses .account-container divs
@@ -1522,104 +2320,297 @@ class CreditImportAutomation:
                             status: null,
                             balance: null,
                             credit_limit: null,
-                            is_negative: container.classList.contains('negative-account'),
+                            high_balance: null,
+                            date_opened: null,
+                            date_reported: null,
+                            date_closed: null,
+                            last_activity: null,
+                            last_payment: null,
+                            payment_amount: null,
+                            past_due: null,
+                            payment_status: null,
+                            account_rating: null,
+                            creditor_type: null,
+                            dispute_status: null,
+                            term_length: null,
+                            is_negative: container.classList.contains('negative-account') ||
+                                        container.querySelector('.uppercase.negative') !== null,
                             bureaus: {
-                                transunion: { present: true },
-                                experian: { present: true },
-                                equifax: { present: true }
+                                transunion: { present: false },
+                                experian: { present: false },
+                                equifax: { present: false }
+                            },
+                            payment_history: {
+                                transunion: [],
+                                experian: [],
+                                equifax: []
+                            },
+                            late_payments: {
+                                transunion: { days_30: 0, days_60: 0, days_90: 0 },
+                                experian: { days_30: 0, days_60: 0, days_90: 0 },
+                                equifax: { days_30: 0, days_60: 0, days_90: 0 }
                             }
                         };
 
-                        // Get creditor name from data-test-account-name or strong tag
+                        // Get creditor name
                         const nameEl = container.querySelector('[data-test-account-name]')
                                     || container.querySelector('.account-heading strong');
                         if (nameEl) {
                             account.creditor = nameEl.textContent.trim();
                         }
 
-                        // Get account number from the heading paragraph (after creditor name)
-                        const headingP = container.querySelector('.account-heading p[data-uw-ignore-translate]');
-                        if (headingP) {
-                            const text = headingP.textContent.trim();
-                            // Account number is typically after the creditor name
-                            const parts = text.split(/\\s+/);
-                            if (parts.length > 1) {
-                                // Last part is often the masked account number
-                                const lastPart = parts[parts.length - 1];
-                                if (/\\d/.test(lastPart) || lastPart.includes('*')) {
-                                    account.account_number = lastPart;
-                                }
-                            }
-                        }
-
-                        // Get status from data-test-account-status
+                        // Get status
                         const statusEl = container.querySelector('[data-test-account-status]');
                         if (statusEl) {
                             account.status = statusEl.textContent.trim();
                         }
 
-                        // Get balance from .balance row
+                        // Get basic balance info from container
                         const balanceRow = container.querySelector('.attribute-row.balance .display-attribute p');
                         if (balanceRow) {
                             const balText = balanceRow.textContent.trim();
-                            // Extract dollar amount
                             const match = balText.match(/\\$[\\d,]+/);
-                            if (match) {
-                                account.balance = match[0];
-                            }
-                            // Check for credit limit or original amount
-                            const limitMatch = balText.match(/\\$[\\d,]+\\s+Limit/i);
-                            const origMatch = balText.match(/Orig\\.\\s*\\$[\\d,]+/i);
-                            if (limitMatch) {
-                                account.credit_limit = limitMatch[0].replace(' Limit', '');
-                            } else if (origMatch) {
-                                account.original_amount = origMatch[0].replace(/Orig\\.?\\s*/i, '');
-                            }
+                            if (match) account.balance = match[0];
+                            const origMatch = balText.match(/Orig\\.?\\s*\\$[\\d,]+/i);
+                            if (origMatch) account.high_balance = origMatch[0].replace(/Orig\\.?\\s*/i, '');
                         }
 
-                        // Get payment amount from .payment row
+                        // Get payment from container
                         const paymentRow = container.querySelector('.attribute-row.payment .display-attribute p');
                         if (paymentRow) {
-                            const payText = paymentRow.textContent.trim();
-                            const match = payText.match(/\\$[\\d,]+/);
-                            if (match) {
-                                account.payment = match[0];
-                            }
+                            const match = paymentRow.textContent.match(/\\$[\\d,]+/);
+                            if (match) account.payment_amount = match[0];
                         }
 
-                        // Get late payment info
-                        const late30 = container.querySelector('[data-test-30-late]');
-                        const late60 = container.querySelector('[data-test-60-late]');
-                        const late90 = container.querySelector('[data-test-90-late]');
-
-                        if (late30 || late60 || late90) {
-                            account.late_payments = {
-                                days_30: late30 ? parseInt(late30.textContent) : 0,
-                                days_60: late60 ? parseInt(late60.textContent) : 0,
-                                days_90: late90 ? parseInt(late90.textContent) : 0
+                        // Parse the EXPANDED MODAL for full bureau-specific data
+                        const modal = container.querySelector('.account-modal');
+                        if (modal) {
+                            // Parse the attributes table grid (4 columns: label, TU, EX, EQ)
+                            const gridCells = modal.querySelectorAll('.attributes-table .d-grid > div');
+                            const fieldMap = {
+                                'account #': 'account_number',
+                                'high balance': 'high_balance',
+                                'date opened': 'date_opened',
+                                'date reported': 'date_reported',
+                                'closed date': 'date_closed',
+                                'date of last activity': 'last_activity',
+                                'balance owed': 'balance',
+                                'credit limit': 'credit_limit',
+                                'payment amount': 'payment_amount',
+                                'last payment': 'last_payment',
+                                'past due amount': 'past_due',
+                                'account type': 'account_type',
+                                'account rating': 'account_rating',
+                                'account status': 'status',
+                                'payment status': 'payment_status',
+                                'creditor type': 'creditor_type',
+                                'dispute status': 'dispute_status',
+                                'term length': 'term_length'
                             };
+
+                            let currentLabel = null;
+                            let colIndex = 0;
+                            gridCells.forEach((cell, i) => {
+                                const text = cell.textContent.trim();
+                                const isLabel = cell.classList.contains('attribute-label');
+
+                                if (isLabel) {
+                                    currentLabel = text.toLowerCase();
+                                    colIndex = 0;
+                                } else if (currentLabel) {
+                                    colIndex++;
+                                    const val = text === '--' || text === '-' ? null : text;
+
+                                    // Map to account field
+                                    const fieldName = fieldMap[currentLabel];
+                                    if (fieldName && val && !account[fieldName]) {
+                                        account[fieldName] = val;
+                                    }
+
+                                    // Store bureau-specific value
+                                    const bureauName = colIndex === 1 ? 'transunion' :
+                                                       colIndex === 2 ? 'experian' :
+                                                       colIndex === 3 ? 'equifax' : null;
+                                    if (bureauName && val) {
+                                        account.bureaus[bureauName].present = true;
+                                        if (fieldName) {
+                                            account.bureaus[bureauName][fieldName] = val;
+                                        }
+                                    }
+                                }
+                            });
+
+                            // Parse payment history timeline
+                            const historyDivs = modal.querySelectorAll('.payment-history .d-flex.flex-wrap');
+                            historyDivs.forEach(div => {
+                                const bureauP = div.querySelector('p.payment-history-heading, p.fw-bold');
+                                if (!bureauP) return;
+                                const bureauText = bureauP.textContent.toLowerCase();
+                                const bureauName = bureauText.includes('transunion') ? 'transunion' :
+                                                   bureauText.includes('experian') ? 'experian' :
+                                                   bureauText.includes('equifax') ? 'equifax' : null;
+                                if (!bureauName) return;
+
+                                const monthDivs = div.querySelectorAll('[class^="status-"]');
+                                monthDivs.forEach(md => {
+                                    const status = md.className.match(/status-(\\w+)/)?.[1] || 'U';
+                                    const badge = md.querySelector('.month-badge')?.textContent.trim() || '';
+                                    const month = md.querySelector('.month-label')?.textContent.trim() || '';
+                                    account.payment_history[bureauName].push({
+                                        month: month,
+                                        status: status,
+                                        badge: badge
+                                    });
+                                });
+                            });
+
+                            // Parse late payment counts (30/60/90)
+                            const lateDivs = modal.querySelectorAll('.late-history > div');
+                            lateDivs.forEach(div => {
+                                const bureauP = div.querySelector('p.fw-bold, p.text-transunion, p.text-experian, p.text-equifax');
+                                if (!bureauP) return;
+                                const bureauText = bureauP.textContent.toLowerCase();
+                                const bureauName = bureauText.includes('transunion') ? 'transunion' :
+                                                   bureauText.includes('experian') ? 'experian' :
+                                                   bureauText.includes('equifax') ? 'equifax' : null;
+                                if (!bureauName) return;
+
+                                const gridText = div.querySelector('.d-grid')?.textContent || '';
+                                const match30 = gridText.match(/30:\\s*(\\d+)/);
+                                const match60 = gridText.match(/60:\\s*(\\d+)/);
+                                const match90 = gridText.match(/90:\\s*(\\d+)/);
+                                if (match30) account.late_payments[bureauName].days_30 = parseInt(match30[1]);
+                                if (match60) account.late_payments[bureauName].days_60 = parseInt(match60[1]);
+                                if (match90) account.late_payments[bureauName].days_90 = parseInt(match90[1]);
+                            });
                         }
 
-                        // Get utilization if present
-                        const utilEl = container.querySelector('[data-test-account-utilization] .circle-chart__percent');
-                        if (utilEl) {
-                            account.utilization = utilEl.textContent.trim();
-                        }
-
-                        // Only add if we got a creditor name
                         if (account.creditor) {
                             accounts.push(account);
                         }
                     });
 
                     return accounts;
-                }""")
+                }"""
+                )
 
                 if mfsn_accounts:
                     logger.info(
                         f"Extracted {len(mfsn_accounts)} accounts from MyFreeScoreNow DOM"
                     )
                     accounts.extend(mfsn_accounts)
+
+                # If still no accounts, try Classic View format extraction
+                if not accounts:
+                    logger.info(
+                        "Trying Classic View extraction (original-view format)..."
+                    )
+                    classic_accounts = await self.page.evaluate(
+                        """() => {
+                        const accounts = [];
+
+                        // Classic View uses sections with .d-grid.grid-cols-4 directly
+                        // Account names are in .h6 > strong or .mb-3.h6 > strong
+                        const accountBlocks = document.querySelectorAll('.mb-5 .border-b.border-5, .original-view .my-3.border-b');
+
+                        accountBlocks.forEach(block => {
+                            const nameEl = block.querySelector('p.h6 > strong, .h6 > strong, .mb-3.h6 > strong');
+                            if (!nameEl) return;
+
+                            const account = {
+                                creditor: nameEl.textContent.trim(),
+                                bureaus: {
+                                    transunion: { present: false },
+                                    experian: { present: false },
+                                    equifax: { present: false }
+                                },
+                                payment_history: {
+                                    transunion: [],
+                                    experian: [],
+                                    equifax: []
+                                },
+                                late_payments: {
+                                    transunion: {},
+                                    experian: {},
+                                    equifax: {}
+                                }
+                            };
+
+                            // Parse the grid-cols-4 data
+                            const grid = block.querySelector('.d-grid.grid-cols-4');
+                            if (grid) {
+                                // Classic View structure: labels in .labels div, values in 3 bureau columns
+                                const labelCells = grid.querySelectorAll('.labels .grid-cell');
+                                const tuCells = grid.querySelectorAll('.d-contents:nth-child(2) .grid-cell');
+                                const exCells = grid.querySelectorAll('.d-contents:nth-child(3) .grid-cell');
+                                const eqCells = grid.querySelectorAll('.d-contents:nth-child(4) .grid-cell');
+
+                                const fieldMap = {
+                                    'account #': 'account_number',
+                                    'high balance:': 'high_balance',
+                                    'date opened:': 'date_opened',
+                                    'date reported:': 'date_reported',
+                                    'closed date:': 'date_closed',
+                                    'date of last activity:': 'last_activity',
+                                    'balance owed:': 'balance',
+                                    'credit limit:': 'credit_limit',
+                                    'payment amount:': 'payment_amount',
+                                    'last payment:': 'last_payment',
+                                    'past due amount:': 'past_due',
+                                    'account type:': 'account_type',
+                                    'account rating:': 'account_rating',
+                                    'account status:': 'status',
+                                    'payment status:': 'payment_status',
+                                    'creditor type:': 'creditor_type',
+                                    'term length:': 'term_length'
+                                };
+
+                                // Parse each row by index
+                                labelCells.forEach((labelCell, i) => {
+                                    const labelText = labelCell.textContent.trim().toLowerCase();
+                                    const fieldName = fieldMap[labelText];
+
+                                    // Get values from each bureau column (same row index + 1 for header)
+                                    const tuVal = tuCells[i + 1]?.textContent.trim();
+                                    const exVal = exCells[i + 1]?.textContent.trim();
+                                    const eqVal = eqCells[i + 1]?.textContent.trim();
+
+                                    const cleanVal = (v) => (v && v !== '--' && v !== '-') ? v : null;
+
+                                    if (fieldName) {
+                                        // Use first non-null value for main field
+                                        account[fieldName] = cleanVal(tuVal) || cleanVal(exVal) || cleanVal(eqVal);
+
+                                        // Store bureau-specific values
+                                        if (cleanVal(tuVal)) {
+                                            account.bureaus.transunion.present = true;
+                                            account.bureaus.transunion[fieldName] = cleanVal(tuVal);
+                                        }
+                                        if (cleanVal(exVal)) {
+                                            account.bureaus.experian.present = true;
+                                            account.bureaus.experian[fieldName] = cleanVal(exVal);
+                                        }
+                                        if (cleanVal(eqVal)) {
+                                            account.bureaus.equifax.present = true;
+                                            account.bureaus.equifax[fieldName] = cleanVal(eqVal);
+                                        }
+                                    }
+                                });
+                            }
+
+                            if (account.creditor) {
+                                accounts.push(account);
+                            }
+                        });
+
+                        return accounts;
+                    }"""
+                    )
+                    if classic_accounts:
+                        logger.info(
+                            f"Extracted {len(classic_accounts)} accounts from Classic View"
+                        )
+                        accounts.extend(classic_accounts)
 
             except Exception as e:
                 logger.warning(f"MyFreeScoreNow account extraction failed: {e}")
@@ -1669,6 +2660,192 @@ def run_import_sync(
             loop.close()
         except:
             pass
+
+
+def check_cached_report(client_id: int) -> Optional[Dict]:
+    """
+    Check if a recent report exists for this client (within CACHE_HOURS).
+    Returns cached data if found, None if fresh pull needed.
+    """
+    try:
+        import json
+
+        from database import CreditMonitoringCredential, SessionLocal
+
+        db = SessionLocal()
+        cred = (
+            db.query(CreditMonitoringCredential)
+            .filter(
+                CreditMonitoringCredential.client_id == client_id,
+                CreditMonitoringCredential.is_active == True,
+            )
+            .first()
+        )
+
+        if not cred or not cred.last_import_at:
+            db.close()
+            return None
+
+        # Check if report is recent enough to reuse
+        cache_cutoff = datetime.utcnow() - timedelta(hours=CACHE_HOURS)
+        if cred.last_import_at < cache_cutoff:
+            db.close()
+            return None
+
+        # Check if the last import was successful and has a report
+        if cred.last_import_status != "success" or not cred.last_report_path:
+            db.close()
+            return None
+
+        # Try to load the cached JSON data
+        json_path = cred.last_report_path.replace(".html", ".json")
+        if os.path.exists(json_path):
+            with open(json_path, "r") as f:
+                cached_data = json.load(f)
+
+            logger.info(
+                f"Using cached report for client {client_id} from {cred.last_import_at}"
+            )
+            log_activity(
+                "Credit Import (Cached)",
+                f"Using cached report from {cred.last_import_at.strftime('%Y-%m-%d %H:%M')}",
+                client_id=client_id,
+                status="success",
+            )
+
+            result = {
+                "success": True,
+                "cached": True,
+                "report_path": cred.last_report_path,
+                "scores": cached_data.get("scores", {}),
+                "accounts": cached_data.get("accounts", []),
+                "timestamp": cred.last_import_at.isoformat(),
+            }
+            db.close()
+            return result
+
+        db.close()
+        return None
+
+    except Exception as e:
+        logger.error(f"Error checking cached report: {e}")
+        return None
+
+
+def run_import_background(
+    service_name: str,
+    username: str,
+    password: str,
+    ssn_last4: str,
+    client_id: int,
+    client_name: str,
+    credential_id: int = None,
+) -> None:
+    """
+    Run import in background thread. Updates database when complete.
+    """
+    try:
+        from database import CreditMonitoringCredential, SessionLocal
+
+        logger.info(f"Background import started for {client_name}")
+
+        # Run the actual import
+        result = run_import_sync(
+            service_name=service_name,
+            username=username,
+            password=password,
+            ssn_last4=ssn_last4,
+            client_id=client_id,
+            client_name=client_name,
+        )
+
+        # Update credential status in database
+        if credential_id:
+            db = SessionLocal()
+            cred = (
+                db.query(CreditMonitoringCredential).filter_by(id=credential_id).first()
+            )
+            if cred:
+                cred.last_import_at = datetime.utcnow()
+                # Check for success - result has "report_path" key when successful
+                report_path = result.get("report_path") or result.get("path")
+                if result and report_path:
+                    cred.last_import_status = "success"
+                    cred.last_import_error = None
+                    cred.last_report_path = report_path
+                    logger.info(
+                        f"Updated credential {credential_id} with report path: {report_path}"
+                    )
+                else:
+                    cred.last_import_status = "failed"
+                    cred.last_import_error = (
+                        result.get("error") if result else "Import returned None"
+                    )
+                db.commit()
+            db.close()
+
+        logger.info(
+            f"Background import completed for {client_name}: success={result.get('success')}"
+        )
+
+    except Exception as e:
+        logger.error(f"Background import failed for {client_name}: {e}")
+
+
+def run_import_async(
+    service_name: str,
+    username: str,
+    password: str,
+    ssn_last4: str,
+    client_id: int,
+    client_name: str,
+    credential_id: int = None,
+    use_cache: bool = True,
+) -> Dict:
+    """
+    Start import and return immediately. Import runs in background.
+    Checks cache first - returns cached data instantly if available.
+
+    Returns:
+        Dict with status. If cached, returns full data immediately.
+        If not cached, returns "processing" status while import runs in background.
+    """
+    # Check cache first
+    if use_cache:
+        cached = check_cached_report(client_id)
+        if cached:
+            return cached
+
+    # No cache - start background import
+    log_activity(
+        "Credit Import Queued",
+        f"{client_name} | {service_name} | Running in background",
+        client_id=client_id,
+        status="info",
+    )
+
+    # Start background thread
+    thread = threading.Thread(
+        target=run_import_background,
+        args=(
+            service_name,
+            username,
+            password,
+            ssn_last4,
+            client_id,
+            client_name,
+            credential_id,
+        ),
+        daemon=True,
+    )
+    thread.start()
+
+    return {
+        "success": True,
+        "processing": True,
+        "message": "Import started in background. Check back in 1-2 minutes.",
+        "timestamp": datetime.utcnow().isoformat(),
+    }
 
 
 def test_browser_availability() -> Tuple[bool, str]:

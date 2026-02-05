@@ -348,7 +348,7 @@ templates/chexsystems.html:654:                            <select name="account
 templates/chexsystems.html:666:                        <input type="text" name="reported_by" placeholder="e.g., Chase Bank, Wells Fargo">
 templates/chexsystems.html:671:                        <textarea name="dispute_reason" placeholder="Explain why this information is inaccurate or should be removed..." required></textarea>
 templates/chexsystems.html:676:                        <textarea name="notes" placeholder="Any additional information or context..." rows="3"></textarea>
-templates/credit_report_view.html:661:                <input type="text" id="accountSearch" placeholder="Search creditors..." 
+templates/credit_report_view.html:661:                <input type="text" id="accountSearch" placeholder="Search creditors..."
 templates/sops.html:372:                <input type="hidden" name="category" value="{{ current_category }}">
 templates/sops.html:373:                <input type="text" name="search" placeholder="Search procedures..." value="{{ search_query or '' }}">
 templates/integrations_hub.html:578:                    <input type="hidden" id="configService" name="service">
@@ -491,7 +491,7 @@ templates/credit_tracker.html:135:                        <input type="number" i
 templates/credit_tracker.html:139:                        <input type="number" id="numNegatives" placeholder="e.g., 8" min="0" max="50">
 templates/credit_tracker.html:173:                    <input type="number" id="detailedCurrentScore" placeholder="e.g., 580" min="300" max="850" value="550">
 templates/credit_tracker.html:232:                    <input type="text" id="searchClients" placeholder="Search clients..." onkeyup="filterClients()">
-templates/credit_tracker.html:353:                    <input type="number" class="count-input" value="${item.count}" min="1" max="20" 
+templates/credit_tracker.html:353:                    <input type="number" class="count-input" value="${item.count}" min="1" max="20"
 templates/cfpb_generator.html:433:                <input type="hidden" id="complaintId" value="{{ complaint.id }}">
 templates/cfpb_generator.html:438:                        <input type="text" class="form-input" value="{{ complaint.client_name }}" disabled>
 templates/cfpb_generator.html:442:                        <input type="text" class="form-input" id="editTargetCompany" value="{{ complaint.target_company }}">
@@ -698,8 +698,8 @@ templates/sms_settings.html:431:                        <input type="checkbox" n
 templates/sms_settings.html:442:                        <input type="checkbox" name="dispute_sent_enabled" {{ 'checked' if settings.dispute_sent_enabled else '' }}>
 templates/sms_settings.html:453:                        <input type="checkbox" name="cra_response_enabled" {{ 'checked' if settings.cra_response_enabled else '' }}>
 templates/sms_settings.html:464:                        <input type="checkbox" name="payment_reminder_enabled" {{ 'checked' if settings.payment_reminder_enabled else '' }}>
-templates/sms_settings.html:474:                    <input type="number" class="setting-input" name="reminder_delay_hours" 
-templates/sms_settings.html:491:                        <input type="tel" id="testPhone" placeholder="+1 (555) 123-4567" 
+templates/sms_settings.html:474:                    <input type="number" class="setting-input" name="reminder_delay_hours"
+templates/sms_settings.html:491:                        <input type="tel" id="testPhone" placeholder="+1 (555) 123-4567"
 templates/sms_settings.html:496:                        <input type="text" id="testMessage" placeholder="Custom message or leave empty for default">
 templates/client_portal.html:883:                                    <td style="padding: 10px;"><input type="text" class="comment-input" data-id="{{ item.id }}" value="{{ item.comments or '' }}" placeholder="Add comment"></td>
 templates/client_portal.html:935:                                    <td style="padding: 10px;"><input type="text" class="comment-input" data-id="{{ item.id }}" value="{{ item.comments or '' }}" placeholder="Add comment"></td>

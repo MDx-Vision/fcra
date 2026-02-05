@@ -55,10 +55,10 @@ _cache_lock = threading.RLock()
 # =============================================================================
 
 FLAG_CATEGORIES = [
-    "feature",      # New features
-    "experiment",   # A/B tests
-    "ops",          # Operational flags (maintenance mode, etc.)
-    "ui",           # UI variations
+    "feature",  # New features
+    "experiment",  # A/B tests
+    "ops",  # Operational flags (maintenance mode, etc.)
+    "ui",  # UI variations
     "kill_switch",  # Emergency kill switches
 ]
 
@@ -110,6 +110,7 @@ DEFAULT_FLAGS = [
 # Feature Flag Service
 # =============================================================================
 
+
 class FeatureFlagService:
     """
     Service for managing feature flags.
@@ -137,6 +138,7 @@ class FeatureFlagService:
         if self._db:
             return self._db
         from database import SessionLocal
+
         return SessionLocal()
 
     def _should_close_db(self):
@@ -185,7 +187,9 @@ class FeatureFlagService:
             flag = db.query(FeatureFlag).filter_by(key=key).first()
 
             if flag is None:
-                logger.debug(f"Feature flag '{key}' not found, using default: {default}")
+                logger.debug(
+                    f"Feature flag '{key}' not found, using default: {default}"
+                )
                 return default
 
             # Check expiration
@@ -266,6 +270,7 @@ class FeatureFlagService:
         environments = rules.get("environments", [])
         if environments:
             import os
+
             current_env = os.environ.get("ENVIRONMENT", "development")
             if current_env not in environments:
                 return False
@@ -307,6 +312,7 @@ class FeatureFlagService:
         db = self._get_db()
         try:
             from database import FeatureFlag
+
             flag = db.query(FeatureFlag).filter_by(key=key).first()
             return flag.to_dict() if flag else None
         finally:
@@ -318,6 +324,7 @@ class FeatureFlagService:
         db = self._get_db()
         try:
             from database import FeatureFlag
+
             query = db.query(FeatureFlag)
             if category:
                 query = query.filter_by(category=category)
@@ -449,12 +456,16 @@ class FeatureFlagService:
             if self._should_close_db():
                 db.close()
 
-    def set_flag(self, key: str, enabled: bool, updated_by_id: Optional[int] = None) -> bool:
+    def set_flag(
+        self, key: str, enabled: bool, updated_by_id: Optional[int] = None
+    ) -> bool:
         """Quick method to enable/disable a flag."""
         result = self.update_flag(key, enabled=enabled, updated_by_id=updated_by_id)
         return result is not None
 
-    def toggle_flag(self, key: str, updated_by_id: Optional[int] = None) -> Optional[bool]:
+    def toggle_flag(
+        self, key: str, updated_by_id: Optional[int] = None
+    ) -> Optional[bool]:
         """Toggle a flag's enabled state."""
         flag = self.get_flag(key)
         if not flag:
@@ -548,22 +559,28 @@ class FeatureFlagService:
         """Get feature flag statistics."""
         db = self._get_db()
         try:
-            from database import FeatureFlag
             from sqlalchemy import func
 
+            from database import FeatureFlag
+
             total = db.query(func.count(FeatureFlag.id)).scalar()
-            enabled = db.query(func.count(FeatureFlag.id)).filter(
-                FeatureFlag.enabled == True
-            ).scalar()
-            expired = db.query(func.count(FeatureFlag.id)).filter(
-                FeatureFlag.expires_at < datetime.utcnow()
-            ).scalar()
+            enabled = (
+                db.query(func.count(FeatureFlag.id))
+                .filter(FeatureFlag.enabled == True)
+                .scalar()
+            )
+            expired = (
+                db.query(func.count(FeatureFlag.id))
+                .filter(FeatureFlag.expires_at < datetime.utcnow())
+                .scalar()
+            )
 
             by_category = {}
-            categories = db.query(
-                FeatureFlag.category,
-                func.count(FeatureFlag.id)
-            ).group_by(FeatureFlag.category).all()
+            categories = (
+                db.query(FeatureFlag.category, func.count(FeatureFlag.id))
+                .group_by(FeatureFlag.category)
+                .all()
+            )
             for cat, count in categories:
                 by_category[cat or "uncategorized"] = count
 
@@ -650,6 +667,7 @@ def feature_flag(
         def experimental_handler():
             return {"experimental": True}
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -661,6 +679,7 @@ def feature_flag(
             if user_id is None:
                 try:
                     from flask import session
+
                     user_id = session.get("staff_id") or session.get("client_id")
                     user_role = session.get("staff_role")
                 except RuntimeError:

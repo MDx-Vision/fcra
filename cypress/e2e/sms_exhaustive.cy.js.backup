@@ -142,25 +142,25 @@ describe('Staff Login Page (/dashboard/settings/sms)', () => {
 
     it('should submit form with valid data', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 200 }).as('loginRequest');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@loginRequest');
     });
 
     it('should disable submit button and show loading state on form submission', () => {
       cy.intercept('POST', '/staff/login', { delay: 1000, statusCode: 200 }).as('loginRequest');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.get('[data-testid="login-button"]')
         .should('be.disabled')
         .and('contain', 'Signing in...');
-      
+
       cy.get('.spinner').should('exist');
     });
   });
@@ -168,14 +168,14 @@ describe('Staff Login Page (/dashboard/settings/sms)', () => {
   describe('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').type('password123');
-      
+
       // Password should be hidden initially
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      
+
       // Click toggle button to show password
       cy.get('.toggle-btn').click();
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      
+
       // Click toggle button again to hide password
       cy.get('.toggle-btn').click();
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
@@ -219,21 +219,21 @@ describe('Staff Login Page (/dashboard/settings/sms)', () => {
   describe('Error Handling Tests', () => {
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500 }).as('serverError');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@serverError');
     });
 
     it('should handle authentication errors', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 401 }).as('authError');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('wrongpassword');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@authError');
     });
 
@@ -245,7 +245,7 @@ describe('Staff Login Page (/dashboard/settings/sms)', () => {
     it('should handle special characters in input fields', () => {
       cy.get('[data-testid="email-input"]').type('test+special@example.com');
       cy.get('[data-testid="password-input"]').type('P@ssw0rd!@#$%');
-      
+
       cy.get('[data-testid="email-input"]').should('have.value', 'test+special@example.com');
       cy.get('[data-testid="password-input"]').should('have.value', 'P@ssw0rd!@#$%');
     });
@@ -280,7 +280,7 @@ describe('Staff Login Page (/dashboard/settings/sms)', () => {
     it('should execute togglePassword function correctly', () => {
       cy.window().invoke('togglePassword', 'password');
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      
+
       cy.window().invoke('togglePassword', 'password');
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
     });

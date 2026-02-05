@@ -1,9 +1,9 @@
 # FCRA PROMPT 09: BIG 3 CRA â€” PII CORRECTION (SEPARATE FILES)
 ## Upload â†’ Analyze â†’ Confirm â†’ Generate 3 Separate Files
 
-**Version:** 3.0 (Separate File Output + Two-Step)  
-**Created:** November 24, 2025  
-**Output:** 3 separate PII correction letters after user confirmation  
+**Version:** 3.0 (Separate File Output + Two-Step)
+**Created:** November 24, 2025
+**Output:** 3 separate PII correction letters after user confirmation
 
 ---
 
@@ -126,7 +126,7 @@ LETTER TEMPLATE (For Each CRA)
 
 Dear Sir or Madam:
 
-I have reviewed my credit file from [CRA Name] and discovered **INACCURATE 
+I have reviewed my credit file from [CRA Name] and discovered **INACCURATE
 PERSONAL IDENTIFYING INFORMATION** in violation of FCRA Â§ 1681e(b).
 
 **This is not a request. This is a DEMAND backed by federal law.**
@@ -193,7 +193,7 @@ SECTION 4: DAMAGES EXPOSURE
 | Punitive (if willful) | 2-4x statutory |
 | Attorney fees | $15,000+ |
 
-**You are on notice. Continued inaccuracy after this letter = willfulness 
+**You are on notice. Continued inaccuracy after this letter = willfulness
 under Safeco v. Burr.**
 
 ---------------------------------------------------------------------------

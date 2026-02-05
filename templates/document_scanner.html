@@ -13,35 +13,35 @@
             --lime: #32CD32;
             --gradient: linear-gradient(135deg, var(--teal), var(--lime));
         }
-        
+
         body {
             background: #f8f9fa;
             min-height: 100vh;
         }
-        
+
         .main-content {
             margin-left: 260px;
             padding-bottom: 100px;
         }
-        
+
         .page-header {
             background: var(--gradient);
             color: white;
             padding: 1.5rem 2rem;
             margin-bottom: 1.5rem;
         }
-        
+
         .page-header h4 {
             margin: 0;
             font-weight: 600;
         }
-        
+
         .scanner-container {
             max-width: 600px;
             margin: 0 auto;
             padding: 0 1rem;
         }
-        
+
         .doc-type-card {
             border: 2px solid #dee2e6;
             border-radius: 12px;
@@ -50,16 +50,16 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        
+
         .doc-type-card:hover, .doc-type-card.selected {
             border-color: var(--teal);
             background: rgba(0, 128, 128, 0.05);
         }
-        
+
         .doc-type-card.selected {
             background: rgba(0, 128, 128, 0.1);
         }
-        
+
         .camera-container {
             position: relative;
             background: #000;
@@ -67,12 +67,12 @@
             overflow: hidden;
             margin-bottom: 1rem;
         }
-        
+
         #video-preview {
             width: 100%;
             display: block;
         }
-        
+
         .camera-overlay {
             position: absolute;
             bottom: 0;
@@ -84,7 +84,7 @@
             justify-content: center;
             gap: 1rem;
         }
-        
+
         .capture-btn {
             width: 70px;
             height: 70px;
@@ -94,18 +94,18 @@
             cursor: pointer;
             transition: transform 0.1s;
         }
-        
+
         .capture-btn:active {
             transform: scale(0.95);
         }
-        
+
         .capture-btn-inner {
             width: 100%;
             height: 100%;
             border-radius: 50%;
             background: var(--gradient);
         }
-        
+
         .upload-zone {
             border: 3px dashed #dee2e6;
             border-radius: 12px;
@@ -115,24 +115,24 @@
             transition: all 0.2s;
             margin-bottom: 1rem;
         }
-        
+
         .upload-zone:hover, .upload-zone.dragover {
             border-color: var(--teal);
             background: rgba(0, 128, 128, 0.05);
         }
-        
+
         .upload-zone i {
             font-size: 3rem;
             color: var(--teal);
         }
-        
+
         .page-queue {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
             margin-bottom: 1rem;
         }
-        
+
         .page-thumbnail {
             position: relative;
             width: calc(33.33% - 0.35rem);
@@ -141,13 +141,13 @@
             overflow: hidden;
             border: 2px solid #dee2e6;
         }
-        
+
         .page-thumbnail img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        
+
         .page-thumbnail .page-number {
             position: absolute;
             top: 4px;
@@ -163,7 +163,7 @@
             font-size: 0.75rem;
             font-weight: bold;
         }
-        
+
         .page-thumbnail .remove-btn {
             position: absolute;
             top: 4px;
@@ -181,7 +181,7 @@
             opacity: 0;
             transition: opacity 0.2s;
         }
-        
+
         .round-badge {
             width: 40px;
             height: 40px;
@@ -192,7 +192,7 @@
             font-weight: bold;
             font-size: 1rem;
         }
-        
+
         .add-more-prompt {
             background: linear-gradient(135deg, rgba(0,128,128,0.1), rgba(50,205,50,0.1));
             border: 2px dashed var(--teal);
@@ -201,7 +201,7 @@
             text-align: center;
             margin-top: 1rem;
         }
-        
+
         .add-more-btn {
             width: 60px;
             height: 60px;
@@ -218,24 +218,24 @@
             transition: transform 0.2s, box-shadow 0.2s;
             box-shadow: 0 4px 12px rgba(0, 128, 128, 0.3);
         }
-        
+
         .add-more-btn:hover {
             transform: scale(1.1);
             box-shadow: 0 6px 16px rgba(0, 128, 128, 0.4);
         }
-        
+
         .add-more-btn:active {
             transform: scale(0.95);
         }
-        
+
         .add-more-btn i {
             font-size: 2rem;
         }
-        
+
         .page-thumbnail:hover .remove-btn {
             opacity: 1;
         }
-        
+
         .bottom-actions {
             position: fixed;
             bottom: 0;
@@ -247,18 +247,18 @@
             display: flex;
             gap: 0.5rem;
         }
-        
+
         .btn-gradient {
             background: var(--gradient);
             border: none;
             color: white;
         }
-        
+
         .btn-gradient:hover {
             background: linear-gradient(135deg, #006666, #28a428);
             color: white;
         }
-        
+
         .processing-overlay {
             position: fixed;
             top: 0;
@@ -273,33 +273,33 @@
             z-index: 9999;
             color: white;
         }
-        
+
         .processing-overlay.hidden {
             display: none;
         }
-        
+
         .step-indicator {
             display: flex;
             justify-content: center;
             gap: 0.5rem;
             margin-bottom: 2rem;
         }
-        
+
         .step {
             width: 12px;
             height: 12px;
             border-radius: 50%;
             background: #dee2e6;
         }
-        
+
         .step.active {
             background: var(--teal);
         }
-        
+
         .step.completed {
             background: var(--lime);
         }
-        
+
         .result-card {
             background: white;
             border-radius: 12px;
@@ -307,23 +307,23 @@
             margin-bottom: 1rem;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        
+
         .result-card h5 {
             color: var(--teal);
             margin-bottom: 1rem;
         }
-        
+
         .stat-row {
             display: flex;
             justify-content: space-between;
             padding: 0.5rem 0;
             border-bottom: 1px solid #eee;
         }
-        
+
         .stat-row:last-child {
             border-bottom: none;
         }
-        
+
         @media (max-width: 768px) {
             .main-content {
                 margin-left: 0;
@@ -340,7 +340,7 @@
 <body>
     {% set active_page = 'scanner' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="page-header">
             <div class="d-flex justify-content-between align-items-center">
@@ -355,17 +355,17 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <div class="scanner-container">
             <div class="step-indicator mb-3">
                 <div class="step" id="step-1"></div>
                 <div class="step" id="step-2"></div>
                 <div class="step" id="step-3"></div>
             </div>
-            
+
             <div id="step-select-type">
                 <h5 class="mb-3">Select Document Type</h5>
-                
+
                 <div class="doc-type-card" data-type="cra_response" data-has-rounds="true">
                     <div class="d-flex align-items-center">
                         <i class="bi bi-envelope-open fs-4 me-3 text-info"></i>
@@ -376,7 +376,7 @@
                         <i class="bi bi-chevron-right ms-auto text-muted"></i>
                     </div>
                 </div>
-                
+
                 <div class="doc-type-card" data-type="collection_letter">
                     <div class="d-flex align-items-center">
                         <i class="bi bi-exclamation-triangle fs-4 me-3 text-warning"></i>
@@ -386,7 +386,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="doc-type-card" data-type="creditor_response">
                     <div class="d-flex align-items-center">
                         <i class="bi bi-bank fs-4 me-3 text-primary"></i>
@@ -396,7 +396,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="doc-type-card" data-type="court_document">
                     <div class="d-flex align-items-center">
                         <i class="bi bi-building fs-4 me-3 text-danger"></i>
@@ -406,7 +406,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="doc-type-card" data-type="id_document">
                     <div class="d-flex align-items-center">
                         <i class="bi bi-person-badge fs-4 me-3 text-success"></i>
@@ -416,7 +416,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="doc-type-card" data-type="proof_of_address">
                     <div class="d-flex align-items-center">
                         <i class="bi bi-house fs-4 me-3 text-secondary"></i>
@@ -426,7 +426,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="doc-type-card" data-type="other">
                     <div class="d-flex align-items-center">
                         <i class="bi bi-file-earmark fs-4 me-3 text-muted"></i>
@@ -437,11 +437,11 @@
                     </div>
                 </div>
             </div>
-            
+
             <div id="step-select-round" class="d-none">
                 <h5 class="mb-3">Select Dispute Round</h5>
                 <p class="text-muted mb-3">Which dispute round is this response from?</p>
-                
+
                 <div class="doc-type-card round-card" data-round="1" data-type="cra_response_r1">
                     <div class="d-flex align-items-center">
                         <div class="round-badge bg-primary text-white">R1</div>
@@ -451,7 +451,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="doc-type-card round-card" data-round="2" data-type="cra_response_r2">
                     <div class="d-flex align-items-center">
                         <div class="round-badge bg-info text-white">R2</div>
@@ -461,7 +461,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="doc-type-card round-card" data-round="3" data-type="cra_response_r3">
                     <div class="d-flex align-items-center">
                         <div class="round-badge bg-warning text-dark">R3</div>
@@ -471,7 +471,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="doc-type-card round-card" data-round="4" data-type="cra_response_r4">
                     <div class="d-flex align-items-center">
                         <div class="round-badge bg-danger text-white">R4</div>
@@ -482,13 +482,13 @@
                     </div>
                 </div>
             </div>
-            
+
             <div id="step-capture" class="d-none">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0">Scan Pages</h5>
                     <span class="badge bg-secondary" id="page-count-badge">0 pages</span>
                 </div>
-                
+
                 <ul class="nav nav-tabs mb-3" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-camera" type="button">
@@ -501,7 +501,7 @@
                         </button>
                     </li>
                 </ul>
-                
+
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="tab-camera">
                         <div class="camera-container">
@@ -517,7 +517,7 @@
                             <i class="bi bi-lightbulb"></i> Position document flat with good lighting
                         </div>
                     </div>
-                    
+
                     <div class="tab-pane fade" id="tab-upload">
                         <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
                             <i class="bi bi-cloud-upload"></i>
@@ -527,14 +527,14 @@
                         <input type="file" id="file-input" accept="image/*" multiple class="d-none" onchange="handleFileSelect(event)">
                     </div>
                 </div>
-                
+
                 <div id="pages-container">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="mb-0">Scanned Pages</h6>
                         <small class="text-muted" id="pages-hint">Capture all pages, then process</small>
                     </div>
                     <div class="page-queue" id="page-queue"></div>
-                    
+
                     <div class="add-more-prompt" id="add-more-prompt" style="display: none;">
                         <button class="add-more-btn" id="add-more-btn" onclick="addMorePages()">
                             <i class="bi bi-plus-circle-fill"></i>
@@ -547,11 +547,11 @@
                     </div>
                 </div>
             </div>
-            
+
             <div id="step-result" class="d-none">
                 <div class="result-card">
                     <h5><i class="bi bi-check-circle text-success"></i> Processing Complete</h5>
-                    
+
                     <div class="stat-row">
                         <span>Document Type</span>
                         <strong id="result-doc-type">-</strong>
@@ -565,7 +565,7 @@
                         <strong id="result-words">- words</strong>
                     </div>
                 </div>
-                
+
                 <div class="result-card">
                     <h6>Generated Files</h6>
                     <a href="#" id="download-pdf-link" class="btn btn-outline-primary w-100 mb-2">
@@ -575,14 +575,14 @@
                         <i class="bi bi-file-text"></i> Download Text
                     </a>
                 </div>
-                
+
                 <button class="btn btn-gradient w-100" onclick="startNewScan()">
                     <i class="bi bi-plus-circle"></i> Scan Another Document
                 </button>
             </div>
         </div>
     </main>
-    
+
     <div class="bottom-actions" id="bottom-actions">
         <button class="btn btn-outline-secondary flex-grow-1" id="btn-back" onclick="goBack()">
             <i class="bi bi-arrow-left"></i> Back
@@ -591,7 +591,7 @@
             Next <i class="bi bi-arrow-right"></i>
         </button>
     </div>
-    
+
     <div class="processing-overlay hidden" id="processing-overlay">
         <div class="spinner-border text-light mb-3" style="width: 3rem; height: 3rem;"></div>
         <h5 id="processing-status">Processing...</h5>
@@ -607,12 +607,12 @@
         let sessionId = null;
         let pages = [];
         let videoStream = null;
-        
+
         const clientId = {{ client_id|default('null') }};
         const clientName = '{{ client_name|default("Client") }}';
         const portalToken = '{{ portal_token|default("") }}';
         const isPortal = {{ 'true' if is_portal else 'false' }};
-        
+
         document.querySelectorAll('.doc-type-card:not(.round-card)').forEach(card => {
             card.addEventListener('click', () => {
                 document.querySelectorAll('.doc-type-card:not(.round-card)').forEach(c => c.classList.remove('selected'));
@@ -622,7 +622,7 @@
                 document.getElementById('btn-next').disabled = false;
             });
         });
-        
+
         document.querySelectorAll('.round-card').forEach(card => {
             card.addEventListener('click', () => {
                 document.querySelectorAll('.round-card').forEach(c => c.classList.remove('selected'));
@@ -632,7 +632,7 @@
                 document.getElementById('btn-next').disabled = false;
             });
         });
-        
+
         const uploadZone = document.getElementById('upload-zone');
         uploadZone.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -646,7 +646,7 @@
             uploadZone.classList.remove('dragover');
             handleFiles(e.dataTransfer.files);
         });
-        
+
         function updateStepIndicator() {
             for (let i = 1; i <= 3; i++) {
                 const step = document.getElementById(`step-${i}`);
@@ -655,7 +655,7 @@
                 if (i === currentStep) step.classList.add('active');
             }
         }
-        
+
         async function goNext() {
             if (currentStep === 1 && selectedDocType) {
                 if (needsRoundSelection) {
@@ -665,7 +665,7 @@
                     needsRoundSelection = false;
                     return;
                 }
-                
+
                 currentStep = 2;
                 document.getElementById('step-select-type').classList.add('d-none');
                 document.getElementById('step-select-round').classList.add('d-none');
@@ -679,10 +679,10 @@
                 await processDocument();
             }
         }
-        
+
         function goBack() {
             const roundStep = document.getElementById('step-select-round');
-            
+
             if (!roundStep.classList.contains('d-none')) {
                 roundStep.classList.add('d-none');
                 document.getElementById('step-select-type').classList.remove('d-none');
@@ -692,7 +692,7 @@
                 document.getElementById('btn-next').disabled = false;
                 return;
             }
-            
+
             if (currentStep === 2) {
                 currentStep = 1;
                 document.getElementById('step-capture').classList.add('d-none');
@@ -706,7 +706,7 @@
                 startNewScan();
             }
         }
-        
+
         async function startSession() {
             try {
                 const response = await fetch('/api/scanner/session/start', {
@@ -726,7 +726,7 @@
                 console.error('Failed to start session:', error);
             }
         }
-        
+
         async function startCamera() {
             try {
                 videoStream = await navigator.mediaDevices.getUserMedia({
@@ -738,33 +738,33 @@
                 document.querySelector('[data-bs-target="#tab-upload"]').click();
             }
         }
-        
+
         function stopCamera() {
             if (videoStream) {
                 videoStream.getTracks().forEach(track => track.stop());
                 videoStream = null;
             }
         }
-        
+
         async function capturePhoto() {
             const video = document.getElementById('video-preview');
             const canvas = document.getElementById('capture-canvas');
-            
+
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            
+
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
-            
+
             canvas.toBlob(async (blob) => {
                 await uploadImage(blob, `capture_${Date.now()}.jpg`);
             }, 'image/jpeg', 0.9);
         }
-        
+
         function handleFileSelect(event) {
             handleFiles(event.target.files);
         }
-        
+
         async function handleFiles(files) {
             for (const file of files) {
                 if (file.type.startsWith('image/')) {
@@ -772,19 +772,19 @@
                 }
             }
         }
-        
+
         async function uploadImage(blob, filename) {
             const formData = new FormData();
             formData.append('image', blob, filename);
             formData.append('session_id', sessionId);
-            
+
             try {
                 const response = await fetch('/api/scanner/session/add-image', {
                     method: 'POST',
                     body: formData
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     pages.push({
                         page_number: data.page_number,
@@ -793,9 +793,9 @@
                     });
                     renderPageQueue();
                     updatePageCount();
-                    
+
                     document.getElementById('add-more-prompt').style.display = 'block';
-                    
+
                     setTimeout(() => {
                         document.getElementById('add-more-prompt').scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 100);
@@ -804,7 +804,7 @@
                 console.error('Upload failed:', error);
             }
         }
-        
+
         function renderPageQueue() {
             const queue = document.getElementById('page-queue');
             queue.innerHTML = pages.map((page, idx) => `
@@ -817,13 +817,13 @@
                 </div>
             `).join('');
         }
-        
+
         function updatePageCount() {
             const badge = document.getElementById('page-count-badge');
             badge.textContent = `${pages.length} page${pages.length !== 1 ? 's' : ''}`;
             document.getElementById('btn-next').disabled = pages.length === 0;
         }
-        
+
         async function removePage(pageNumber) {
             try {
                 await fetch('/api/scanner/session/remove-image', {
@@ -834,7 +834,7 @@
                         page_number: pageNumber
                     })
                 });
-                
+
                 pages.splice(pageNumber - 1, 1);
                 pages.forEach((p, idx) => p.page_number = idx + 1);
                 renderPageQueue();
@@ -843,14 +843,14 @@
                 console.error('Remove failed:', error);
             }
         }
-        
+
         async function processDocument() {
             const overlay = document.getElementById('processing-overlay');
             overlay.classList.remove('hidden');
-            
+
             document.getElementById('processing-status').textContent = 'Creating PDF...';
             document.getElementById('processing-detail').textContent = `Processing ${pages.length} pages`;
-            
+
             try {
                 const response = await fetch('/api/scanner/session/finalize', {
                     method: 'POST',
@@ -861,7 +861,7 @@
                     })
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     overlay.classList.add('hidden');
                     showResults(data);
@@ -873,15 +873,15 @@
                 alert('Processing failed: ' + error.message);
             }
         }
-        
+
         function showResults(data) {
             currentStep = 3;
             stopCamera();
-            
+
             document.getElementById('step-capture').classList.add('d-none');
             document.getElementById('step-result').classList.remove('d-none');
             document.getElementById('bottom-actions').classList.add('d-none');
-            
+
             const docTypes = {
                 'cra_response_r1': 'CRA Response - Round 1',
                 'cra_response_r2': 'CRA Response - Round 2',
@@ -894,21 +894,21 @@
                 'proof_of_address': 'Proof of Address',
                 'other': 'Other Document'
             };
-            
+
             document.getElementById('result-doc-type').textContent = docTypes[data.document_type] || data.document_type;
             document.getElementById('result-pages').textContent = data.page_count;
             document.getElementById('result-words').textContent = `${data.total_words?.toLocaleString() || 0} words`;
-            
+
             if (data.pdf_path) {
                 document.getElementById('download-pdf-link').href = `/api/scanner/download?path=${encodeURIComponent(data.pdf_path)}`;
             }
             if (data.text_file_path) {
                 document.getElementById('download-text-link').href = `/api/scanner/download?path=${encodeURIComponent(data.text_file_path)}`;
             }
-            
+
             updateStepIndicator();
         }
-        
+
         function startNewScan() {
             currentStep = 1;
             selectedDocType = null;
@@ -916,27 +916,27 @@
             selectedRound = null;
             sessionId = null;
             pages = [];
-            
+
             document.querySelectorAll('.doc-type-card').forEach(c => c.classList.remove('selected'));
             document.getElementById('page-queue').innerHTML = '';
             document.getElementById('add-more-prompt').style.display = 'none';
-            
+
             document.getElementById('step-result').classList.add('d-none');
             document.getElementById('step-capture').classList.add('d-none');
             document.getElementById('step-select-round').classList.add('d-none');
             document.getElementById('step-select-type').classList.remove('d-none');
             document.getElementById('bottom-actions').classList.remove('d-none');
-            
+
             document.getElementById('btn-next').innerHTML = 'Next <i class="bi bi-arrow-right"></i>';
             document.getElementById('btn-next').disabled = true;
-            
+
             updateStepIndicator();
         }
-        
+
         function addMorePages() {
             const cameraTab = document.querySelector('[data-bs-target="#tab-camera"]');
             const uploadTab = document.querySelector('[data-bs-target="#tab-upload"]');
-            
+
             if (videoStream) {
                 cameraTab.click();
                 document.getElementById('video-preview').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -945,7 +945,7 @@
                 document.getElementById('file-input').click();
             }
         }
-        
+
         updateStepIndicator();
     </script>
 </body>

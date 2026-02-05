@@ -1,10 +1,10 @@
 # FCRA PROMPT 15B: IDENTITY THEFT INQUIRY DISPUTES (§ 605B BLOCK)
 ## Full Identity Theft Package for Fraudulent Inquiries
 
-**Version:** 1.0  
-**Created:** January 13, 2026  
-**Use Case:** REAL identity theft victims with fraudulent hard inquiries  
-**Output:** Professional DOCX letters with full legal framework  
+**Version:** 1.0
+**Created:** January 13, 2026
+**Use Case:** REAL identity theft victims with fraudulent hard inquiries
+**Output:** Professional DOCX letters with full legal framework
 **Requirements:** FTC Report + Police Report + Identity Theft Affidavit
 
 ---
@@ -135,12 +135,12 @@ DEMAND TO BLOCK FRAUDULENT INQUIRIES WITHIN 4 BUSINESS DAYS
 
 SECTION 1: NOTICE OF IDENTITY THEFT
 
-I am a VICTIM OF IDENTITY THEFT. Pursuant to the Fair Credit Reporting 
-Act, 15 U.S.C. § 1681c-2 (FCRA § 605B), I am formally requesting that 
+I am a VICTIM OF IDENTITY THEFT. Pursuant to the Fair Credit Reporting
+Act, 15 U.S.C. § 1681c-2 (FCRA § 605B), I am formally requesting that
 you BLOCK the following fraudulent inquiries from my consumer file.
 
-These inquiries are the result of criminal identity theft. I did NOT 
-apply for credit with these companies. Someone fraudulently used my 
+These inquiries are the result of criminal identity theft. I did NOT
+apply for credit with these companies. Someone fraudulently used my
 personal information to submit credit applications.
 
 I CERTIFY UNDER PENALTY OF PERJURY:
@@ -177,24 +177,24 @@ SECTION 4: YOUR LEGAL OBLIGATIONS
 
 Under 15 U.S.C. § 1681c-2(a):
 
-"...a consumer reporting agency shall block the reporting of any 
-information in the file of a consumer that the consumer identifies 
-as information that resulted from an alleged identity theft, NOT 
+"...a consumer reporting agency shall block the reporting of any
+information in the file of a consumer that the consumer identifies
+as information that resulted from an alleged identity theft, NOT
 LATER THAN 4 BUSINESS DAYS after the date of receipt of—"
 
-This letter satisfies ALL statutory requirements. You have 4 BUSINESS 
+This letter satisfies ALL statutory requirements. You have 4 BUSINESS
 DAYS from receipt to block these fraudulent inquiries.
 
 SECTION 5: PROHIBITION ON RESALE AND REINSERTION
 
 Under § 1681c-2(b): You are PROHIBITED from reselling blocked information.
 
-Under § 1681c-2(c): You may NOT decline to block or rescind a block 
+Under § 1681c-2(c): You may NOT decline to block or rescind a block
 UNLESS you reasonably determine that:
 - The information was blocked in error
 - The identity theft report was filed fraudulently
 
-You have NO BASIS to decline this block request. I am a legitimate 
+You have NO BASIS to decline this block request. I am a legitimate
 identity theft victim with proper documentation.
 
 SECTION 6: NOTIFICATION TO FURNISHER
@@ -256,7 +256,7 @@ If you fail to block within 4 BUSINESS DAYS:
    - Attorney fees per § 1681n(a)(3)
    - Emotional distress damages
 
-Identity theft victims receive ENHANCED PROTECTION under FCRA. 
+Identity theft victims receive ENHANCED PROTECTION under FCRA.
 Courts view failure to block identity theft information harshly.
 
 LEGAL CITATIONS:
@@ -304,12 +304,12 @@ Inquiry Date: [DATE]
 
 SECTION 1: NOTICE OF IDENTITY THEFT
 
-I am a VICTIM OF IDENTITY THEFT. This letter serves as formal notice 
-that the credit application submitted to your company on or about 
+I am a VICTIM OF IDENTITY THEFT. This letter serves as formal notice
+that the credit application submitted to your company on or about
 [DATE] was FRAUDULENT. I did NOT submit this application.
 
-A criminal fraudulently used my personal information to apply for 
-credit with your company. The resulting inquiry on my credit report 
+A criminal fraudulently used my personal information to apply for
+credit with your company. The resulting inquiry on my credit report
 is the product of this criminal activity.
 
 I CERTIFY UNDER PENALTY OF PERJURY:
@@ -328,23 +328,23 @@ SECTION 2: DOCUMENTATION ENCLOSED
 
 SECTION 3: YOUR DUTIES UNDER FCRA
 
-Under 15 U.S.C. § 1681s-2(a)(6), when you receive notice that 
-information may be fraudulent due to identity theft, you have 
+Under 15 U.S.C. § 1681s-2(a)(6), when you receive notice that
+information may be fraudulent due to identity theft, you have
 specific duties including:
 
 - Cease reporting information you know is fraudulent
 - Cooperate with consumer in resolving identity theft
 - Maintain records related to fraudulent application
 
-Under 15 U.S.C. § 1681b, you had NO PERMISSIBLE PURPOSE to access 
-my credit report. The application was fraudulent - there was no 
+Under 15 U.S.C. § 1681b, you had NO PERMISSIBLE PURPOSE to access
+my credit report. The application was fraudulent - there was no
 legitimate transaction initiated by me.
 
 SECTION 4: DEMANDS
 
 I DEMAND that [COMPANY]:
 
-1. IMMEDIATELY notify Experian, Equifax, and TransUnion to DELETE 
+1. IMMEDIATELY notify Experian, Equifax, and TransUnion to DELETE
    this inquiry from my credit file
 
 2. CONFIRM in writing that you have requested deletion from all bureaus
@@ -356,19 +356,19 @@ I DEMAND that [COMPANY]:
    - IP address / device information (if online)
    - Any documents submitted
    - All communications
-   
+
    These records may be needed for law enforcement investigation.
 
-5. PROVIDE me with copies of any application or documents submitted 
+5. PROVIDE me with copies of any application or documents submitted
    in my name (I am entitled to this under FCRA § 609(e))
 
 SECTION 5: FCRA § 609(e) - IDENTITY THEFT VICTIM RIGHTS
 
-Under 15 U.S.C. § 1681g(e), as an identity theft victim with a valid 
+Under 15 U.S.C. § 1681g(e), as an identity theft victim with a valid
 police report, I am entitled to receive:
 
-"...a copy of all transaction records related to the alleged identity 
-theft, including any application and business transaction records in 
+"...a copy of all transaction records related to the alleged identity
+theft, including any application and business transaction records in
 the control of the business entity..."
 
 You have 30 DAYS to provide these records.
@@ -383,7 +383,7 @@ SECTION 6: PRESERVATION OF EVIDENCE
 - All communications related to this application
 - Records showing who processed this application
 
-These records are essential for potential criminal prosecution 
+These records are essential for potential criminal prosecution
 and civil litigation.
 
 SECTION 7: DAMAGES EXPOSURE
@@ -464,14 +464,14 @@ ENCLOSURES:
 > "[Month] [Year]" - when consumer first saw inquiries
 
 **"Describe what happened (in your own words):"**
-> "Someone used my personal information without my permission to 
-> apply for credit with multiple companies. This resulted in 
-> unauthorized hard inquiries appearing on my credit report. I did 
-> not apply for credit with these companies. I did not authorize 
+> "Someone used my personal information without my permission to
+> apply for credit with multiple companies. This resulted in
+> unauthorized hard inquiries appearing on my credit report. I did
+> not apply for credit with these companies. I did not authorize
 > anyone to apply on my behalf. These applications were fraudulent."
 
 **"What would be a fair resolution?"**
-> "Remove all fraudulent inquiries from my credit report and flag 
+> "Remove all fraudulent inquiries from my credit report and flag
 > my information to prevent future fraudulent applications."
 
 **"Your Information"**

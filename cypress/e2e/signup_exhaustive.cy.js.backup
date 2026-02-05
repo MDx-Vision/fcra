@@ -327,11 +327,11 @@ describe('/signup - Complete Test Suite', () => {
     it('should test all navigation buttons', () => {
       // Step 1 continue button
       cy.get('.btn-primary').contains('Continue to Credit Access').should('be.visible').click();
-      
+
       // Step 2 buttons
       cy.get('.btn-secondary').contains('Back').should('be.visible');
       cy.get('.btn-primary').contains('Continue to Plan Selection').should('be.visible').click();
-      
+
       // Navigate through remaining steps if they exist
       cy.get('body').then(($body) => {
         if ($body.find('.btn-primary:contains("Continue to Agreement")').length) {
@@ -386,7 +386,7 @@ describe('/signup - Complete Test Suite', () => {
       cy.get('#addressZip').type('12345');
       cy.get('#dateOfBirth').type('1990-01-01');
       cy.get('#ssnLast4').type('1234');
-      
+
       cy.get('.btn-primary').contains('Continue to Credit Access').click();
       cy.get('#step2').should('have.class', 'active');
     });
@@ -409,7 +409,7 @@ describe('/signup - Complete Test Suite', () => {
       cy.get('input[name="creditService"][value="IdentityIQ.com"]').check();
       cy.get('#creditUsername').type('testuser');
       cy.get('#creditPassword').type('password123');
-      
+
       cy.get('.btn-primary').contains('Continue to Plan Selection').should('be.visible');
     });
   });
@@ -449,7 +449,7 @@ describe('/signup - Complete Test Suite', () => {
   describe('Progress Indicator Tests', () => {
     it('should update progress indicator on step navigation', () => {
       cy.get('#step1-indicator').should('have.class', 'active');
-      
+
       // Fill required fields and proceed
       cy.get('#firstName').type('John');
       cy.get('#lastName').type('Doe');
@@ -461,7 +461,7 @@ describe('/signup - Complete Test Suite', () => {
       cy.get('#addressZip').type('12345');
       cy.get('#dateOfBirth').type('1990-01-01');
       cy.get('#ssnLast4').type('1234');
-      
+
       cy.get('.btn-primary').contains('Continue to Credit Access').click();
       cy.get('#step2-indicator').should('have.class', 'active');
     });

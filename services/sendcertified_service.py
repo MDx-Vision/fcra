@@ -104,6 +104,7 @@ class SendCertifiedService:
         # Add request ID for distributed tracing
         try:
             from services.request_id_service import with_request_id_headers
+
             headers = with_request_id_headers(headers)
         except ImportError:
             pass

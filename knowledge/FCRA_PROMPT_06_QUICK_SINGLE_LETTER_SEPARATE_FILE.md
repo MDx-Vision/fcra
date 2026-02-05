@@ -1,9 +1,9 @@
 # FCRA PROMPT 06: QUICK SINGLE LETTER (SEPARATE FILE)
 ## Generate One Letter Fast â€” Separate File Output
 
-**Version:** 2.0 (Separate File Output)  
-**Created:** November 24, 2025  
-**Output:** One letter saved as separate downloadable file  
+**Version:** 2.0 (Separate File Output)
+**Created:** November 24, 2025
+**Output:** One letter saved as separate downloadable file
 
 ---
 

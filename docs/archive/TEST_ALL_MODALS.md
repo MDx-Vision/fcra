@@ -144,21 +144,21 @@ async def test_all_modals():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
-        
+
         # First, scan all pages to find modals dynamically
         await scan_for_modals(page)
-        
+
         # Then test each known modal
         for modal_info in KNOWN_MODALS:
             await test_single_modal(page, modal_info)
-        
+
         await browser.close()
-    
+
     save_results()
 
 async def scan_for_modals(page):
     """Scan pages to find all modal elements"""
-    
+
     pages_to_scan = [
         "/dashboard",
         "/dashboard/clients",
@@ -186,33 +186,33 @@ async def scan_for_modals(page):
         "/dashboard/credit-import",
         "/dashboard/furnishers",
     ]
-    
+
     print("Scanning for modals...")
-    
+
     for url in pages_to_scan:
         try:
             await page.goto(f"{BASE_URL}{url}", wait_until="networkidle", timeout=15000)
-            
+
             # Find modal elements
             modals = await page.query_selector_all("[id*='Modal'], .modal-overlay, [class*='modal']")
-            
+
             if modals:
                 print(f"  {url}: Found {len(modals)} modal elements")
                 RESULTS["modals_found"] += len(modals)
-        
+
         except Exception as e:
             print(f"  {url}: Error - {str(e)[:50]}")
 
 async def test_single_modal(page, modal_info):
     """Test a single modal: open, verify, close"""
-    
+
     url = modal_info["page"]
     modal_id = modal_info["modal_id"]
-    
+
     print(f"\n{'='*60}")
     print(f"Testing Modal: {modal_id} on {url}")
     print(f"{'='*60}")
-    
+
     result = {
         "page": url,
         "modal_id": modal_id,
@@ -222,13 +222,13 @@ async def test_single_modal(page, modal_info):
         "has_form": False,
         "notes": ""
     }
-    
+
     try:
         await page.goto(f"{BASE_URL}{url}", wait_until="networkidle", timeout=15000)
-        
+
         # Check if modal element exists
         modal = await page.query_selector(f"#{modal_id}")
-        
+
         if not modal:
             result["status"] = "NOT_FOUND"
             result["notes"] = "Modal element not found in DOM"
@@ -236,12 +236,12 @@ async def test_single_modal(page, modal_info):
             print(f"  ❌ Modal element not found")
             RESULTS["pages"].append(result)
             return
-        
+
         # Try to open the modal using JavaScript
         try:
             await page.evaluate(f"openModal('{modal_id}')")
             await page.wait_for_timeout(500)
-            
+
             # Check if modal is now visible
             is_visible = await page.evaluate(f"""() => {{
                 const modal = document.getElementById('{modal_id}');
@@ -249,24 +249,24 @@ async def test_single_modal(page, modal_info):
                 const style = window.getComputedStyle(modal);
                 return style.display !== 'none' && style.visibility !== 'hidden';
             }}""")
-            
+
             if is_visible:
                 result["opened"] = True
                 RESULTS["modals_opened"] += 1
                 print(f"  ✅ Modal opened successfully")
-                
+
                 # Check for form inside modal
                 form = await modal.query_selector("form")
                 if form:
                     result["has_form"] = True
                     RESULTS["modals_with_forms"] += 1
                     print(f"  📝 Modal contains a form")
-                
+
                 # Try to close the modal
                 try:
                     await page.evaluate(f"closeModal('{modal_id}')")
                     await page.wait_for_timeout(300)
-                    
+
                     # Verify closed
                     is_still_visible = await page.evaluate(f"""() => {{
                         const modal = document.getElementById('{modal_id}');
@@ -274,7 +274,7 @@ async def test_single_modal(page, modal_info):
                         const style = window.getComputedStyle(modal);
                         return style.display !== 'none' && style.visibility !== 'hidden';
                     }}""")
-                    
+
                     if not is_still_visible:
                         result["closed"] = True
                         RESULTS["modals_closed"] += 1
@@ -286,7 +286,7 @@ async def test_single_modal(page, modal_info):
                         result["status"] = "CLOSE_FAILED"
                         RESULTS["status_counts"]["broken"] += 1
                         print(f"  ⚠️ Modal did not close")
-                
+
                 except Exception as close_error:
                     result["notes"] = f"Close error: {str(close_error)[:50]}"
                     result["status"] = "CLOSE_ERROR"
@@ -294,26 +294,26 @@ async def test_single_modal(page, modal_info):
                     print(f"  ❌ Error closing modal")
                     # Try Escape key
                     await page.keyboard.press("Escape")
-            
+
             else:
                 result["status"] = "OPEN_FAILED"
                 result["notes"] = "openModal() called but modal not visible"
                 RESULTS["status_counts"]["broken"] += 1
                 print(f"  ❌ Modal did not open")
-        
+
         except Exception as open_error:
             # openModal function might not exist
             result["status"] = "NO_FUNCTION"
             result["notes"] = f"openModal() error: {str(open_error)[:50]}"
             RESULTS["status_counts"]["no_trigger"] += 1
             print(f"  ⚠️ openModal() function error")
-    
+
     except Exception as e:
         result["status"] = "PAGE_ERROR"
         result["notes"] = str(e)[:100]
         RESULTS["status_counts"]["broken"] += 1
         print(f"  ❌ Error: {str(e)[:50]}")
-    
+
     RESULTS["modals_tested"] += 1
     RESULTS["pages"].append(result)
 
@@ -321,10 +321,10 @@ def save_results():
     # Save JSON
     with open("tests/mandatory/MODALS_THOROUGH_RESULTS.json", "w") as f:
         json.dump(RESULTS, f, indent=2, default=str)
-    
+
     # Generate report
     total = RESULTS["modals_tested"] or 1
-    
+
     report = f"""# MODAL TESTING - COMPLETE INVENTORY
 
 **Date:** {RESULTS['timestamp']}
@@ -357,16 +357,16 @@ def save_results():
 | Page | Modal ID | Opened | Closed | Has Form | Status |
 |------|----------|--------|--------|----------|--------|
 """
-    
+
     for modal in RESULTS["pages"]:
         opened = "✅" if modal["opened"] else "❌"
         closed = "✅" if modal["closed"] else "❌"
         has_form = "📝" if modal["has_form"] else "-"
         report += f"| {modal['page']} | {modal['modal_id']} | {opened} | {closed} | {has_form} | {modal['status']} |\n"
-    
+
     # Issues section
     issues = [m for m in RESULTS["pages"] if m["status"] != "WORKING"]
-    
+
     if issues:
         report += """
 
@@ -379,7 +379,7 @@ def save_results():
 """
         for issue in issues:
             report += f"| {issue['page']} | {issue['modal_id']} | {issue['notes']} |\n"
-    
+
     report += f"""
 
 ---
@@ -391,10 +391,10 @@ def save_results():
 - **Issues to Fix:** {len(issues)}
 
 """
-    
+
     with open("tests/mandatory/MODALS_INVENTORY_REPORT.md", "w") as f:
         f.write(report)
-    
+
     print(f"\n{'='*60}")
     print("MODAL TESTING COMPLETE")
     print(f"{'='*60}")

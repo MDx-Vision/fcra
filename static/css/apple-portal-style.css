@@ -2,10 +2,10 @@
  * BRIGHTPATH ASCEND - APPLE-STYLE PORTAL THEME
  * Version: 1.0
  * Created: December 13, 2025
- * 
+ *
  * This stylesheet overrides the default portal styles
  * to match the premium Apple-inspired document design.
- * 
+ *
  * Add this AFTER your main styles:
  * <link rel="stylesheet" href="/static/css/apple-portal-style.css">
  */
@@ -18,12 +18,12 @@
   --apple-teal: #0d9488;
   --apple-teal-dark: #0f766e;
   --apple-teal-light: #14b8a6;
-  
+
   /* Navy Palette */
   --apple-navy: #1e3a5f;
   --apple-navy-dark: #0a2540;
   --apple-navy-light: #2d4a6f;
-  
+
   /* Neutrals */
   --apple-white: #ffffff;
   --apple-cream: #faf9f7;
@@ -36,7 +36,7 @@
   --apple-gray-600: #4b5563;
   --apple-gray-700: #374151;
   --apple-gray-900: #111827;
-  
+
   /* Status Colors */
   --apple-green: #059669;
   --apple-green-light: #d1fae5;
@@ -46,11 +46,11 @@
   --apple-yellow-light: #fef3c7;
   --apple-blue: #2563eb;
   --apple-blue-light: #dbeafe;
-  
+
   /* Typography */
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  
+
   /* Spacing */
   --space-xs: 4px;
   --space-sm: 8px;
@@ -58,14 +58,14 @@
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 48px;
-  
+
   /* Border Radius */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
   --radius-full: 9999px;
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -724,19 +724,19 @@ a:hover {
   .container {
     padding: var(--space-md) !important;
   }
-  
+
   .card {
     padding: var(--space-md) !important;
   }
-  
+
   .card-title {
     font-size: 18px !important;
   }
-  
+
   .stat-value {
     font-size: 28px !important;
   }
-  
+
   .nav-tab {
     padding: 12px 14px !important;
     font-size: 12px !important;
@@ -751,12 +751,12 @@ a:hover {
   .nav-tabs {
     display: none !important;
   }
-  
+
   .container {
     max-width: 100% !important;
     padding: 0 !important;
   }
-  
+
   .card {
     box-shadow: none !important;
     border: 1px solid #ddd !important;

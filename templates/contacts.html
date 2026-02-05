@@ -971,7 +971,7 @@
 <body>
     {% set active_page = 'contacts' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="header">
             <h1>Clients</h1>
@@ -996,7 +996,7 @@
             <button class="top-nav-btn">Post Portals</button>
             <button class="top-nav-btn" onclick="openMyNotes()">My Notes</button>
         </div>
-        
+
         <div class="content-card">
             <div class="filters-row">
                 <a href="/dashboard/contacts?filter=mark1" class="filter-btn mark1 {% if filter == 'mark1' %}active{% endif %}">Mark 1</a>
@@ -1028,7 +1028,7 @@
                     <span>rows</span>
                 </div>
             </div>
-            
+
             {% if contacts %}
             <div style="overflow-x: auto;">
                 <table class="data-table">
@@ -1380,7 +1380,7 @@
                     <textarea id="newNote" class="note-input" rows="3" placeholder="Enter your note here..."></textarea>
                 </div>
                 <button class="btn btn-primary" onclick="saveNote()" style="margin-bottom: 15px;">Add Note</button>
-                
+
                 <div class="notes-panel">
                     <h4>Previous Notes</h4>
                     <div id="notesList">
@@ -1567,11 +1567,11 @@
                 if (data.success) {
                     const receivedCount = data.received_count;
                     const totalCount = data.total_count;
-                    
+
                     let html = `<div style="padding: 0 16px 8px; font-size: 11px; color: #64748b;">
                         This client has received <strong>${receivedCount}/${totalCount}</strong> documents:
                     </div>`;
-                    
+
                     data.documents.forEach(doc => {
                         const checkClass = doc.received ? 'yes' : 'no';
                         const checkIcon = doc.received ? '✓' : '✗';
@@ -1584,7 +1584,7 @@
                             <span class="doc-date">${dateText}</span>
                         </div>`;
                     });
-                    
+
                     contentEl.innerHTML = html;
                 } else {
                     contentEl.innerHTML = '<div style="padding: 16px; color: #ef4444;">Error loading documents</div>';
@@ -1604,7 +1604,7 @@
                 const data = await response.json();
                 if (data.success) {
                     await loadDocsDropdownContent(clientId);
-                    
+
                     const docsResponse = await fetch('/api/clients/' + clientId + '/documents');
                     const docsData = await docsResponse.json();
                     if (docsData.success) {
@@ -1757,8 +1757,8 @@
                 { key: 'poa', label: 'Power of Attorney', required: false }
             ];
             const docMap = {};
-            docs.forEach(d => { 
-                docMap[d.document_type] = { received: d.received, received_at: d.received_at }; 
+            docs.forEach(d => {
+                docMap[d.document_type] = { received: d.received, received_at: d.received_at };
             });
             const html = docTypes.map(dt => {
                 const docData = docMap[dt.key] || { received: false, received_at: null };
@@ -1779,10 +1779,10 @@
             if (!currentContactId) return;
             const switchEl = element.querySelector('.doc-toggle-switch');
             const wasReceived = switchEl.dataset.received === 'true';
-            
+
             switchEl.classList.toggle('on');
             switchEl.dataset.received = !wasReceived;
-            
+
             try {
                 const response = await fetch('/api/clients/' + currentContactId + '/documents/toggle', {
                     method: 'POST',
@@ -1793,7 +1793,7 @@
                 if (data.success) {
                     const dateEl = element.querySelector('.doc-date-small');
                     dateEl.textContent = data.received ? `Received: ${data.received_at}` : '';
-                    
+
                     updateDocIcons(currentContactId, await getDocumentsForClient(currentContactId));
                 } else {
                     switchEl.classList.toggle('on');
@@ -1980,7 +1980,7 @@
             currentDocsClientId = id;
             document.getElementById('docsModal').classList.add('active');
             document.getElementById('docsModalGoToLink').href = '/dashboard/documents?client=' + id;
-            
+
             try {
                 const response = await fetch('/api/clients/' + id + '/documents');
                 const data = await response.json();
@@ -1995,21 +1995,21 @@
                         { key: 'poa', label: 'Power of Attorney', required: false }
                     ];
                     const docMap = {};
-                    docs.forEach(d => { 
-                        docMap[d.document_type] = { received: d.received, received_at: d.received_at }; 
+                    docs.forEach(d => {
+                        docMap[d.document_type] = { received: d.received, received_at: d.received_at };
                     });
-                    
+
                     const receivedCount = docs.filter(d => d.received).length;
                     const totalCount = docTypes.length;
-                    
+
                     let statusClass = 'none';
                     if (receivedCount === totalCount) statusClass = 'complete';
                     else if (receivedCount > 0) statusClass = 'partial';
-                    
+
                     let html = `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
                         <span class="doc-summary-badge ${statusClass}">${receivedCount}/${totalCount} Documents Received</span>
                     </div>`;
-                    
+
                     html += docTypes.map(dt => {
                         const docData = docMap[dt.key] || { received: false, received_at: null };
                         const received = docData.received;
@@ -2022,7 +2022,7 @@
                             <div class="doc-toggle-switch ${received ? 'on' : ''}" data-received="${received}"></div>
                         </div>`;
                     }).join('');
-                    
+
                     document.getElementById('docsModalChecklist').innerHTML = html;
                 }
             } catch (error) {
@@ -2034,10 +2034,10 @@
         async function toggleDocInDocsModal(docType, clientId, element) {
             const switchEl = element.querySelector('.doc-toggle-switch');
             const wasReceived = switchEl.dataset.received === 'true';
-            
+
             switchEl.classList.toggle('on');
             switchEl.dataset.received = !wasReceived;
-            
+
             try {
                 const response = await fetch('/api/clients/' + clientId + '/documents/toggle', {
                     method: 'POST',
@@ -2048,12 +2048,12 @@
                 if (data.success) {
                     const dateEl = element.querySelector('.doc-date-small');
                     dateEl.textContent = data.received ? `Received: ${data.received_at}` : '';
-                    
+
                     const docsResponse = await fetch('/api/clients/' + clientId + '/documents');
                     const docsData = await docsResponse.json();
                     if (docsData.success) {
                         updateDocIcons(clientId, docsData.documents);
-                        
+
                         const badge = document.querySelector('#docsModalChecklist .doc-summary-badge');
                         if (badge) {
                             const receivedCount = docsData.documents.filter(d => d.received).length;

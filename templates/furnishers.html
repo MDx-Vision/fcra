@@ -111,7 +111,7 @@
 <body>
     {% set active_page = 'furnishers' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="header">
             <div>
@@ -129,7 +129,7 @@
                 </button>
             </div>
         </div>
-        
+
         <div class="stats-grid">
             <div class="stat-card highlight">
                 <div class="stat-label">Total Furnishers</div>
@@ -152,7 +152,7 @@
                 <div class="stat-detail">{{ worst_response_days }} avg days</div>
             </div>
         </div>
-        
+
         <div class="card">
             <div class="card-header">
                 <div class="card-title">All Furnishers</div>
@@ -166,7 +166,7 @@
                     </select>
                 </div>
             </div>
-            
+
             {% if furnishers %}
             <table class="data-table">
                 <thead>
@@ -224,7 +224,7 @@
             {% endif %}
         </div>
     </main>
-    
+
     <div class="modal-overlay" id="addModal">
         <div class="modal">
             <div class="modal-header">
@@ -286,32 +286,32 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         function viewFurnisher(id) {
             window.location.href = `/dashboard/furnisher/${id}`;
         }
-        
+
         function filterTable() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const industry = document.getElementById('industryFilter').value.toLowerCase();
             const rows = document.querySelectorAll('#furnisherTable tr');
-            
+
             rows.forEach(row => {
                 const name = row.dataset.name || '';
                 const rowIndustry = row.dataset.industry || '';
-                
+
                 const matchesSearch = name.includes(search);
                 const matchesIndustry = !industry || rowIndustry === industry;
-                
+
                 row.style.display = matchesSearch && matchesIndustry ? '' : 'none';
             });
         }
-        
+
         function openAddModal() {
             document.getElementById('addModal').classList.add('active');
         }
-        
+
         function closeAddModal() {
             document.getElementById('addModal').classList.remove('active');
             document.getElementById('furnisherName').value = '';
@@ -324,14 +324,14 @@
             document.getElementById('furnisherWebsite').value = '';
             document.getElementById('furnisherNotes').value = '';
         }
-        
+
         async function saveFurnisher() {
             const name = document.getElementById('furnisherName').value.trim();
             if (!name) {
                 alert('Furnisher name is required');
                 return;
             }
-            
+
             const data = {
                 name: name,
                 industry: document.getElementById('furnisherIndustry').value,
@@ -343,14 +343,14 @@
                 website: document.getElementById('furnisherWebsite').value,
                 notes: document.getElementById('furnisherNotes').value
             };
-            
+
             try {
                 const response = await fetch('/api/furnishers', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
                     window.location.reload();
@@ -362,18 +362,18 @@
                 alert('Failed to create furnisher');
             }
         }
-        
+
         async function populateFromExisting() {
             if (!confirm('This will scan all existing dispute items and create furnisher entries for each unique creditor. Continue?')) {
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/furnishers/populate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
                     alert(`Populated ${result.created} new furnishers, updated ${result.updated} existing.`);

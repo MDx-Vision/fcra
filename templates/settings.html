@@ -245,18 +245,18 @@
 <body>
     {% set active_page = 'settings' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="header">
             <h1>Signup Settings</h1>
             <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
         </div>
-        
+
         <form id="settingsForm">
             <div class="content-card">
                 <h2 class="section-title">📝 Signup Field Configuration</h2>
                 <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">Configure which fields are shown during signup and how they behave.</p>
-                
+
                 <div class="settings-grid">
                     <div>
                         <div class="setting-row">
@@ -270,7 +270,7 @@
                                 <option value="hidden" {% if settings.field_name == 'hidden' %}selected{% endif %}>Hidden</option>
                             </select>
                         </div>
-                        
+
                         <div class="setting-row">
                             <div>
                                 <div class="setting-label">Email Address</div>
@@ -282,7 +282,7 @@
                                 <option value="hidden" {% if settings.field_email == 'hidden' %}selected{% endif %}>Hidden</option>
                             </select>
                         </div>
-                        
+
                         <div class="setting-row">
                             <div>
                                 <div class="setting-label">Phone Number</div>
@@ -294,7 +294,7 @@
                                 <option value="hidden" {% if settings.field_phone == 'hidden' %}selected{% endif %}>Hidden</option>
                             </select>
                         </div>
-                        
+
                         <div class="setting-row">
                             <div>
                                 <div class="setting-label">Full Address</div>
@@ -308,7 +308,7 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div>
                         <div class="setting-row">
                             <div>
@@ -322,7 +322,7 @@
                                 <option value="deferred" {% if settings.field_dob == 'deferred' %}selected{% endif %}>Deferred</option>
                             </select>
                         </div>
-                        
+
                         <div class="setting-row">
                             <div>
                                 <div class="setting-label">SSN Last 4</div>
@@ -335,7 +335,7 @@
                                 <option value="deferred" {% if settings.field_ssn == 'deferred' %}selected{% endif %}>Deferred</option>
                             </select>
                         </div>
-                        
+
                         <div class="setting-row">
                             <div>
                                 <div class="setting-label">Credit Monitoring Login</div>
@@ -348,7 +348,7 @@
                                 <option value="deferred" {% if settings.field_credit_login == 'deferred' %}selected{% endif %}>Deferred</option>
                             </select>
                         </div>
-                        
+
                         <div class="setting-row">
                             <div>
                                 <div class="setting-label">Referral Code</div>
@@ -363,11 +363,11 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="content-card">
                 <h2 class="section-title">💰 Pricing Tier Configuration</h2>
                 <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">Configure pricing tiers, enable/disable tiers, and set payment requirements.</p>
-                
+
                 <div class="pricing-tier">
                     <div class="tier-header">
                         <div class="tier-name">Free Tier (Lead Magnet)</div>
@@ -387,7 +387,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="pricing-tier">
                     <div class="tier-header">
                         <div class="tier-name">Tier 1 - Basic</div>
@@ -411,7 +411,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="pricing-tier">
                     <div class="tier-header">
                         <div class="tier-name">Tier 2 - Standard</div>
@@ -435,7 +435,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="pricing-tier">
                     <div class="tier-header">
                         <div class="tier-name">Tier 3 - Premium</div>
@@ -459,7 +459,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="pricing-tier">
                     <div class="tier-header">
                         <div class="tier-name">Tier 4 - Advanced</div>
@@ -483,7 +483,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="pricing-tier">
                     <div class="tier-header">
                         <div class="tier-name">Tier 5 - Elite</div>
@@ -507,7 +507,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
                     <div class="setting-row">
                         <div>
@@ -521,38 +521,38 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="content-card">
                 <h2 class="section-title">💳 Manual Payment Information</h2>
                 <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">Enter your payment details for manual payment methods. These will be shown to clients during checkout.</p>
-                
+
                 <div class="payment-info-grid">
                     <div class="payment-info-card">
                         <h4>💚 Cash App</h4>
                         <input type="text" name="payment_cashapp" placeholder="$YourCashtag" value="{{ settings.payment_cashapp or '' }}">
                     </div>
-                    
+
                     <div class="payment-info-card">
                         <h4>💙 Venmo</h4>
                         <input type="text" name="payment_venmo" placeholder="@YourUsername" value="{{ settings.payment_venmo or '' }}">
                     </div>
-                    
+
                     <div class="payment-info-card">
                         <h4>💜 Zelle</h4>
                         <input type="text" name="payment_zelle" placeholder="phone or email" value="{{ settings.payment_zelle or '' }}">
                     </div>
-                    
+
                     <div class="payment-info-card">
                         <h4>💛 PayPal</h4>
                         <input type="text" name="payment_paypal" placeholder="your@email.com" value="{{ settings.payment_paypal or '' }}">
                     </div>
                 </div>
             </div>
-            
+
             <div class="content-card">
                 <h2 class="section-title">⚙️ Payment Methods</h2>
                 <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">Enable or disable payment methods shown to clients during signup.</p>
-                
+
                 <div class="settings-grid">
                     <div>
                         <div class="setting-row">
@@ -565,7 +565,7 @@
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        
+
                         <div class="setting-row">
                             <div>
                                 <div class="setting-label">PayPal</div>
@@ -576,7 +576,7 @@
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        
+
                         <div class="setting-row">
                             <div>
                                 <div class="setting-label">Cash App</div>
@@ -588,7 +588,7 @@
                             </label>
                         </div>
                     </div>
-                    
+
                     <div>
                         <div class="setting-row">
                             <div>
@@ -600,7 +600,7 @@
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
-                        
+
                         <div class="setting-row">
                             <div>
                                 <div class="setting-label">Zelle</div>
@@ -614,7 +614,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- SMS Settings Link -->
             <div class="content-card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #86efac;">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -796,33 +796,33 @@
             </div>
         </form>
     </main>
-    
+
     <div class="toast" id="toast">Settings saved successfully!</div>
-    
+
     <script>
         document.getElementById('settingsForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const formData = new FormData(this);
             const data = {};
-            
+
             for (const [key, value] of formData.entries()) {
                 data[key] = value;
             }
-            
+
             document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
                 data[cb.name] = cb.checked;
             });
-            
+
             try {
                 const response = await fetch('/api/settings/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
+
                 const result = await response.json();
-                
+
                 const toast = document.getElementById('toast');
                 if (result.success) {
                     toast.textContent = 'Settings saved successfully!';

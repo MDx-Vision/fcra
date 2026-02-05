@@ -139,21 +139,21 @@ describe('Staff Login Page - /dashboard/queue', () => {
 
     it('should submit form with valid credentials', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 200 }).as('loginRequest');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@loginRequest');
     });
 
     it('should disable submit button and show loading state on form submission', () => {
       cy.intercept('POST', '/staff/login', { delay: 1000, statusCode: 200 }).as('loginRequest');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.get('[data-testid="login-button"]').should('be.disabled');
       cy.get('[data-testid="login-button"]').should('contain.text', 'Signing in...');
       cy.get('.spinner').should('exist');
@@ -164,10 +164,10 @@ describe('Staff Login Page - /dashboard/queue', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      
+
       cy.get('.toggle-btn').click();
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      
+
       cy.get('.toggle-btn').click();
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
     });
@@ -228,31 +228,31 @@ describe('Staff Login Page - /dashboard/queue', () => {
 
     it('should handle server error responses', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500, body: 'Internal Server Error' }).as('loginError');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@loginError');
     });
 
     it('should handle authentication failure', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 401, body: 'Unauthorized' }).as('loginUnauthorized');
-      
+
       cy.get('[data-testid="email-input"]').type('wrong@example.com');
       cy.get('[data-testid="password-input"]').type('wrongpassword');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@loginUnauthorized');
     });
 
     it('should handle network errors', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@networkError');
     });
   });
@@ -281,7 +281,7 @@ describe('Staff Login Page - /dashboard/queue', () => {
       cy.window().then((win) => {
         expect(win.togglePassword).to.be.a('function');
       });
-      
+
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
       cy.window().invoke('togglePassword', 'password');
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');

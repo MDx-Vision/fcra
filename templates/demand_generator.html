@@ -91,11 +91,11 @@
             <div>
                 <div class="card">
                     <h2 class="card-title"><i class="fas fa-user"></i> Select Client</h2>
-                    
+
                     <div class="form-group">
                         <input type="text" id="clientSearch" placeholder="Search clients..." class="form-input">
                     </div>
-                    
+
                     <div id="clientList" class="client-list">
                         {% for client in clients %}
                         <div class="client-item" data-id="{{ client.id }}" data-name="{{ client.name }}">
@@ -113,18 +113,18 @@
             <div>
                 <div class="card">
                     <h2 class="card-title"><i class="fas fa-cog" style="color: #9333ea;"></i> Demand Configuration</h2>
-                    
+
                     <div id="noClientSelected" class="no-selection">
                         <i class="fas fa-arrow-left"></i>
                         <p>Select a client to generate a demand letter</p>
                     </div>
-                    
+
                     <div id="demandForm" class="hidden">
                         <div class="selected-client-box">
                             <p>Selected Client: <span id="selectedClientName"></span></p>
                             <input type="hidden" id="selectedClientId">
                         </div>
-                        
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Target</label>
@@ -146,7 +146,7 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label class="form-label">Demand Amount (Optional)</label>
                             <div style="display: flex; align-items: center; gap: 8px;">
@@ -155,7 +155,7 @@
                             </div>
                             <p style="font-size: 12px; color: #64748b; margin-top: 5px;">Leave blank to use calculated settlement target</p>
                         </div>
-                        
+
                         <button id="generateBtn" class="btn btn-primary">
                             <i class="fas fa-magic"></i> Generate AI Demand Letter
                         </button>
@@ -175,7 +175,7 @@
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div class="result-stats">
                             <div class="stat-box green">
                                 <p class="stat-label green">Demand Amount</p>
@@ -190,7 +190,7 @@
                                 <p class="stat-value purple" id="resultDeadline">30 Days</p>
                             </div>
                         </div>
-                        
+
                         <div class="letter-content">
                             <pre id="letterContent"></pre>
                         </div>
@@ -273,23 +273,23 @@
             if (generateBtn.disabled) {
                 return;
             }
-            
+
             loadingOverlay.classList.remove('hidden');
             generateBtn.disabled = true;
-            
+
             const data = {
                 target: document.getElementById('demandTarget').value,
                 deadline_days: parseInt(document.getElementById('deadlineDays').value),
             };
-            
+
             const amountInput = document.getElementById('demandAmount').value;
             if (amountInput) {
                 data.amount = parseFloat(amountInput);
             }
-            
+
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 60000);
-            
+
             try {
                 const response = await fetch(`/api/generate-demand/${clientId}`, {
                     method: 'POST',
@@ -297,23 +297,23 @@
                     body: JSON.stringify(data),
                     signal: controller.signal
                 });
-                
+
                 clearTimeout(timeoutId);
-                
+
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
                     throw new Error(errorData.error || `Server error: ${response.status}`);
                 }
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     document.getElementById('letterContent').textContent = result.letter_content;
                     document.getElementById('resultAmount').textContent = '$' + (result.demand_amount || 0).toLocaleString();
                     document.getElementById('resultViolations').textContent = result.violation_count || 0;
                     document.getElementById('resultDeadline').textContent = (result.deadline_days || 30) + ' Days';
                     document.getElementById('downloadPdfBtn').href = result.pdf_path || '#';
-                    
+
                     resultSection.classList.remove('hidden');
                     resultSection.scrollIntoView({ behavior: 'smooth' });
                 } else {

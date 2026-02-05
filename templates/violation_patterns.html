@@ -159,7 +159,7 @@
 <body>
     {% set active_page = 'patterns' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="header">
             <div>
@@ -171,9 +171,9 @@
                 New Pattern
             </button>
         </div>
-        
+
         <div id="alertContainer"></div>
-        
+
         <div class="stats-grid">
             <div class="stat-card highlight">
                 <div class="stat-label">Total Patterns</div>
@@ -196,7 +196,7 @@
                 <div class="stat-detail">Patterns with strong evidence</div>
             </div>
         </div>
-        
+
         <div class="card">
             <div class="card-header">
                 <div class="card-title">All Patterns</div>
@@ -223,7 +223,7 @@
                     </select>
                 </div>
             </div>
-            
+
             {% if patterns %}
             <table class="data-table">
                 <thead>
@@ -241,9 +241,9 @@
                 </thead>
                 <tbody id="patternsTable">
                     {% for p in patterns %}
-                    <tr data-id="{{ p.id }}" 
-                        data-name="{{ p.pattern_name|lower }}" 
-                        data-furnisher="{{ p.furnisher_name or '' }}" 
+                    <tr data-id="{{ p.id }}"
+                        data-name="{{ p.pattern_name|lower }}"
+                        data-furnisher="{{ p.furnisher_name or '' }}"
                         data-cra="{{ p.cra_name or '' }}"
                         data-status="{{ p.status or 'monitoring' }}">
                         <td onclick="viewPattern({{ p.id }})">
@@ -300,7 +300,7 @@
             {% endif %}
         </div>
     </main>
-    
+
     <div id="createModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -313,7 +313,7 @@
                         <label class="form-label">Pattern Name *</label>
                         <input type="text" name="pattern_name" class="form-input" placeholder="e.g., Capital One Systematic Metro 2 Violations" required>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Pattern Type</label>
@@ -332,7 +332,7 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group" id="furnisherField">
                             <label class="form-label">Furnisher Name</label>
@@ -353,7 +353,7 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">FCRA Section</label>
@@ -364,12 +364,12 @@
                             <input type="text" name="violation_type" class="form-input" placeholder="e.g., Failure to report max delinquency date">
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label class="form-label">Violation Description</label>
                         <textarea name="violation_description" class="form-textarea" placeholder="Describe the systemic violation pattern..."></textarea>
                     </div>
-                    
+
                     <div class="form-row-3">
                         <div class="form-group">
                             <label class="form-label">Evidence Strength</label>
@@ -398,7 +398,7 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label class="form-label">Strategy Notes</label>
                         <textarea name="strategy_notes" class="form-textarea" placeholder="Notes on recommended legal approach..."></textarea>
@@ -411,7 +411,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="detailModal" class="modal-overlay">
         <div class="modal modal-large">
             <div class="modal-header">
@@ -424,19 +424,19 @@
                     <button class="tab-btn" onclick="switchTab('violations')">Linked Violations</button>
                     <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
                 </div>
-                
+
                 <div id="tab-overview" class="tab-content active">
                     <div class="detail-section">
                         <div class="detail-section-title">Pattern Statistics</div>
                         <div class="detail-grid" id="patternStats">
                         </div>
                     </div>
-                    
+
                     <div class="detail-section">
                         <div class="detail-section-title">Strategy & Evidence</div>
                         <div id="patternStrategy"></div>
                     </div>
-                    
+
                     <div class="detail-section">
                         <div class="detail-section-title">Actions</div>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -449,7 +449,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div id="tab-violations" class="tab-content">
                     <div class="detail-section">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -467,11 +467,11 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div id="tab-settings" class="tab-content">
                     <form id="updatePatternForm">
                         <input type="hidden" name="pattern_id" id="updatePatternId">
-                        
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Status</label>
@@ -492,7 +492,7 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Evidence Strength</label>
@@ -512,19 +512,19 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label class="form-label">Admin Notes</label>
                             <textarea name="admin_notes" id="updateNotes" class="form-textarea"></textarea>
                         </div>
-                        
+
                         <button type="button" class="btn btn-primary" onclick="savePatternSettings()">Save Changes</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <div id="addViolationModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -541,30 +541,30 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         let currentPatternId = null;
         let availableViolations = [];
-        
+
         function showAlert(message, type = 'success') {
             const container = document.getElementById('alertContainer');
             container.innerHTML = `<div class="alert alert-${type}"><span>${type === 'success' ? '✓' : '⚠️'}</span> ${message}</div>`;
             setTimeout(() => container.innerHTML = '', 5000);
         }
-        
+
         function openCreateModal() {
             document.getElementById('createModal').classList.add('active');
         }
-        
+
         function closeCreateModal() {
             document.getElementById('createModal').classList.remove('active');
             document.getElementById('createPatternForm').reset();
         }
-        
+
         function toggleTargetFields(value) {
             const furnisherField = document.getElementById('furnisherField');
             const craField = document.getElementById('craField');
-            
+
             if (value === 'furnisher') {
                 furnisherField.style.display = 'block';
                 craField.style.display = 'none';
@@ -576,12 +576,12 @@
                 craField.style.display = 'block';
             }
         }
-        
+
         async function createPattern() {
             const form = document.getElementById('createPatternForm');
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            
+
             try {
                 const response = await fetch('/api/patterns/create', {
                     method: 'POST',
@@ -589,7 +589,7 @@
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showAlert('Pattern created successfully');
                     closeCreateModal();
@@ -601,42 +601,42 @@
                 showAlert('Error creating pattern: ' + error.message, 'error');
             }
         }
-        
+
         function closeDetailModal() {
             document.getElementById('detailModal').classList.remove('active');
             currentPatternId = null;
         }
-        
+
         function switchTab(tabName) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
+
             document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`).classList.add('active');
             document.getElementById(`tab-${tabName}`).classList.add('active');
         }
-        
+
         async function viewPattern(patternId) {
             currentPatternId = patternId;
-            
+
             try {
                 const response = await fetch(`/api/patterns/${patternId}`);
                 const result = await response.json();
-                
+
                 if (!result.success) {
                     showAlert(result.error || 'Failed to load pattern', 'error');
                     return;
                 }
-                
+
                 const pattern = result.pattern_full;
-                
+
                 document.getElementById('detailModalTitle').textContent = pattern.pattern_name;
-                
+
                 const strategyLabels = {
                     'class_action': 'Class Action Lawsuit',
                     'individual_suits': 'Individual Lawsuits',
                     'regulatory_complaint': 'Regulatory Complaint (CFPB)'
                 };
-                
+
                 document.getElementById('patternStats').innerHTML = `
                     <div class="detail-item">
                         <div class="detail-label">Occurrences</div>
@@ -663,7 +663,7 @@
                         <div class="detail-value">${pattern.earliest_occurrence || 'N/A'} - ${pattern.latest_occurrence || 'Present'}</div>
                     </div>
                 `;
-                
+
                 document.getElementById('patternStrategy').innerHTML = `
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div>
@@ -686,7 +686,7 @@
                     ${pattern.strategy_notes ? `<div style="margin-top: 15px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 14px; color: #334155;">${pattern.strategy_notes}</div>` : ''}
                     ${pattern.violation_description ? `<div style="margin-top: 15px;"><div class="detail-label">Violation Description</div><p style="margin-top: 8px; color: #334155;">${pattern.violation_description}</p></div>` : ''}
                 `;
-                
+
                 const violationsList = document.getElementById('linkedViolationsList');
                 if (result.linked_violations && result.linked_violations.length > 0) {
                     let html = `<div class="violations-list-header">
@@ -696,7 +696,7 @@
                         <span style="flex: 1;">Date</span>
                         <span style="flex: 1; text-align: right;">Damages</span>
                     </div>`;
-                    
+
                     result.linked_violations.forEach(v => {
                         html += `<div class="violations-list-item">
                             <span style="flex: 2; font-weight: 500;">${v.client_name}</span>
@@ -717,29 +717,29 @@
                     </div>
                     <div style="padding: 30px; text-align: center; color: #64748b;">No violations linked yet. Click "Link Violation" to add.</div>`;
                 }
-                
+
                 document.getElementById('updatePatternId').value = pattern.id;
                 document.getElementById('updateStatus').value = pattern.status || 'monitoring';
                 document.getElementById('updatePriority').value = pattern.priority || 'medium';
                 document.getElementById('updateEvidence').value = pattern.evidence_strength || 'moderate';
                 document.getElementById('updateStrategy').value = pattern.recommended_strategy || 'individual_suits';
                 document.getElementById('updateNotes').value = pattern.admin_notes || '';
-                
+
                 switchTab('overview');
                 document.getElementById('detailModal').classList.add('active');
-                
+
             } catch (error) {
                 showAlert('Error loading pattern: ' + error.message, 'error');
             }
         }
-        
+
         async function generatePacket(patternId) {
             try {
                 const response = await fetch(`/api/patterns/${patternId}/generate-packet`, {
                     method: 'POST'
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showAlert(`Evidence packet generated with ${result.instances_included} instances`);
                     window.open(result.filepath, '_blank');
@@ -750,16 +750,16 @@
                 showAlert('Error generating packet: ' + error.message, 'error');
             }
         }
-        
+
         function generatePacketFromModal() {
             if (currentPatternId) {
                 generatePacket(currentPatternId);
             }
         }
-        
+
         async function updatePatternStatus(status) {
             if (!currentPatternId) return;
-            
+
             try {
                 const response = await fetch(`/api/patterns/${currentPatternId}/update`, {
                     method: 'POST',
@@ -767,7 +767,7 @@
                     body: JSON.stringify({ status })
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showAlert('Status updated successfully');
                     viewPattern(currentPatternId);
@@ -778,12 +778,12 @@
                 showAlert('Error updating status: ' + error.message, 'error');
             }
         }
-        
+
         async function savePatternSettings() {
             const form = document.getElementById('updatePatternForm');
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            
+
             try {
                 const response = await fetch(`/api/patterns/${currentPatternId}/update`, {
                     method: 'POST',
@@ -791,7 +791,7 @@
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showAlert('Settings saved successfully');
                     viewPattern(currentPatternId);
@@ -802,14 +802,14 @@
                 showAlert('Error saving settings: ' + error.message, 'error');
             }
         }
-        
+
         async function openAddViolationModal() {
             document.getElementById('addViolationModal').classList.add('active');
-            
+
             try {
                 const response = await fetch(`/api/patterns/${currentPatternId}/available-violations`);
                 const result = await response.json();
-                
+
                 if (result.success) {
                     availableViolations = result.violations;
                     renderAvailableViolations(availableViolations);
@@ -818,21 +818,21 @@
                 console.error('Error loading violations:', error);
             }
         }
-        
+
         function closeAddViolationModal() {
             document.getElementById('addViolationModal').classList.remove('active');
             document.getElementById('violationSearchInput').value = '';
             availableViolations = [];
         }
-        
+
         function renderAvailableViolations(violations) {
             const list = document.getElementById('availableViolationsList');
-            
+
             if (violations.length === 0) {
                 list.innerHTML = '<div style="padding: 30px; text-align: center; color: #64748b;">No matching violations found.</div>';
                 return;
             }
-            
+
             let html = '';
             violations.forEach(v => {
                 html += `<div class="violations-list-item" onclick="linkViolation(${v.id})" style="cursor: pointer;">
@@ -849,20 +849,20 @@
                     </div>
                 </div>`;
             });
-            
+
             list.innerHTML = html;
         }
-        
+
         function searchViolations() {
             const query = document.getElementById('violationSearchInput').value.toLowerCase();
-            const filtered = availableViolations.filter(v => 
+            const filtered = availableViolations.filter(v =>
                 v.client_name.toLowerCase().includes(query) ||
                 (v.violation_type || '').toLowerCase().includes(query) ||
                 (v.account_name || '').toLowerCase().includes(query)
             );
             renderAvailableViolations(filtered);
         }
-        
+
         async function linkViolation(violationId) {
             try {
                 const response = await fetch(`/api/patterns/${currentPatternId}/add-instance`, {
@@ -871,7 +871,7 @@
                     body: JSON.stringify({ violation_id: violationId })
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showAlert('Violation linked successfully');
                     closeAddViolationModal();
@@ -883,25 +883,25 @@
                 showAlert('Error linking violation: ' + error.message, 'error');
             }
         }
-        
+
         function filterTable() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const furnisher = document.getElementById('furnisherFilter').value;
             const cra = document.getElementById('craFilter').value;
             const status = document.getElementById('statusFilter').value;
-            
+
             const rows = document.querySelectorAll('#patternsTable tr');
             rows.forEach(row => {
                 const name = row.dataset.name || '';
                 const rowFurnisher = row.dataset.furnisher || '';
                 const rowCra = row.dataset.cra || '';
                 const rowStatus = row.dataset.status || '';
-                
+
                 const matchesSearch = name.includes(search);
                 const matchesFurnisher = !furnisher || rowFurnisher.toLowerCase().includes(furnisher.toLowerCase());
                 const matchesCra = !cra || rowCra.toLowerCase().includes(cra.toLowerCase());
                 const matchesStatus = !status || rowStatus === status;
-                
+
                 row.style.display = matchesSearch && matchesFurnisher && matchesCra && matchesStatus ? '' : 'none';
             });
         }

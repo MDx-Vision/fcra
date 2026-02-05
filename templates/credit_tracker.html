@@ -14,14 +14,14 @@
         .page-header h1 { font-size: 1.75rem; color: #1a1a2e; }
         .page-header-subtitle { color: #64748b; margin-top: 5px; }
         .container { max-width: 1400px; margin: 0 auto; }
-        
+
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
         .tab-btn { padding: 12px 24px; border: none; background: white; border-radius: 8px; cursor: pointer; font-weight: 600; color: #666; transition: all 0.2s; }
         .tab-btn.active { background: linear-gradient(135deg, #008080, #32CD32); color: white; }
         .tab-btn:hover:not(.active) { background: #e8f5f5; color: #008080; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
+
         .quick-estimate { background: white; border-radius: 16px; padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .quick-estimate h2 { margin-bottom: 20px; color: #1a1a2e; }
         .estimate-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; align-items: end; }
@@ -39,7 +39,7 @@
         .result-item .value { font-size: 1.8rem; font-weight: 700; }
         .result-item .value.green { color: #32CD32; }
         .result-item .value.teal { color: #008080; }
-        
+
         .item-selector { background: white; border-radius: 16px; padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .item-selector h2 { margin-bottom: 10px; }
         .item-selector p { color: #666; margin-bottom: 20px; }
@@ -47,7 +47,7 @@
         .selected-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: white; border-radius: 8px; border: 1px solid #e0e0e0; }
         .selected-item .remove { cursor: pointer; color: #dc3545; font-weight: bold; }
         .selected-item .count-input { width: 50px; padding: 4px 8px; border: 1px solid #e0e0e0; border-radius: 4px; text-align: center; }
-        
+
         .category-accordion { margin-bottom: 15px; }
         .category-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #f8f9fa; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
         .category-header:hover { background: #e8f5f5; }
@@ -68,13 +68,13 @@
         .severity-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
         .btn-add-item { background: #008080; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
         .btn-add-item:hover { background: #006666; }
-        
+
         .detailed-result { margin-top: 30px; }
         .breakdown-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         .breakdown-table th, .breakdown-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e0e0e0; }
         .breakdown-table th { background: #f8f9fa; font-weight: 600; color: #666; }
         .breakdown-table tr:hover { background: #f8f9fa; }
-        
+
         .clients-section { background: white; border-radius: 16px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .clients-section h2 { margin-bottom: 20px; }
         .search-box { margin-bottom: 20px; }
@@ -109,7 +109,7 @@
 <body>
     {% set active_page = 'credit-tracker' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="page-header">
             <div>
@@ -117,14 +117,14 @@
                 <p class="page-header-subtitle">Track and estimate credit score improvements for clients</p>
             </div>
         </div>
-        
+
         <div class="container">
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('quick')">Quick Estimate</button>
             <button class="tab-btn" onclick="switchTab('detailed')">Detailed Calculator</button>
             <button class="tab-btn" onclick="switchTab('clients')">Client Progress</button>
         </div>
-        
+
         <div id="quick-tab" class="tab-content active">
             <div class="quick-estimate">
                 <h2>Quick Score Improvement Estimator</h2>
@@ -162,29 +162,29 @@
                 </div>
             </div>
         </div>
-        
+
         <div id="detailed-tab" class="tab-content">
             <div class="item-selector">
                 <h2>Detailed Score Impact Calculator</h2>
                 <p>Select specific negative items to see exactly how removing each one could impact the credit score. Different items have very different effects on scores.</p>
-                
+
                 <div class="form-group" style="max-width: 300px; margin-bottom: 20px;">
                     <label>Current Average Score</label>
                     <input type="number" id="detailedCurrentScore" placeholder="e.g., 580" min="300" max="850" value="550">
                 </div>
-                
+
                 <h3 style="margin-bottom: 15px;">Selected Items to Remove:</h3>
                 <div class="selected-items" id="selectedItems">
                     <span style="color: #999;">Click items below to add them to your calculation</span>
                 </div>
-                
+
                 <button class="btn-estimate" onclick="calculateDetailedEstimate()" style="margin-bottom: 30px;">Calculate Detailed Estimate</button>
-                
+
                 <h3 style="margin-bottom: 15px;">Available Negative Item Types:</h3>
                 <div id="itemCategories">
                     <div class="no-data">Loading item types...</div>
                 </div>
-                
+
                 <div class="detailed-result" id="detailedResult" style="display: none;">
                     <div class="estimate-result show">
                         <h3 style="margin-bottom: 20px;">Projected Improvement</h3>
@@ -206,7 +206,7 @@
                                 <div class="value green" id="detResMaxScore">--</div>
                             </div>
                         </div>
-                        
+
                         <h4 style="margin: 25px 0 10px;">Impact Breakdown by Item:</h4>
                         <table class="breakdown-table">
                             <thead>
@@ -224,7 +224,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div id="clients-tab" class="tab-content">
             <div class="clients-section">
                 <h2>Client Score Progress</h2>
@@ -237,24 +237,24 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         let allClients = [];
         let itemTypes = {};
         let selectedItems = [];
-        
+
         function switchTab(tabName) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
+
             document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
             document.getElementById(`${tabName}-tab`).classList.add('active');
-            
+
             if (tabName === 'clients' && allClients.length === 0) {
                 loadClients();
             }
         }
-        
+
         async function loadItemTypes() {
             try {
                 const response = await fetch('/api/credit-score/item-types');
@@ -267,17 +267,17 @@
                 console.error('Error loading item types:', error);
             }
         }
-        
+
         function renderItemCategories() {
             const container = document.getElementById('itemCategories');
             let html = '';
-            
+
             const categoryOrder = ['payment_history', 'derogatory', 'public_record', 'utilization', 'inquiry', 'error', 'fraud', 'account_status', 'other'];
-            
+
             categoryOrder.forEach(catKey => {
                 const category = itemTypes[catKey];
                 if (!category) return;
-                
+
                 html += `
                     <div class="category-accordion">
                         <div class="category-header" onclick="toggleCategory('${catKey}')">
@@ -306,17 +306,17 @@
                     </div>
                 `;
             });
-            
+
             container.innerHTML = html;
         }
-        
+
         function toggleCategory(catKey) {
             const items = document.getElementById(`cat-${catKey}`);
             const header = items.previousElementSibling;
             items.classList.toggle('open');
             header.classList.toggle('open');
         }
-        
+
         function addItem(key, label) {
             const existing = selectedItems.find(i => i.type === key);
             if (existing) {
@@ -326,12 +326,12 @@
             }
             renderSelectedItems();
         }
-        
+
         function removeItem(key) {
             selectedItems = selectedItems.filter(i => i.type !== key);
             renderSelectedItems();
         }
-        
+
         function updateItemCount(key, count) {
             const item = selectedItems.find(i => i.type === key);
             if (item) {
@@ -339,42 +339,42 @@
             }
             renderSelectedItems();
         }
-        
+
         function renderSelectedItems() {
             const container = document.getElementById('selectedItems');
             if (selectedItems.length === 0) {
                 container.innerHTML = '<span style="color: #999;">Click items below to add them to your calculation</span>';
                 return;
             }
-            
+
             container.innerHTML = selectedItems.map(item => `
                 <div class="selected-item">
                     <span>${item.label}</span>
-                    <input type="number" class="count-input" value="${item.count}" min="1" max="20" 
+                    <input type="number" class="count-input" value="${item.count}" min="1" max="20"
                            onchange="updateItemCount('${item.type}', this.value)">
                     <span class="remove" onclick="removeItem('${item.type}')">&times;</span>
                 </div>
             `).join('');
         }
-        
+
         async function calculateDetailedEstimate() {
             if (selectedItems.length === 0) {
                 alert('Please add at least one item to calculate');
                 return;
             }
-            
+
             const currentScore = parseInt(document.getElementById('detailedCurrentScore').value) || 550;
-            
+
             try {
                 const response = await fetch('/api/credit-score/estimate-detailed', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        current_score: currentScore, 
+                    body: JSON.stringify({
+                        current_score: currentScore,
                         items: selectedItems.map(i => ({ type: i.type, count: i.count }))
                     })
                 });
-                
+
                 const data = await response.json();
                 if (data.success) {
                     const result = data.data;
@@ -382,7 +382,7 @@
                     document.getElementById('detResMinScore').textContent = result.projected.min;
                     document.getElementById('detResAvgScore').textContent = result.projected.avg;
                     document.getElementById('detResMaxScore').textContent = result.projected.max;
-                    
+
                     const tbody = document.getElementById('breakdownBody');
                     tbody.innerHTML = result.item_breakdown.map(item => `
                         <tr>
@@ -393,7 +393,7 @@
                             <td><span class="severity-badge" style="background: #${getSeverityColor(item.severity)}20; color: #${getSeverityColor(item.severity)}">${item.severity}</span></td>
                         </tr>
                     `).join('');
-                    
+
                     const totalRow = `
                         <tr style="background: #f8f9fa; font-weight: bold;">
                             <td>TOTAL</td>
@@ -404,14 +404,14 @@
                         </tr>
                     `;
                     tbody.innerHTML += totalRow;
-                    
+
                     document.getElementById('detailedResult').style.display = 'block';
                 }
             } catch (error) {
                 console.error('Error calculating detailed estimate:', error);
             }
         }
-        
+
         function getSeverityColor(severity) {
             const colors = {
                 'low': '22c55e',
@@ -422,7 +422,7 @@
             };
             return colors[severity] || 'eab308';
         }
-        
+
         async function loadClients() {
             try {
                 const response = await fetch('/api/clients');
@@ -436,15 +436,15 @@
                 document.getElementById('clientGrid').innerHTML = '<div class="no-data">Error loading clients</div>';
             }
         }
-        
+
         async function loadClientScores() {
             const grid = document.getElementById('clientGrid');
-            
+
             if (allClients.length === 0) {
                 grid.innerHTML = '<div class="no-data">No clients found. Add clients to track their credit scores.</div>';
                 return;
             }
-            
+
             const clientCards = await Promise.all(allClients.slice(0, 20).map(async (client) => {
                 try {
                     const response = await fetch(`/api/credit-score/summary/${client.id}`);
@@ -454,7 +454,7 @@
                     return { client, summary: { has_data: false } };
                 }
             }));
-            
+
             grid.innerHTML = clientCards.map(({ client, summary }) => {
                 if (!summary.has_data) {
                     return `
@@ -465,11 +465,11 @@
                         </div>
                     `;
                 }
-                
+
                 const scoreClass = getScoreClass(summary.current_score);
                 const progressPct = summary.removal_percentage || 0;
                 const gainText = summary.points_gained >= 0 ? `+${summary.points_gained}` : summary.points_gained;
-                
+
                 return `
                     <div class="client-card" onclick="window.location='/dashboard/credit-tracker/${client.id}'">
                         <h3>${client.name}</h3>
@@ -498,7 +498,7 @@
                 `;
             }).join('');
         }
-        
+
         function getScoreClass(score) {
             if (!score) return '';
             if (score >= 800) return 'excellent';
@@ -507,7 +507,7 @@
             if (score >= 580) return 'fair';
             return 'poor';
         }
-        
+
         function filterClients() {
             const search = document.getElementById('searchClients').value.toLowerCase();
             const cards = document.querySelectorAll('.client-card');
@@ -516,18 +516,18 @@
                 card.style.display = name.includes(search) ? 'block' : 'none';
             });
         }
-        
+
         async function calculateEstimate() {
             const currentScore = parseInt(document.getElementById('currentScore').value) || 550;
             const numNegatives = parseInt(document.getElementById('numNegatives').value) || 0;
-            
+
             try {
                 const response = await fetch('/api/credit-score/estimate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ current_score: currentScore, num_negatives: numNegatives })
                 });
-                
+
                 const data = await response.json();
                 if (data.success) {
                     const result = data.data;
@@ -541,7 +541,7 @@
                 console.error('Error calculating estimate:', error);
             }
         }
-        
+
         loadItemTypes();
     </script>
     </main>

@@ -87,7 +87,7 @@ describe('/scanner - Document Scanner', () => {
       cy.get('.nav-section[data-section="cases"] .nav-section-title').click();
       cy.get('.nav-section[data-section="cases"] .nav-section-items').should('have.class', 'expanded');
       cy.get('.nav-section[data-section="cases"] .chevron').should('have.class', 'rotated');
-      
+
       cy.get('.nav-section[data-section="cases"] .nav-section-title').click();
       cy.get('.nav-section[data-section="cases"] .nav-section-items').should('not.have.class', 'expanded');
       cy.get('.nav-section[data-section="cases"] .chevron').should('not.have.class', 'rotated');
@@ -128,7 +128,7 @@ describe('/scanner - Document Scanner', () => {
       cy.get('button.nav-link').contains('Upload').click();
       cy.get('button.nav-link').contains('Upload').should('have.class', 'active');
       cy.get('button.nav-link').contains('Camera').should('not.have.class', 'active');
-      
+
       cy.get('button.nav-link').contains('Camera').click();
       cy.get('button.nav-link').contains('Camera').should('have.class', 'active');
       cy.get('button.nav-link').contains('Upload').should('not.have.class', 'active');
@@ -247,7 +247,7 @@ describe('/scanner - Document Scanner', () => {
     it('should handle tab switching functionality', () => {
       cy.get('button.nav-link').contains('Upload').click();
       cy.get('button.nav-link').contains('Upload').should('have.class', 'active');
-      
+
       cy.get('button.nav-link').contains('Camera').click();
       cy.get('button.nav-link').contains('Camera').should('have.class', 'active');
     });
@@ -255,7 +255,7 @@ describe('/scanner - Document Scanner', () => {
     it('should handle step navigation', () => {
       cy.get('#btn-next').click();
       cy.get('#step-2').should('have.class', 'active');
-      
+
       cy.get('#btn-back').click();
       cy.get('#step-1').should('have.class', 'active');
     });
@@ -306,7 +306,7 @@ describe('/scanner - Document Scanner', () => {
   describe('File Upload Tests', () => {
     it('should handle file upload functionality', () => {
       cy.get('button.nav-link').contains('Upload').click();
-      
+
       // Create a test file
       const fileName = 'test-document.pdf';
       cy.fixture('test-document.pdf', 'binary')
@@ -315,7 +315,7 @@ describe('/scanner - Document Scanner', () => {
           const file = new File([fileContent], fileName, { type: 'application/pdf' });
           const dataTransfer = new DataTransfer();
           dataTransfer.items.add(file);
-          
+
           // Simulate file upload (assuming there's a file input)
           cy.get('input[type="file"]').then(input => {
             input[0].files = dataTransfer.files;
@@ -334,11 +334,11 @@ describe('/scanner - Document Scanner', () => {
 
     it('should handle invalid file uploads', () => {
       cy.get('button.nav-link').contains('Upload').click();
-      
+
       const fileName = 'invalid-file.txt';
       const fileContent = 'This is not a valid document';
       const file = new File([fileContent], fileName, { type: 'text/plain' });
-      
+
       // Should show validation error for invalid file type
     });
 

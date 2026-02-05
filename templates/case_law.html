@@ -13,12 +13,12 @@
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .main-content {
             margin-left: 260px;
             padding: 30px;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -34,7 +34,7 @@
             display: flex;
             gap: 15px;
         }
-        
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -61,14 +61,14 @@
         .btn-sm { padding: 8px 16px; font-size: 12px; }
         .btn-danger { background: #ef4444; color: white; }
         .btn-danger:hover { background: #dc2626; }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .stat-card {
             background: white;
             border-radius: 16px;
@@ -92,7 +92,7 @@
             color: #1a1a2e;
         }
         .stat-card.highlight .stat-value { color: #84cc16; }
-        
+
         .content-section {
             background: white;
             border-radius: 16px;
@@ -100,7 +100,7 @@
             margin-bottom: 30px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        
+
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -112,14 +112,14 @@
             font-weight: 600;
             color: #1a1a2e;
         }
-        
+
         .filters-row {
             display: flex;
             gap: 15px;
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
-        
+
         .filter-group {
             display: flex;
             flex-direction: column;
@@ -141,7 +141,7 @@
             outline: none;
             border-color: #84cc16;
         }
-        
+
         .search-box {
             display: flex;
             align-items: center;
@@ -160,7 +160,7 @@
             outline: none;
         }
         .search-box svg { color: #94a3b8; margin-right: 10px; }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -182,7 +182,7 @@
             color: #334155;
         }
         tr:hover { background: #f8fafc; cursor: pointer; }
-        
+
         .case-name {
             font-weight: 600;
             color: #1a1a2e;
@@ -192,7 +192,7 @@
             color: #64748b;
             font-style: italic;
         }
-        
+
         .tag {
             display: inline-block;
             padding: 4px 10px;
@@ -206,7 +206,7 @@
         .tag.court { background: #dbeafe; color: #1e40af; }
         .tag.section { background: #dcfce7; color: #166534; }
         .tag.violation { background: #fef3c7; color: #92400e; }
-        
+
         .relevance-badge {
             display: inline-flex;
             align-items: center;
@@ -222,7 +222,7 @@
         .relevance-3 { background: #fef3c7; color: #92400e; }
         .relevance-2 { background: #fee2e2; color: #991b1b; }
         .relevance-1 { background: #fecaca; color: #7f1d1d; }
-        
+
         .outcome-badge {
             display: inline-block;
             padding: 4px 10px;
@@ -233,7 +233,7 @@
         .outcome-won { background: #dcfce7; color: #166534; }
         .outcome-lost { background: #fee2e2; color: #991b1b; }
         .outcome-unknown { background: #f1f5f9; color: #64748b; }
-        
+
         .modal-overlay {
             display: none;
             position: fixed;
@@ -247,7 +247,7 @@
             justify-content: center;
         }
         .modal-overlay.active { display: flex; }
-        
+
         .modal {
             background: white;
             border-radius: 16px;
@@ -289,7 +289,7 @@
             justify-content: flex-end;
             gap: 10px;
         }
-        
+
         .detail-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -314,7 +314,7 @@
             font-size: 16px;
             font-weight: 600;
         }
-        
+
         .quote-box {
             background: #f8fafc;
             border-left: 4px solid #84cc16;
@@ -331,7 +331,7 @@
             font-size: 12px;
             color: #64748b;
         }
-        
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -366,7 +366,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -383,7 +383,7 @@
             color: #1a1a2e;
             margin-bottom: 10px;
         }
-        
+
         .copy-btn {
             padding: 6px 12px;
             background: #f1f5f9;
@@ -397,7 +397,7 @@
         }
         .copy-btn:hover { background: #e2e8f0; }
         .copy-btn.copied { background: #dcfce7; border-color: #84cc16; color: #166534; }
-        
+
         @media (max-width: 1200px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .detail-grid { grid-template-columns: 1fr; }
@@ -407,7 +407,7 @@
 <body>
     {% set active_page = 'case-law' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="header">
             <h1>Case Law Citation Database</h1>
@@ -424,7 +424,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <div class="stats-grid">
             <div class="stat-card highlight">
                 <div class="stat-label">Total Citations</div>
@@ -443,18 +443,18 @@
                 <div class="stat-value">{{ fcra_sections|length }}</div>
             </div>
         </div>
-        
+
         <div class="content-section">
             <div class="section-header">
                 <div class="section-title">FCRA Case Law Citations</div>
             </div>
-            
+
             <div class="filters-row">
                 <div class="search-box">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input type="text" id="searchInput" placeholder="Search cases..." onkeyup="filterCases()">
                 </div>
-                
+
                 <div class="filter-group">
                     <label>Court</label>
                     <select id="courtFilter" onchange="filterCases()">
@@ -464,7 +464,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                
+
                 <div class="filter-group">
                     <label>Violation Type</label>
                     <select id="violationFilter" onchange="filterCases()">
@@ -474,7 +474,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                
+
                 <div class="filter-group">
                     <label>FCRA Section</label>
                     <select id="sectionFilter" onchange="filterCases()">
@@ -485,7 +485,7 @@
                     </select>
                 </div>
             </div>
-            
+
             {% if cases %}
             <table id="casesTable">
                 <thead>
@@ -557,7 +557,7 @@
             {% endif %}
         </div>
     </main>
-    
+
     <div id="viewModal" class="modal-overlay" onclick="if(event.target===this)closeModal('viewModal')">
         <div class="modal">
             <div class="modal-header">
@@ -577,7 +577,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="addModal" class="modal-overlay" onclick="if(event.target===this)closeModal('addModal')">
         <div class="modal">
             <div class="modal-header">
@@ -666,21 +666,21 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         let currentCase = null;
-        
+
         function filterCases() {
             const search = document.getElementById('searchInput').value.toLowerCase();
             const court = document.getElementById('courtFilter').value;
             const violation = document.getElementById('violationFilter').value;
             const section = document.getElementById('sectionFilter').value;
-            
+
             const rows = document.querySelectorAll('#casesTable tbody tr');
             rows.forEach(row => {
                 const data = JSON.parse(row.dataset.case);
                 let show = true;
-                
+
                 if (search) {
                     const searchText = (data.case_name + ' ' + data.citation + ' ' + data.key_holding + ' ' + (data.tags || []).join(' ')).toLowerCase();
                     if (!searchText.includes(search)) show = false;
@@ -688,11 +688,11 @@
                 if (court && data.court !== court) show = false;
                 if (violation && !(data.violation_types || []).includes(violation)) show = false;
                 if (section && !(data.fcra_sections || []).includes(section)) show = false;
-                
+
                 row.style.display = show ? '' : 'none';
             });
         }
-        
+
         function viewCase(id) {
             fetch(`/api/case-law/${id}`)
                 .then(r => r.json())
@@ -703,10 +703,10 @@
                     }
                 });
         }
-        
+
         function showCaseDetails(c) {
             document.getElementById('viewModalTitle').textContent = c.case_name;
-            
+
             let quotesHtml = '';
             if (c.quote_snippets && c.quote_snippets.length > 0) {
                 quotesHtml = '<div class="detail-item" style="grid-column: span 2;"><div class="detail-label">Key Quotes</div>';
@@ -715,11 +715,11 @@
                 });
                 quotesHtml += '</div>';
             }
-            
+
             const tagsHtml = (c.tags || []).map(t => `<span class="tag">${t}</span>`).join(' ');
             const sectionsHtml = (c.fcra_sections || []).map(s => `<span class="tag section">§${s}</span>`).join(' ');
             const violationsHtml = (c.violation_types || []).map(v => `<span class="tag violation">${v.replace(/_/g, ' ')}</span>`).join(' ');
-            
+
             document.getElementById('viewModalBody').innerHTML = `
                 <div class="detail-grid">
                     <div class="detail-item">
@@ -770,10 +770,10 @@
                 </div>
                 ${c.notes ? `<div class="detail-item"><div class="detail-label">Notes</div><div class="detail-value">${c.notes}</div></div>` : ''}
             `;
-            
+
             document.getElementById('viewModal').classList.add('active');
         }
-        
+
         function copyCitation(id, format, btn) {
             fetch(`/api/case-law/format/${id}?format=${format}`)
                 .then(r => r.json())
@@ -789,7 +789,7 @@
                     }
                 });
         }
-        
+
         function copyCitationFromModal(format) {
             if (!currentCase) return;
             fetch(`/api/case-law/format/${currentCase.id}?format=${format}`)
@@ -801,21 +801,21 @@
                     }
                 });
         }
-        
+
         function openAddModal() {
             document.getElementById('addCaseForm').reset();
             document.getElementById('addModal').classList.add('active');
         }
-        
+
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
         }
-        
+
         function saveCase() {
             const form = document.getElementById('addCaseForm');
             const formData = new FormData(form);
             const data = {};
-            
+
             formData.forEach((value, key) => {
                 if (key === 'fcra_sections' || key === 'violation_types' || key === 'tags') {
                     data[key] = value ? value.split(',').map(s => s.trim()).filter(s => s) : [];
@@ -829,7 +829,7 @@
                     data[key] = value || null;
                 }
             });
-            
+
             fetch('/api/case-law', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -845,11 +845,11 @@
                 }
             });
         }
-        
+
         function deleteCase() {
             if (!currentCase) return;
             if (!confirm(`Are you sure you want to delete "${currentCase.case_name}"?`)) return;
-            
+
             fetch(`/api/case-law/${currentCase.id}`, {method: 'DELETE'})
                 .then(r => r.json())
                 .then(result => {
@@ -861,10 +861,10 @@
                     }
                 });
         }
-        
+
         function populateDefaultCases() {
             if (!confirm('This will add default FCRA case law citations to the database. Continue?')) return;
-            
+
             fetch('/api/case-law/populate', {method: 'POST'})
                 .then(r => r.json())
                 .then(result => {

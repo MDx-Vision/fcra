@@ -145,7 +145,7 @@ IMPORTANT: Return ONLY valid JSON, no additional text or explanation.
 
 This is a response from a credit bureau after a dispute was submitted. Common document types include:
 - "Results of Investigation" letters
-- "Reinvestigation Results" 
+- "Reinvestigation Results"
 - Account status update notices
 - Frivolous dispute notifications
 

@@ -90,7 +90,7 @@ def check_staff_permission(role, permission):
 class Staff(Base):
     """Staff/team member accounts for platform access"""
     __tablename__ = 'staff'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
@@ -123,27 +123,27 @@ class Staff(Base):
         elif self.first_name:
             return self.first_name
         return self.email.split('@')[0]
-    
+
     @property
     def initials(self):
         if self.first_name and self.last_name:
             return f"{self.first_name[0]}{self.last_name[0]}".upper()
         return self.email[0].upper()
-    
+
     def has_permission(self, permission):
         return check_staff_permission(self.role, permission)
 
 
 class Client(Base):
     __tablename__ = 'clients'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     first_name = Column(String(100))
     last_name = Column(String(100))
     email = Column(String(255))
     phone = Column(String(50))
-    
+
     # Address fields
     address_street = Column(String(255))
     address_city = Column(String(100))
@@ -156,51 +156,51 @@ class Client(Base):
     ssn_encrypted = Column(Text, nullable=True)  # Full SSN, encrypted
     ssn_last_four = Column(String(4))
     date_of_birth = Column(Date)
-    
+
     # Credit monitoring credentials (NOTE: Encrypt in production)
     credit_monitoring_service = Column(String(100))  # IdentityIQ, MyScoreIQ, etc.
     credit_monitoring_username = Column(String(255))
     credit_monitoring_password_encrypted = Column(Text)  # Encrypted credential
-    
+
     # Dispute tracking
     current_dispute_round = Column(Integer, default=0)  # 0=new, 1-4=active rounds
     current_dispute_step = Column(String(100))  # For fine-grained tracking
     dispute_status = Column(String(50), default='new')  # new, active, waiting_response, complete
     round_started_at = Column(DateTime)
     last_bureau_response_at = Column(DateTime)
-    
+
     # Import tracking (for existing clients)
     legacy_system_id = Column(String(100))  # ID from CMM or other system
     legacy_case_number = Column(String(100))
     imported_at = Column(DateTime)
     import_notes = Column(Text)
-    
+
     # Referral tracking
     referred_by_client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
     referred_by_affiliate_id = Column(Integer, ForeignKey('affiliates.id'), nullable=True)
     referral_code = Column(String(50), unique=True)
-    
+
     # Client portal access
     portal_token = Column(String(100), unique=True, index=True)
     portal_password_hash = Column(String(255))  # For client login
     password_reset_token = Column(String(100), unique=True, index=True)
     password_reset_expires = Column(DateTime)
-    
+
     # Status
     status = Column(String(50), default='signup')  # signup, active, paused, complete, cancelled
     signup_completed = Column(Boolean, default=False)
     agreement_signed = Column(Boolean, default=False)
     agreement_signed_at = Column(DateTime)
-    
+
     # Legacy
     cmm_contact_id = Column(String(100))
-    
+
     # Notes
     admin_notes = Column(Text)
-    
+
     # Profile/Avatar
     avatar_filename = Column(String(255))  # Stored in static/avatars/
-    
+
     # Payment/Stripe fields
     signup_plan = Column(String(50))  # free, tier1, tier2, tier3, tier4, tier5
     signup_amount = Column(Integer)  # Amount in cents
@@ -211,7 +211,7 @@ class Client(Base):
     payment_received_at = Column(DateTime)
     payment_method = Column(String(50), default='pending')  # stripe, paypal, cashapp, venmo, zelle, pending, free
     payment_pending = Column(Boolean, default=False)  # True if waiting for manual confirmation
-    
+
     # Contact management fields (CMM style)
     client_type = Column(String(1), default='L')  # L=Lead, C=Active Client, I=Inactive, O=Other, P=Provider, X=Cancelled
     status_2 = Column(String(100))  # Secondary status field
@@ -274,7 +274,7 @@ class Client(Base):
     affirm_status = Column(String(30))  # pending, authorized, captured, voided, refunded, failed
 
     organization_id = Column(Integer, nullable=True, index=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -313,7 +313,7 @@ class UserQuickLink(Base):
 
 class CreditReport(Base):
     __tablename__ = 'credit_reports'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, nullable=False)
     client_name = Column(String(255), nullable=False)
@@ -324,7 +324,7 @@ class CreditReport(Base):
 
 class Analysis(Base):
     __tablename__ = 'analyses'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     credit_report_id = Column(Integer, nullable=False)
     client_id = Column(Integer, nullable=False)
@@ -342,7 +342,7 @@ class Analysis(Base):
 
 class DisputeLetter(Base):
     __tablename__ = 'dispute_letters'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     analysis_id = Column(Integer, nullable=False)
     client_id = Column(Integer, nullable=False)
@@ -358,67 +358,67 @@ class DisputeLetter(Base):
 
 class Violation(Base):
     __tablename__ = 'violations'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=False)
     client_id = Column(Integer, nullable=False)
-    
+
     # Violation details
     bureau = Column(String(50))
     account_name = Column(String(255))
     fcra_section = Column(String(50))
     violation_type = Column(String(100))
     description = Column(Text)
-    
+
     # Damages
     statutory_damages_min = Column(Float, default=0)
     statutory_damages_max = Column(Float, default=0)
-    
+
     # Willfulness indicators
     is_willful = Column(Boolean, default=False)
     willfulness_notes = Column(Text)
-    
+
     # Statute of Limitations (SOL) tracking - FCRA § 1681p
     violation_date = Column(Date)
     discovery_date = Column(Date)
     sol_expiration_date = Column(Date)
     sol_warning_sent = Column(Boolean, default=False)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Standing(Base):
     __tablename__ = 'standing'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=False)
     client_id = Column(Integer, nullable=False)
-    
+
     # Post-TransUnion standing elements
     has_concrete_harm = Column(Boolean, default=False)
     concrete_harm_type = Column(Text)
     concrete_harm_details = Column(Text)
-    
+
     has_dissemination = Column(Boolean, default=False)
     dissemination_details = Column(Text)
-    
+
     has_causation = Column(Boolean, default=False)
     causation_details = Column(Text)
-    
+
     # Supporting documents
     denial_letters_count = Column(Integer, default=0)
     adverse_action_notices_count = Column(Integer, default=0)
-    
+
     standing_verified = Column(Boolean, default=False)
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Damages(Base):
     __tablename__ = 'damages'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=False)
     client_id = Column(Integer, nullable=False)
-    
+
     # Actual damages
     credit_denials_amount = Column(Float, default=0)
     higher_interest_amount = Column(Float, default=0)
@@ -426,63 +426,63 @@ class Damages(Base):
     time_stress_amount = Column(Float, default=0)
     other_actual_amount = Column(Float, default=0)
     actual_damages_total = Column(Float, default=0)
-    
+
     # Statutory damages
     section_605b_count = Column(Integer, default=0)
     section_605b_amount = Column(Float, default=0)
-    
+
     section_607b_count = Column(Integer, default=0)
     section_607b_amount = Column(Float, default=0)
-    
+
     section_611_count = Column(Integer, default=0)
     section_611_amount = Column(Float, default=0)
-    
+
     section_623_count = Column(Integer, default=0)
     section_623_amount = Column(Float, default=0)
-    
+
     statutory_damages_total = Column(Float, default=0)
-    
+
     # Punitive damages
     willfulness_multiplier = Column(Float, default=0)
     punitive_damages_amount = Column(Float, default=0)
-    
+
     # Attorney fees
     estimated_hours = Column(Float, default=0)
     hourly_rate = Column(Float, default=0)
     attorney_fees_projection = Column(Float, default=0)
-    
+
     # Settlement targets
     total_exposure = Column(Float, default=0)
     settlement_target = Column(Float, default=0)
     minimum_acceptable = Column(Float, default=0)
-    
+
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class CaseScore(Base):
     __tablename__ = 'case_scores'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=False)
     client_id = Column(Integer, nullable=False)
-    
+
     # Scoring components (total 10 points)
     standing_score = Column(Integer, default=0)
     violation_quality_score = Column(Integer, default=0)
     willfulness_score = Column(Integer, default=0)
     documentation_score = Column(Integer, default=0)
-    
+
     # Total score
     total_score = Column(Integer, default=0)
-    
+
     # Settlement probability
     settlement_probability = Column(Float, default=0)
     case_strength = Column(String(50))
-    
+
     # Recommendation
     recommendation = Column(String(50))
     recommendation_notes = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -493,35 +493,35 @@ class CaseScore(Base):
 class Case(Base):
     """Main case tracking - links client to analysis with status pipeline"""
     __tablename__ = 'cases'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
-    
+
     # Case identification
     case_number = Column(String(50), unique=True, index=True)
-    
+
     # Status pipeline
     status = Column(String(50), default='intake')  # intake, stage1_pending, stage1_complete, stage2_pending, stage2_complete, delivered, settled
-    
+
     # Pricing tier
     pricing_tier = Column(String(50), default='tier1')  # tier1, tier2, tier3
     base_fee = Column(Float, default=0)
     contingency_percent = Column(Float, default=0)
-    
+
     # Client portal access
     portal_token = Column(String(100), unique=True, index=True)
     portal_expires = Column(DateTime)
-    
+
     # Tracking
     intake_at = Column(DateTime)
     stage1_completed_at = Column(DateTime)
     stage2_completed_at = Column(DateTime)
     delivered_at = Column(DateTime)
-    
+
     # Notes
     admin_notes = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -529,81 +529,81 @@ class Case(Base):
 class CaseEvent(Base):
     """Timeline log of all case activities"""
     __tablename__ = 'case_events'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=False)
-    
+
     event_type = Column(String(50))  # intake, analysis_started, analysis_complete, approved, letter_sent, settlement_offer, etc.
     description = Column(Text)
     event_data = Column(Text)  # JSON for extra data
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Document(Base):
     """Stores generated documents with download tracking"""
     __tablename__ = 'documents'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=False)
     analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
-    
+
     document_type = Column(String(50))  # credit_report, stage1_analysis, stage2_report, dispute_letter, settlement_demand, cfpb_complaint
     filename = Column(String(255))
     file_path = Column(String(500))
     file_size = Column(Integer)
-    
+
     # For bureau-specific letters
     bureau = Column(String(50))
-    
+
     # Tracking
     download_count = Column(Integer, default=0)
     last_downloaded_at = Column(DateTime)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Notification(Base):
     """Email/SMS notification history"""
     __tablename__ = 'notifications'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     notification_type = Column(String(50))  # email, sms
     template = Column(String(100))  # intake_confirmation, stage1_complete, stage2_ready, etc.
     recipient = Column(String(255))
     subject = Column(String(255))
     body = Column(Text)
-    
+
     # Status
     status = Column(String(50), default='pending')  # pending, sent, failed
     sent_at = Column(DateTime)
     error_message = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Settlement(Base):
     """Track settlement negotiations"""
     __tablename__ = 'settlements'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=False)
-    
+
     # Target based on analysis
     target_amount = Column(Float, default=0)
     minimum_acceptable = Column(Float, default=0)
-    
+
     # Bureau breakdown
     transunion_target = Column(Float, default=0)
     experian_target = Column(Float, default=0)
     equifax_target = Column(Float, default=0)
-    
+
     # Negotiation tracking
     status = Column(String(50), default='pending')  # pending, demand_sent, negotiating, accepted, rejected, litigated
-    
+
     # Offers
     initial_demand = Column(Float, default=0)
     initial_demand_date = Column(DateTime)
@@ -612,17 +612,17 @@ class Settlement(Base):
     counter_offer_2 = Column(Float, default=0)
     counter_offer_2_date = Column(DateTime)
     final_amount = Column(Float, default=0)
-    
+
     # Outcome
     settled_at = Column(DateTime)
     settlement_notes = Column(Text)
-    
+
     # Payment tracking
     payment_received = Column(Boolean, default=False)
     payment_amount = Column(Float, default=0)
     payment_date = Column(DateTime)
     contingency_earned = Column(Float, default=0)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -630,77 +630,77 @@ class Settlement(Base):
 class AnalysisQueue(Base):
     """Batch processing queue"""
     __tablename__ = 'analysis_queue'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
     client_id = Column(Integer, nullable=False)
-    
+
     # Queue details
     priority = Column(Integer, default=5)  # 1=highest, 10=lowest
     stage = Column(Integer, default=1)  # 1 or 2
-    
+
     # Status
     status = Column(String(50), default='queued')  # queued, processing, completed, failed
     progress = Column(Integer, default=0)  # 0-100
-    
+
     # Credit report data
     credit_provider = Column(String(100))
     dispute_round = Column(Integer, default=1)
     credit_report_html = Column(Text)
-    
+
     # Processing info
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
     error_message = Column(Text)
-    
+
     # Result
     analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class CRAResponse(Base):
     """Track Credit Reporting Agency response letters"""
     __tablename__ = 'cra_responses'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
     analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
-    
+
     # Which bureau and round
     bureau = Column(String(50))  # Experian, TransUnion, Equifax
     dispute_round = Column(Integer, default=1)
-    
+
     # Response details
     response_type = Column(String(50))  # verified, deleted, updated, investigating, no_response, frivolous
     response_date = Column(Date)
     received_date = Column(Date)
-    
+
     # Uploaded letter/document
     file_path = Column(String(500))
     file_name = Column(String(255))
     file_size = Column(Integer)
-    
+
     # Upload attribution
     uploaded_by_admin = Column(Boolean, default=True)  # True=admin, False=client
     uploaded_by_user_id = Column(Integer)  # Admin user ID if applicable
-    
+
     # Parsed response content
     response_text = Column(Text)  # OCR or extracted text from PDF
     items_verified = Column(Integer, default=0)
     items_deleted = Column(Integer, default=0)
     items_updated = Column(Integer, default=0)
     structured_items = Column(JSON)  # Detailed breakdown for automation
-    
+
     # Follow-up tracking
     requires_follow_up = Column(Boolean, default=False)
     follow_up_deadline = Column(DateTime)  # Usually 30 days from response
     follow_up_completed = Column(Boolean, default=False)
-    
+
     # Analysis notes
     admin_notes = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -708,23 +708,23 @@ class CRAResponse(Base):
 class DisputeItem(Base):
     """Track individual account/item disputes with status"""
     __tablename__ = 'dispute_items'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
-    
+
     # Which bureau and round
     bureau = Column(String(50), nullable=False)  # Experian, TransUnion, Equifax
     dispute_round = Column(Integer, default=1)
-    
+
     # Item details
     item_type = Column(String(50))  # inquiry, collection, late_payment, personal_info, public_record
     creditor_name = Column(String(255))
     account_id = Column(String(100))  # Masked account number
-    
+
     # Status tracking
     status = Column(String(50), default='to_do')  # sent, deleted, updated, in_progress, to_do, no_change, no_answer, on_hold, positive, duplicate, other
-    
+
     # FCRA Escalation Pathway (Credit Repair Warfare)
     # Stages: section_611 -> section_623 -> section_621 -> section_616_617
     escalation_stage = Column(String(50), default='section_611')  # section_611, section_623, section_621, section_616_617
@@ -738,16 +738,16 @@ class DisputeItem(Base):
     attorney_referral_date = Column(Date)
     method_of_verification_requested = Column(Boolean, default=False)  # §611(a)(6)(B)(iii)
     method_of_verification_received = Column(Boolean, default=False)
-    
+
     # Dates
     follow_up_date = Column(Date)  # When to follow up
     sent_date = Column(Date)  # When dispute was sent
     response_date = Column(Date)  # When response received
-    
+
     # Client/admin interaction
     reason = Column(Text)  # Reason for dispute or status
     comments = Column(Text)  # Client or admin comments
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -755,49 +755,49 @@ class DisputeItem(Base):
 class LetterQueue(Base):
     """Queue for auto-suggested letters based on escalation triggers"""
     __tablename__ = 'letter_queue'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     dispute_item_id = Column(Integer, ForeignKey('dispute_items.id'), nullable=True)
-    
+
     # Letter type (matches advanced letter templates)
     letter_type = Column(String(50), nullable=False)
-    # Types: mov_request, fdcpa_validation, respa_qwr, reg_z_dispute, 
+    # Types: mov_request, fdcpa_validation, respa_qwr, reg_z_dispute,
     #        section_605b_block, section_623_direct, reinsertion_challenge
-    
+
     # Trigger info
     trigger_type = Column(String(100), nullable=False)
-    # Triggers: cra_verified, no_cra_response_35_days, collection_disputed, 
+    # Triggers: cra_verified, no_cra_response_35_days, collection_disputed,
     #           mortgage_late, item_reinserted, mov_inadequate, escalation_stage_change
     trigger_description = Column(Text)  # Human-readable trigger explanation
     trigger_date = Column(DateTime, default=datetime.utcnow)
-    
+
     # Target info
     target_bureau = Column(String(50))  # Experian, TransUnion, Equifax
     target_creditor = Column(String(255))  # Creditor/furnisher name
     target_account = Column(String(100))  # Account number (masked)
-    
+
     # Pre-filled letter data (JSON)
     letter_data = Column(JSON)  # Pre-populated fields for the letter
-    
+
     # Priority and status
     priority = Column(String(20), default='normal')  # urgent, high, normal, low
     status = Column(String(50), default='pending')  # pending, approved, dismissed, generated, sent
-    
+
     # Staff action tracking
     reviewed_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
     reviewed_at = Column(DateTime)
     action_notes = Column(Text)  # Staff notes on approval/dismissal
-    
+
     # Generated letter info
     generated_letter_id = Column(Integer, ForeignKey('dispute_letters.id'), nullable=True)
     generated_at = Column(DateTime)
     generated_pdf_path = Column(String(500))
-    
+
     # Notification tracking
     notification_sent = Column(Boolean, default=False)
     notification_sent_at = Column(DateTime)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -805,24 +805,24 @@ class LetterQueue(Base):
 class SecondaryBureauFreeze(Base):
     """Track freeze status with secondary credit bureaus"""
     __tablename__ = 'secondary_bureau_freezes'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     # Secondary bureau info
     bureau_name = Column(String(100), nullable=False)  # Innovis, ChexSystems, Clarity, LexisNexis, etc.
-    
+
     # Status
     status = Column(String(50), default='pending')  # pending, frozen, not_frozen, error
-    
+
     # Dates
     follow_up_date = Column(Date)
     freeze_requested_at = Column(DateTime)
     freeze_confirmed_at = Column(DateTime)
-    
+
     # Notes
     comments = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -830,46 +830,46 @@ class SecondaryBureauFreeze(Base):
 class ClientReferral(Base):
     """Track referrals between clients"""
     __tablename__ = 'client_referrals'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     referring_client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     referred_client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
-    
+
     # Referral info
     referred_name = Column(String(255))
     referred_email = Column(String(255))
     referred_phone = Column(String(50))
-    
+
     # Status
     status = Column(String(50), default='pending')  # pending, contacted, signed_up, converted
-    
+
     # Reward tracking
     reward_type = Column(String(50))  # discount, credit, cash
     reward_amount = Column(Float, default=0)
     reward_paid = Column(Boolean, default=False)
     reward_paid_at = Column(DateTime)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Affiliate(Base):
     """Affiliate partners for two-level commission tracking"""
     __tablename__ = 'affiliates'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
-    
+
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False, index=True)
     phone = Column(String(50))
     company_name = Column(String(255))
-    
+
     affiliate_code = Column(String(50), unique=True, nullable=False, index=True)
     parent_affiliate_id = Column(Integer, ForeignKey('affiliates.id'), nullable=True)
-    
+
     commission_rate_1 = Column(Float, default=0.10)
     commission_rate_2 = Column(Float, default=0.05)
-    
+
     status = Column(String(50), default='pending')
 
     # Authentication for affiliate portal
@@ -879,41 +879,41 @@ class Affiliate(Base):
 
     payout_method = Column(String(50))
     payout_details = Column(JSON)
-    
+
     total_referrals = Column(Integer, default=0)
     total_earnings = Column(Float, default=0.0)
     pending_earnings = Column(Float, default=0.0)
     paid_out = Column(Float, default=0.0)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     parent = relationship("Affiliate", remote_side=[id], backref="sub_affiliates")
 
 
 class Commission(Base):
     """Commission records for affiliate referrals"""
     __tablename__ = 'commissions'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     affiliate_id = Column(Integer, ForeignKey('affiliates.id'), nullable=False)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     level = Column(Integer, default=1)
-    
+
     trigger_type = Column(String(50), nullable=False)
     trigger_amount = Column(Float, default=0.0)
     commission_rate = Column(Float, default=0.0)
     commission_amount = Column(Float, default=0.0)
-    
+
     status = Column(String(50), default='pending')
-    
+
     paid_at = Column(DateTime)
     payout_id = Column(Integer)
     notes = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     affiliate = relationship("Affiliate", backref="commissions")
 
 
@@ -953,30 +953,30 @@ class AffiliatePayout(Base):
 class SignupDraft(Base):
     """Store pre-payment signup data temporarily until payment is confirmed"""
     __tablename__ = 'signup_drafts'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     draft_uuid = Column(String(36), unique=True, index=True, nullable=False)
-    
+
     # All form data stored as JSON
     form_data = Column(JSON, nullable=False)
-    
+
     # Selected plan
     plan_tier = Column(String(50))  # tier1-tier5
     plan_amount = Column(Integer)  # Amount in cents
-    
+
     # Stripe tracking
     stripe_checkout_session_id = Column(String(255))
-    
+
     # Status tracking
     status = Column(String(50), default='pending')  # pending, paid, expired, cancelled
-    
+
     # Expiration
     expires_at = Column(DateTime, nullable=False)
-    
+
     # Promotion to full client
     promoted_client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
     promoted_at = Column(DateTime)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -984,20 +984,20 @@ class SignupDraft(Base):
 class Task(Base):
     """Tasks/reminders for client management"""
     __tablename__ = 'tasks'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     title = Column(String(255), nullable=False)
     task_type = Column(String(50))  # call, email, follow_up, document, dispute, other
     description = Column(Text)
-    
+
     due_date = Column(Date)
     due_time = Column(String(10))  # HH:MM format
-    
+
     status = Column(String(50), default='pending')  # pending, completed, cancelled
     assigned_to = Column(String(100))
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1005,29 +1005,29 @@ class Task(Base):
 class ClientNote(Base):
     """Notes/comments for client records"""
     __tablename__ = 'client_notes'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     note_content = Column(Text, nullable=False)
     created_by = Column(String(100))
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class ClientDocument(Base):
     """Track document receipt status for clients"""
     __tablename__ = 'client_documents'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     document_type = Column(String(50), nullable=False)  # agreement, cr_login, drivers_license, ssn_card, utility_bill, poa, other
     file_path = Column(String(500))
-    
+
     received = Column(Boolean, default=False)
     received_at = Column(DateTime)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1035,40 +1035,40 @@ class ClientDocument(Base):
 class ClientUpload(Base):
     """Unified document uploads from clients"""
     __tablename__ = 'client_uploads'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
-    
+
     category = Column(String(50), nullable=False)
     document_type = Column(String(100), nullable=False)
-    
+
     bureau = Column(String(50))
     dispute_round = Column(Integer)
     response_type = Column(String(50))
-    
+
     sender_name = Column(String(200))
     account_number = Column(String(100))
     amount_claimed = Column(Float)
-    
+
     file_path = Column(String(500))
     file_name = Column(String(255))
     file_size = Column(Integer)
     file_type = Column(String(50))
-    
+
     document_date = Column(Date)
     received_date = Column(Date)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
-    
+
     reviewed = Column(Boolean, default=False)
     reviewed_by = Column(String(100))
     reviewed_at = Column(DateTime)
     notes = Column(Text)
-    
+
     requires_action = Column(Boolean, default=False)
     action_deadline = Column(Date)
     priority = Column(String(20), default='normal')
-    
+
     harm_amount = Column(Float)
     harm_description = Column(Text)
     creditor_name = Column(String(200))
@@ -1079,7 +1079,7 @@ class ClientUpload(Base):
     call_date = Column(DateTime)
     ocr_extracted = Column(Boolean, default=False)
     ocr_data = Column(JSON)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1115,7 +1115,7 @@ class TimelineEvent(Base):
 class SignupSettings(Base):
     """Store configurable signup settings as key-value pairs"""
     __tablename__ = 'signup_settings'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     setting_key = Column(String(100), unique=True, nullable=False)
     setting_value = Column(Text)  # JSON for complex settings
@@ -1386,29 +1386,29 @@ class DripEmailLog(Base):
 class CaseDeadline(Base):
     """Track deadlines for dispute responses and required actions"""
     __tablename__ = 'case_deadlines'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
-    
+
     deadline_type = Column(String(50), nullable=False)
     bureau = Column(String(50))
     dispute_round = Column(Integer)
-    
+
     start_date = Column(Date, nullable=False)
     deadline_date = Column(Date, nullable=False)
     days_allowed = Column(Integer, default=30)
-    
+
     status = Column(String(50), default='active')
     completed_at = Column(DateTime)
-    
+
     reminder_sent_7_days = Column(Boolean, default=False)
     reminder_sent_3_days = Column(Boolean, default=False)
     reminder_sent_1_day = Column(Boolean, default=False)
     overdue_notice_sent = Column(Boolean, default=False)
-    
+
     notes = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1416,36 +1416,36 @@ class CaseDeadline(Base):
 class NotarizationOrder(Base):
     """Track remote online notarization orders via Proof.com or NotaryLive"""
     __tablename__ = 'notarization_orders'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     provider = Column(String(50), nullable=False)
     external_order_id = Column(String(255))
     external_transaction_id = Column(String(255))
-    
+
     document_type = Column(String(100))
     document_name = Column(String(255))
     document_path = Column(String(500))
-    
+
     signer_email = Column(String(255))
     signer_name = Column(String(255))
-    
+
     session_link = Column(String(500))
-    
+
     status = Column(String(50), default='pending')
-    
+
     notarized_document_path = Column(String(500))
     audit_trail_path = Column(String(500))
     video_recording_path = Column(String(500))
-    
+
     notarized_at = Column(DateTime)
     expires_at = Column(DateTime)
-    
+
     cost = Column(Float)
-    
+
     webhook_data = Column(JSON)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1453,59 +1453,59 @@ class NotarizationOrder(Base):
 class FreezeLetterBatch(Base):
     """Track bulk freeze letter generation batches"""
     __tablename__ = 'freeze_letter_batches'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     batch_uuid = Column(String(36), unique=True, index=True)
-    
+
     bureaus_included = Column(JSON)
     total_bureaus = Column(Integer, default=12)
-    
+
     generated_pdf_path = Column(String(500))
     generated_docx_path = Column(String(500))
-    
+
     mail_method = Column(String(50))
     certified_mail_tracking = Column(JSON)
-    
+
     status = Column(String(50), default='generated')
     mailed_at = Column(DateTime)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class CertifiedMailOrder(Base):
     """Track certified mail orders via SendCertifiedMail.com"""
     __tablename__ = 'certified_mail_orders'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     external_order_id = Column(String(255))
     tracking_number = Column(String(100))
-    
+
     recipient_name = Column(String(255))
     recipient_address = Column(Text)
     recipient_type = Column(String(50))
-    
+
     document_type = Column(String(100))
     document_path = Column(String(500))
-    
+
     letter_type = Column(String(50))
     dispute_round = Column(Integer)
     bureau = Column(String(50))
-    
+
     status = Column(String(50), default='pending')
-    
+
     cost = Column(Float)
-    
+
     submitted_at = Column(DateTime)
     mailed_at = Column(DateTime)
     delivered_at = Column(DateTime)
     delivery_proof_path = Column(String(500))
-    
+
     webhook_data = Column(JSON)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1513,36 +1513,36 @@ class CertifiedMailOrder(Base):
 class SettlementEstimate(Base):
     """Store settlement calculations for cases"""
     __tablename__ = 'settlement_estimates'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
-    
+
     total_violations = Column(Integer, default=0)
     willful_violations = Column(Integer, default=0)
     negligent_violations = Column(Integer, default=0)
-    
+
     statutory_damages_low = Column(Float, default=0)
     statutory_damages_high = Column(Float, default=0)
-    
+
     actual_damages = Column(Float, default=0)
     actual_damages_breakdown = Column(JSON)
-    
+
     punitive_multiplier = Column(Float, default=1.0)
     punitive_damages_low = Column(Float, default=0)
     punitive_damages_high = Column(Float, default=0)
-    
+
     attorney_fees_estimate = Column(Float, default=0)
-    
+
     total_low = Column(Float, default=0)
     total_high = Column(Float, default=0)
-    
+
     settlement_likelihood = Column(String(50))
     recommended_demand = Column(Float)
-    
+
     calculation_notes = Column(Text)
     calculation_data = Column(JSON)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1550,35 +1550,35 @@ class SettlementEstimate(Base):
 class AttorneyReferral(Base):
     """Track attorney referrals for high-value cases"""
     __tablename__ = 'attorney_referrals'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
-    
+
     attorney_name = Column(String(255))
     attorney_firm = Column(String(255))
     attorney_email = Column(String(255))
     attorney_phone = Column(String(50))
-    
+
     referral_reason = Column(Text)
     case_summary = Column(Text)
     estimated_value = Column(Float)
-    
+
     status = Column(String(50), default='pending')
-    
+
     referred_at = Column(DateTime)
     attorney_response_at = Column(DateTime)
     attorney_accepted = Column(Boolean)
-    
+
     fee_arrangement = Column(String(100))
     referral_fee_percent = Column(Float)
-    
+
     outcome = Column(Text)
     settlement_amount = Column(Float)
     referral_fee_received = Column(Float)
-    
+
     notes = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1586,34 +1586,34 @@ class AttorneyReferral(Base):
 class LimitedPOA(Base):
     """Track Limited Power of Attorney documents for clients"""
     __tablename__ = 'limited_poa'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     poa_type = Column(String(100), default='credit_dispute')
-    
+
     document_path = Column(String(500))
-    
+
     signed = Column(Boolean, default=False)
     signed_at = Column(DateTime)
     signature_method = Column(String(50))
-    
+
     notarized = Column(Boolean, default=False)
     notarized_at = Column(DateTime)
     notarization_order_id = Column(Integer, ForeignKey('notarization_orders.id'), nullable=True)
     notarized_document_path = Column(String(500))
-    
+
     effective_date = Column(Date)
     expiration_date = Column(Date)
-    
+
     scope = Column(JSON)
-    
+
     revoked = Column(Boolean, default=False)
     revoked_at = Column(DateTime)
     revocation_reason = Column(Text)
-    
+
     status = Column(String(50), default='draft')
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1621,34 +1621,34 @@ class LimitedPOA(Base):
 class Metro2DisputeLog(Base):
     """Track Metro2 format violations detected during analysis"""
     __tablename__ = 'metro2_dispute_logs'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
-    
+
     tradeline_identifier = Column(String(255))
     creditor_name = Column(String(255))
     account_number_masked = Column(String(50))
-    
+
     violation_type = Column(String(100))
     violation_description = Column(Text)
     fcra_section = Column(String(50))
     severity = Column(String(20))
-    
+
     evidence = Column(JSON)
     dispute_language = Column(Text)
-    
+
     damage_estimate_low = Column(Integer, default=0)
     damage_estimate_high = Column(Integer, default=0)
-    
+
     disputed = Column(Boolean, default=False)
     disputed_at = Column(DateTime)
     dispute_round = Column(Integer)
-    
+
     resolved = Column(Boolean, default=False)
     resolved_at = Column(DateTime)
     resolution_type = Column(String(100))
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1656,41 +1656,41 @@ class Metro2DisputeLog(Base):
 class CRAResponseOCR(Base):
     """Store OCR extraction results from CRA response documents"""
     __tablename__ = 'cra_response_ocr'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
     upload_id = Column(Integer, ForeignKey('client_uploads.id'), nullable=True)
-    
+
     bureau = Column(String(50))
     document_type = Column(String(100))
-    
+
     document_date = Column(Date)
     response_date = Column(Date)
-    
+
     raw_text = Column(Text)
     structured_data = Column(JSON)
-    
+
     items_verified = Column(JSON)
     items_deleted = Column(JSON)
     items_updated = Column(JSON)
     items_reinvestigated = Column(JSON)
-    
+
     new_violations_detected = Column(JSON)
-    
+
     reinvestigation_complete = Column(Boolean, default=False)
     frivolous_claim = Column(Boolean, default=False)
-    
+
     ocr_confidence = Column(Float)
     extraction_method = Column(String(50), default='claude_vision')
-    
+
     processed_at = Column(DateTime, default=datetime.utcnow)
     reviewed = Column(Boolean, default=False)
     reviewed_by = Column(String(100))
     reviewed_at = Column(DateTime)
-    
+
     notes = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1698,31 +1698,31 @@ class CRAResponseOCR(Base):
 class ESignatureRequest(Base):
     """Track e-signature requests for client agreements"""
     __tablename__ = 'esignature_requests'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     provider = Column(String(50))
     external_request_id = Column(String(255))
-    
+
     document_type = Column(String(100))
     document_name = Column(String(255))
     document_path = Column(String(500))
-    
+
     signer_email = Column(String(255))
     signer_name = Column(String(255))
-    
+
     signing_link = Column(String(500))
-    
+
     status = Column(String(50), default='pending')
-    
+
     signed_at = Column(DateTime)
     signed_document_path = Column(String(500))
-    
+
     expires_at = Column(DateTime)
-    
+
     webhook_data = Column(JSON)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1808,29 +1808,29 @@ class CROAProgress(Base):
 class CaseTriage(Base):
     """AI-powered case triage for priority scoring and queue assignment"""
     __tablename__ = 'case_triage'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
-    
+
     priority_score = Column(Integer, default=3)
     estimated_value = Column(Float, default=0)
     complexity_level = Column(String(50), default='moderate')
     recommended_queue = Column(String(50), default='standard')
-    
+
     key_violations = Column(JSON)
     risk_factors = Column(JSON)
     strengths = Column(JSON)
-    
+
     triage_summary = Column(Text)
     ai_confidence = Column(Float, default=0.5)
-    
+
     reviewed = Column(Boolean, default=False)
     reviewed_by = Column(String(100))
     reviewed_at = Column(DateTime)
     final_priority = Column(Integer)
     notes = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1838,34 +1838,34 @@ class CaseTriage(Base):
 class CreditScoreSnapshot(Base):
     """Track credit scores over time for improvement analytics"""
     __tablename__ = 'credit_score_snapshots'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     equifax_score = Column(Integer)
     experian_score = Column(Integer)
     transunion_score = Column(Integer)
     average_score = Column(Integer)
-    
+
     equifax_negatives = Column(Integer, default=0)
     experian_negatives = Column(Integer, default=0)
     transunion_negatives = Column(Integer, default=0)
     total_negatives = Column(Integer, default=0)
-    
+
     equifax_removed = Column(Integer, default=0)
     experian_removed = Column(Integer, default=0)
     transunion_removed = Column(Integer, default=0)
     total_removed = Column(Integer, default=0)
-    
+
     milestone = Column(String(100))
     dispute_round = Column(Integer, default=0)
-    
+
     snapshot_type = Column(String(50), default='manual')
-    
+
     notes = Column(Text)
-    
+
     source = Column(String(100))
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1873,21 +1873,21 @@ class CreditScoreSnapshot(Base):
 class CreditScoreProjection(Base):
     """Store projected score improvements based on negative removal"""
     __tablename__ = 'credit_score_projections'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    
+
     current_average = Column(Integer)
     projected_score = Column(Integer)
     potential_gain = Column(Integer)
-    
+
     negatives_to_remove = Column(Integer)
     estimated_points_per_negative = Column(Integer, default=15)
-    
+
     confidence_level = Column(String(20), default='medium')
-    
+
     projection_details = Column(JSON)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1953,30 +1953,30 @@ class ScoreScenario(Base):
 class CFPBComplaint(Base):
     """Track CFPB complaints filed against CRAs and furnishers"""
     __tablename__ = 'cfpb_complaints'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
-    
+
     target_company = Column(String(255), nullable=False)
     target_type = Column(String(50), nullable=False)
-    
+
     product_type = Column(String(100), nullable=False)
     issue_type = Column(String(100), nullable=False)
     sub_issue_type = Column(String(100))
-    
+
     narrative = Column(Text)
     desired_resolution = Column(Text)
-    
+
     status = Column(String(50), default='draft')
     cfpb_complaint_id = Column(String(100))
-    
+
     submitted_at = Column(DateTime)
     response_received_at = Column(DateTime)
     company_response = Column(Text)
-    
+
     file_path = Column(String(500))
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1984,7 +1984,7 @@ class CFPBComplaint(Base):
 class Furnisher(Base):
     """Track creditors/furnishers that report to credit bureaus for strategic intelligence"""
     __tablename__ = 'furnishers'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), unique=True, nullable=False, index=True)
     alternate_names = Column(JSON)
@@ -1997,84 +1997,84 @@ class Furnisher(Base):
     website = Column(String(255))
     dispute_address = Column(Text)
     notes = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     stats = relationship("FurnisherStats", back_populates="furnisher", uselist=False)
 
 
 class FurnisherStats(Base):
     """Track furnisher behavior patterns across disputes"""
     __tablename__ = 'furnisher_stats'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     furnisher_id = Column(Integer, ForeignKey('furnishers.id'), nullable=False, unique=True)
-    
+
     total_disputes = Column(Integer, default=0)
-    
+
     round_1_verified = Column(Integer, default=0)
     round_1_deleted = Column(Integer, default=0)
     round_1_updated = Column(Integer, default=0)
-    
+
     round_2_verified = Column(Integer, default=0)
     round_2_deleted = Column(Integer, default=0)
     round_2_updated = Column(Integer, default=0)
-    
+
     round_3_verified = Column(Integer, default=0)
     round_3_deleted = Column(Integer, default=0)
     round_3_updated = Column(Integer, default=0)
-    
+
     mov_requests_sent = Column(Integer, default=0)
     mov_provided = Column(Integer, default=0)
     mov_failed = Column(Integer, default=0)
-    
+
     avg_response_days = Column(Float, default=0)
-    
+
     settlement_count = Column(Integer, default=0)
     settlement_total = Column(Float, default=0)
     settlement_avg = Column(Float, default=0)
-    
+
     violation_count = Column(Integer, default=0)
     reinsertion_count = Column(Integer, default=0)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     furnisher = relationship("Furnisher", back_populates="stats")
 
 
 class EscalationRecommendation(Base):
     """AI-powered escalation recommendations for dispute strategy"""
     __tablename__ = 'escalation_recommendations'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
-    
+
     dispute_round = Column(Integer, default=1)
     bureau = Column(String(50))
     creditor_name = Column(String(255))
     current_status = Column(String(50))
-    
+
     recommended_action = Column(String(100), nullable=False)
     confidence_score = Column(Float, default=0.5)
     reasoning = Column(Text)
-    
+
     supporting_factors = Column(JSON)
     alternative_actions = Column(JSON)
-    
+
     expected_outcome = Column(String(100))
     success_probability = Column(Float, default=0.5)
-    
+
     applied = Column(Boolean, default=False)
     applied_at = Column(DateTime)
     outcome_actual = Column(String(100))
     outcome_recorded_at = Column(DateTime)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2103,7 +2103,7 @@ class EscalationRecommendation(Base):
 class CaseLawCitation(Base):
     """FCRA case law citations for legal reference and letter insertion"""
     __tablename__ = 'case_law_citations'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     case_name = Column(String(500), nullable=False, index=True)
     citation = Column(String(255), nullable=False)
@@ -2119,10 +2119,10 @@ class CaseLawCitation(Base):
     relevance_score = Column(Integer, default=3)
     tags = Column(JSON)
     notes = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2143,7 +2143,7 @@ class CaseLawCitation(Base):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
-    
+
     def format_citation(self, format_type='short'):
         """Format citation for letter insertion"""
         if format_type == 'short':
@@ -2162,7 +2162,7 @@ class CaseLawCitation(Base):
 class IntegrationConnection(Base):
     """Store API credentials and connection status for external services"""
     __tablename__ = 'integration_connections'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     service_name = Column(String(100), unique=True, nullable=False, index=True)
     display_name = Column(String(255))
@@ -2176,7 +2176,7 @@ class IntegrationConnection(Base):
     last_error = Column(Text)
     connection_status = Column(String(50), default='not_configured')
     config_json = Column(JSON)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -2184,7 +2184,7 @@ class IntegrationConnection(Base):
 class IntegrationEvent(Base):
     """Audit logging for all integration actions"""
     __tablename__ = 'integration_events'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     integration_id = Column(Integer, ForeignKey('integration_connections.id'), nullable=False)
     event_type = Column(String(100))
@@ -2194,14 +2194,14 @@ class IntegrationEvent(Base):
     response_status = Column(Integer)
     error_message = Column(Text)
     cost_cents = Column(Integer, default=0)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class CertifiedMailingRecord(Base):
     """Track SendCertified mailings"""
     __tablename__ = 'certified_mailing_records'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     dispute_id = Column(Integer, ForeignKey('dispute_letters.id'), nullable=True)
@@ -2218,7 +2218,7 @@ class CertifiedMailingRecord(Base):
     return_receipt_path = Column(String(500))
     signature_name = Column(String(255))
     tracking_history = Column(JSON)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -2226,7 +2226,7 @@ class CertifiedMailingRecord(Base):
 class NotarizeTransaction(Base):
     """Track Notarize.com transactions"""
     __tablename__ = 'notarize_transactions'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     document_id = Column(Integer, ForeignKey('client_documents.id'), nullable=True)
@@ -2243,7 +2243,7 @@ class NotarizeTransaction(Base):
     expires_at = Column(DateTime)
     cost_cents = Column(Integer, default=0)
     webhook_events = Column(JSON)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -2251,7 +2251,7 @@ class NotarizeTransaction(Base):
 class CreditPullRequest(Base):
     """Track credit report pull requests"""
     __tablename__ = 'credit_pull_requests'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     provider = Column(String(100))
@@ -2267,7 +2267,7 @@ class CreditPullRequest(Base):
     cost_cents = Column(Integer, default=0)
     pulled_at = Column(DateTime)
     error_message = Column(Text)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -2290,7 +2290,7 @@ CREDIT_MONITORING_SERVICES = [
 class CreditMonitoringCredential(Base):
     """Store encrypted credentials for credit monitoring service auto-import"""
     __tablename__ = 'credit_monitoring_credentials'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
     service_name = Column(String(100), nullable=False)
@@ -2304,12 +2304,12 @@ class CreditMonitoringCredential(Base):
     last_report_path = Column(Text, nullable=True)  # Path to last imported report
     import_frequency = Column(String(50), default='manual')
     next_scheduled_import = Column(DateTime, nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     client = relationship('Client', backref='credit_monitoring_credentials')
-    
+
     def to_dict(self):
         """Return dictionary representation (excluding sensitive data)"""
         return {
@@ -2401,7 +2401,7 @@ class CreditPullLog(Base):
 class BillingPlan(Base):
     """Define subscription plans"""
     __tablename__ = 'billing_plans'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100))
     display_name = Column(String(255))
@@ -2412,7 +2412,7 @@ class BillingPlan(Base):
     features = Column(JSON)
     is_active = Column(Boolean, default=True)
     sort_order = Column(Integer, default=0)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -2420,7 +2420,7 @@ class BillingPlan(Base):
 class ClientSubscription(Base):
     """Track client billing subscriptions"""
     __tablename__ = 'client_subscriptions'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), unique=True, nullable=False)
     plan_id = Column(Integer, ForeignKey('billing_plans.id'), nullable=True)
@@ -2433,7 +2433,7 @@ class ClientSubscription(Base):
     canceled_at = Column(DateTime, nullable=True)
     amount_paid_cents = Column(Integer, default=0)
     next_payment_date = Column(DateTime)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -2441,7 +2441,7 @@ class ClientSubscription(Base):
 class BackgroundTask(Base):
     """Background task queue for async job processing"""
     __tablename__ = 'background_tasks'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     task_type = Column(String(100), nullable=False, index=True)
     payload = Column(JSON)
@@ -2456,10 +2456,10 @@ class BackgroundTask(Base):
     max_retries = Column(Integer, default=3)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
     created_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2484,7 +2484,7 @@ class BackgroundTask(Base):
 class ScheduledJob(Base):
     """Scheduled jobs with cron expressions for recurring tasks"""
     __tablename__ = 'scheduled_jobs'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, unique=True)
     task_type = Column(String(100), nullable=False)
@@ -2497,10 +2497,10 @@ class ScheduledJob(Base):
     last_status = Column(String(50), nullable=True)
     last_error = Column(Text, nullable=True)
     created_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2523,7 +2523,7 @@ class ScheduledJob(Base):
 class CaseOutcome(Base):
     """ML Learning - Track completed case outcomes for prediction training"""
     __tablename__ = 'case_outcomes'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
     case_type = Column(String(100), index=True)
@@ -2541,10 +2541,10 @@ class CaseOutcome(Base):
     violation_count = Column(Integer, default=0)
     willfulness_score = Column(Float, default=0)
     documentation_quality = Column(Float, default=0)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2572,7 +2572,7 @@ class CaseOutcome(Base):
 class OutcomePrediction(Base):
     """ML Learning - Store predictions and compare with actual outcomes"""
     __tablename__ = 'outcome_predictions'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
     prediction_type = Column(String(100), nullable=False, index=True)
@@ -2583,10 +2583,10 @@ class OutcomePrediction(Base):
     prediction_error = Column(Float, nullable=True)
     model_version = Column(String(50), default='v1.0')
     was_accurate = Column(Boolean, nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     resolved_at = Column(DateTime, nullable=True)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2607,7 +2607,7 @@ class OutcomePrediction(Base):
 class FurnisherPattern(Base):
     """ML Learning - Track furnisher behavior patterns for strategic insights"""
     __tablename__ = 'furnisher_patterns'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     furnisher_id = Column(Integer, ForeignKey('furnishers.id'), nullable=True, index=True)
     furnisher_name = Column(String(255), index=True)
@@ -2617,10 +2617,10 @@ class FurnisherPattern(Base):
     confidence = Column(Float, default=0.5)
     insight_text = Column(Text)
     actionable_recommendation = Column(Text)
-    
+
     last_updated = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2640,7 +2640,7 @@ class FurnisherPattern(Base):
 class RevenueForecast(Base):
     """Revenue forecasting for predictive analytics"""
     __tablename__ = 'revenue_forecasts'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     forecast_date = Column(Date, nullable=False, index=True)
     forecast_period = Column(String(50), nullable=False)
@@ -2650,9 +2650,9 @@ class RevenueForecast(Base):
     confidence_interval_low = Column(Float, default=0)
     confidence_interval_high = Column(Float, default=0)
     factors = Column(JSON)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2671,7 +2671,7 @@ class RevenueForecast(Base):
 class ClientLifetimeValue(Base):
     """Client lifetime value estimation for predictive analytics"""
     __tablename__ = 'client_lifetime_values'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
     ltv_estimate = Column(Float, default=0)
@@ -2681,9 +2681,9 @@ class ClientLifetimeValue(Base):
     acquisition_cost = Column(Float, default=0)
     churn_risk = Column(Float, default=0.5)
     risk_factors = Column(JSON)
-    
+
     calculated_at = Column(DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2702,7 +2702,7 @@ class ClientLifetimeValue(Base):
 class AttorneyPerformance(Base):
     """Attorney/staff performance metrics for predictive analytics"""
     __tablename__ = 'attorney_performance'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     staff_user_id = Column(Integer, ForeignKey('staff.id'), nullable=False, index=True)
     period_start = Column(Date, nullable=False)
@@ -2718,9 +2718,9 @@ class AttorneyPerformance(Base):
     client_satisfaction = Column(Float, default=0)
     efficiency_score = Column(Float, default=0)
     strengths = Column(JSON)
-    
+
     calculated_at = Column(DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2745,7 +2745,7 @@ class AttorneyPerformance(Base):
 class WorkflowTrigger(Base):
     """Automated workflow triggers for case events"""
     __tablename__ = 'workflow_triggers'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     description = Column(Text)
@@ -2759,7 +2759,7 @@ class WorkflowTrigger(Base):
     created_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2781,7 +2781,7 @@ class WorkflowTrigger(Base):
 class WorkflowExecution(Base):
     """Execution history for workflow triggers"""
     __tablename__ = 'workflow_executions'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     trigger_id = Column(Integer, ForeignKey('workflow_triggers.id'), nullable=False, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=True, index=True)
@@ -2791,7 +2791,7 @@ class WorkflowExecution(Base):
     error_message = Column(Text)
     execution_time_ms = Column(Integer)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2809,36 +2809,36 @@ class WorkflowExecution(Base):
 class WhiteLabelTenant(Base):
     """White-label tenant for partner law firms"""
     __tablename__ = 'white_label_tenants'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     slug = Column(String(100), unique=True, nullable=False, index=True)
     domain = Column(String(255), unique=True, nullable=True, index=True)
-    
+
     logo_url = Column(String(500))
     favicon_url = Column(String(500))
     primary_color = Column(String(7), default='#319795')
     secondary_color = Column(String(7), default='#1a1a2e')
     accent_color = Column(String(7), default='#84cc16')
-    
+
     company_name = Column(String(255))
     company_address = Column(Text)
     company_phone = Column(String(50))
     company_email = Column(String(255))
     support_email = Column(String(255))
-    
+
     terms_url = Column(String(500))
     privacy_url = Column(String(500))
-    
+
     custom_css = Column(Text)
     custom_js = Column(Text)
-    
+
     is_active = Column(Boolean, default=True, index=True)
     subscription_tier = Column(String(50), default='basic')
     max_users = Column(Integer, default=5)
     max_clients = Column(Integer, default=100)
     features_enabled = Column(JSON, default=dict)
-    
+
     api_key = Column(String(100), unique=True, index=True)
     webhook_url = Column(String(500))
 
@@ -2861,7 +2861,7 @@ class WhiteLabelTenant(Base):
 
     users = relationship("TenantUser", back_populates="tenant", cascade="all, delete-orphan")
     clients = relationship("TenantClient", back_populates="tenant", cascade="all, delete-orphan")
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2894,7 +2894,7 @@ class WhiteLabelTenant(Base):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
-    
+
     def get_branding_config(self):
         """Return CSS variables and branding configuration"""
         return {
@@ -2918,17 +2918,17 @@ class WhiteLabelTenant(Base):
 class TenantUser(Base):
     """Staff/user assignment to a tenant"""
     __tablename__ = 'tenant_users'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey('white_label_tenants.id', ondelete='CASCADE'), nullable=False, index=True)
     staff_id = Column(Integer, ForeignKey('staff.id', ondelete='CASCADE'), nullable=False, index=True)
     role = Column(String(50), default='user')
     is_primary_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     tenant = relationship("WhiteLabelTenant", back_populates="users")
     staff = relationship("Staff")
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -2949,15 +2949,15 @@ class TenantUser(Base):
 class TenantClient(Base):
     """Client assignment to a tenant"""
     __tablename__ = 'tenant_clients'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey('white_label_tenants.id', ondelete='CASCADE'), nullable=False, index=True)
     client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     tenant = relationship("WhiteLabelTenant", back_populates="clients")
     client = relationship("Client")
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3017,13 +3017,13 @@ FRANCHISE_MEMBER_ROLES = {
 class FranchiseOrganization(Base):
     """Franchise organization for multi-office law firm management"""
     __tablename__ = 'franchise_organizations'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     slug = Column(String(100), unique=True, nullable=False, index=True)
     parent_org_id = Column(Integer, ForeignKey('franchise_organizations.id'), nullable=True, index=True)
     org_type = Column(String(50), default='branch', index=True)
-    
+
     address = Column(String(500))
     city = Column(String(100))
     state = Column(String(50))
@@ -3031,26 +3031,26 @@ class FranchiseOrganization(Base):
     phone = Column(String(50))
     email = Column(String(255))
     contact_name = Column(String(255))
-    
+
     license_number = Column(String(100))
     max_users = Column(Integer, default=10)
     max_clients = Column(Integer, default=100)
     subscription_tier = Column(String(50), default='basic')
     billing_contact_email = Column(String(255))
-    
+
     manager_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
     is_active = Column(Boolean, default=True, index=True)
     settings = Column(JSON, default=dict)
     revenue_share_percent = Column(Float, default=0.0)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     parent = relationship("FranchiseOrganization", remote_side=[id], backref="children")
     manager = relationship("Staff", foreign_keys=[manager_staff_id])
     members = relationship("OrganizationMembership", back_populates="organization", cascade="all, delete-orphan")
     clients = relationship("OrganizationClient", back_populates="organization", cascade="all, delete-orphan")
-    
+
     def to_dict(self, include_children=False):
         result = {
             'id': self.id,
@@ -3083,7 +3083,7 @@ class FranchiseOrganization(Base):
         if include_children and self.children:
             result['children'] = [child.to_dict(include_children=True) for child in self.children]
         return result
-    
+
     def get_full_hierarchy_path(self):
         """Get full path from root to this organization"""
         path = [self]
@@ -3097,7 +3097,7 @@ class FranchiseOrganization(Base):
 class OrganizationMembership(Base):
     """Staff membership in a franchise organization"""
     __tablename__ = 'organization_memberships'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey('franchise_organizations.id', ondelete='CASCADE'), nullable=False, index=True)
     staff_id = Column(Integer, ForeignKey('staff.id', ondelete='CASCADE'), nullable=False, index=True)
@@ -3105,10 +3105,10 @@ class OrganizationMembership(Base):
     permissions = Column(JSON, default=list)
     is_primary = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     organization = relationship("FranchiseOrganization", back_populates="members")
     staff = relationship("Staff")
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3123,7 +3123,7 @@ class OrganizationMembership(Base):
             'is_primary': self.is_primary,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
-    
+
     def has_permission(self, permission):
         """Check if member has a specific permission"""
         role_config = FRANCHISE_MEMBER_ROLES.get(self.role, {})
@@ -3137,17 +3137,17 @@ class OrganizationMembership(Base):
 class OrganizationClient(Base):
     """Client assignment to a franchise organization"""
     __tablename__ = 'organization_clients'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey('franchise_organizations.id', ondelete='CASCADE'), nullable=False, index=True)
     client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'), nullable=False, index=True)
     assigned_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     organization = relationship("FranchiseOrganization", back_populates="clients")
     client = relationship("Client")
     assigned_by = relationship("Staff")
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3166,7 +3166,7 @@ class OrganizationClient(Base):
 class InterOrgTransfer(Base):
     """Client transfer between franchise organizations"""
     __tablename__ = 'inter_org_transfers'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
     from_org_id = Column(Integer, ForeignKey('franchise_organizations.id'), nullable=False, index=True)
@@ -3178,13 +3178,13 @@ class InterOrgTransfer(Base):
     status = Column(String(50), default='pending', index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime)
-    
+
     client = relationship("Client")
     from_org = relationship("FranchiseOrganization", foreign_keys=[from_org_id])
     to_org = relationship("FranchiseOrganization", foreign_keys=[to_org_id])
     transferred_by = relationship("Staff", foreign_keys=[transferred_by_staff_id])
     approved_by = relationship("Staff", foreign_keys=[approved_by_staff_id])
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3227,45 +3227,45 @@ FONT_FAMILIES = {
 class WhiteLabelConfig(Base):
     """White-label configuration for partner law firms/organizations"""
     __tablename__ = 'white_label_configs'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     organization_id = Column(Integer, ForeignKey('franchise_organizations.id', ondelete='SET NULL'), nullable=True, index=True)
     organization_name = Column(String(255), nullable=False)
-    
+
     subdomain = Column(String(100), unique=True, nullable=False, index=True)
     custom_domain = Column(String(255), unique=True, nullable=True, index=True)
-    
+
     logo_url = Column(String(500))
     favicon_url = Column(String(500))
-    
+
     primary_color = Column(String(7), default='#319795')
     secondary_color = Column(String(7), default='#1a1a2e')
     accent_color = Column(String(7), default='#84cc16')
     header_bg_color = Column(String(7), default='#1a1a2e')
     sidebar_bg_color = Column(String(7), default='#1a1a2e')
-    
+
     font_family = Column(String(50), default='inter')
     custom_css = Column(Text)
-    
+
     email_from_name = Column(String(255))
     email_from_address = Column(String(255))
     email_from_address_encrypted = Column(Text)
-    
+
     company_address = Column(Text)
     company_phone = Column(String(50))
     company_email = Column(String(255))
-    
+
     footer_text = Column(Text)
     terms_url = Column(String(500))
     privacy_url = Column(String(500))
-    
+
     is_active = Column(Boolean, default=True, index=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     organization = relationship("FranchiseOrganization", foreign_keys=[organization_id])
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3294,7 +3294,7 @@ class WhiteLabelConfig(Base):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
-    
+
     def get_branding_dict(self):
         """Return branding configuration for templates"""
         font_css = FONT_FAMILIES.get(self.font_family, FONT_FAMILIES['inter'])
@@ -3339,7 +3339,7 @@ API_SCOPES = {
 class APIKey(Base):
     """API keys for third-party integrations"""
     __tablename__ = 'api_keys'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     key_hash = Column(String(255), nullable=False, index=True)
@@ -3357,11 +3357,11 @@ class APIKey(Base):
     expires_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     tenant = relationship("WhiteLabelTenant")
     staff = relationship("Staff")
     requests = relationship("APIRequest", back_populates="api_key", cascade="all, delete-orphan")
-    
+
     def to_dict(self, include_prefix=True):
         return {
             'id': self.id,
@@ -3383,7 +3383,7 @@ class APIKey(Base):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
-    
+
     def has_scope(self, scope):
         """Check if API key has a specific scope"""
         if not self.scopes:
@@ -3391,7 +3391,7 @@ class APIKey(Base):
         if '*' in self.scopes:
             return True
         return scope in self.scopes
-    
+
     def has_any_scope(self, scopes):
         """Check if API key has any of the given scopes"""
         return any(self.has_scope(s) for s in scopes)
@@ -3400,7 +3400,7 @@ class APIKey(Base):
 class APIRequest(Base):
     """Log of API requests for analytics and rate limiting"""
     __tablename__ = 'api_requests'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     api_key_id = Column(Integer, ForeignKey('api_keys.id', ondelete='CASCADE'), nullable=False, index=True)
     endpoint = Column(String(500), nullable=False, index=True)
@@ -3412,9 +3412,9 @@ class APIRequest(Base):
     response_time_ms = Column(Integer)
     error_message = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    
+
     api_key = relationship("APIKey", back_populates="requests")
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3432,7 +3432,7 @@ class APIRequest(Base):
 class APIWebhook(Base):
     """Webhooks for event notifications"""
     __tablename__ = 'api_webhooks'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey('white_label_tenants.id', ondelete='SET NULL'), nullable=True, index=True)
     name = Column(String(255), nullable=False)
@@ -3444,9 +3444,9 @@ class APIWebhook(Base):
     failure_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     tenant = relationship("WhiteLabelTenant")
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3500,49 +3500,49 @@ AUDIT_SEVERITY_LEVELS = ['info', 'warning', 'critical']
 class AuditLog(Base):
     """Comprehensive audit log for SOC 2 and HIPAA compliance"""
     __tablename__ = 'audit_logs'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    
+
     event_type = Column(String(50), nullable=False, index=True)
     resource_type = Column(String(50), nullable=False, index=True)
     resource_id = Column(String(100), index=True)
-    
+
     user_id = Column(Integer, index=True)
     user_type = Column(String(20), nullable=False, index=True)
     user_email = Column(String(255))
     user_name = Column(String(255))
-    
+
     user_ip = Column(String(45), index=True)
     user_agent = Column(Text)
-    
+
     action = Column(String(255), nullable=False)
     details = Column(JSON)
-    
+
     old_values = Column(JSON)
     new_values = Column(JSON)
-    
+
     severity = Column(String(20), default='info', index=True)
-    
+
     session_id = Column(String(100), index=True)
     request_id = Column(String(100), index=True)
-    
+
     duration_ms = Column(Integer)
-    
+
     endpoint = Column(String(500))
     http_method = Column(String(10))
     http_status = Column(Integer)
-    
+
     organization_id = Column(Integer, index=True)
     tenant_id = Column(Integer, index=True)
-    
+
     is_phi_access = Column(Boolean, default=False, index=True)
     phi_fields_accessed = Column(JSON)
-    
+
     compliance_flags = Column(JSON)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3574,13 +3574,13 @@ class AuditLog(Base):
             'compliance_flags': self.compliance_flags,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
-    
+
     @classmethod
     def get_severity_for_event(cls, event_type):
         """Determine severity level based on event type"""
         critical_events = ['login_failed', 'permission_change', 'password_reset', 'settings_change', 'delete']
         warning_events = ['export', 'phi_access', 'credit_report_access', 'password_change']
-        
+
         if event_type in critical_events:
             return 'critical'
         elif event_type in warning_events:
@@ -3613,28 +3613,28 @@ SUBSCRIPTION_TIERS = {
 class PerformanceMetric(Base):
     """Track aggregated performance metrics per endpoint"""
     __tablename__ = 'performance_metrics'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     endpoint = Column(String(500), nullable=False, index=True)
     method = Column(String(10), nullable=False)
-    
+
     avg_response_time_ms = Column(Float, default=0)
     p50_time = Column(Float, default=0)
     p95_time = Column(Float, default=0)
     p99_time = Column(Float, default=0)
     min_response_time_ms = Column(Float, default=0)
     max_response_time_ms = Column(Float, default=0)
-    
+
     request_count = Column(Integer, default=0)
     error_count = Column(Integer, default=0)
     cache_hit_count = Column(Integer, default=0)
     cache_hit_rate = Column(Float, default=0)
-    
+
     period_start = Column(DateTime, nullable=False, index=True)
     period_end = Column(DateTime, nullable=False)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3659,17 +3659,17 @@ class PerformanceMetric(Base):
 class CacheEntry(Base):
     """Track persistent cache entries for analysis"""
     __tablename__ = 'cache_entries'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     cache_key = Column(String(255), nullable=False, unique=True, index=True)
     cache_value = Column(JSON)
-    
+
     ttl_seconds = Column(Integer, default=300)
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, index=True)
     last_accessed = Column(DateTime)
     hit_count = Column(Integer, default=0)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3681,7 +3681,7 @@ class CacheEntry(Base):
             'hit_count': self.hit_count,
             'is_expired': self.expires_at and datetime.utcnow() > self.expires_at if self.expires_at else False
         }
-    
+
     @property
     def is_expired(self):
         if not self.expires_at:
@@ -3692,7 +3692,7 @@ class CacheEntry(Base):
 class KnowledgeContent(Base):
     """Training content from Credit Repair and Metro 2® courses"""
     __tablename__ = 'knowledge_content'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     course = Column(String(100), nullable=False, index=True)
     section_number = Column(Integer, nullable=False)
@@ -3710,7 +3710,7 @@ class KnowledgeContent(Base):
     display_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3732,7 +3732,7 @@ class KnowledgeContent(Base):
 class Metro2Code(Base):
     """Metro 2® code lookup tables for violations and reporting"""
     __tablename__ = 'metro2_codes'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     code_type = Column(String(50), nullable=False, index=True)
     code = Column(String(20), nullable=False, index=True)
@@ -3747,7 +3747,7 @@ class Metro2Code(Base):
     is_derogatory = Column(Boolean, default=False)
     severity_score = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3769,7 +3769,7 @@ class Metro2Code(Base):
 class SOP(Base):
     """Standard Operating Procedures for credit repair workflows"""
     __tablename__ = 'sops'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(500), nullable=False)
     category = Column(String(100), nullable=False, index=True)
@@ -3791,7 +3791,7 @@ class SOP(Base):
     created_by_id = Column(Integer, ForeignKey('staff.id'))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3817,7 +3817,7 @@ class SOP(Base):
 class ChexSystemsDispute(Base):
     """ChexSystems and Early Warning Services dispute tracking"""
     __tablename__ = 'chexsystems_disputes'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
     bureau_type = Column(String(50), nullable=False)
@@ -3840,7 +3840,7 @@ class ChexSystemsDispute(Base):
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3867,7 +3867,7 @@ class ChexSystemsDispute(Base):
 
 SPECIALTY_BUREAUS = [
     'Innovis',
-    'ChexSystems', 
+    'ChexSystems',
     'Clarity Services Inc',
     'LexisNexis',
     'CoreLogic Teletrack',
@@ -3904,7 +3904,7 @@ SPECIALTY_RESPONSE_OUTCOMES = [
 class SpecialtyBureauDispute(Base):
     """Unified dispute tracking for all 9 specialty consumer reporting agencies"""
     __tablename__ = 'specialty_bureau_disputes'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
     bureau_name = Column(String(100), nullable=False, index=True)
@@ -3926,7 +3926,7 @@ class SpecialtyBureauDispute(Base):
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -3960,50 +3960,50 @@ class SpecialtyBureauDispute(Base):
 class FrivolousDefense(Base):
     """Track CRA frivolous claims and defense evidence requirements"""
     __tablename__ = 'frivolous_defenses'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
     cra_response_id = Column(Integer, ForeignKey('cra_responses.id'), nullable=True, index=True)
     dispute_item_id = Column(Integer, ForeignKey('dispute_items.id'), nullable=True, index=True)
-    
+
     # Which bureau made the frivolous claim
     bureau = Column(String(50), nullable=False)  # Equifax, Experian, TransUnion
     dispute_round = Column(Integer, default=1)
-    
+
     # Frivolous claim details
     claim_date = Column(Date)  # When CRA claimed frivolous
     claim_reason = Column(Text)  # CRA's stated reason for frivolous determination
     claim_citation = Column(String(255))  # CRA's legal citation if provided
-    
+
     # Required evidence/theory for re-dispute
     required_evidence = Column(JSON)  # List of evidence types needed
     new_legal_theory = Column(Text)  # New legal theory or argument required
     new_facts_required = Column(Text)  # New factual basis needed
-    
+
     # Status tracking
     status = Column(String(50), default='pending')  # pending, evidence_gathering, ready_to_redispute, redisputed, resolved
     defense_strategy = Column(Text)  # Planned strategy for overcoming frivolous claim
-    
+
     # Evidence collected
     evidence_collected = Column(JSON)  # List of evidence documents collected
     evidence_sufficient = Column(Boolean, default=False)
-    
+
     # Re-dispute tracking
     redispute_date = Column(Date)
     redispute_letter_id = Column(Integer, ForeignKey('dispute_letters.id'), nullable=True)
     redispute_outcome = Column(String(50))  # accepted, rejected, deleted, verified
-    
+
     # Follow-up
     follow_up_due = Column(Date)
     escalation_notes = Column(Text)
-    
+
     # Admin notes
     admin_notes = Column(Text)
     assigned_to_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -4025,21 +4025,21 @@ class FrivolousDefense(Base):
 class FrivolousDefenseEvidence(Base):
     """Evidence documents for frivolous defense cases"""
     __tablename__ = 'frivolous_defense_evidence'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     defense_id = Column(Integer, ForeignKey('frivolous_defenses.id'), nullable=False, index=True)
-    
+
     # Evidence details
     evidence_type = Column(String(100))  # id_document, utility_bill, bank_statement, affidavit, etc.
     file_path = Column(String(500))
     file_name = Column(String(255))
     description = Column(Text)
-    
+
     # Verification
     verified = Column(Boolean, default=False)
     verified_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
     verified_at = Column(DateTime)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -4050,42 +4050,42 @@ class FrivolousDefenseEvidence(Base):
 class MortgagePaymentLedger(Base):
     """Track mortgage payment history for suspense account detection"""
     __tablename__ = 'mortgage_payment_ledgers'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
-    
+
     # Account identification
     creditor_name = Column(String(255), nullable=False)
     account_number_masked = Column(String(100))  # Last 4 digits
     loan_type = Column(String(50))  # conventional, FHA, VA, USDA
-    
+
     # Payment details
     payment_date = Column(Date, nullable=False)
     payment_amount = Column(Float)
     due_date = Column(Date)
-    
+
     # How payment was applied
     applied_to_principal = Column(Float, default=0)
     applied_to_interest = Column(Float, default=0)
     applied_to_escrow = Column(Float, default=0)
     applied_to_fees = Column(Float, default=0)
     held_in_suspense = Column(Float, default=0)
-    
+
     # Suspense flags
     is_suspense = Column(Boolean, default=False)
     suspense_reason = Column(String(255))  # partial_payment, misapplied, escrow_shortage, etc.
     suspense_resolved = Column(Boolean, default=False)
     suspense_resolved_date = Column(Date)
-    
+
     # Reporting impact
     reported_as_late = Column(Boolean, default=False)
     days_late_reported = Column(Integer, default=0)
     actual_days_late = Column(Integer, default=0)  # Calculated based on when full payment received
-    
+
     # Source document
     source_doc_path = Column(String(500))
     source_doc_type = Column(String(50))  # statement, ledger, payment_history
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -4093,50 +4093,50 @@ class MortgagePaymentLedger(Base):
 class SuspenseAccountFinding(Base):
     """Identified suspense account issues that may be FCRA violations"""
     __tablename__ = 'suspense_account_findings'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
     ledger_id = Column(Integer, ForeignKey('mortgage_payment_ledgers.id'), nullable=True)
     violation_id = Column(Integer, ForeignKey('violations.id'), nullable=True)
-    
+
     # Finding details
     creditor_name = Column(String(255))
     account_number_masked = Column(String(100))
-    
+
     # Suspense issue
     finding_type = Column(String(100))  # false_late, misapplied_payment, escrow_mishandling, payment_held
     finding_description = Column(Text)
-    
+
     # Payment analysis
     total_suspense_amount = Column(Float, default=0)
     months_affected = Column(Integer, default=0)
     false_lates_count = Column(Integer, default=0)
-    
+
     # Evidence
     evidence_summary = Column(Text)
     payment_timeline = Column(JSON)  # Timeline of payments and suspense activity
-    
+
     # FCRA violation potential
     is_fcra_violation = Column(Boolean, default=False)
     fcra_section = Column(String(50))  # e.g., 1681e(b), 1681s-2(a)
     violation_description = Column(Text)
     estimated_damages = Column(Float, default=0)
-    
+
     # Status
     status = Column(String(50), default='identified')  # identified, disputed, resolved, litigation
     dispute_sent_date = Column(Date)
     resolution_date = Column(Date)
     resolution_outcome = Column(String(100))
-    
+
     # Remediation
     remediation_requested = Column(Boolean, default=False)
     credit_correction_requested = Column(Boolean, default=False)
     damages_claimed = Column(Float)
-    
+
     admin_notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -4161,47 +4161,47 @@ class SuspenseAccountFinding(Base):
 class ViolationPattern(Base):
     """Track patterns of violations across multiple clients for systemic claims"""
     __tablename__ = 'violation_patterns'
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    
+
     # Pattern identification
     pattern_name = Column(String(255), nullable=False)
     pattern_type = Column(String(100))  # furnisher_practice, cra_procedure, industry_wide
-    
+
     # Target entity
     target_type = Column(String(50))  # furnisher, cra, both
     furnisher_name = Column(String(255), index=True)
     cra_name = Column(String(50), index=True)  # Equifax, Experian, TransUnion
-    
+
     # Violation pattern details
     violation_code = Column(String(50))  # FCRA section
     violation_type = Column(String(255))
     violation_description = Column(Text)
-    
+
     # Pattern metrics
     occurrences_count = Column(Integer, default=0)
     clients_affected = Column(Integer, default=0)
     total_damages_estimate = Column(Float, default=0)
     avg_damages_per_client = Column(Float, default=0)
-    
+
     # Date range
     earliest_occurrence = Column(Date)
     latest_occurrence = Column(Date)
-    
+
     # Evidence packaging
     evidence_packet_path = Column(String(500))  # PDF evidence packet
     evidence_summary = Column(Text)
     evidence_strength = Column(String(50))  # weak, moderate, strong, compelling
-    
+
     # Legal strategy
     recommended_strategy = Column(String(100))  # class_action, individual_suits, regulatory_complaint
     strategy_notes = Column(Text)
     case_law_citations = Column(JSON)  # Relevant case citations
-    
+
     # Status
     status = Column(String(50), default='monitoring')  # monitoring, documenting, ready_for_action, active_litigation
     priority = Column(String(20), default='medium')  # low, medium, high, critical
-    
+
     # Actions taken
     cfpb_complaint_filed = Column(Boolean, default=False)
     cfpb_complaint_date = Column(Date)
@@ -4209,13 +4209,13 @@ class ViolationPattern(Base):
     litigation_filed = Column(Boolean, default=False)
     litigation_date = Column(Date)
     litigation_case_number = Column(String(100))
-    
+
     admin_notes = Column(Text)
     created_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -4239,25 +4239,25 @@ class ViolationPattern(Base):
 class PatternInstance(Base):
     """Link individual violations to pattern groups"""
     __tablename__ = 'pattern_instances'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     pattern_id = Column(Integer, ForeignKey('violation_patterns.id'), nullable=False, index=True)
     violation_id = Column(Integer, ForeignKey('violations.id'), nullable=False, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
-    
+
     # Instance details
     occurrence_date = Column(Date)
     instance_description = Column(Text)
     damages_for_instance = Column(Float, default=0)
-    
+
     # Evidence
     evidence_docs = Column(JSON)  # List of document paths
     evidence_notes = Column(Text)
-    
+
     # Status
     included_in_packet = Column(Boolean, default=False)
     included_date = Column(DateTime)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -6843,7 +6843,7 @@ class ScheduledReport(Base):
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
-    
+
     migrate_columns = [
         ("staff", "id", "SERIAL PRIMARY KEY"),
         ("staff", "email", "VARCHAR(255) UNIQUE NOT NULL"),
@@ -8443,17 +8443,17 @@ def create_performance_indices():
         ("idx_cache_entries_key", "cache_entries", "cache_key"),
         ("idx_cache_entries_expires", "cache_entries", "expires_at"),
     ]
-    
+
     conn = engine.connect()
     try:
         for idx_name, table, column in indices:
             try:
                 check_sql = text(f"""
-                    SELECT 1 FROM pg_indexes 
+                    SELECT 1 FROM pg_indexes
                     WHERE indexname = :idx_name
                 """)
                 result = conn.execute(check_sql, {"idx_name": idx_name}).fetchone()
-                
+
                 if not result:
                     create_sql = text(f"CREATE INDEX {idx_name} ON {table}({column})")
                     conn.execute(create_sql)

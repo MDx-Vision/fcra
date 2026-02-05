@@ -54,7 +54,7 @@ class GracefulShutdownManager:
         name: str,
         handler: Callable[[], None],
         priority: int = 50,
-        timeout: int = 5
+        timeout: int = 5,
     ) -> None:
         """
         Register a cleanup handler to be called during shutdown.
@@ -66,12 +66,14 @@ class GracefulShutdownManager:
             timeout: Max seconds to wait for this handler (default: 5)
         """
         with self._lock:
-            self._handlers.append({
-                "name": name,
-                "handler": handler,
-                "priority": priority,
-                "timeout": timeout,
-            })
+            self._handlers.append(
+                {
+                    "name": name,
+                    "handler": handler,
+                    "priority": priority,
+                    "timeout": timeout,
+                }
+            )
             # Keep handlers sorted by priority
             self._handlers.sort(key=lambda h: h["priority"])
 
@@ -149,7 +151,9 @@ class GracefulShutdownManager:
         if requests_completed:
             self._safe_log("info", "All in-flight requests completed")
         else:
-            self._safe_log("warning", "Proceeding with shutdown despite pending requests")
+            self._safe_log(
+                "warning", "Proceeding with shutdown despite pending requests"
+            )
 
         # Step 2: Execute cleanup handlers in priority order
         self._safe_log("info", f"Executing {len(self._handlers)} cleanup handlers...")
@@ -177,9 +181,13 @@ class GracefulShutdownManager:
                 thread.join(timeout=timeout)
 
                 if thread.is_alive():
-                    self._safe_log("warning", f"Handler '{name}' timed out after {timeout}s")
+                    self._safe_log(
+                        "warning", f"Handler '{name}' timed out after {timeout}s"
+                    )
                 elif result["error"]:
-                    self._safe_log("error", f"Handler '{name}' failed: {result['error']}")
+                    self._safe_log(
+                        "error", f"Handler '{name}' failed: {result['error']}"
+                    )
                 else:
                     self._safe_log("info", f"Handler '{name}' completed successfully")
 
@@ -193,9 +201,7 @@ class GracefulShutdownManager:
         """Install SIGTERM and SIGINT signal handlers."""
         # Only install in main thread
         if threading.current_thread() is not threading.main_thread():
-            self._logger.warning(
-                "Cannot install signal handlers from non-main thread"
-            )
+            self._logger.warning("Cannot install signal handlers from non-main thread")
             return
 
         signal.signal(signal.SIGTERM, self.shutdown)
@@ -229,10 +235,7 @@ def get_shutdown_manager() -> GracefulShutdownManager:
 
 
 def register_shutdown_handler(
-    name: str,
-    handler: Callable[[], None],
-    priority: int = 50,
-    timeout: int = 5
+    name: str, handler: Callable[[], None], priority: int = 50, timeout: int = 5
 ) -> None:
     """Convenience function to register a shutdown handler."""
     get_shutdown_manager().register_handler(name, handler, priority, timeout)
@@ -254,12 +257,12 @@ def init_graceful_shutdown(app=None) -> GracefulShutdownManager:
     try:
         manager.install_signal_handlers()
     except Exception as e:
-        logging.getLogger("shutdown").warning(
-            f"Could not install signal handlers: {e}"
-        )
+        logging.getLogger("shutdown").warning(f"Could not install signal handlers: {e}")
 
     # Register atexit handler as backup
-    atexit.register(lambda: manager.shutdown() if not manager._shutdown_complete else None)
+    atexit.register(
+        lambda: manager.shutdown() if not manager._shutdown_complete else None
+    )
 
     # Register default handlers
     _register_default_handlers()
@@ -281,6 +284,7 @@ def _register_default_handlers() -> None:
     def shutdown_cache():
         try:
             from services.performance_service import app_cache
+
             app_cache.shutdown()
         except Exception:
             pass
@@ -291,12 +295,15 @@ def _register_default_handlers() -> None:
     def close_database():
         try:
             from database import engine
+
             if engine:
                 engine.dispose()
         except Exception:
             pass
 
-    manager.register_handler("database_connections", close_database, priority=30, timeout=10)
+    manager.register_handler(
+        "database_connections", close_database, priority=30, timeout=10
+    )
 
     # Priority 90: Flush all loggers
     def flush_logs():

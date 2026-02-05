@@ -1,10 +1,10 @@
 # FCRA PROMPT 12 V2: INTERNAL ANALYSIS (APPLE-STYLE)
 ## Upload Report → Generate Staff Case Review
 
-**Version:** 2.0  
-**Updated:** December 13, 2025  
-**Use Case:** Quick internal review for case assessment  
-**Output:** 5-6 page HTML internal analysis  
+**Version:** 2.0
+**Updated:** December 13, 2025
+**Use Case:** Quick internal review for case assessment
+**Output:** 5-6 page HTML internal analysis
 **Audience:** Staff only — NOT for client
 
 ---
@@ -53,7 +53,7 @@ CASE NUMBER: [Your case number]
 FCRA INTERNAL ANALYSIS GENERATOR — APPLE-STYLE
 ===========================================================================
 
-Analyze the uploaded credit report and generate INTERNAL staff analysis 
+Analyze the uploaded credit report and generate INTERNAL staff analysis
 using the Apple-style design system below.
 
 **OUTPUT:** One HTML document (5-6 pages) for staff case review.
@@ -76,7 +76,7 @@ DESIGN SYSTEM — APPLE-STYLE (INTERNAL)
   --text-secondary: #4a5568;
   --bg-cream: #faf9f7;
   --bg-white: #ffffff;
-  
+
   /* Staff-specific colors */
   --staff-red: #dc2626;
   --proceed-green: #059669;
@@ -112,9 +112,9 @@ Generate this complete HTML document:
       --bg-white: #ffffff;
       --border-subtle: #e8e6e3;
     }
-    
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
       font-family: 'DM Sans', -apple-system, sans-serif;
       font-size: 14px;
@@ -122,14 +122,14 @@ Generate this complete HTML document:
       color: var(--text-primary);
       background: var(--bg-cream);
     }
-    
+
     .page {
       max-width: 8.5in;
       margin: 20px auto;
       background: var(--bg-white);
       box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
-    
+
     /* ========================================
        HEADER
        ======================================== */
@@ -140,13 +140,13 @@ Generate this complete HTML document:
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .brand {
       display: flex;
       align-items: center;
       gap: 15px;
     }
-    
+
     .brand-name {
       font-family: 'DM Sans', sans-serif;
       font-size: 16px;
@@ -155,13 +155,13 @@ Generate this complete HTML document:
       letter-spacing: 2px;
       text-transform: uppercase;
     }
-    
+
     .doc-type {
       font-family: 'Playfair Display', serif;
       font-size: 13px;
       color: rgba(255,255,255,0.6);
     }
-    
+
     .staff-badge {
       background: #dc2626;
       color: white;
@@ -172,7 +172,7 @@ Generate this complete HTML document:
       text-transform: uppercase;
       border-radius: 3px;
     }
-    
+
     /* ========================================
        CLIENT INFO BAR
        ======================================== */
@@ -184,7 +184,7 @@ Generate this complete HTML document:
       grid-template-columns: repeat(4, 1fr);
       gap: 20px;
     }
-    
+
     .info-item label {
       font-size: 9px;
       font-weight: 600;
@@ -192,14 +192,14 @@ Generate this complete HTML document:
       letter-spacing: 0.5px;
       color: var(--text-muted);
     }
-    
+
     .info-item p {
       font-size: 13px;
       font-weight: 600;
       color: var(--text-primary);
       margin-top: 2px;
     }
-    
+
     /* ========================================
        EXECUTIVE SUMMARY BOX
        ======================================== */
@@ -209,7 +209,7 @@ Generate this complete HTML document:
       border-radius: 8px;
       padding: 25px;
     }
-    
+
     .exec-title {
       font-family: 'Playfair Display', serif;
       font-size: 14px;
@@ -217,20 +217,20 @@ Generate this complete HTML document:
       margin-bottom: 20px;
       text-align: center;
     }
-    
+
     .exec-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 15px;
     }
-    
+
     .exec-item {
       text-align: center;
       padding: 12px;
       background: rgba(255,255,255,0.05);
       border-radius: 6px;
     }
-    
+
     .exec-label {
       font-size: 9px;
       text-transform: uppercase;
@@ -238,14 +238,14 @@ Generate this complete HTML document:
       color: var(--brand-teal);
       margin-bottom: 6px;
     }
-    
+
     .exec-value {
       font-family: 'Playfair Display', serif;
       font-size: 24px;
       font-weight: 700;
       color: white;
     }
-    
+
     /* ========================================
        DECISION BOX
        ======================================== */
@@ -257,47 +257,47 @@ Generate this complete HTML document:
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .decision-box.proceed {
       background: linear-gradient(135deg, #059669 0%, #10b981 100%);
     }
-    
+
     .decision-box.caution {
       background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
     }
-    
+
     .decision-box.reject {
       background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
     }
-    
+
     .decision-text {
       font-family: 'Playfair Display', serif;
       font-size: 22px;
       font-weight: 700;
       color: white;
     }
-    
+
     .decision-sub {
       font-size: 12px;
       color: rgba(255,255,255,0.8);
       margin-top: 4px;
     }
-    
+
     .decision-right {
       text-align: right;
       color: white;
     }
-    
+
     .decision-prob-label {
       font-size: 11px;
       opacity: 0.8;
     }
-    
+
     .decision-prob-value {
       font-size: 24px;
       font-weight: 700;
     }
-    
+
     /* ========================================
        QUICK STATS ROW
        ======================================== */
@@ -307,21 +307,21 @@ Generate this complete HTML document:
       gap: 12px;
       margin: 0 40px 25px;
     }
-    
+
     .quick-stat {
       background: var(--bg-cream);
       padding: 15px;
       border-radius: 6px;
       text-align: center;
     }
-    
+
     .quick-stat-value {
       font-family: 'Playfair Display', serif;
       font-size: 22px;
       font-weight: 700;
       color: var(--brand-teal);
     }
-    
+
     .quick-stat-label {
       font-size: 9px;
       font-weight: 600;
@@ -330,18 +330,18 @@ Generate this complete HTML document:
       color: var(--text-muted);
       margin-top: 4px;
     }
-    
+
     /* ========================================
        CONTENT
        ======================================== */
     .content {
       padding: 0 40px 40px;
     }
-    
+
     .section {
       margin-bottom: 30px;
     }
-    
+
     .section-header {
       display: flex;
       align-items: center;
@@ -350,7 +350,7 @@ Generate this complete HTML document:
       padding-bottom: 10px;
       border-bottom: 2px solid var(--brand-teal);
     }
-    
+
     .section-number {
       width: 26px;
       height: 26px;
@@ -363,14 +363,14 @@ Generate this complete HTML document:
       font-size: 12px;
       font-weight: 700;
     }
-    
+
     .section-title {
       font-family: 'Playfair Display', serif;
       font-size: 17px;
       font-weight: 600;
       color: var(--brand-navy);
     }
-    
+
     /* ========================================
        TABLES
        ======================================== */
@@ -380,7 +380,7 @@ Generate this complete HTML document:
       font-size: 12px;
       margin: 15px 0;
     }
-    
+
     th {
       background: var(--brand-navy);
       color: white;
@@ -391,17 +391,17 @@ Generate this complete HTML document:
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    
+
     th:first-child { border-radius: 5px 0 0 0; }
     th:last-child { border-radius: 0 5px 0 0; }
-    
+
     td {
       padding: 10px 12px;
       border-bottom: 1px solid var(--border-subtle);
     }
-    
+
     tr:hover { background: var(--bg-cream); }
-    
+
     /* ========================================
        BADGES
        ======================================== */
@@ -413,7 +413,7 @@ Generate this complete HTML document:
       font-weight: 600;
       text-transform: uppercase;
     }
-    
+
     .badge-critical { background: #fef2f2; color: #dc2626; }
     .badge-high { background: #fff7ed; color: #ea580c; }
     .badge-medium { background: #fefce8; color: #ca8a04; }
@@ -421,11 +421,11 @@ Generate this complete HTML document:
     .badge-confirmed { background: #f0fdf4; color: #16a34a; }
     .badge-conditional { background: #fefce8; color: #ca8a04; }
     .badge-missing { background: #fef2f2; color: #dc2626; }
-    
+
     .badge-tier1 { background: #dc2626; color: white; }
     .badge-tier2 { background: #f59e0b; color: white; }
     .badge-tier3 { background: #16a34a; color: white; }
-    
+
     /* ========================================
        ASSESSMENT BOXES
        ======================================== */
@@ -435,32 +435,32 @@ Generate this complete HTML document:
       margin: 15px 0;
       border-left: 4px solid;
     }
-    
+
     .assessment-box.strong {
       background: #f0fdf4;
       border-color: #16a34a;
     }
-    
+
     .assessment-box.moderate {
       background: #fefce8;
       border-color: #ca8a04;
     }
-    
+
     .assessment-box.weak {
       background: #fef2f2;
       border-color: #dc2626;
     }
-    
+
     .assessment-title {
       font-weight: 600;
       margin-bottom: 5px;
     }
-    
+
     .assessment-text {
       font-size: 13px;
       color: var(--text-secondary);
     }
-    
+
     /* ========================================
        TWO COLUMN LAYOUT
        ======================================== */
@@ -469,7 +469,7 @@ Generate this complete HTML document:
       grid-template-columns: 1fr 1fr;
       gap: 25px;
     }
-    
+
     .col h4 {
       color: var(--brand-navy);
       font-size: 13px;
@@ -477,17 +477,17 @@ Generate this complete HTML document:
       padding-bottom: 8px;
       border-bottom: 1px solid var(--border-subtle);
     }
-    
+
     .col ul {
       padding-left: 20px;
       color: var(--text-secondary);
       font-size: 13px;
     }
-    
+
     .col li {
       margin-bottom: 6px;
     }
-    
+
     /* ========================================
        FOOTER
        ======================================== */
@@ -498,7 +498,7 @@ Generate this complete HTML document:
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .footer-brand {
       font-size: 10px;
       font-weight: 600;
@@ -506,12 +506,12 @@ Generate this complete HTML document:
       letter-spacing: 1px;
       text-transform: uppercase;
     }
-    
+
     .footer-info {
       font-size: 10px;
       color: rgba(255,255,255,0.4);
     }
-    
+
     /* ========================================
        PRINT STYLES
        ======================================== */
@@ -524,7 +524,7 @@ Generate this complete HTML document:
 <body>
 
 <div class="page">
-  
+
   <!-- ========================================
        HEADER
        ======================================== -->
@@ -537,7 +537,7 @@ Generate this complete HTML document:
     </div>
     <div class="staff-badge">Staff Only — Not for Client</div>
   </div>
-  
+
   <!-- ========================================
        CLIENT INFO BAR
        ======================================== -->
@@ -559,7 +559,7 @@ Generate this complete HTML document:
       <p>TU: [TU_SCORE] | EX: [EX_SCORE] | EQ: [EQ_SCORE]</p>
     </div>
   </div>
-  
+
   <!-- ========================================
        EXECUTIVE SUMMARY
        ======================================== -->
@@ -584,7 +584,7 @@ Generate this complete HTML document:
       </div>
     </div>
   </div>
-  
+
   <!-- ========================================
        DECISION BOX
        ======================================== -->
@@ -598,7 +598,7 @@ Generate this complete HTML document:
       <div class="decision-prob-value">[SETTLEMENT_PROB]%</div>
     </div>
   </div>
-  
+
   <!-- ========================================
        QUICK STATS
        ======================================== -->
@@ -624,19 +624,19 @@ Generate this complete HTML document:
       <div class="quick-stat-label">Est. Days</div>
     </div>
   </div>
-  
+
   <!-- ========================================
        CONTENT SECTIONS
        ======================================== -->
   <div class="content">
-    
+
     <!-- SECTION 1: STANDING -->
     <div class="section">
       <div class="section-header">
         <div class="section-number">1</div>
         <div class="section-title">Standing Analysis (TransUnion v. Ramirez)</div>
       </div>
-      
+
       <table>
         <tr>
           <th>Element</th>
@@ -667,20 +667,20 @@ Generate this complete HTML document:
           <td>[CAUSE_ACTION]</td>
         </tr>
       </table>
-      
+
       <div class="assessment-box [STANDING_BOX_CLASS]">
         <div class="assessment-title">Standing Verdict: [STANDING_VERDICT]</div>
         <div class="assessment-text">[STANDING_ANALYSIS]</div>
       </div>
     </div>
-    
+
     <!-- SECTION 2: VIOLATIONS -->
     <div class="section">
       <div class="section-header">
         <div class="section-number">2</div>
         <div class="section-title">Violation Summary</div>
       </div>
-      
+
       <table>
         <tr>
           <th>Category</th>
@@ -692,14 +692,14 @@ Generate this complete HTML document:
         [VIOLATION_ROWS]
       </table>
     </div>
-    
+
     <!-- SECTION 3: CRITICAL VIOLATIONS -->
     <div class="section">
       <div class="section-header">
         <div class="section-number">3</div>
         <div class="section-title">Critical Violations — Impossible Contradictions</div>
       </div>
-      
+
       <table>
         <tr>
           <th>Account</th>
@@ -712,14 +712,14 @@ Generate this complete HTML document:
         [CONTRADICTION_ROWS]
       </table>
     </div>
-    
+
     <!-- SECTION 4: WILLFULNESS -->
     <div class="section">
       <div class="section-header">
         <div class="section-number">4</div>
         <div class="section-title">Willfulness Assessment (Safeco Standard)</div>
       </div>
-      
+
       <table>
         <tr>
           <th>Factor</th>
@@ -758,20 +758,20 @@ Generate this complete HTML document:
           <td>[PRIOR_ANALYSIS]</td>
         </tr>
       </table>
-      
+
       <div class="assessment-box [WILLFULNESS_BOX_CLASS]">
         <div class="assessment-title">Willfulness Probability: [WILLFULNESS]%</div>
         <div class="assessment-text">[WILLFULNESS_CONCLUSION]</div>
       </div>
     </div>
-    
+
     <!-- SECTION 5: DAMAGES -->
     <div class="section">
       <div class="section-header">
         <div class="section-number">5</div>
         <div class="section-title">Damages Calculation</div>
       </div>
-      
+
       <table>
         <tr>
           <th>Component</th>
@@ -811,14 +811,14 @@ Generate this complete HTML document:
         </tr>
       </table>
     </div>
-    
+
     <!-- SECTION 6: DEFENDANTS -->
     <div class="section">
       <div class="section-header">
         <div class="section-number">6</div>
         <div class="section-title">Defendant Targeting</div>
       </div>
-      
+
       <table>
         <tr>
           <th>Priority</th>
@@ -836,14 +836,14 @@ Generate this complete HTML document:
         </tr>
       </table>
     </div>
-    
+
     <!-- SECTION 7: ACTION ITEMS -->
     <div class="section">
       <div class="section-header">
         <div class="section-number">7</div>
         <div class="section-title">Action Items</div>
       </div>
-      
+
       <div class="two-col">
         <div class="col">
           <h4>Pre-Approval (Before Client Docs)</h4>
@@ -859,14 +859,14 @@ Generate this complete HTML document:
         </div>
       </div>
     </div>
-    
+
     <!-- SECTION 8: TIMELINE -->
     <div class="section">
       <div class="section-header">
         <div class="section-number">8</div>
         <div class="section-title">RLPP Timeline</div>
       </div>
-      
+
       <table>
         <tr>
           <th>Phase</th>
@@ -900,9 +900,9 @@ Generate this complete HTML document:
         </tr>
       </table>
     </div>
-    
+
   </div>
-  
+
   <!-- ========================================
        FOOTER
        ======================================== -->
@@ -910,7 +910,7 @@ Generate this complete HTML document:
     <div class="footer-brand">Brightpath Ascend Group</div>
     <div class="footer-info">Case: [CASE_NUMBER] | Confidential — Internal Use Only</div>
   </div>
-  
+
 </div>
 
 </body>

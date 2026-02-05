@@ -5,7 +5,7 @@ Quick reference for staff review before approving cases.
 
 from datetime import datetime
 
-from reportlab.lib.colors import HexColor, lightgrey
+from reportlab.lib.colors import HexColor, lightgrey, white
 from reportlab.lib.units import inch
 from reportlab.platypus import PageBreak, Spacer, Table, TableStyle
 

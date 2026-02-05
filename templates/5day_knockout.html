@@ -187,6 +187,16 @@
                             <!-- Loaded items go here -->
                         </div>
 
+                        <!-- Account Type Warning -->
+                        <div class="alert alert-warning py-2 px-3 mb-3" id="accountTypeWarning">
+                            <h6 class="mb-1 small"><i class="bi bi-exclamation-triangle me-1"></i>Account Type Matters!</h6>
+                            <ul class="mb-0 small ps-3" style="font-size: 11px;">
+                                <li><strong class="text-success">Best for:</strong> Collections, charge-offs, closed accounts</li>
+                                <li><strong class="text-danger">Avoid:</strong> Open accounts with active balance</li>
+                                <li><strong class="text-info">If open:</strong> Pay off → Close card → Then 5KO</li>
+                            </ul>
+                        </div>
+
                         <!-- Manual Entry Section -->
                         <div id="manualEntrySection">
                             <p class="text-muted small mb-2">Add accounts to dispute as identity theft:</p>
@@ -322,51 +332,121 @@
                     <div class="row mb-4">
                         <div class="col-md-4">
                             <div class="card border-primary">
-                                <div class="card-header bg-primary text-white">
+                                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                                     <strong>Experian</strong>
+                                    <span class="badge bg-light text-primary">2/day limit</span>
                                 </div>
                                 <div class="card-body">
                                     <p class="mb-2"><strong>Upload URL:</strong></p>
                                     <a href="https://www.experian.com/upload" target="_blank" class="btn btn-outline-primary btn-sm w-100 mb-2">
                                         <i class="bi bi-box-arrow-up-right me-1"></i>experian.com/upload
                                     </a>
-                                    <p class="small text-muted mb-0">Or login at usa.experian.com</p>
+                                    <p class="small text-muted mb-1">Or login at usa.experian.com</p>
+                                    <div class="alert alert-warning py-1 px-2 mb-0 small">
+                                        <i class="bi bi-exclamation-triangle me-1"></i><strong>Limit:</strong> Max 2 disputes per day. Submit 2 today, 2 tomorrow if needed.
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="card border-danger">
-                                <div class="card-header bg-danger text-white">
+                                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
                                     <strong>Equifax</strong>
+                                    <span class="badge bg-light text-danger">No limit</span>
                                 </div>
                                 <div class="card-body">
                                     <p class="mb-2"><strong>Upload URL:</strong></p>
                                     <a href="https://www.equifax.com/personal/disputes" target="_blank" class="btn btn-outline-danger btn-sm w-100 mb-2">
                                         <i class="bi bi-box-arrow-up-right me-1"></i>equifax.com/personal/disputes
                                     </a>
-                                    <p class="small text-muted mb-0">Or login at my.equifax.com</p>
+                                    <p class="small text-muted mb-1">Or login at my.equifax.com</p>
+                                    <div class="alert alert-success py-1 px-2 mb-0 small">
+                                        <i class="bi bi-check-circle me-1"></i><strong>No limit!</strong> Submit entire batch at once.
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="card border-info">
-                                <div class="card-header bg-info text-white">
+                                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                                     <strong>TransUnion</strong>
+                                    <span class="badge bg-light text-info">1 at a time</span>
                                 </div>
                                 <div class="card-body">
                                     <p class="mb-2"><strong>Upload URL:</strong></p>
                                     <a href="https://www.transunion.com/dispute" target="_blank" class="btn btn-outline-info btn-sm w-100 mb-2">
                                         <i class="bi bi-box-arrow-up-right me-1"></i>transunion.com/dispute
                                     </a>
-                                    <p class="small text-muted mb-0">Or login at service.transunion.com</p>
+                                    <p class="small text-muted mb-1">Or login at service.transunion.com</p>
+                                    <div class="alert alert-danger py-1 px-2 mb-0 small">
+                                        <i class="bi bi-exclamation-octagon me-1"></i><strong>Warning:</strong> Only 1 active dispute allowed. Use MAIL for 2+ items!
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="alert alert-warning mb-0">
+                    <div class="alert alert-warning mb-3">
                         <h6 class="mb-1"><i class="bi bi-exclamation-triangle me-2"></i>Important: Repeat for EACH Account + EACH Bureau</h6>
                         <p class="mb-0 small">Example: If JMPCB shows on Experian, Equifax, and TransUnion = <strong>3 separate online disputes</strong> for that one account!</p>
+                    </div>
+
+                    <!-- Follow-Up Call Scheduler -->
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <i class="bi bi-telephone me-2"></i>Schedule Follow-Up Calls (Critical!)
+                        </div>
+                        <div class="card-body">
+                            <p class="small mb-3">Calling after submission dramatically speeds up removals. Many accounts removed <strong>same day</strong> after the call!</p>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <div class="border rounded p-2 text-center">
+                                        <strong class="text-primary">Experian</strong>
+                                        <p class="mb-1 small text-muted">Call 1-2 business days after</p>
+                                        <p class="mb-1"><strong id="experianCallDate">-</strong></p>
+                                        <a href="tel:1-855-414-6048" class="btn btn-sm btn-outline-primary w-100">
+                                            <i class="bi bi-telephone me-1"></i>1-855-414-6048
+                                        </a>
+                                        <small class="text-muted d-block mt-1">~20 min wait</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="border rounded p-2 text-center">
+                                        <strong class="text-danger">Equifax</strong>
+                                        <p class="mb-1 small text-muted">Call 3-5 business days after</p>
+                                        <p class="mb-1"><strong id="equifaxCallDate">-</strong></p>
+                                        <a href="tel:1-800-525-6285" class="btn btn-sm btn-outline-danger w-100">
+                                            <i class="bi bi-telephone me-1"></i>1-800-525-6285
+                                        </a>
+                                        <small class="text-muted d-block mt-1">~15 min wait</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="border rounded p-2 text-center">
+                                        <strong class="text-info">TransUnion</strong>
+                                        <p class="mb-1 small text-muted">Call 5 business days after</p>
+                                        <p class="mb-1"><strong id="transunionCallDate">-</strong></p>
+                                        <a href="tel:1-800-916-8800" class="btn btn-sm btn-outline-info w-100">
+                                            <i class="bi bi-telephone me-1"></i>1-800-916-8800
+                                        </a>
+                                        <small class="text-muted d-block mt-1">~30 min wait</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 pt-2 border-top">
+                                <label class="form-label small fw-semibold">When did you submit? (calculates call dates)</label>
+                                <input type="date" id="submissionDate" class="form-control form-control-sm" style="max-width: 200px;" onchange="calculateFollowUpDates()">
+                                <button class="btn btn-sm btn-outline-success mt-2" onclick="setSubmissionToday()">
+                                    <i class="bi bi-calendar-check me-1"></i>I submitted today
+                                </button>
+                            </div>
+
+                            <div class="alert alert-success mt-3 mb-0 py-2 small">
+                                <i class="bi bi-lightbulb me-1"></i><strong>Pro Tip:</strong> Submit Friday → Call Monday morning = often removed same day!
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1049,6 +1129,58 @@
         for (const bureau of Object.keys(currentPackets)) {
             setTimeout(() => downloadCoverSheet(bureau), 500 * Object.keys(currentPackets).indexOf(bureau));
         }
+    }
+
+    // =========================================================================
+    // FOLLOW-UP CALL DATE CALCULATOR
+    // =========================================================================
+
+    function setSubmissionToday() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('submissionDate').value = today;
+        calculateFollowUpDates();
+    }
+
+    function calculateFollowUpDates() {
+        const submissionDate = document.getElementById('submissionDate').value;
+        if (!submissionDate) {
+            document.getElementById('experianCallDate').textContent = '-';
+            document.getElementById('equifaxCallDate').textContent = '-';
+            document.getElementById('transunionCallDate').textContent = '-';
+            return;
+        }
+
+        const startDate = new Date(submissionDate);
+
+        // Experian: 1-2 business days
+        const experianDate = addBusinessDays(startDate, 1);
+        document.getElementById('experianCallDate').textContent = formatDate(experianDate);
+
+        // Equifax: 3-5 business days
+        const equifaxDate = addBusinessDays(startDate, 3);
+        document.getElementById('equifaxCallDate').textContent = formatDate(equifaxDate);
+
+        // TransUnion: 5 business days
+        const transunionDate = addBusinessDays(startDate, 5);
+        document.getElementById('transunionCallDate').textContent = formatDate(transunionDate);
+    }
+
+    function addBusinessDays(startDate, days) {
+        const result = new Date(startDate);
+        let addedDays = 0;
+        while (addedDays < days) {
+            result.setDate(result.getDate() + 1);
+            // Skip weekends (0 = Sunday, 6 = Saturday)
+            if (result.getDay() !== 0 && result.getDay() !== 6) {
+                addedDays++;
+            }
+        }
+        return result;
+    }
+
+    function formatDate(date) {
+        const options = { weekday: 'short', month: 'short', day: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
     }
     </script>
 </body>

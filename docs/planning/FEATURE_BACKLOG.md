@@ -2126,3 +2126,53 @@ See `CRM_ENHANCEMENT_CHECKLIST.md` for detailed implementation plans and failpro
 ---
 
 *Last updated: 2026-01-03*
+
+---
+
+## Priority 41: Dashboard Drill-Downs
+
+**Status**: 🔲 NOT STARTED
+
+**Problem**: 33 stat cards across dashboards show numbers but aren't clickable. Users can't drill into the data.
+
+**What Works Now**:
+- Dashboard pipeline stages (6 clickable)
+- "View All" links
+- Client page status/workflow badges
+- Bureau filter dots on credit reports
+
+**Missing Drill-Downs**:
+
+### P1 - Quick Wins (11 cards)
+| Dashboard | Card | Drill-Down To |
+|-----------|------|---------------|
+| Main Dashboard | Total Case Value | `/dashboard/clients?sort=exposure` |
+| Main Dashboard | Active Cases | `/dashboard/clients?status=active` |
+| Main Dashboard | Avg Case Score | `/dashboard/clients?sort=score` |
+| Main Dashboard | Pending Review | `/dashboard/clients?status=stage1_complete` |
+| Analytics | Active Clients | `/dashboard/clients?status=active` |
+| Analytics | In Signup | `/dashboard/clients?status=lead` |
+| Analytics | Paused | `/dashboard/clients?status=paused` |
+| Analytics | Complete | `/dashboard/clients?status=complete` |
+| Analytics | Round 1-4 | `/dashboard/clients?round={n}` |
+| Analytics | Settlement Pipeline (6) | `/dashboard/settlements?status={status}` |
+
+### P2 - Medium Effort (7 cards)
+- Revenue metrics (MRR, LTV, Churn) → transaction details
+- Payment method breakdown → filtered transactions
+- Revenue by plan → clients on that plan
+
+### P3 - Complex (9 cards)
+- Dispute Progress stats → new disputes view
+- CRA Response summary → new CRA responses page
+
+**Implementation Pattern**:
+```javascript
+onclick="window.location='/dashboard/clients?filter=value'"
+```
+
+**Estimated Effort**: 2-3 hours for P1, 4-5 hours total
+
+---
+
+*Added: 2026-01-30*

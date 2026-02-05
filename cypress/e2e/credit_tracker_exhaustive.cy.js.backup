@@ -299,7 +299,7 @@ describe('Staff Login Page - /dashboard/credit-tracker', () => {
     it('should verify all data-testid attributes are present', () => {
       const testIds = [
         'login-container',
-        'login-card', 
+        'login-card',
         'login-title',
         'login-form',
         'email-input',
@@ -307,7 +307,7 @@ describe('Staff Login Page - /dashboard/credit-tracker', () => {
         'login-button',
         'client-portal-link'
       ];
-      
+
       testIds.forEach((testId) => {
         cy.get(`[data-testid="${testId}"]`).should('exist');
       });

@@ -88,6 +88,7 @@ def _get_request_id() -> Optional[str]:
     """Get current request ID for logging."""
     try:
         from services.request_id_service import get_request_id
+
         return get_request_id()
     except ImportError:
         return None
@@ -117,13 +118,17 @@ def _log_retry_attempt(
         f"Retry attempt {attempt}/{max_attempts} for {service_name}: "
         f"{type(exception).__name__}: {str(exception)[:100]}... "
         f"(waiting {wait_time:.1f}s)",
-        extra={"retry_data": log_data}
+        extra={"retry_data": log_data},
     )
 
     # Update statistics
     _retry_stats["total_retries"] += 1
     if service_name not in _retry_stats["by_service"]:
-        _retry_stats["by_service"][service_name] = {"attempts": 0, "retries": 0, "failures": 0}
+        _retry_stats["by_service"][service_name] = {
+            "attempts": 0,
+            "retries": 0,
+            "failures": 0,
+        }
     _retry_stats["by_service"][service_name]["retries"] += 1
 
 
@@ -134,7 +139,11 @@ def _log_retry_success(service_name: str, attempts: int) -> None:
     if attempts > 1:
         logger.info(
             f"Request succeeded for {service_name} after {attempts} attempts",
-            extra={"service": service_name, "attempts": attempts, "request_id": request_id}
+            extra={
+                "service": service_name,
+                "attempts": attempts,
+                "request_id": request_id,
+            },
         )
 
     _retry_stats["total_successes"] += 1
@@ -154,13 +163,17 @@ def _log_retry_failure(service_name: str, attempts: int, exception: Exception) -
             "exception_type": type(exception).__name__,
             "exception_message": str(exception),
             "request_id": request_id,
-        }
+        },
     )
 
     _retry_stats["total_failures"] += 1
     _retry_stats["total_attempts"] += attempts
     if service_name not in _retry_stats["by_service"]:
-        _retry_stats["by_service"][service_name] = {"attempts": 0, "retries": 0, "failures": 0}
+        _retry_stats["by_service"][service_name] = {
+            "attempts": 0,
+            "retries": 0,
+            "failures": 0,
+        }
     _retry_stats["by_service"][service_name]["failures"] += 1
 
 
@@ -222,6 +235,7 @@ def with_retry(
         def create_charge(amount):
             return stripe.Charge.create(amount=amount)
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -239,10 +253,10 @@ def with_retry(
                     last_exception = e
 
                     if attempt < max_attempts:
-                        wait_time = calculate_backoff_time(
-                            attempt, min_wait, max_wait
+                        wait_time = calculate_backoff_time(attempt, min_wait, max_wait)
+                        _log_retry_attempt(
+                            svc_name, attempt, max_attempts, e, wait_time
                         )
-                        _log_retry_attempt(svc_name, attempt, max_attempts, e, wait_time)
                         time.sleep(wait_time)
                     else:
                         # Last attempt failed
@@ -264,6 +278,7 @@ def with_retry(
             return None
 
         return wrapper
+
     return decorator
 
 
@@ -311,6 +326,7 @@ def retry_external_api(
 
 # Pre-configured retry decorators for common services
 
+
 def retry_stripe(
     max_attempts: int = 3,
     min_wait: float = 1,
@@ -326,6 +342,7 @@ def retry_stripe(
     """
     try:
         import stripe
+
         stripe_exceptions = (
             stripe.error.APIConnectionError,
             stripe.error.RateLimitError,
@@ -358,6 +375,7 @@ def retry_twilio(
     """
     try:
         from twilio.base.exceptions import TwilioRestException
+
         # Note: TwilioRestException status codes 429, 5xx are transient
         twilio_exceptions = ()  # We'll check status code in the exception handler
     except ImportError:
@@ -417,6 +435,7 @@ def retry_http(
     """
     try:
         import requests
+
         http_exceptions = (
             requests.exceptions.ConnectionError,
             requests.exceptions.Timeout,
@@ -478,6 +497,7 @@ class RetryableHTTPClient:
         headers = kwargs.get("headers", {})
         try:
             from services.request_id_service import with_request_id_headers
+
             headers = with_request_id_headers(headers)
             kwargs["headers"] = headers
         except ImportError:
@@ -500,8 +520,11 @@ class RetryableHTTPClient:
                             f"HTTP {response.status_code}: {response.text[:100]}"
                         )
                         _log_retry_attempt(
-                            self.service_name, attempt, self.max_attempts,
-                            error, wait_time
+                            self.service_name,
+                            attempt,
+                            self.max_attempts,
+                            error,
+                            wait_time,
                         )
                         time.sleep(wait_time)
                         continue

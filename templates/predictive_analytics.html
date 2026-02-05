@@ -14,12 +14,12 @@
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .main-content {
             margin-left: 260px;
             padding: 30px;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -36,7 +36,7 @@
             font-size: 14px;
             margin-top: 5px;
         }
-        
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -61,14 +61,14 @@
             border: 2px solid #e2e8f0;
         }
         .btn-secondary:hover { border-color: #84cc16; }
-        
+
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .metric-card {
             background: white;
             border-radius: 16px;
@@ -90,7 +90,7 @@
         .metric-card.blue::before { background: #3b82f6; }
         .metric-card.purple::before { background: #8b5cf6; }
         .metric-card.orange::before { background: #f97316; }
-        
+
         .metric-label {
             font-size: 13px;
             color: #64748b;
@@ -112,7 +112,7 @@
         .metric-change.positive { color: #22c55e; }
         .metric-change.negative { color: #ef4444; }
         .metric-change.neutral { color: #64748b; }
-        
+
         .card {
             background: white;
             border-radius: 16px;
@@ -133,7 +133,7 @@
             font-weight: 600;
             color: #1a1a2e;
         }
-        
+
         .grid-2 {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -144,12 +144,12 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
         }
-        
+
         .chart-container {
             height: 300px;
             position: relative;
         }
-        
+
         .forecast-item {
             display: flex;
             justify-content: space-between;
@@ -172,7 +172,7 @@
             font-size: 12px;
             color: #64748b;
         }
-        
+
         .opportunity-card {
             background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
             border: 1px solid #86efac;
@@ -214,7 +214,7 @@
             font-size: 13px;
             cursor: pointer;
         }
-        
+
         .leaderboard-item {
             display: flex;
             align-items: center;
@@ -245,7 +245,7 @@
             font-weight: 700;
             color: #319795;
         }
-        
+
         .workload-bar {
             display: flex;
             align-items: center;
@@ -279,7 +279,7 @@
             font-weight: 600;
             color: #64748b;
         }
-        
+
         .client-ltv-item {
             display: flex;
             justify-content: space-between;
@@ -297,7 +297,7 @@
             font-weight: 700;
             color: #22c55e;
         }
-        
+
         .trend-badge {
             display: inline-flex;
             align-items: center;
@@ -310,7 +310,7 @@
         .trend-badge.up { background: #dcfce7; color: #15803d; }
         .trend-badge.down { background: #fee2e2; color: #b91c1c; }
         .trend-badge.stable { background: #e0e7ff; color: #4338ca; }
-        
+
         .tab-nav {
             display: flex;
             gap: 10px;
@@ -334,7 +334,7 @@
         .tab-btn:hover:not(.active) {
             background: #cbd5e1;
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 40px;
@@ -346,7 +346,7 @@
             margin-bottom: 15px;
             opacity: 0.5;
         }
-        
+
         @media (max-width: 1400px) {
             .metrics-grid { grid-template-columns: repeat(2, 1fr); }
         }
@@ -406,7 +406,7 @@
                     {{ revenue_forecast.trend_percent|default(0)|abs }}% trend
                 </div>
             </div>
-            
+
             <div class="metric-card green">
                 <div class="metric-label">Growth Opportunities</div>
                 <div class="metric-value">{{ growth_opportunities.opportunities|length if growth_opportunities.success else 0 }}</div>
@@ -414,7 +414,7 @@
                     ${{ "{:,.0f}".format(growth_opportunities.total_potential_value|default(0)) }} potential
                 </div>
             </div>
-            
+
             <div class="metric-card blue">
                 <div class="metric-label">Active Staff</div>
                 <div class="metric-value">{{ workload_distribution.summary.total_staff if workload_distribution.success else 0 }}</div>
@@ -422,7 +422,7 @@
                     {{ workload_distribution.summary.avg_workload|round(1) if workload_distribution.success else 0 }} avg cases
                 </div>
             </div>
-            
+
             <div class="metric-card purple">
                 <div class="metric-label">Expected Caseload (3 Months)</div>
                 <div class="metric-value">
@@ -565,7 +565,7 @@
                     <div class="workload-bar">
                         <span class="workload-name">{{ staff.staff_name[:15] }}</span>
                         <div class="workload-progress">
-                            <div class="workload-fill {% if staff.capacity_status == 'overloaded' %}overloaded{% elif staff.capacity_status == 'optimal' %}optimal{% else %}high{% endif %}" 
+                            <div class="workload-fill {% if staff.capacity_status == 'overloaded' %}overloaded{% elif staff.capacity_status == 'optimal' %}optimal{% else %}high{% endif %}"
                                  style="width: {{ [staff.active_cases * 6.67, 100]|min }}%"></div>
                         </div>
                         <span class="workload-count">{{ staff.active_cases }} cases</span>
@@ -636,7 +636,7 @@
         const caseloadHistory = {{ caseload_forecast.historical|tojson if caseload_forecast.success else '[]'|safe }};
 
         const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-        
+
         const historicalLabels = historicalData.map(d => d.month_name || d.month);
         const historicalRevenue = historicalData.map(d => d.total_revenue);
         const forecastLabels = forecastData.map(d => d.period);

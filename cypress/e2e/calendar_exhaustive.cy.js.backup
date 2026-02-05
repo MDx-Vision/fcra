@@ -158,9 +158,9 @@ describe('Staff Login Page - /dashboard/calendar', () => {
     it('should disable login button and show loading state on form submission', () => {
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
-      
+
       cy.intercept('POST', '/staff/login', { delay: 1000, statusCode: 200 }).as('loginRequest');
-      
+
       cy.get('[data-testid="login-button"]').click();
       cy.get('[data-testid="login-button"]').should('be.disabled');
       cy.get('[data-testid="login-button"]').should('contain.text', 'Signing in...');
@@ -209,31 +209,31 @@ describe('Staff Login Page - /dashboard/calendar', () => {
   describe('Error Handling Tests', () => {
     it('should handle server errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500, body: 'Server Error' }).as('serverError');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@serverError');
     });
 
     it('should handle network errors', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
-      
+
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@networkError');
     });
 
     it('should handle invalid credentials', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 401, body: { error: 'Invalid credentials' } }).as('invalidLogin');
-      
+
       cy.get('[data-testid="email-input"]').type('invalid@example.com');
       cy.get('[data-testid="password-input"]').type('wrongpassword');
       cy.get('[data-testid="login-button"]').click();
-      
+
       cy.wait('@invalidLogin');
     });
   });

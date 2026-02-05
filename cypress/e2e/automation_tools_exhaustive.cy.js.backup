@@ -150,10 +150,10 @@ describe('Staff Login Page - /dashboard/automation-tools', () => {
       it('should toggle password visibility', () => {
         cy.get('[data-testid="password-input"]').type('password123');
         cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-        
+
         cy.get('.toggle-btn').click();
         cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-        
+
         cy.get('.toggle-btn').click();
         cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
       });
@@ -171,7 +171,7 @@ describe('Staff Login Page - /dashboard/automation-tools', () => {
         cy.get('[data-testid="email-input"]').type('invalid-email');
         cy.get('[data-testid="password-input"]').type('password123');
         cy.get('[data-testid="login-button"]').click();
-        
+
         cy.get('[data-testid="email-input"]').then(($input) => {
           expect($input[0].validationMessage).to.contain('valid email');
         });
@@ -181,7 +181,7 @@ describe('Staff Login Page - /dashboard/automation-tools', () => {
         cy.get('[data-testid="email-input"]').type('test@example.com');
         cy.get('[data-testid="password-input"]').type('password123');
         cy.get('[data-testid="login-button"]').click();
-        
+
         cy.get('[data-testid="login-button"]').should('contain.text', 'Signing in...');
       });
     });
@@ -190,7 +190,7 @@ describe('Staff Login Page - /dashboard/automation-tools', () => {
       it('should disable submit button and show loading state on form submission', () => {
         cy.get('[data-testid="email-input"]').type('test@example.com');
         cy.get('[data-testid="password-input"]').type('password123');
-        
+
         cy.get('[data-testid="login-button"]').click();
         cy.get('[data-testid="login-button"]').should('be.disabled');
         cy.get('[data-testid="login-button"]').should('contain.text', 'Signing in...');

@@ -134,15 +134,15 @@ SAFE_FILES = [
 
 def test_upload_endpoint(endpoint):
     print(f"\n=== Testing {endpoint} ===")
-    
+
     results = {"blocked": 0, "allowed": 0, "errors": []}
-    
+
     # Test dangerous files - should ALL be rejected
     for filename, content, description in DANGEROUS_FILES:
         try:
             files = {'file': (filename, content)}
             r = requests.post(f"{BASE}{endpoint}", files=files, timeout=10)
-            
+
             if r.status_code in [400, 403, 415]:
                 print(f"  ✅ BLOCKED: {filename} ({description})")
                 results["blocked"] += 1
@@ -151,13 +151,13 @@ def test_upload_endpoint(endpoint):
                 results["errors"].append(f"{filename} was accepted!")
         except Exception as e:
             print(f"  ⚠️ ERROR testing {filename}: {e}")
-    
+
     # Test safe files - should ALL be accepted
     for filename, content, description in SAFE_FILES:
         try:
             files = {'file': (filename, content)}
             r = requests.post(f"{BASE}{endpoint}", files=files, timeout=10)
-            
+
             if r.status_code in [200, 201]:
                 print(f"  ✅ ACCEPTED: {filename} ({description})")
                 results["allowed"] += 1
@@ -167,7 +167,7 @@ def test_upload_endpoint(endpoint):
                 print(f"  ⚠️ UNEXPECTED: {filename} - STATUS {r.status_code}")
         except Exception as e:
             print(f"  ⚠️ ERROR testing {filename}: {e}")
-    
+
     return results
 
 # Test both endpoints

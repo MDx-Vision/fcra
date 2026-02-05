@@ -589,4 +589,3 @@ ALTER TABLE ONLY public.credit_monitoring_credentials
 --
 
 \unrestrict N5OvIoWaL5dMygYKVeSuWkeua9ddW4c9nURuJ3Cn2xt4I1XeaddGCdAlShrTkp2
-

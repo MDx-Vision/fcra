@@ -14,7 +14,7 @@ def get_relevant_files(error_text):
     """Extract file paths mentioned in error output"""
     files = set()
     keywords = ['.py', '.html', '.js', '.cy.js']
-    
+
     for line in error_text.split('\n'):
         for kw in keywords:
             if kw in line:
@@ -26,7 +26,7 @@ def get_relevant_files(error_text):
                         path = part.strip('():,\'"')
                         if os.path.exists(path):
                             files.add(path)
-    
+
     # Also check common locations
     common_files = [
         'templates/credit_report_view.html',
@@ -36,7 +36,7 @@ def get_relevant_files(error_text):
     for f in common_files:
         if os.path.exists(f):
             files.add(f)
-    
+
     return list(files)[:5]  # Limit to 5 files
 
 def read_file_content(filepath, max_lines=200):
@@ -53,11 +53,11 @@ def read_file_content(filepath, max_lines=200):
 def analyze_and_fix(error_output):
     """Send error to Claude and get fix"""
     client = anthropic.Anthropic()
-    
+
     # Get relevant files
     relevant_files = get_relevant_files(error_output)
     file_contents = {f: read_file_content(f) for f in relevant_files}
-    
+
     prompt = f"""You are a QA automation engineer. Analyze this test failure and provide a fix.
 
 ## Test Failure Output:
@@ -67,10 +67,10 @@ def analyze_and_fix(error_output):
 
 ## Relevant Files:
 """
-    
+
     for filepath, content in file_contents.items():
         prompt += f"\n### {filepath}\n```\n{content[:3000]}\n```\n"
-    
+
     prompt += """
 
 ## Instructions:
@@ -99,7 +99,7 @@ Only output the JSON, nothing else.
         max_tokens=4096,
         messages=[{"role": "user", "content": prompt}]
     )
-    
+
     return response.content[0].text
 
 def apply_fixes(fix_json):
@@ -111,22 +111,22 @@ def apply_fixes(fix_json):
             json_str = json_str.split('```json')[1].split('```')[0]
         elif '```' in json_str:
             json_str = json_str.split('```')[1].split('```')[0]
-        
+
         data = json.loads(json_str.strip())
-        
+
         print(f"Analysis: {data.get('analysis', 'N/A')}")
-        
+
         for fix in data.get('fixes', []):
             filepath = fix['file']
             action = fix['action']
-            
+
             if action == 'replace' and os.path.exists(filepath):
                 with open(filepath, 'r') as f:
                     content = f.read()
-                
+
                 old_text = fix['old_text']
                 new_text = fix['new_text']
-                
+
                 if old_text in content:
                     content = content.replace(old_text, new_text)
                     with open(filepath, 'w') as f:
@@ -134,12 +134,12 @@ def apply_fixes(fix_json):
                     print(f"✅ Fixed {filepath}")
                 else:
                     print(f"⚠️ Could not find text in {filepath}")
-            
+
             elif action == 'create':
                 with open(filepath, 'w') as f:
                     f.write(fix.get('content', ''))
                 print(f"✅ Created {filepath}")
-        
+
         return True
     except Exception as e:
         print(f"❌ Error applying fixes: {e}")
@@ -149,10 +149,10 @@ def main():
     if len(sys.argv) < 3:
         print("Usage: python claude_assistant.py fix 'error output'")
         sys.exit(1)
-    
+
     command = sys.argv[1]
     error_output = sys.argv[2]
-    
+
     if command == 'fix':
         print("🔍 Analyzing test failure...")
         fix_response = analyze_and_fix(error_output)

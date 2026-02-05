@@ -89,7 +89,13 @@ REPORT_TYPES = {
 SCHEDULE_TYPES = ["daily", "weekly", "monthly"]
 
 DAYS_OF_WEEK = [
-    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
 ]
 
 TIMEZONES = [
@@ -105,6 +111,7 @@ TIMEZONES = [
 # =============================================================================
 # Scheduled Reports Service
 # =============================================================================
+
 
 class ScheduledReportsService:
     """
@@ -131,6 +138,7 @@ class ScheduledReportsService:
         if self._db:
             return self._db
         from database import SessionLocal
+
         return SessionLocal()
 
     def _should_close_db(self):
@@ -214,6 +222,7 @@ class ScheduledReportsService:
         db = self._get_db()
         try:
             from database import ScheduledReport
+
             report = db.query(ScheduledReport).filter_by(id=report_id).first()
             return report.to_dict() if report else None
         finally:
@@ -336,7 +345,9 @@ class ScheduledReportsService:
             report.updated_at = datetime.utcnow()
             db.commit()
 
-            logger.info(f"Toggled report {report.name} to {'active' if report.is_active else 'inactive'}")
+            logger.info(
+                f"Toggled report {report.name} to {'active' if report.is_active else 'inactive'}"
+            )
             return report.is_active
 
         finally:
@@ -369,36 +380,33 @@ class ScheduledReportsService:
     def _is_report_due(self, report) -> bool:
         """Check if a report is due to run."""
         try:
-            tz = pytz.timezone(report.timezone or 'America/New_York')
+            tz = pytz.timezone(report.timezone or "America/New_York")
             now = datetime.now(tz)
 
             # Parse schedule time
-            hour, minute = map(int, (report.schedule_time or '08:00').split(':'))
+            hour, minute = map(int, (report.schedule_time or "08:00").split(":"))
 
             # Check if it's time to run
             current_hour = now.hour
             current_minute = now.minute
 
             # Allow 5-minute window for scheduling
-            time_match = (
-                current_hour == hour and
-                abs(current_minute - minute) <= 5
-            )
+            time_match = current_hour == hour and abs(current_minute - minute) <= 5
 
             if not time_match:
                 return False
 
             # Check day/date based on schedule type
-            if report.schedule_type == 'daily':
+            if report.schedule_type == "daily":
                 # Daily: always due at the right time
                 pass
 
-            elif report.schedule_type == 'weekly':
+            elif report.schedule_type == "weekly":
                 # Weekly: check day of week
                 if now.weekday() != (report.schedule_day or 0):
                     return False
 
-            elif report.schedule_type == 'monthly':
+            elif report.schedule_type == "monthly":
                 # Monthly: check day of month
                 if now.day != (report.schedule_day or 1):
                     return False
@@ -433,23 +441,29 @@ class ScheduledReportsService:
                     results["succeeded"] += 1
                 else:
                     results["failed"] += 1
-                results["details"].append({
-                    "report_id": report_dict["id"],
-                    "name": report_dict["name"],
-                    "success": result.get("success"),
-                    "error": result.get("error"),
-                })
+                results["details"].append(
+                    {
+                        "report_id": report_dict["id"],
+                        "name": report_dict["name"],
+                        "success": result.get("success"),
+                        "error": result.get("error"),
+                    }
+                )
             except Exception as e:
                 results["ran"] += 1
                 results["failed"] += 1
-                results["details"].append({
-                    "report_id": report_dict["id"],
-                    "name": report_dict["name"],
-                    "success": False,
-                    "error": str(e),
-                })
+                results["details"].append(
+                    {
+                        "report_id": report_dict["id"],
+                        "name": report_dict["name"],
+                        "success": False,
+                        "error": str(e),
+                    }
+                )
 
-        logger.info(f"Ran {results['ran']} reports: {results['succeeded']} succeeded, {results['failed']} failed")
+        logger.info(
+            f"Ran {results['ran']} reports: {results['succeeded']} succeeded, {results['failed']} failed"
+        )
         return results
 
     def run_report(self, report_id: int) -> Dict[str, Any]:
@@ -531,34 +545,53 @@ class ScheduledReportsService:
         """Generate revenue report content."""
         db = self._get_db()
         try:
-            from database import Client, PaymentPlanPayment
             from sqlalchemy import func
+
+            from database import Client, PaymentPlanPayment
 
             # Get date range
             days = params.get("days", 30)
             start_date = datetime.utcnow() - timedelta(days=days)
 
             # Get revenue stats
-            total_revenue = db.query(func.sum(PaymentPlanPayment.amount)).filter(
-                PaymentPlanPayment.payment_date >= start_date,
-                PaymentPlanPayment.status == 'completed'
-            ).scalar() or 0
+            total_revenue = (
+                db.query(func.sum(PaymentPlanPayment.amount))
+                .filter(
+                    PaymentPlanPayment.payment_date >= start_date,
+                    PaymentPlanPayment.status == "completed",
+                )
+                .scalar()
+                or 0
+            )
 
-            payment_count = db.query(func.count(PaymentPlanPayment.id)).filter(
-                PaymentPlanPayment.payment_date >= start_date,
-                PaymentPlanPayment.status == 'completed'
-            ).scalar() or 0
+            payment_count = (
+                db.query(func.count(PaymentPlanPayment.id))
+                .filter(
+                    PaymentPlanPayment.payment_date >= start_date,
+                    PaymentPlanPayment.status == "completed",
+                )
+                .scalar()
+                or 0
+            )
 
             # Get top clients by revenue
-            top_clients = db.query(
-                Client.id,
-                Client.first_name,
-                Client.last_name,
-                func.sum(PaymentPlanPayment.amount).label('total')
-            ).join(PaymentPlanPayment, PaymentPlanPayment.client_id == Client.id).filter(
-                PaymentPlanPayment.payment_date >= start_date,
-                PaymentPlanPayment.status == 'completed'
-            ).group_by(Client.id).order_by(func.sum(PaymentPlanPayment.amount).desc()).limit(10).all()
+            top_clients = (
+                db.query(
+                    Client.id,
+                    Client.first_name,
+                    Client.last_name,
+                    func.sum(PaymentPlanPayment.amount).label("total"),
+                )
+                .join(PaymentPlanPayment, PaymentPlanPayment.client_id == Client.id)
+                .filter(
+                    PaymentPlanPayment.payment_date >= start_date,
+                    PaymentPlanPayment.status == "completed",
+                )
+                .group_by(Client.id)
+                .order_by(func.sum(PaymentPlanPayment.amount).desc())
+                .limit(10)
+                .all()
+            )
 
             # Build CSV data
             csv_rows = [
@@ -567,7 +600,10 @@ class ScheduledReportsService:
                 ["Metric", "Value"],
                 ["Total Revenue", f"${total_revenue:,.2f}"],
                 ["Payment Count", payment_count],
-                ["Average Payment", f"${(total_revenue / payment_count if payment_count else 0):,.2f}"],
+                [
+                    "Average Payment",
+                    f"${(total_revenue / payment_count if payment_count else 0):,.2f}",
+                ],
                 [],
                 ["Top Clients by Revenue"],
                 ["Name", "Revenue"],
@@ -595,23 +631,28 @@ class ScheduledReportsService:
         """Generate client summary report."""
         db = self._get_db()
         try:
-            from database import Client
             from sqlalchemy import func
+
+            from database import Client
 
             days = params.get("days", 30)
             start_date = datetime.utcnow() - timedelta(days=days)
 
             # Get client stats
             total_clients = db.query(func.count(Client.id)).scalar() or 0
-            new_clients = db.query(func.count(Client.id)).filter(
-                Client.created_at >= start_date
-            ).scalar() or 0
+            new_clients = (
+                db.query(func.count(Client.id))
+                .filter(Client.created_at >= start_date)
+                .scalar()
+                or 0
+            )
 
             # Status breakdown
-            status_counts = db.query(
-                Client.dispute_status,
-                func.count(Client.id)
-            ).group_by(Client.dispute_status).all()
+            status_counts = (
+                db.query(Client.dispute_status, func.count(Client.id))
+                .group_by(Client.dispute_status)
+                .all()
+            )
 
             csv_rows = [
                 ["Client Summary Report", f"Last {days} Days"],
@@ -645,25 +686,37 @@ class ScheduledReportsService:
         """Generate analytics summary report."""
         db = self._get_db()
         try:
-            from database import Client, Analysis, PaymentPlanPayment
             from sqlalchemy import func
+
+            from database import Analysis, Client, PaymentPlanPayment
 
             days = params.get("days", 30)
             start_date = datetime.utcnow() - timedelta(days=days)
 
             # Get key metrics
-            total_analyses = db.query(func.count(Analysis.id)).filter(
-                Analysis.created_at >= start_date
-            ).scalar() or 0
+            total_analyses = (
+                db.query(func.count(Analysis.id))
+                .filter(Analysis.created_at >= start_date)
+                .scalar()
+                or 0
+            )
 
-            total_payments = db.query(func.sum(PaymentPlanPayment.amount)).filter(
-                PaymentPlanPayment.payment_date >= start_date,
-                PaymentPlanPayment.status == 'completed'
-            ).scalar() or 0
+            total_payments = (
+                db.query(func.sum(PaymentPlanPayment.amount))
+                .filter(
+                    PaymentPlanPayment.payment_date >= start_date,
+                    PaymentPlanPayment.status == "completed",
+                )
+                .scalar()
+                or 0
+            )
 
-            active_clients = db.query(func.count(Client.id)).filter(
-                Client.dispute_status == 'active'
-            ).scalar() or 0
+            active_clients = (
+                db.query(func.count(Client.id))
+                .filter(Client.dispute_status == "active")
+                .scalar()
+                or 0
+            )
 
             csv_rows = [
                 ["Analytics Summary", f"Last {days} Days"],
@@ -692,35 +745,48 @@ class ScheduledReportsService:
         """Generate AI usage report."""
         db = self._get_db()
         try:
-            from database import AIUsageLog
             from sqlalchemy import func
+
+            from database import AIUsageLog
 
             days = params.get("days", 30)
             start_date = datetime.utcnow() - timedelta(days=days)
 
             # Get AI usage stats
-            total_requests = db.query(func.count(AIUsageLog.id)).filter(
-                AIUsageLog.created_at >= start_date
-            ).scalar() or 0
+            total_requests = (
+                db.query(func.count(AIUsageLog.id))
+                .filter(AIUsageLog.created_at >= start_date)
+                .scalar()
+                or 0
+            )
 
-            total_tokens = db.query(func.sum(AIUsageLog.total_tokens)).filter(
-                AIUsageLog.created_at >= start_date
-            ).scalar() or 0
+            total_tokens = (
+                db.query(func.sum(AIUsageLog.total_tokens))
+                .filter(AIUsageLog.created_at >= start_date)
+                .scalar()
+                or 0
+            )
 
             # total_cost_cents is in cents, convert to dollars
-            total_cost_cents = db.query(func.sum(AIUsageLog.total_cost_cents)).filter(
-                AIUsageLog.created_at >= start_date
-            ).scalar() or 0
+            total_cost_cents = (
+                db.query(func.sum(AIUsageLog.total_cost_cents))
+                .filter(AIUsageLog.created_at >= start_date)
+                .scalar()
+                or 0
+            )
             total_cost = total_cost_cents / 100.0
 
             # By operation type
-            by_operation = db.query(
-                AIUsageLog.operation,
-                func.count(AIUsageLog.id),
-                func.sum(AIUsageLog.total_cost_cents)
-            ).filter(
-                AIUsageLog.created_at >= start_date
-            ).group_by(AIUsageLog.operation).all()
+            by_operation = (
+                db.query(
+                    AIUsageLog.operation,
+                    func.count(AIUsageLog.id),
+                    func.sum(AIUsageLog.total_cost_cents),
+                )
+                .filter(AIUsageLog.created_at >= start_date)
+                .group_by(AIUsageLog.operation)
+                .all()
+            )
 
             csv_rows = [
                 ["AI Usage Report", f"Last {days} Days"],
@@ -756,21 +822,30 @@ class ScheduledReportsService:
         """Generate disputes status report."""
         db = self._get_db()
         try:
-            from database import DisputeLetter
             from sqlalchemy import func
+
+            from database import DisputeLetter
 
             days = params.get("days", 30)
             start_date = datetime.utcnow() - timedelta(days=days)
 
             # Get dispute stats
-            total_letters = db.query(func.count(DisputeLetter.id)).filter(
-                DisputeLetter.created_at >= start_date
-            ).scalar() or 0
+            total_letters = (
+                db.query(func.count(DisputeLetter.id))
+                .filter(DisputeLetter.created_at >= start_date)
+                .scalar()
+                or 0
+            )
 
-            sent_letters = db.query(func.count(DisputeLetter.id)).filter(
-                DisputeLetter.created_at >= start_date,
-                DisputeLetter.sent_at.isnot(None)
-            ).scalar() or 0
+            sent_letters = (
+                db.query(func.count(DisputeLetter.id))
+                .filter(
+                    DisputeLetter.created_at >= start_date,
+                    DisputeLetter.sent_at.isnot(None),
+                )
+                .scalar()
+                or 0
+            )
 
             csv_rows = [
                 ["Disputes Report", f"Last {days} Days"],
@@ -797,21 +872,29 @@ class ScheduledReportsService:
         """Generate settlements report."""
         db = self._get_db()
         try:
-            from database import Settlement
             from sqlalchemy import func
+
+            from database import Settlement
 
             days = params.get("days", 30)
             start_date = datetime.utcnow() - timedelta(days=days)
 
             # Get settlement stats
-            total_settlements = db.query(func.count(Settlement.id)).filter(
-                Settlement.created_at >= start_date
-            ).scalar() or 0
+            total_settlements = (
+                db.query(func.count(Settlement.id))
+                .filter(Settlement.created_at >= start_date)
+                .scalar()
+                or 0
+            )
 
-            total_amount = db.query(func.sum(Settlement.final_amount)).filter(
-                Settlement.created_at >= start_date,
-                Settlement.status == 'accepted'
-            ).scalar() or 0
+            total_amount = (
+                db.query(func.sum(Settlement.final_amount))
+                .filter(
+                    Settlement.created_at >= start_date, Settlement.status == "accepted"
+                )
+                .scalar()
+                or 0
+            )
 
             csv_rows = [
                 ["Settlements Report", f"Last {days} Days"],
@@ -838,25 +921,30 @@ class ScheduledReportsService:
         """Generate staff performance report."""
         db = self._get_db()
         try:
-            from database import Staff, StaffActivity
             from sqlalchemy import func
+
+            from database import Staff, StaffActivity
 
             days = params.get("days", 30)
             start_date = datetime.utcnow() - timedelta(days=days)
 
             # Get staff activity counts
-            staff_activities = db.query(
-                Staff.id,
-                Staff.first_name,
-                Staff.last_name,
-                func.count(StaffActivity.id).label('activity_count')
-            ).outerjoin(
-                StaffActivity,
-                (StaffActivity.staff_id == Staff.id) &
-                (StaffActivity.created_at >= start_date)
-            ).filter(
-                Staff.is_active == True
-            ).group_by(Staff.id).all()
+            staff_activities = (
+                db.query(
+                    Staff.id,
+                    Staff.first_name,
+                    Staff.last_name,
+                    func.count(StaffActivity.id).label("activity_count"),
+                )
+                .outerjoin(
+                    StaffActivity,
+                    (StaffActivity.staff_id == Staff.id)
+                    & (StaffActivity.created_at >= start_date),
+                )
+                .filter(Staff.is_active == True)
+                .group_by(Staff.id)
+                .all()
+            )
 
             csv_rows = [
                 ["Staff Performance Report", f"Last {days} Days"],
@@ -884,22 +972,26 @@ class ScheduledReportsService:
         """Generate bureau tracking report."""
         db = self._get_db()
         try:
-            from database import BureauDispute
             from sqlalchemy import func
+
+            from database import BureauDispute
 
             days = params.get("days", 30)
             start_date = datetime.utcnow() - timedelta(days=days)
 
             # Get bureau stats by bureau
-            bureau_stats = db.query(
-                BureauDispute.bureau,
-                func.count(BureauDispute.id).label('total'),
-                func.sum(
-                    func.cast(BureauDispute.response_received == True, Integer)
-                ).label('responded')
-            ).filter(
-                BureauDispute.created_at >= start_date
-            ).group_by(BureauDispute.bureau).all()
+            bureau_stats = (
+                db.query(
+                    BureauDispute.bureau,
+                    func.count(BureauDispute.id).label("total"),
+                    func.sum(
+                        func.cast(BureauDispute.response_received == True, Integer)
+                    ).label("responded"),
+                )
+                .filter(BureauDispute.created_at >= start_date)
+                .group_by(BureauDispute.bureau)
+                .all()
+            )
 
             csv_rows = [
                 ["Bureau Tracking Report", f"Last {days} Days"],
@@ -972,11 +1064,13 @@ class ScheduledReportsService:
         """
 
         # Create attachment
-        attachments = [{
-            "filename": f"{report.report_type}_report_{datetime.utcnow().strftime('%Y%m%d')}.csv",
-            "content": csv_content,
-            "content_type": "text/csv",
-        }]
+        attachments = [
+            {
+                "filename": f"{report.report_type}_report_{datetime.utcnow().strftime('%Y%m%d')}.csv",
+                "content": csv_content,
+                "content_type": "text/csv",
+            }
+        ]
 
         # Send to each recipient
         for recipient in report.recipients:
@@ -1000,28 +1094,38 @@ class ScheduledReportsService:
         """Get scheduled reports statistics."""
         db = self._get_db()
         try:
-            from database import ScheduledReport
             from sqlalchemy import func
 
+            from database import ScheduledReport
+
             total = db.query(func.count(ScheduledReport.id)).scalar() or 0
-            active = db.query(func.count(ScheduledReport.id)).filter(
-                ScheduledReport.is_active == True
-            ).scalar() or 0
+            active = (
+                db.query(func.count(ScheduledReport.id))
+                .filter(ScheduledReport.is_active == True)
+                .scalar()
+                or 0
+            )
 
-            by_type = db.query(
-                ScheduledReport.report_type,
-                func.count(ScheduledReport.id)
-            ).group_by(ScheduledReport.report_type).all()
+            by_type = (
+                db.query(ScheduledReport.report_type, func.count(ScheduledReport.id))
+                .group_by(ScheduledReport.report_type)
+                .all()
+            )
 
-            by_schedule = db.query(
-                ScheduledReport.schedule_type,
-                func.count(ScheduledReport.id)
-            ).group_by(ScheduledReport.schedule_type).all()
+            by_schedule = (
+                db.query(ScheduledReport.schedule_type, func.count(ScheduledReport.id))
+                .group_by(ScheduledReport.schedule_type)
+                .all()
+            )
 
             # Recent runs
-            recent_runs = db.query(ScheduledReport).filter(
-                ScheduledReport.last_run_at.isnot(None)
-            ).order_by(ScheduledReport.last_run_at.desc()).limit(5).all()
+            recent_runs = (
+                db.query(ScheduledReport)
+                .filter(ScheduledReport.last_run_at.isnot(None))
+                .order_by(ScheduledReport.last_run_at.desc())
+                .limit(5)
+                .all()
+            )
 
             return {
                 "total_reports": total,
@@ -1032,7 +1136,9 @@ class ScheduledReportsService:
                 "recent_runs": [
                     {
                         "name": r.name,
-                        "last_run_at": r.last_run_at.isoformat() if r.last_run_at else None,
+                        "last_run_at": (
+                            r.last_run_at.isoformat() if r.last_run_at else None
+                        ),
                         "status": r.last_run_status,
                     }
                     for r in recent_runs

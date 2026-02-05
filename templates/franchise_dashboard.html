@@ -13,12 +13,12 @@
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .main-content {
             margin-left: 260px;
             padding: 30px;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -31,7 +31,7 @@
             color: #1a1a2e;
         }
         .header-actions { display: flex; gap: 15px; }
-        
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -61,14 +61,14 @@
         .btn-danger { background: #ef4444; color: white; }
         .btn-danger:hover { background: #dc2626; }
         .btn-sm { padding: 8px 16px; font-size: 13px; }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .stat-card {
             background: white;
             border-radius: 16px;
@@ -93,7 +93,7 @@
             margin-bottom: 8px;
         }
         .stat-card.highlight .stat-value { color: #84cc16; }
-        
+
         .content-section {
             background: white;
             border-radius: 16px;
@@ -101,7 +101,7 @@
             margin-bottom: 30px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        
+
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -113,10 +113,10 @@
             font-weight: 600;
             color: #1a1a2e;
         }
-        
+
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-        
+
         /* Organization Tree */
         .org-tree { padding: 10px 0; }
         .org-tree-item {
@@ -137,7 +137,7 @@
         .org-tree-node.regional { border-left-color: #3b82f6; }
         .org-tree-node.branch { border-left-color: #22c55e; }
         .org-tree-node.selected { background: #e0f2fe; border-left-color: #0ea5e9; }
-        
+
         .org-tree-toggle {
             width: 24px;
             height: 24px;
@@ -149,7 +149,7 @@
             transition: transform 0.2s;
         }
         .org-tree-toggle.expanded { transform: rotate(90deg); }
-        
+
         .org-tree-icon {
             width: 36px;
             height: 36px;
@@ -163,11 +163,11 @@
         .org-tree-icon.headquarters { background: #ede9fe; color: #8b5cf6; }
         .org-tree-icon.regional { background: #dbeafe; color: #3b82f6; }
         .org-tree-icon.branch { background: #dcfce7; color: #22c55e; }
-        
+
         .org-tree-info { flex: 1; }
         .org-tree-name { font-weight: 600; color: #1a1a2e; margin-bottom: 2px; }
         .org-tree-meta { font-size: 12px; color: #64748b; }
-        
+
         .org-tree-stats {
             display: flex;
             gap: 16px;
@@ -175,14 +175,14 @@
             color: #64748b;
         }
         .org-tree-stat { display: flex; align-items: center; gap: 4px; }
-        
+
         .org-tree-children {
             margin-left: 40px;
             padding-left: 20px;
             border-left: 2px dashed #e2e8f0;
         }
         .org-tree-children.hidden { display: none; }
-        
+
         /* Organization Cards */
         .org-card {
             background: white;
@@ -208,10 +208,10 @@
         .org-card-type.headquarters { background: #ede9fe; color: #8b5cf6; }
         .org-card-type.regional { background: #dbeafe; color: #3b82f6; }
         .org-card-type.branch { background: #dcfce7; color: #22c55e; }
-        
+
         .org-card-name { font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 4px; }
         .org-card-location { font-size: 13px; color: #64748b; }
-        
+
         .org-card-stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -223,13 +223,13 @@
         }
         .org-card-stat-label { font-size: 11px; color: #64748b; }
         .org-card-stat-value { font-size: 20px; font-weight: 700; color: #1a1a2e; }
-        
+
         .org-card-actions {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
-        
+
         /* Tables */
         .data-table {
             width: 100%;
@@ -252,7 +252,7 @@
             color: #1a1a2e;
         }
         .data-table tr:hover td { background: #f8fafc; }
-        
+
         /* Transfer Status Badges */
         .status-badge {
             padding: 4px 12px;
@@ -263,7 +263,7 @@
         .status-badge.pending { background: #fef3c7; color: #d97706; }
         .status-badge.approved { background: #dcfce7; color: #16a34a; }
         .status-badge.rejected { background: #fee2e2; color: #dc2626; }
-        
+
         /* Modal */
         .modal-overlay {
             position: fixed;
@@ -281,7 +281,7 @@
             transition: all 0.3s;
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        
+
         .modal {
             background: white;
             border-radius: 16px;
@@ -293,7 +293,7 @@
             transition: transform 0.3s;
         }
         .modal-overlay.active .modal { transform: translateY(0); }
-        
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -314,7 +314,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .modal-body { padding: 24px; }
         .modal-footer {
             padding: 16px 24px;
@@ -323,7 +323,7 @@
             justify-content: flex-end;
             gap: 12px;
         }
-        
+
         .form-group { margin-bottom: 20px; }
         .form-label {
             display: block;
@@ -346,7 +346,7 @@
         }
         .form-textarea { resize: vertical; min-height: 100px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        
+
         /* Tabs */
         .tabs {
             display: flex;
@@ -365,10 +365,10 @@
         }
         .tab:hover { color: #1a1a2e; }
         .tab.active { color: #319795; border-bottom-color: #319795; }
-        
+
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
+
         /* Revenue Section */
         .revenue-summary {
             display: grid;
@@ -385,7 +385,7 @@
         .revenue-card-label { font-size: 12px; color: #64748b; margin-bottom: 8px; }
         .revenue-card-value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
         .revenue-card-value.positive { color: #22c55e; }
-        
+
         /* Alerts */
         .alert {
             padding: 16px 20px;
@@ -398,7 +398,7 @@
         .alert-success { background: #dcfce7; color: #166534; }
         .alert-error { background: #fee2e2; color: #991b1b; }
         .alert-info { background: #dbeafe; color: #1e40af; }
-        
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -407,7 +407,7 @@
         }
         .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
         .empty-state-title { font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
-        
+
         @media (max-width: 1200px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .grid-2 { grid-template-columns: 1fr; }
@@ -420,7 +420,7 @@
 <body>
     {% set active_page = 'franchise' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <div class="main-content">
         {% if message %}
         <div class="alert alert-success">
@@ -434,7 +434,7 @@
             {{ error }}
         </div>
         {% endif %}
-        
+
         <div class="header">
             <h1>Franchise Management</h1>
             <div class="header-actions">
@@ -444,7 +444,7 @@
                 </button>
             </div>
         </div>
-        
+
         <!-- Stats Overview -->
         <div class="stats-grid">
             <div class="stat-card highlight">
@@ -476,7 +476,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Tabs -->
         <div class="tabs">
             <div class="tab active" data-tab="hierarchy">Organization Hierarchy</div>
@@ -484,14 +484,14 @@
             <div class="tab" data-tab="transfers">Transfers {% if pending_transfers %}<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:6px;">{{ pending_transfers|length }}</span>{% endif %}</div>
             <div class="tab" data-tab="revenue">Revenue</div>
         </div>
-        
+
         <!-- Hierarchy Tab -->
         <div class="tab-content active" id="tab-hierarchy">
             <div class="content-section">
                 <div class="section-header">
                     <div class="section-title">Organization Hierarchy</div>
                 </div>
-                
+
                 {% if hierarchy %}
                 <div class="org-tree">
                     {% for org in hierarchy %}
@@ -508,7 +508,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <!-- List Tab -->
         <div class="tab-content" id="tab-list">
             <div class="grid-3">
@@ -553,7 +553,7 @@
                 {% endfor %}
             </div>
         </div>
-        
+
         <!-- Transfers Tab -->
         <div class="tab-content" id="tab-transfers">
             <div class="content-section">
@@ -561,7 +561,7 @@
                     <div class="section-title">Pending Transfer Requests</div>
                     <button class="btn btn-primary btn-sm" onclick="openModal('transferModal')">New Transfer</button>
                 </div>
-                
+
                 {% if pending_transfers %}
                 <table class="data-table">
                     <thead>
@@ -601,7 +601,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <!-- Revenue Tab -->
         <div class="tab-content" id="tab-revenue">
             <div class="content-section">
@@ -613,7 +613,7 @@
                         <option value="year">Last Year</option>
                     </select>
                 </div>
-                
+
                 <div class="revenue-summary">
                     <div class="revenue-card">
                         <div class="revenue-card-label">Total Revenue</div>
@@ -636,7 +636,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -664,7 +664,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Create Organization Modal -->
     <div class="modal-overlay" id="createOrgModal">
         <div class="modal">
@@ -786,7 +786,7 @@
             </form>
         </div>
     </div>
-    
+
     <!-- Edit Organization Modal -->
     <div class="modal-overlay" id="editOrgModal">
         <div class="modal">
@@ -898,7 +898,7 @@
             </form>
         </div>
     </div>
-    
+
     <!-- Members Modal -->
     <div class="modal-overlay" id="membersModal">
         <div class="modal" style="max-width: 800px;">
@@ -925,7 +925,7 @@
                     </select>
                     <button type="submit" class="btn btn-primary btn-sm">Add</button>
                 </form>
-                
+
                 <table class="data-table" id="membersTable">
                     <thead>
                         <tr>
@@ -943,7 +943,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Consolidated Report Modal -->
     <div class="modal-overlay" id="consolidatedReportModal">
         <div class="modal" style="max-width: 900px;">
@@ -956,7 +956,7 @@
                     <div style="font-size: 12px; color: #64748b;">Generated: <span id="consolidatedReportDate" style="font-weight: 500;">-</span></div>
                     <div style="font-size: 12px; color: #64748b;">Organizations Included: <span id="consolidatedOrgCount" style="font-weight: 600; color: #1a1a2e;">-</span></div>
                 </div>
-                
+
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px;">
                     <div style="background: #f8fafc; padding: 15px; border-radius: 8px; text-align: center;">
                         <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">Total Clients</div>
@@ -979,7 +979,7 @@
                         <div style="font-size: 11px; color: #64748b;"><span id="consolidatedTotalStaff">-</span> staff</div>
                     </div>
                 </div>
-                
+
                 <div style="font-weight: 600; margin-bottom: 12px; color: #1a1a2e;">Organization Breakdown</div>
                 <table class="data-table">
                     <thead>
@@ -1002,7 +1002,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Transfer Modal -->
     <div class="modal-overlay" id="transferModal">
         <div class="modal">
@@ -1061,7 +1061,7 @@
             </form>
         </div>
     </div>
-    
+
     <!-- Organization Tree Macro -->
     {% macro render_org_tree(org) %}
     <div class="org-tree-item">
@@ -1095,7 +1095,7 @@
         {% endif %}
     </div>
     {% endmacro %}
-    
+
     <script>
         // Tab Switching
         document.querySelectorAll('.tab').forEach(tab => {
@@ -1106,16 +1106,16 @@
                 document.getElementById('tab-' + this.dataset.tab).classList.add('active');
             });
         });
-        
+
         // Modal Functions
         function openModal(id) {
             document.getElementById(id).classList.add('active');
         }
-        
+
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
         }
-        
+
         // Toggle org tree children
         function toggleOrgChildren(toggle) {
             toggle.classList.toggle('expanded');
@@ -1124,14 +1124,14 @@
                 children.classList.toggle('hidden');
             }
         }
-        
+
         // Create Organization
         async function createOrganization(event) {
             event.preventDefault();
             const form = event.target;
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            
+
             try {
                 const response = await fetch('/api/organizations', {
                     method: 'POST',
@@ -1139,7 +1139,7 @@
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     window.location.href = '/dashboard/franchise?message=' + encodeURIComponent(result.message);
                 } else {
@@ -1149,13 +1149,13 @@
                 alert('Error creating organization: ' + err.message);
             }
         }
-        
+
         // View Organization
         async function viewOrganization(orgId) {
             try {
                 const response = await fetch(`/api/organizations/${orgId}`);
                 const result = await response.json();
-                
+
                 if (result.success) {
                     console.log('Organization:', result);
                     editOrganization(orgId);
@@ -1166,17 +1166,17 @@
                 alert('Error: ' + err.message);
             }
         }
-        
+
         // Edit Organization
         async function editOrganization(orgId) {
             try {
                 const response = await fetch(`/api/franchise/organizations/${orgId}`);
                 const result = await response.json();
-                
+
                 if (result.success) {
                     const org = result.organization;
                     const limits = result.limits || {};
-                    
+
                     document.getElementById('editOrgId').value = org.id;
                     document.getElementById('editOrgName').value = org.name || '';
                     document.getElementById('editOrgType').value = org.org_type || 'branch';
@@ -1186,21 +1186,21 @@
                     document.getElementById('editOrgPhone').value = org.phone || '';
                     document.getElementById('editOrgEmail').value = org.email || '';
                     document.getElementById('editOrgRevShare').value = org.revenue_share_percent || 0;
-                    
+
                     document.getElementById('editOrgContactName').value = org.contact_name || '';
                     document.getElementById('editOrgLicense').value = org.license_number || '';
                     document.getElementById('editOrgTier').value = org.subscription_tier || 'basic';
                     document.getElementById('editOrgBillingEmail').value = org.billing_contact_email || '';
                     document.getElementById('editOrgMaxUsers').value = org.max_users || 10;
                     document.getElementById('editOrgMaxClients').value = org.max_clients || 100;
-                    
+
                     if (limits.users) {
                         document.getElementById('editOrgCurrentUsers').textContent = limits.users.current || 0;
                         document.getElementById('editOrgLimitUsers').textContent = limits.users.max || '-';
                         document.getElementById('editOrgCurrentClients').textContent = limits.clients.current || 0;
                         document.getElementById('editOrgLimitClients').textContent = limits.clients.max || '-';
                     }
-                    
+
                     openModal('editOrgModal');
                 } else {
                     alert('Error: ' + result.error);
@@ -1209,7 +1209,7 @@
                 alert('Error: ' + err.message);
             }
         }
-        
+
         // Update Organization
         async function updateOrganization(event) {
             event.preventDefault();
@@ -1218,7 +1218,7 @@
             const orgId = formData.get('org_id');
             const data = Object.fromEntries(formData.entries());
             delete data.org_id;
-            
+
             try {
                 const response = await fetch(`/api/organizations/${orgId}`, {
                     method: 'PUT',
@@ -1226,7 +1226,7 @@
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     window.location.href = '/dashboard/franchise?message=' + encodeURIComponent('Organization updated successfully');
                 } else {
@@ -1236,7 +1236,7 @@
                 alert('Error updating organization: ' + err.message);
             }
         }
-        
+
         // Manage Members
         async function manageMembers(orgId) {
             try {
@@ -1246,14 +1246,14 @@
                 ]);
                 const orgResult = await orgResponse.json();
                 const membersResult = await membersResponse.json();
-                
+
                 if (orgResult.success && membersResult.success) {
                     document.getElementById('membersOrgId').value = orgId;
                     document.getElementById('membersOrgName').textContent = orgResult.organization.name;
-                    
+
                     const tbody = document.getElementById('membersList');
                     tbody.innerHTML = '';
-                    
+
                     membersResult.members.forEach(member => {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
@@ -1266,11 +1266,11 @@
                         `;
                         tbody.appendChild(tr);
                     });
-                    
+
                     if (membersResult.members.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#64748b;">No members yet</td></tr>';
                     }
-                    
+
                     openModal('membersModal');
                 } else {
                     alert('Error loading members');
@@ -1279,7 +1279,7 @@
                 alert('Error: ' + err.message);
             }
         }
-        
+
         // Add Member
         async function addMember(event) {
             event.preventDefault();
@@ -1288,7 +1288,7 @@
             const orgId = formData.get('org_id');
             const data = Object.fromEntries(formData.entries());
             delete data.org_id;
-            
+
             try {
                 const response = await fetch(`/api/organizations/${orgId}/members`, {
                     method: 'POST',
@@ -1296,7 +1296,7 @@
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     manageMembers(orgId);
                     form.reset();
@@ -1308,17 +1308,17 @@
                 alert('Error adding member: ' + err.message);
             }
         }
-        
+
         // Remove Member
         async function removeMember(orgId, staffId) {
             if (!confirm('Are you sure you want to remove this member?')) return;
-            
+
             try {
                 const response = await fetch(`/api/organizations/${orgId}/members/${staffId}`, {
                     method: 'DELETE'
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     manageMembers(orgId);
                 } else {
@@ -1328,14 +1328,14 @@
                 alert('Error removing member: ' + err.message);
             }
         }
-        
+
         // Create Transfer
         async function createTransfer(event) {
             event.preventDefault();
             const form = event.target;
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            
+
             try {
                 const response = await fetch('/api/transfers', {
                     method: 'POST',
@@ -1343,7 +1343,7 @@
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     window.location.href = '/dashboard/franchise?message=' + encodeURIComponent(result.message);
                 } else {
@@ -1353,12 +1353,12 @@
                 alert('Error creating transfer: ' + err.message);
             }
         }
-        
+
         // Approve/Reject Transfer
         async function approveTransfer(transferId, approve) {
             const action = approve ? 'approve' : 'reject';
             if (!confirm(`Are you sure you want to ${action} this transfer?`)) return;
-            
+
             try {
                 const response = await fetch(`/api/transfers/${transferId}/approve`, {
                     method: 'POST',
@@ -1366,7 +1366,7 @@
                     body: JSON.stringify({ approve: approve })
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     window.location.href = '/dashboard/franchise?message=' + encodeURIComponent(result.message);
                 } else {
@@ -1376,27 +1376,27 @@
                 alert('Error: ' + err.message);
             }
         }
-        
+
         // Load Revenue Report
         async function loadRevenueReport(period) {
             console.log('Loading revenue report for period:', period);
         }
-        
+
         // View Consolidated Report
         async function viewConsolidatedReport(orgId) {
             try {
                 const response = await fetch(`/api/franchise/organizations/${orgId}/consolidated-report`);
                 const result = await response.json();
-                
+
                 if (result.success) {
                     const report = result.report;
                     const summary = report.summary || {};
                     const breakdown = report.organization_breakdown || [];
-                    
+
                     document.getElementById('consolidatedReportOrgName').textContent = report.organization_name || '';
                     document.getElementById('consolidatedReportDate').textContent = new Date(report.generated_at).toLocaleString();
                     document.getElementById('consolidatedOrgCount').textContent = report.included_organization_count || 0;
-                    
+
                     document.getElementById('consolidatedTotalClients').textContent = summary.total_clients || 0;
                     document.getElementById('consolidatedActiveClients').textContent = summary.active_clients || 0;
                     document.getElementById('consolidatedTotalCases').textContent = summary.total_cases || 0;
@@ -1405,7 +1405,7 @@
                     document.getElementById('consolidatedSettlements').textContent = summary.total_settlements || 0;
                     document.getElementById('consolidatedAvgSettlement').textContent = '$' + (summary.avg_settlement_amount || 0).toLocaleString(undefined, {maximumFractionDigits: 2});
                     document.getElementById('consolidatedTotalStaff').textContent = summary.total_staff || 0;
-                    
+
                     const breakdownHtml = breakdown.map(org => `
                         <tr>
                             <td>${org.organization_name}</td>
@@ -1417,7 +1417,7 @@
                         </tr>
                     `).join('');
                     document.getElementById('consolidatedBreakdown').innerHTML = breakdownHtml || '<tr><td colspan="6">No data available</td></tr>';
-                    
+
                     openModal('consolidatedReportModal');
                 } else {
                     alert('Error: ' + result.error);
@@ -1426,7 +1426,7 @@
                 alert('Error loading report: ' + err.message);
             }
         }
-        
+
         // Close modal when clicking overlay
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', function(e) {

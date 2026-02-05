@@ -81,7 +81,7 @@ CREDIT_REPORT_EXTRACTION_PROMPT = """You are an expert at analyzing three-bureau
 
 Analyze this credit report and extract ALL data in the following JSON structure.
 
-IMPORTANT: 
+IMPORTANT:
 - Return ONLY valid JSON, no additional text
 - Extract data for ALL THREE bureaus where available
 - Include ALL accounts shown, not just a few
@@ -102,7 +102,7 @@ IMPORTANT:
         },
         "experian": {
             "name": "full name as shown",
-            "also_known_as": "AKA names", 
+            "also_known_as": "AKA names",
             "dob": "year or full date",
             "current_address": "full address",
             "previous_addresses": ["address1", "address2"],
@@ -111,7 +111,7 @@ IMPORTANT:
         "equifax": {
             "name": "full name as shown",
             "also_known_as": "AKA names",
-            "dob": "year or full date", 
+            "dob": "year or full date",
             "current_address": "full address",
             "previous_addresses": ["address1", "address2"],
             "employer": "employer name or NA"
@@ -250,7 +250,7 @@ CRITICAL EXTRACTION RULES:
 
 2. PAYMENT STATUS - Extract the EXACT text shown:
    - "Pays account as agreed" = Current (good)
-   - "Current" = Current (good)  
+   - "Current" = Current (good)
    - "30 days past due" or "Past due 30 days" = Late (bad)
    - "60 days past due" = Very Late (bad)
    - "Not more than two payments past due" = Late (bad)

@@ -123,7 +123,7 @@
 <body>
     {% set active_page = 'furnishers' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="header">
             <div>
@@ -148,7 +148,7 @@
                 </a>
             </div>
         </div>
-        
+
         <div class="strategy-box">
             <div class="strategy-title">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -156,7 +156,7 @@
             </div>
             <div class="strategy-text">{{ strategy }}</div>
         </div>
-        
+
         <div class="stat-grid">
             <div class="stat-box">
                 <div class="stat-box-value">{{ stats.total_disputes if stats else 0 }}</div>
@@ -175,7 +175,7 @@
                 <div class="stat-box-label">Avg Settlement</div>
             </div>
         </div>
-        
+
         <div class="grid">
             <div class="card">
                 <div class="card-title">Dispute Outcomes by Round</div>
@@ -183,7 +183,7 @@
                 {% set r1_total = (stats.round_1_verified or 0) + (stats.round_1_deleted or 0) + (stats.round_1_updated or 0) %}
                 {% set r2_total = (stats.round_2_verified or 0) + (stats.round_2_deleted or 0) + (stats.round_2_updated or 0) %}
                 {% set r3_total = (stats.round_3_verified or 0) + (stats.round_3_deleted or 0) + (stats.round_3_updated or 0) %}
-                
+
                 <div class="round-chart">
                     <div class="round-bar">
                         <div class="round-bar-header">
@@ -234,7 +234,7 @@
                 <p style="color: #94a3b8; text-align: center; padding: 40px;">No dispute data available yet</p>
                 {% endif %}
             </div>
-            
+
             <div class="card">
                 <div class="card-title">Contact Information</div>
                 <div class="info-row">
@@ -269,7 +269,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="grid">
             <div class="card">
                 <div class="card-title">Method of Verification (MOV)</div>
@@ -301,7 +301,7 @@
                 <p style="color: #94a3b8; text-align: center; padding: 40px;">No MOV data available yet</p>
                 {% endif %}
             </div>
-            
+
             <div class="card">
                 <div class="card-title">Violations & Issues</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center;">
@@ -323,7 +323,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <div class="card">
             <div class="card-title">Related Cases ({{ related_clients|length }})</div>
             {% if related_clients %}
@@ -342,7 +342,7 @@
             <p style="color: #94a3b8; text-align: center; padding: 40px;">No related cases found</p>
             {% endif %}
         </div>
-        
+
         {% if furnisher.notes %}
         <div class="card">
             <div class="card-title">Notes</div>
@@ -350,7 +350,7 @@
         </div>
         {% endif %}
     </main>
-    
+
     <div class="modal-overlay" id="editModal">
         <div class="modal">
             <div class="modal-header">
@@ -416,25 +416,25 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         const furnisherId = {{ furnisher.id }};
-        
+
         function openEditModal() {
             document.getElementById('editModal').classList.add('active');
         }
-        
+
         function closeEditModal() {
             document.getElementById('editModal').classList.remove('active');
         }
-        
+
         async function saveFurnisher() {
             const name = document.getElementById('editName').value.trim();
             if (!name) {
                 alert('Furnisher name is required');
                 return;
             }
-            
+
             const data = {
                 name: name,
                 industry: document.getElementById('editIndustry').value,
@@ -447,14 +447,14 @@
                 website: document.getElementById('editWebsite').value,
                 notes: document.getElementById('editNotes').value
             };
-            
+
             try {
                 const response = await fetch(`/api/furnishers/${furnisherId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
                     window.location.reload();

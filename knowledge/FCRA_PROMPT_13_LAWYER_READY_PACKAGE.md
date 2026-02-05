@@ -1,9 +1,9 @@
 # FCRA PROMPT 13 V2: LAWYER-READY PACKAGE GENERATOR
 ## WITH EMBEDDED APPLE-STYLE + TRADITIONAL TEMPLATES
 
-**Version:** 2.0  
-**Updated:** December 13, 2025  
-**Author:** Brightpath Ascend Group  
+**Version:** 2.0
+**Updated:** December 13, 2025
+**Author:** Brightpath Ascend Group
 **Purpose:** Generate complete 4-document lawyer-ready litigation packages with premium styling
 
 ---
@@ -132,9 +132,9 @@ Generate this HTML structure for internal staff review:
       --bg-cream: #faf9f7;
       --bg-white: #ffffff;
     }
-    
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
@@ -142,14 +142,14 @@ Generate this HTML structure for internal staff review:
       color: var(--text-primary);
       background: var(--bg-cream);
     }
-    
+
     .page {
       max-width: 8.5in;
       margin: 0 auto;
       background: var(--bg-white);
       box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
-    
+
     /* HEADER */
     .header {
       background: linear-gradient(135deg, var(--brand-navy-dark) 0%, var(--brand-navy) 100%);
@@ -158,13 +158,13 @@ Generate this HTML structure for internal staff review:
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .brand {
       display: flex;
       align-items: center;
       gap: 15px;
     }
-    
+
     .brand-name {
       font-family: 'DM Sans', sans-serif;
       font-size: 18px;
@@ -173,13 +173,13 @@ Generate this HTML structure for internal staff review:
       letter-spacing: 2px;
       text-transform: uppercase;
     }
-    
+
     .doc-type {
       font-family: 'Playfair Display', serif;
       font-size: 14px;
       color: rgba(255,255,255,0.7);
     }
-    
+
     .confidential {
       background: #dc2626;
       color: white;
@@ -190,7 +190,7 @@ Generate this HTML structure for internal staff review:
       text-transform: uppercase;
       border-radius: 3px;
     }
-    
+
     /* CLIENT INFO BAR */
     .client-bar {
       background: var(--bg-cream);
@@ -200,7 +200,7 @@ Generate this HTML structure for internal staff review:
       grid-template-columns: repeat(4, 1fr);
       gap: 20px;
     }
-    
+
     .info-item label {
       font-size: 10px;
       font-weight: 600;
@@ -208,14 +208,14 @@ Generate this HTML structure for internal staff review:
       letter-spacing: 0.5px;
       color: var(--text-secondary);
     }
-    
+
     .info-item p {
       font-size: 14px;
       font-weight: 600;
       color: var(--text-primary);
       margin-top: 2px;
     }
-    
+
     /* EXECUTIVE SUMMARY */
     .exec-summary {
       background: linear-gradient(135deg, var(--brand-navy-dark) 0%, var(--brand-navy) 100%);
@@ -223,7 +223,7 @@ Generate this HTML structure for internal staff review:
       border-radius: 8px;
       padding: 30px;
     }
-    
+
     .exec-title {
       font-family: 'Playfair Display', serif;
       font-size: 16px;
@@ -231,20 +231,20 @@ Generate this HTML structure for internal staff review:
       margin-bottom: 20px;
       text-align: center;
     }
-    
+
     .exec-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 20px;
     }
-    
+
     .exec-item {
       text-align: center;
       padding: 15px;
       background: rgba(255,255,255,0.05);
       border-radius: 6px;
     }
-    
+
     .exec-label {
       font-size: 10px;
       text-transform: uppercase;
@@ -252,14 +252,14 @@ Generate this HTML structure for internal staff review:
       color: var(--brand-teal);
       margin-bottom: 8px;
     }
-    
+
     .exec-value {
       font-family: 'Playfair Display', serif;
       font-size: 28px;
       font-weight: 700;
       color: white;
     }
-    
+
     /* DECISION BOX */
     .decision-box {
       margin: 0 40px 30px;
@@ -269,41 +269,41 @@ Generate this HTML structure for internal staff review:
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .decision-box.proceed {
       background: linear-gradient(135deg, #059669 0%, #10b981 100%);
     }
-    
+
     .decision-box.caution {
       background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
     }
-    
+
     .decision-box.reject {
       background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
     }
-    
+
     .decision-text {
       font-family: 'Playfair Display', serif;
       font-size: 24px;
       font-weight: 700;
       color: white;
     }
-    
+
     .decision-sub {
       font-size: 13px;
       color: rgba(255,255,255,0.8);
       margin-top: 4px;
     }
-    
+
     /* CONTENT */
     .content {
       padding: 0 40px 40px;
     }
-    
+
     .section {
       margin-bottom: 30px;
     }
-    
+
     .section-header {
       display: flex;
       align-items: center;
@@ -312,7 +312,7 @@ Generate this HTML structure for internal staff review:
       padding-bottom: 10px;
       border-bottom: 2px solid var(--brand-teal);
     }
-    
+
     .section-number {
       width: 28px;
       height: 28px;
@@ -325,14 +325,14 @@ Generate this HTML structure for internal staff review:
       font-size: 12px;
       font-weight: 700;
     }
-    
+
     .section-title {
       font-family: 'Playfair Display', serif;
       font-size: 18px;
       font-weight: 600;
       color: var(--brand-navy);
     }
-    
+
     /* TABLES */
     table {
       width: 100%;
@@ -340,7 +340,7 @@ Generate this HTML structure for internal staff review:
       font-size: 12px;
       margin: 15px 0;
     }
-    
+
     th {
       background: var(--brand-navy);
       color: white;
@@ -351,16 +351,16 @@ Generate this HTML structure for internal staff review:
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    
+
     td {
       padding: 10px 12px;
       border-bottom: 1px solid #e5e5e5;
     }
-    
+
     tr:hover {
       background: var(--bg-cream);
     }
-    
+
     /* BADGES */
     .badge {
       display: inline-block;
@@ -370,13 +370,13 @@ Generate this HTML structure for internal staff review:
       font-weight: 600;
       text-transform: uppercase;
     }
-    
+
     .badge-critical { background: #fef2f2; color: #dc2626; }
     .badge-high { background: #fff7ed; color: #ea580c; }
     .badge-medium { background: #fefce8; color: #ca8a04; }
     .badge-confirmed { background: #f0fdf4; color: #16a34a; }
     .badge-conditional { background: #fefce8; color: #ca8a04; }
-    
+
     /* FOOTER */
     .footer {
       background: var(--brand-navy-dark);
@@ -385,7 +385,7 @@ Generate this HTML structure for internal staff review:
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .footer-brand {
       font-size: 11px;
       font-weight: 600;
@@ -393,12 +393,12 @@ Generate this HTML structure for internal staff review:
       letter-spacing: 1px;
       text-transform: uppercase;
     }
-    
+
     .footer-info {
       font-size: 10px;
       color: rgba(255,255,255,0.5);
     }
-    
+
     @media print {
       body { background: white; }
       .page { box-shadow: none; }
@@ -407,7 +407,7 @@ Generate this HTML structure for internal staff review:
 </head>
 <body>
   <div class="page">
-    
+
     <!-- HEADER -->
     <div class="header">
       <div class="brand">
@@ -418,7 +418,7 @@ Generate this HTML structure for internal staff review:
       </div>
       <div class="confidential">Staff Only — Not for Client</div>
     </div>
-    
+
     <!-- CLIENT INFO BAR -->
     <div class="client-bar">
       <div class="info-item">
@@ -438,7 +438,7 @@ Generate this HTML structure for internal staff review:
         <p>TU: [TU_SCORE] | EX: [EX_SCORE] | EQ: [EQ_SCORE]</p>
       </div>
     </div>
-    
+
     <!-- EXECUTIVE SUMMARY -->
     <div class="exec-summary">
       <div class="exec-title">Executive Summary</div>
@@ -461,7 +461,7 @@ Generate this HTML structure for internal staff review:
         </div>
       </div>
     </div>
-    
+
     <!-- DECISION BOX -->
     <div class="decision-box [DECISION_CLASS]">
       <div>
@@ -473,10 +473,10 @@ Generate this HTML structure for internal staff review:
         <div style="font-size: 24px; font-weight: 700;">[SETTLEMENT_PROB]%</div>
       </div>
     </div>
-    
+
     <!-- CONTENT SECTIONS -->
     <div class="content">
-      
+
       <!-- SECTION 1: STANDING -->
       <div class="section">
         <div class="section-header">
@@ -510,7 +510,7 @@ Generate this HTML structure for internal staff review:
           </tr>
         </table>
       </div>
-      
+
       <!-- SECTION 2: VIOLATIONS -->
       <div class="section">
         <div class="section-header">
@@ -527,7 +527,7 @@ Generate this HTML structure for internal staff review:
           [VIOLATION_ROWS]
         </table>
       </div>
-      
+
       <!-- SECTION 3: CRITICAL VIOLATIONS -->
       <div class="section">
         <div class="section-header">
@@ -545,7 +545,7 @@ Generate this HTML structure for internal staff review:
           [CONTRADICTION_ROWS]
         </table>
       </div>
-      
+
       <!-- SECTION 4: DAMAGES -->
       <div class="section">
         <div class="section-header">
@@ -585,7 +585,7 @@ Generate this HTML structure for internal staff review:
           </tr>
         </table>
       </div>
-      
+
       <!-- SECTION 5: DEFENDANTS -->
       <div class="section">
         <div class="section-header">
@@ -602,7 +602,7 @@ Generate this HTML structure for internal staff review:
           [DEFENDANT_ROWS]
         </table>
       </div>
-      
+
       <!-- SECTION 6: ACTION ITEMS -->
       <div class="section">
         <div class="section-header">
@@ -624,15 +624,15 @@ Generate this HTML structure for internal staff review:
           </div>
         </div>
       </div>
-      
+
     </div>
-    
+
     <!-- FOOTER -->
     <div class="footer">
       <div class="footer-brand">Brightpath Ascend Group</div>
       <div class="footer-info">Case: [CASE_NUMBER] | Confidential — Internal Use Only</div>
     </div>
-    
+
   </div>
 </body>
 </html>
@@ -668,9 +668,9 @@ Generate this HTML structure for client email:
       --bg-white: #ffffff;
       --border-subtle: #e8e6e3;
     }
-    
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
       font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 16px;
@@ -679,23 +679,23 @@ Generate this HTML structure for client email:
       background: linear-gradient(180deg, #f0f0f0 0%, #e8e6e3 100%);
       padding: 40px 20px;
     }
-    
+
     .email-wrapper { max-width: 600px; margin: 0 auto; }
-    
+
     .email-container {
       background: var(--bg-white);
       border-radius: 3px;
       overflow: hidden;
       box-shadow: 0 25px 50px -12px rgba(10, 37, 64, 0.12);
     }
-    
+
     .email-hero {
       position: relative;
       background: var(--brand-navy-dark);
       padding: 48px 40px;
       text-align: center;
     }
-    
+
     .email-hero::after {
       content: '';
       position: absolute;
@@ -703,7 +703,7 @@ Generate this HTML structure for client email:
       height: 3px;
       background: linear-gradient(90deg, var(--brand-teal), var(--brand-teal-light), var(--brand-teal));
     }
-    
+
     .brand-name {
       font-size: 24px;
       font-weight: 700;
@@ -712,34 +712,34 @@ Generate this HTML structure for client email:
       text-transform: uppercase;
       margin-bottom: 12px;
     }
-    
+
     .hero-title {
       font-family: 'Playfair Display', serif;
       font-size: 17px;
       color: rgba(255, 255, 255, 0.7);
     }
-    
+
     .email-body { padding: 45px 40px; }
-    
+
     .greeting {
       font-family: 'Playfair Display', serif;
       font-size: 20px;
       color: var(--brand-navy);
       margin-bottom: 24px;
     }
-    
+
     .intro-text {
       font-size: 16px;
       color: var(--text-secondary);
       margin-bottom: 16px;
       line-height: 1.75;
     }
-    
+
     .intro-text strong {
       color: var(--brand-navy);
       font-weight: 600;
     }
-    
+
     .key-finding {
       background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%);
       border-radius: 3px;
@@ -747,7 +747,7 @@ Generate this HTML structure for client email:
       margin: 32px 0;
       border-left: 4px solid var(--brand-teal);
     }
-    
+
     .key-finding-label {
       font-size: 11px;
       font-weight: 700;
@@ -756,40 +756,40 @@ Generate this HTML structure for client email:
       color: var(--brand-teal);
       margin-bottom: 10px;
     }
-    
+
     .key-finding-text {
       font-size: 16px;
       color: var(--text-primary);
       line-height: 1.65;
     }
-    
+
     .stats-container {
       background: var(--bg-cream);
       border-radius: 3px;
       padding: 12px;
       margin: 32px 0;
     }
-    
+
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
     }
-    
+
     .stat-card {
       text-align: center;
       padding: 18px 6px;
       background: var(--bg-white);
       border-radius: 2px;
     }
-    
+
     .stat-number {
       font-size: 22px;
       font-weight: 700;
       color: var(--brand-teal);
       margin-bottom: 6px;
     }
-    
+
     .stat-label {
       font-size: 10px;
       font-weight: 600;
@@ -797,7 +797,7 @@ Generate this HTML structure for client email:
       text-transform: uppercase;
       color: var(--text-muted);
     }
-    
+
     .value-card {
       background: var(--brand-navy-dark);
       border-radius: 3px;
@@ -805,7 +805,7 @@ Generate this HTML structure for client email:
       margin: 32px 0;
       text-align: center;
     }
-    
+
     .value-label {
       font-size: 11px;
       font-weight: 700;
@@ -814,19 +814,19 @@ Generate this HTML structure for client email:
       color: var(--brand-teal-light);
       margin-bottom: 12px;
     }
-    
+
     .value-amount {
       font-family: 'Playfair Display', serif;
       font-size: 42px;
       font-weight: 700;
       color: white;
     }
-    
+
     .cta-section {
       text-align: center;
       margin: 40px 0 32px;
     }
-    
+
     .cta-title {
       font-family: 'Playfair Display', serif;
       font-size: 24px;
@@ -834,13 +834,13 @@ Generate this HTML structure for client email:
       color: var(--brand-navy);
       margin-bottom: 8px;
     }
-    
+
     .cta-text {
       font-size: 15px;
       color: var(--text-muted);
       margin-bottom: 24px;
     }
-    
+
     .cta-button {
       display: inline-block;
       background: var(--brand-teal);
@@ -852,33 +852,33 @@ Generate this HTML structure for client email:
       border-radius: 4px;
       box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
     }
-    
+
     .signature {
       margin-top: 40px;
       padding-top: 28px;
       border-top: 1px solid var(--border-subtle);
       text-align: center;
     }
-    
+
     .signature-name {
       font-family: 'Playfair Display', serif;
       font-size: 16px;
       font-weight: 700;
       color: var(--brand-navy);
     }
-    
+
     .signature-contact {
       font-size: 13px;
       color: var(--text-muted);
       margin-top: 8px;
     }
-    
+
     .email-footer {
       background: var(--brand-navy-dark);
       padding: 30px 40px;
       text-align: center;
     }
-    
+
     .footer-brand {
       font-size: 11px;
       font-weight: 700;
@@ -886,7 +886,7 @@ Generate this HTML structure for client email:
       color: var(--brand-teal-light);
       text-transform: uppercase;
     }
-    
+
     .footer-disclaimer {
       font-size: 10px;
       color: rgba(255, 255, 255, 0.3);
@@ -898,25 +898,25 @@ Generate this HTML structure for client email:
 
 <div class="email-wrapper">
   <div class="email-container">
-    
+
     <div class="email-hero">
       <div class="brand-name">Brightpath Ascend Group</div>
       <div class="hero-title">Your Credit Analysis is Complete</div>
     </div>
-    
+
     <div class="email-body">
-      
+
       <p class="greeting">[CLIENT_FIRST_NAME],</p>
-      
+
       <p class="intro-text">Your analysis is complete. <strong>We found violations.</strong> Real ones. The kind that get results.</p>
-      
+
       <p class="intro-text">This isn't credit repair. It's federal consumer protection — and the law is on your side.</p>
-      
+
       <div class="key-finding">
         <div class="key-finding-label">Key Finding</div>
         <p class="key-finding-text">[KEY_FINDING_TEXT]</p>
       </div>
-      
+
       <div class="stats-container">
         <div class="stats-grid">
           <div class="stat-card">
@@ -937,18 +937,18 @@ Generate this HTML structure for client email:
           </div>
         </div>
       </div>
-      
+
       <div class="value-card">
         <div class="value-label">Your Case Value</div>
         <div class="value-amount">[VALUE_RANGE]</div>
       </div>
-      
+
       <div class="cta-section">
         <div class="cta-title">Ready?</div>
         <p class="cta-text">Reply "APPROVED" and we start immediately.</p>
         <a href="mailto:support@brightpathascend.com?subject=APPROVED" class="cta-button">I'm In →</a>
       </div>
-      
+
       <div class="signature">
         <div class="signature-name">Brightpath Ascend Group</div>
         <div class="signature-contact">
@@ -956,16 +956,16 @@ Generate this HTML structure for client email:
           (917) 909-4051
         </div>
       </div>
-      
+
     </div>
-    
+
     <div class="email-footer">
       <div class="footer-brand">Brightpath Ascend Group</div>
       <div class="footer-disclaimer">
         Confidential | Case: [CASE_NUMBER]
       </div>
     </div>
-    
+
   </div>
 </div>
 
@@ -1040,9 +1040,9 @@ Generate this HTML structure for attorney review:
   <title>Legal Memorandum - [CASE_CAPTION]</title>
   <style>
     @page { size: letter; margin: 1in; }
-    
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
       font-family: 'Times New Roman', Times, Georgia, serif;
       font-size: 12pt;
@@ -1050,39 +1050,39 @@ Generate this HTML structure for attorney review:
       color: #000;
       background-color: #fff;
     }
-    
+
     .page {
       max-width: 8.5in;
       margin: 0 auto;
       padding: 1in;
       background-color: white;
     }
-    
+
     .memo-header {
       border-bottom: 3px double #000;
       padding-bottom: 20px;
       margin-bottom: 30px;
     }
-    
+
     .memo-header-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 20px;
     }
-    
+
     .firm-name {
       font-size: 14pt;
       font-weight: bold;
       letter-spacing: 1px;
     }
-    
+
     .firm-division {
       font-size: 10pt;
       font-style: italic;
       color: #333;
     }
-    
+
     .confidential-stamp {
       text-align: right;
       font-size: 10pt;
@@ -1091,7 +1091,7 @@ Generate this HTML structure for attorney review:
       padding: 6px 12px;
       text-transform: uppercase;
     }
-    
+
     .memo-title {
       text-align: center;
       font-size: 14pt;
@@ -1101,25 +1101,25 @@ Generate this HTML structure for attorney review:
       margin: 25px 0;
       text-decoration: underline;
     }
-    
+
     .memo-row {
       display: flex;
       margin: 4px 0;
       line-height: 1.6;
     }
-    
+
     .memo-label {
       width: 120px;
       font-weight: bold;
     }
-    
+
     .exec-summary {
       border: 2px solid #000;
       padding: 20px;
       margin: 30px 0;
       background-color: #f9f9f9;
     }
-    
+
     .exec-summary-title {
       font-size: 12pt;
       font-weight: bold;
@@ -1129,26 +1129,26 @@ Generate this HTML structure for attorney review:
       padding-bottom: 10px;
       border-bottom: 1px solid #666;
     }
-    
+
     .exec-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 20px;
       text-align: center;
     }
-    
+
     .exec-item-label {
       font-size: 9pt;
       text-transform: uppercase;
       color: #666;
     }
-    
+
     .exec-item-value {
       font-size: 18pt;
       font-weight: bold;
       margin-top: 5px;
     }
-    
+
     h1 {
       font-size: 12pt;
       font-weight: bold;
@@ -1157,37 +1157,37 @@ Generate this HTML structure for attorney review:
       padding-bottom: 5px;
       border-bottom: 2px solid #000;
     }
-    
+
     h2 {
       font-size: 12pt;
       font-weight: bold;
       margin: 25px 0 12px 0;
       font-style: italic;
     }
-    
+
     h3 {
       font-size: 12pt;
       font-weight: bold;
       margin: 20px 0 10px 0;
     }
-    
+
     p {
       margin: 12px 0;
       text-align: justify;
       text-indent: 0.5in;
     }
-    
+
     p.no-indent { text-indent: 0; }
-    
+
     .cite { font-style: italic; }
-    
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin: 20px 0;
       font-size: 11pt;
     }
-    
+
     th {
       background-color: #e8e8e8;
       border: 1px solid #000;
@@ -1197,56 +1197,56 @@ Generate this HTML structure for attorney review:
       font-size: 10pt;
       text-transform: uppercase;
     }
-    
+
     td {
       border: 1px solid #000;
       padding: 8px 10px;
       vertical-align: top;
     }
-    
+
     tr.total-row {
       background-color: #d9d9d9;
       font-weight: bold;
     }
-    
+
     tr.highlight-row {
       background-color: #ffffcc;
     }
-    
+
     ol, ul {
       margin: 15px 0 15px 0.75in;
     }
-    
+
     li {
       margin: 8px 0;
       line-height: 1.8;
     }
-    
+
     .assessment-box {
       border: 1px solid #000;
       padding: 15px 20px;
       margin: 20px 0;
       background-color: #f5f5f5;
     }
-    
+
     .assessment-box.strong { border-left: 5px solid #228b22; }
     .assessment-box.moderate { border-left: 5px solid #daa520; }
     .assessment-box.weak { border-left: 5px solid #dc143c; }
-    
+
     .assessment-title {
       font-weight: bold;
       margin-bottom: 8px;
     }
-    
+
     .signature-block { margin-top: 50px; }
-    
+
     .signature-line {
       margin-top: 40px;
       padding-top: 5px;
       border-top: 1px solid #000;
       width: 250px;
     }
-    
+
     .memo-footer {
       margin-top: 40px;
       padding-top: 15px;
@@ -1256,7 +1256,7 @@ Generate this HTML structure for attorney review:
       display: flex;
       justify-content: space-between;
     }
-    
+
     @media print {
       .page-break { page-break-before: always; }
       body { padding: 0; }
@@ -1266,7 +1266,7 @@ Generate this HTML structure for attorney review:
 <body>
 
 <div class="page">
-  
+
   <!-- MEMO HEADER -->
   <div class="memo-header">
     <div class="memo-header-top">
@@ -1279,9 +1279,9 @@ Generate this HTML structure for attorney review:
         Attorney Work Product
       </div>
     </div>
-    
+
     <div class="memo-title">Memorandum of Law</div>
-    
+
     <div>
       <div class="memo-row">
         <span class="memo-label">TO:</span>
@@ -1331,23 +1331,23 @@ Generate this HTML structure for attorney review:
 
   <!-- I. QUESTION PRESENTED -->
   <h1>I. Question Presented</h1>
-  
+
   <p class="no-indent">Whether [CLIENT_NAME] ("Consumer") has viable claims under the Fair Credit Reporting Act, 15 U.S.C. § 1681 <em>et seq.</em>, against credit reporting agencies and furnishers based on documented inaccuracies in Consumer's credit reports, and whether such claims survive standing analysis under <span class="cite">TransUnion LLC v. Ramirez</span>, 141 S. Ct. 2190 (2021).</p>
 
   <!-- II. BRIEF ANSWER -->
   <h1>II. Brief Answer</h1>
-  
+
   <p class="no-indent">Yes. Consumer has [CASE_STRENGTH_TEXT] FCRA claims based on [VIOLATION_COUNT] documented violations across [DEFENDANT_COUNT] defendants. The violations include impossible status contradictions, balance discrepancies, and date reporting errors. Standing is [STANDING_STATUS] under <span class="cite">TransUnion</span>. Willfulness probability is assessed at [WILLFULNESS]%. Estimated case value ranges from $[VALUE_LOW] to $[VALUE_HIGH], with a settlement target of $[SETTLEMENT_TARGET].</p>
 
   <!-- III. STATEMENT OF FACTS -->
   <h1>III. Statement of Facts</h1>
-  
+
   <h2>A. Background</h2>
-  
+
   <p>Consumer [CLIENT_NAME] is an individual residing in [CLIENT_STATE]. Consumer obtained tri-bureau credit reports dated [REPORT_DATE]. Review of these reports reveals significant inaccuracies affecting [ACCOUNT_COUNT] accounts.</p>
 
   <h2>B. Credit Bureau Scores</h2>
-  
+
   <table>
     <tr>
       <th>Bureau</th>
@@ -1358,7 +1358,7 @@ Generate this HTML structure for attorney review:
   </table>
 
   <h2>C. Summary of Inaccuracies</h2>
-  
+
   <table>
     <tr>
       <th>Violation Category</th>
@@ -1371,9 +1371,9 @@ Generate this HTML structure for attorney review:
 
   <!-- IV. ANALYSIS -->
   <h1>IV. Analysis</h1>
-  
+
   <h2>A. Standing Under <span class="cite">TransUnion LLC v. Ramirez</span></h2>
-  
+
   <p>Following the Supreme Court's decision in <span class="cite">TransUnion LLC v. Ramirez</span>, 141 S. Ct. 2190 (2021), FCRA plaintiffs must establish Article III standing by demonstrating: (1) a concrete injury-in-fact; (2) caused by defendant's conduct; (3) that is redressable by a favorable decision.</p>
 
   <div class="assessment-box [STANDING_BOX_CLASS]">
@@ -1382,9 +1382,9 @@ Generate this HTML structure for attorney review:
   </div>
 
   <h2>B. Violation Analysis</h2>
-  
+
   <h3>1. Impossible Status Contradictions</h3>
-  
+
   <p>The most significant violations involve accounts reported with mutually exclusive statuses across bureaus. <em>See</em> <span class="cite">Cushman v. Trans Union Corp.</span>, 115 F.3d 220, 225 (3d Cir. 1997).</p>
 
   <table>
@@ -1399,7 +1399,7 @@ Generate this HTML structure for attorney review:
   </table>
 
   <h2>C. Willfulness Analysis Under <span class="cite">Safeco</span></h2>
-  
+
   <p>Under <span class="cite">Safeco Insurance Co. v. Burr</span>, 551 U.S. 47 (2007), willfulness requires knowing or reckless disregard of statutory duties.</p>
 
   <div class="assessment-box [WILLFULNESS_BOX_CLASS]">
@@ -1479,7 +1479,7 @@ Generate this HTML structure for attorney review:
       Confidential — Attorney Work Product
     </div>
   </div>
-  
+
 </div>
 
 </body>

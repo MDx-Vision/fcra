@@ -35,7 +35,9 @@ REQUEST_ID_HEADER = "X-Request-ID"
 CORRELATION_ID_HEADER = "X-Correlation-ID"
 
 # Configuration
-REQUEST_ID_PREFIX = os.environ.get("REQUEST_ID_PREFIX", "")  # Optional prefix for multi-service environments
+REQUEST_ID_PREFIX = os.environ.get(
+    "REQUEST_ID_PREFIX", ""
+)  # Optional prefix for multi-service environments
 
 logger = logging.getLogger("request_id")
 
@@ -70,6 +72,7 @@ def get_request_id() -> Optional[str]:
     # Fall back to Flask's g object
     try:
         from flask import g
+
         return getattr(g, "correlation_id", None) or getattr(g, "request_id", None)
     except RuntimeError:
         return None
@@ -87,6 +90,7 @@ def set_request_id(request_id: str) -> None:
     # Also set in Flask's g if available
     try:
         from flask import g
+
         g.request_id = request_id
         g.correlation_id = request_id  # For backward compatibility
     except RuntimeError:
@@ -178,7 +182,7 @@ class RequestIDFormatter(logging.Formatter):
         self,
         fmt: Optional[str] = None,
         datefmt: Optional[str] = None,
-        include_request_id: bool = True
+        include_request_id: bool = True,
     ):
         if fmt is None:
             if include_request_id:
@@ -215,7 +219,10 @@ def configure_logging_with_request_id() -> None:
     for handler in root_logger.handlers:
         if isinstance(handler, logging.StreamHandler):
             # Only update if not already using JSON formatter
-            if not handler.formatter or "json" not in type(handler.formatter).__name__.lower():
+            if (
+                not handler.formatter
+                or "json" not in type(handler.formatter).__name__.lower()
+            ):
                 handler.setFormatter(RequestIDFormatter())
 
     logger.info("Request ID logging configured")
@@ -237,7 +244,7 @@ def init_request_id_middleware(app) -> None:
     @app.before_request
     def set_request_id_before():
         """Set request ID at the start of each request."""
-        from flask import request, g
+        from flask import g, request
 
         # Try to extract from incoming headers, or generate new
         incoming_id = extract_request_id_from_headers(dict(request.headers))
@@ -292,10 +299,7 @@ def add_request_id_to_error_response(response_data: Dict[str, Any]) -> Dict[str,
 
 
 def log_with_request_id(
-    logger_instance: logging.Logger,
-    level: int,
-    message: str,
-    **extra_fields
+    logger_instance: logging.Logger, level: int, message: str, **extra_fields
 ) -> None:
     """
     Log a message with request ID included in extra data.
@@ -307,16 +311,9 @@ def log_with_request_id(
         **extra_fields: Additional fields to include
     """
     request_id = get_request_id()
-    extra_data = {
-        "request_id": request_id,
-        **extra_fields
-    }
+    extra_data = {"request_id": request_id, **extra_fields}
 
-    logger_instance.log(
-        level,
-        message,
-        extra={"extra_data": extra_data}
-    )
+    logger_instance.log(level, message, extra={"extra_data": extra_data})
 
 
 def request_id_context(request_id: Optional[str] = None):
@@ -333,6 +330,7 @@ def request_id_context(request_id: Optional[str] = None):
             # All logs in this block will include the request ID
             do_something()
     """
+
     class RequestIDContext:
         def __init__(self, rid: Optional[str]):
             self.request_id = rid or generate_request_id()
@@ -365,16 +363,19 @@ def with_request_id(func: Callable) -> Callable:
         def background_task():
             logger.info("Processing...")  # Will include request ID
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         if get_request_id() is None:
             with request_id_context():
                 return func(*args, **kwargs)
         return func(*args, **kwargs)
+
     return wrapper
 
 
 # HTTP client helpers for common libraries
+
 
 def requests_session_with_request_id():
     """

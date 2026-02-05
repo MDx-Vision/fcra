@@ -958,7 +958,7 @@
         function handleBatchFiles(e) {
             batchFiles = Array.from(e.target.files);
             const list = document.getElementById('batchFileList');
-            list.innerHTML = batchFiles.map(f => 
+            list.innerHTML = batchFiles.map(f =>
                 `<div style="padding:8px; background:#f8fafc; margin:5px 0; border-radius:6px;">
                     ${f.name} <span style="color:#64748b;">(${formatBytes(f.size)})</span>
                 </div>`

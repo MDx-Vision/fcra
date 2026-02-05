@@ -5,7 +5,7 @@
 ## THE PROBLEM
 
 The signup page at `/signup` shows:
-- The form has `style="display: none;"` 
+- The form has `style="display: none;"`
 - The success message has `style="display: block;"`
 - **Clients cannot sign up because the form is hidden!**
 

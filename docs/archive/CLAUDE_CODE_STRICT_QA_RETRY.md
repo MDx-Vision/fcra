@@ -108,10 +108,10 @@ If this shows 1,584 buttons, you must click 1,584 buttons.
 
 async def click_button_safely(page, button, button_text):
     """Click any button, handle confirmations"""
-    
+
     await button.click()
     await page.wait_for_timeout(300)
-    
+
     # Check for confirmation dialog
     confirm_dialog = await page.query_selector(
         ".modal.show, "
@@ -120,7 +120,7 @@ async def click_button_safely(page, button, button_text):
         ".swal2-popup, "
         "[class*='confirm']"
     )
-    
+
     if confirm_dialog:
         # Click Cancel/No/Close to abort the action
         cancel = await confirm_dialog.query_selector(
@@ -137,10 +137,10 @@ async def click_button_safely(page, button, button_text):
         else:
             # Press Escape to close
             await page.keyboard.press("Escape")
-    
+
     # Check if page navigated
     # If so, go back
-    
+
     return True  # Button was clicked
 ```
 
@@ -209,10 +209,10 @@ Evidence: [specific file and line numbers]
 # Add explicit waits and retries
 async def test_staff_login(page):
     await page.goto(f"{BASE_URL}/staff/login", wait_until="networkidle")
-    
+
     # Wait for form to be visible
     await page.wait_for_selector("form", state="visible", timeout=10000)
-    
+
     # Try multiple selectors for email field
     email_selectors = [
         "#email",
@@ -221,7 +221,7 @@ async def test_staff_login(page):
         "input[type='text']",
         "form input:first-of-type"
     ]
-    
+
     email_field = None
     for selector in email_selectors:
         try:
@@ -230,12 +230,12 @@ async def test_staff_login(page):
                 break
         except:
             continue
-    
+
     if not email_field:
         # Take screenshot to debug
         await page.screenshot(path="tests/mandatory/staff_login_debug.png")
         raise Exception("Could not find email field")
-    
+
     await email_field.fill("admin@test.com")
     # ... continue
 ```
@@ -273,7 +273,7 @@ all_links_tested = 0
 for url in ALL_PAGES:
     await page.goto(url)
     links = await page.query_selector_all("a[href]")
-    
+
     for link in links:
         href = await link.get_attribute("href")
         # Test it

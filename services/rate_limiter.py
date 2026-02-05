@@ -11,14 +11,16 @@ from flask import jsonify, request, session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
+
 # Check if running in CI/test mode - disable rate limiting for tests
 def is_testing_mode():
     """Check if running in CI/test mode at runtime."""
     return (
-        os.environ.get("CI", "").lower() == "true" or
-        os.environ.get("CYPRESS_TEST", "").lower() == "true" or
-        os.environ.get("TESTING", "").lower() == "true"
+        os.environ.get("CI", "").lower() == "true"
+        or os.environ.get("CYPRESS_TEST", "").lower() == "true"
+        or os.environ.get("TESTING", "").lower() == "true"
     )
+
 
 IS_CI = is_testing_mode()
 
@@ -58,15 +60,16 @@ def init_rate_limiter(app):
     @app.errorhandler(429)
     def ratelimit_handler(e):
         from services.logging_config import api_logger
-        from services.rate_limit_monitor_service import get_rate_limit_monitor, is_ip_blocked
+        from services.rate_limit_monitor_service import (
+            get_rate_limit_monitor,
+            is_ip_blocked,
+        )
 
         ip_address = get_remote_address()
         endpoint = request.path
         user_agent = request.headers.get("User-Agent", "")
 
-        api_logger.warning(
-            f"Rate limit exceeded: {get_rate_limit_key()} - {endpoint}"
-        )
+        api_logger.warning(f"Rate limit exceeded: {get_rate_limit_key()} - {endpoint}")
 
         # Record violation in monitor
         monitor = get_rate_limit_monitor()

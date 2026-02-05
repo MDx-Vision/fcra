@@ -138,10 +138,10 @@ async def test_signup_form():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)  # See it visually
         page = await browser.new_page()
-        
+
         await page.goto("http://localhost:5001/signup")
         await page.wait_for_timeout(2000)
-        
+
         # Check if form fields are visible
         first_name = await page.query_selector("#firstName, input[name='firstName']")
         if first_name:
@@ -149,18 +149,18 @@ async def test_signup_form():
             print(f"First Name field visible: {visible}")
         else:
             print("❌ First Name field NOT FOUND")
-        
+
         # Try to fill the form
         try:
             await page.fill("#firstName", "Test")
             print("✅ Can fill First Name")
         except Exception as e:
             print(f"❌ Cannot fill First Name: {e}")
-        
+
         # Screenshot
         await page.screenshot(path="signup_test.png")
         print("Screenshot saved: signup_test.png")
-        
+
         await browser.close()
 
 asyncio.run(test_signup_form())

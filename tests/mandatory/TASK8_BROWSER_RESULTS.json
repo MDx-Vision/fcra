@@ -1,20 +1,25 @@
 {
-  "timestamp": "2026-01-20T23:24:15.963311",
+  "timestamp": "2026-01-29T17:24:05.927505",
   "browsers_tested": 3,
   "browsers_passed": 0,
   "browsers_failed": 3,
   "browser_results": {
     "chromium": {
-      "pages_tested": 8,
-      "pages_passed": 3,
+      "pages_tested": 0,
+      "pages_passed": 0,
       "actions_tested": 4,
-      "actions_passed": 3,
+      "actions_passed": 1,
       "issues": [
-        "/staff/login returned 429",
-        "/dashboard returned 429",
-        "/dashboard/clients returned 429",
-        "/dashboard/cases returned 429",
-        "/dashboard/settlements returned 429",
+        "/: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/signup: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/staff/login: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/portal/login: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/dashboard: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/dashboard/clients: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/dashboard/cases: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/dashboard/settlements: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "Form test: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "CSS test: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
         "No buttons found"
       ]
     },

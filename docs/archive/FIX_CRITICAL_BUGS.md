@@ -64,7 +64,7 @@ Look for code like this:
 function nextStep(currentStep) {
     // Validate current step
     if (!validateStep(currentStep)) return;  // <-- Is this failing?
-    
+
     // Hide current, show next
     document.getElementById('step' + currentStep).style.display = 'none';
     document.getElementById('step' + (currentStep + 1)).style.display = 'block';
@@ -88,46 +88,46 @@ async def test_signup_wizard():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)  # See what happens
         page = await browser.new_page()
-        
+
         await page.goto("http://localhost:5001/signup")
-        
+
         # Step 1 - Fill personal info
         await page.fill("#firstName", "Test")
         await page.fill("#lastName", "User")
         await page.fill("#email", "test@example.com")
         await page.fill("#phone", "5551234567")
-        
+
         # Click Next
         next_btn = await page.query_selector("button:has-text('Next')")
         await next_btn.click()
         await page.wait_for_timeout(1000)
-        
+
         # Verify Step 2 is showing
         step2 = await page.query_selector("#step2, [data-step='2'], .step-2")
         if step2 and await step2.is_visible():
             print("✅ Step 2 visible")
         else:
             print("❌ Step 2 NOT visible")
-        
+
         # Step 2 - Select plan (radio button)
         plan_radio = await page.query_selector("input[type='radio'][name='plan']")
         if plan_radio:
             await plan_radio.click()
             print("✅ Plan selected")
-        
+
         # Click Next again
         next_btn2 = await page.query_selector("button:has-text('Next'):visible")
         if next_btn2:
             await next_btn2.click()
             await page.wait_for_timeout(1000)
-        
+
         # Verify Step 3 is showing
         step3 = await page.query_selector("#step3, [data-step='3'], .step-3")
         if step3 and await step3.is_visible():
             print("✅ Step 3 visible - WIZARD WORKS!")
         else:
             print("❌ Step 3 NOT visible - STILL BROKEN")
-        
+
         await browser.close()
 
 asyncio.run(test_signup_wizard())
@@ -214,7 +214,7 @@ class Tenant(db.Model):
 **If template variable missing:**
 ```python
 # Make sure all variables are passed
-return render_template('white_label_dashboard.html', 
+return render_template('white_label_dashboard.html',
     tenants=tenants,
     current_user=current_user,  # <-- might be missing
     stats=stats  # <-- might be missing
@@ -245,31 +245,31 @@ async def test():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
-        
+
         await page.goto("http://localhost:5001/signup")
-        
+
         # Fill Step 1
         await page.fill("#firstName", "Test")
-        await page.fill("#lastName", "User") 
+        await page.fill("#lastName", "User")
         await page.fill("#email", "test123@example.com")
         await page.fill("#phone", "5551234567")
         await page.fill("#addressStreet", "123 Test St")
         await page.fill("#addressCity", "Test City")
         await page.fill("#addressZip", "90210")
-        
+
         # Click Next
         await page.click("button:has-text('Next')")
         await page.wait_for_timeout(500)
-        
+
         # Check if we advanced
         url = page.url
         content = await page.content()
-        
+
         if "step2" in content.lower() or "step 2" in content.lower() or "plan" in content.lower():
             print("✅ BUG 1 FIXED: Signup wizard advances to Step 2")
         else:
             print("❌ BUG 1 NOT FIXED: Still stuck on Step 1")
-        
+
         await browser.close()
 
 asyncio.run(test())

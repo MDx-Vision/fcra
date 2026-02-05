@@ -47,6 +47,7 @@ class InMemoryCache:
 
     def _start_cleanup_thread(self) -> None:
         """Start background thread for periodic cache cleanup"""
+
         def cleanup_loop():
             while not self._shutdown:
                 time.sleep(self._cleanup_interval)
@@ -58,7 +59,7 @@ class InMemoryCache:
         self._cleanup_thread = threading.Thread(
             target=cleanup_loop,
             name="cache-cleanup",
-            daemon=True  # Thread will stop when main program exits
+            daemon=True,  # Thread will stop when main program exits
         )
         self._cleanup_thread.start()
 
@@ -562,12 +563,14 @@ class PerformanceService:
                     pass
 
                 try:
-                    result = self.db.execute("""
-                        SELECT state, count(*) as count 
-                        FROM pg_stat_activity 
-                        WHERE datname = current_database() 
+                    result = self.db.execute(
+                        """
+                        SELECT state, count(*) as count
+                        FROM pg_stat_activity
+                        WHERE datname = current_database()
                         GROUP BY state
-                    """).fetchall()
+                    """
+                    ).fetchall()
                     db_stats["connection_states"] = {
                         row[0] or "null": row[1] for row in result
                     }
@@ -575,8 +578,9 @@ class PerformanceService:
                     pass
 
                 try:
-                    result = self.db.execute("""
-                        SELECT 
+                    result = self.db.execute(
+                        """
+                        SELECT
                             relname as table_name,
                             n_live_tup as row_count,
                             n_dead_tup as dead_rows,
@@ -585,7 +589,8 @@ class PerformanceService:
                         FROM pg_stat_user_tables
                         ORDER BY n_live_tup DESC
                         LIMIT 10
-                    """).fetchall()
+                    """
+                    ).fetchall()
                     db_stats["top_tables"] = [
                         {
                             "table": row[0],
@@ -657,15 +662,17 @@ class PerformanceService:
 
         if self.db:
             try:
-                result = self.db.execute("""
-                    SELECT 
+                result = self.db.execute(
+                    """
+                    SELECT
                         schemaname,
                         tablename,
                         indexname,
                         indexdef
                     FROM pg_indexes
                     WHERE schemaname = 'public'
-                """).fetchall()
+                """
+                ).fetchall()
 
                 existing_indices = set()
                 for row in result:

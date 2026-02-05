@@ -267,7 +267,7 @@ describe('/portal - Client Login Page', () => {
       cy.get('[data-testid="new-password-input"]').type('password123');
       cy.get('[data-testid="confirm-password-input"]').type('different123');
       cy.get('[data-testid="reset-password-button"]').click();
-      
+
       cy.get('[data-testid="reset-alert"]')
         .should('not.have.class', 'hidden')
         .should('contain.text', 'Passwords do not match');
@@ -277,7 +277,7 @@ describe('/portal - Client Login Page', () => {
       cy.get('[data-testid="new-password-input"]').type('short');
       cy.get('[data-testid="confirm-password-input"]').type('short');
       cy.get('[data-testid="reset-password-button"]').click();
-      
+
       cy.get('[data-testid="reset-alert"]')
         .should('not.have.class', 'hidden')
         .should('contain.text', 'Password must be at least 8 characters');
@@ -390,7 +390,7 @@ describe('/portal - Client Login Page', () => {
 
     it('should handle network errors in reset password form', () => {
       cy.visit('/portal?token=test-token');
-      
+
       cy.intercept('POST', '/api/portal/reset-password', {
         forceNetworkError: true
       }).as('resetPasswordError');

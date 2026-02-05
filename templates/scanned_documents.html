@@ -14,31 +14,31 @@
             --lime: #32CD32;
             --gradient: linear-gradient(135deg, var(--teal), var(--lime));
         }
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .main-content {
             margin-left: 260px;
             padding: 30px;
         }
-        
+
         .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
         }
-        
+
         .page-header h1 {
             font-size: 28px;
             font-weight: 700;
             color: #1a1a2e;
         }
-        
+
         .doc-card {
             background: white;
             border-radius: 12px;
@@ -47,18 +47,18 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             border-left: 4px solid var(--teal);
         }
-        
+
         .doc-card.r1 { border-left-color: #0d6efd; }
         .doc-card.r2 { border-left-color: #0dcaf0; }
         .doc-card.r3 { border-left-color: #ffc107; }
         .doc-card.r4 { border-left-color: #dc3545; }
-        
+
         .doc-type-badge {
             font-size: 0.75rem;
             padding: 0.25rem 0.5rem;
             border-radius: 4px;
         }
-        
+
         .text-preview {
             background: #f8f9fa;
             border-radius: 8px;
@@ -69,29 +69,29 @@
             white-space: pre-wrap;
             font-family: monospace;
         }
-        
+
         .btn-gradient {
             background: var(--gradient);
             border: none;
             color: white;
         }
-        
+
         .btn-gradient:hover {
             opacity: 0.9;
             color: white;
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 3rem;
             color: #6c757d;
         }
-        
+
         .empty-state i {
             font-size: 4rem;
             opacity: 0.3;
         }
-        
+
         .stats-bar {
             background: white;
             padding: 1rem;
@@ -101,27 +101,27 @@
             gap: 2rem;
             flex-wrap: wrap;
         }
-        
+
         .stat-item {
             text-align: center;
         }
-        
+
         .stat-value {
             font-size: 1.5rem;
             font-weight: bold;
             color: var(--teal);
         }
-        
+
         .stat-label {
             font-size: 0.8rem;
             color: #6c757d;
         }
-        
+
         .nav-tabs .nav-link.active {
             border-bottom: 3px solid var(--teal);
             font-weight: 600;
         }
-        
+
         .cra-response-card {
             background: white;
             border-radius: 12px;
@@ -130,22 +130,22 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             border-left: 4px solid var(--teal);
         }
-        
+
         .cra-response-card.analyzed {
             border-left-color: #198754;
         }
-        
+
         .cra-response-card.pending-review {
             border-left-color: #ffc107;
         }
-        
+
         .analysis-result {
             background: #f8f9fa;
             border-radius: 8px;
             padding: 1rem;
             margin-top: 1rem;
         }
-        
+
         .item-row {
             display: flex;
             justify-content: space-between;
@@ -153,34 +153,34 @@
             padding: 0.5rem;
             border-bottom: 1px solid #eee;
         }
-        
+
         .item-row:last-child {
             border-bottom: none;
         }
-        
+
         .status-badge {
             font-size: 0.75rem;
             padding: 0.25rem 0.5rem;
             border-radius: 4px;
         }
-        
+
         .status-deleted { background: #dc3545; color: white; }
         .status-verified { background: #198754; color: white; }
         .status-updated { background: #0d6efd; color: white; }
         .status-investigating { background: #6c757d; color: white; }
-        
+
         .confidence-bar {
             height: 8px;
             background: #e9ecef;
             border-radius: 4px;
             overflow: hidden;
         }
-        
+
         .confidence-fill {
             height: 100%;
             background: var(--gradient);
         }
-        
+
         .reinsertion-alert {
             background: #fff3cd;
             border: 1px solid #ffc107;
@@ -188,11 +188,11 @@
             padding: 0.75rem;
             margin-top: 0.5rem;
         }
-        
+
         #analysisModal .modal-dialog {
             max-width: 800px;
         }
-        
+
         .spinner-overlay {
             position: fixed;
             top: 0;
@@ -210,7 +210,7 @@
 <body>
     {% set active_page = 'scanned-docs' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
+
     <main class="main-content">
         <div class="page-header">
             <div>
@@ -226,7 +226,7 @@
                 </a>
             </div>
         </div>
-    
+
         <div class="container-fluid p-0">
         <ul class="nav nav-tabs mb-4" id="docTabs" role="tablist">
             <li class="nav-item" role="presentation">
@@ -241,7 +241,7 @@
                 </button>
             </li>
         </ul>
-        
+
         <div class="tab-content">
             <div class="tab-pane fade show active" id="scanned-panel" role="tabpanel">
                 <div class="stats-bar" id="stats-bar">
@@ -258,7 +258,7 @@
                         <div class="stat-label">Scanned Today</div>
                     </div>
                 </div>
-                
+
                 <div id="documents-list">
                     <div class="text-center py-4">
                         <div class="spinner-border text-secondary" role="status"></div>
@@ -266,7 +266,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="tab-pane fade" id="cra-panel" role="tabpanel">
                 <div class="stats-bar">
                     <div class="stat-item">
@@ -286,7 +286,7 @@
                         <div class="stat-label">Reinsertion Alerts</div>
                     </div>
                 </div>
-                
+
                 <div id="cra-responses-list">
                     <div class="text-center py-4">
                         <div class="spinner-border text-secondary" role="status"></div>
@@ -297,7 +297,7 @@
         </div>
     </div>
     </main>
-    
+
     <div class="modal fade" id="analysisModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -320,7 +320,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="spinnerOverlay" class="spinner-overlay" style="display:none">
         <div class="text-center text-white">
             <div class="spinner-border" style="width: 3rem; height: 3rem;" role="status"></div>
@@ -334,7 +334,7 @@
             try {
                 const response = await fetch('/api/scanner/scanned-documents');
                 const data = await response.json();
-                
+
                 if (data.success) {
                     renderDocuments(data.documents);
                     updateStats(data.documents);
@@ -345,23 +345,23 @@
                 showError('Error loading documents: ' + error.message);
             }
         }
-        
+
         function updateStats(documents) {
             document.getElementById('stat-total').textContent = documents.length;
-            
+
             const totalWords = documents.reduce((sum, doc) => sum + (doc.word_count || 0), 0);
             document.getElementById('stat-words').textContent = totalWords.toLocaleString();
-            
+
             const today = new Date().toDateString();
-            const todayCount = documents.filter(doc => 
+            const todayCount = documents.filter(doc =>
                 new Date(doc.created_at).toDateString() === today
             ).length;
             document.getElementById('stat-today').textContent = todayCount;
         }
-        
+
         function renderDocuments(documents) {
             const container = document.getElementById('documents-list');
-            
+
             if (documents.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -375,7 +375,7 @@
                 `;
                 return;
             }
-            
+
             const roundClass = (type) => {
                 if (type.includes('r1')) return 'r1';
                 if (type.includes('r2')) return 'r2';
@@ -383,7 +383,7 @@
                 if (type.includes('r4')) return 'r4';
                 return '';
             };
-            
+
             const badgeColor = (type) => {
                 if (type.includes('r1')) return 'primary';
                 if (type.includes('r2')) return 'info';
@@ -393,7 +393,7 @@
                 if (type.includes('court')) return 'danger';
                 return 'secondary';
             };
-            
+
             container.innerHTML = documents.map(doc => `
                 <div class="doc-card ${roundClass(doc.document_type_key)}">
                     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -403,9 +403,9 @@
                         </div>
                         <small class="text-muted">${doc.created_at_formatted}</small>
                     </div>
-                    
+
                     <h6 class="mb-2">${doc.client_name}</h6>
-                    
+
                     ${doc.word_count > 0 ? `
                         <div class="mb-2">
                             <small class="text-muted"><i class="bi bi-file-text"></i> ${doc.word_count.toLocaleString()} words extracted</small>
@@ -414,7 +414,7 @@
                     ` : `
                         <div class="text-muted small"><i class="bi bi-exclamation-circle"></i> No OCR text available</div>
                     `}
-                    
+
                     <div class="mt-3 d-flex gap-2">
                         <a href="/api/scanner/download?path=${encodeURIComponent(doc.pdf_path)}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-file-pdf"></i> Download PDF
@@ -428,13 +428,13 @@
                 </div>
             `).join('');
         }
-        
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-        
+
         function showError(message) {
             document.getElementById('documents-list').innerHTML = `
                 <div class="alert alert-danger">
@@ -442,18 +442,18 @@
                 </div>
             `;
         }
-        
+
         loadDocuments();
         loadCRAResponses();
-        
+
         let currentAnalysisData = null;
         let currentResponseId = null;
-        
+
         async function loadCRAResponses() {
             try {
                 const response = await fetch('/api/cra-response/list');
                 const data = await response.json();
-                
+
                 if (data.success) {
                     renderCRAResponses(data.responses);
                     updateCRAStats(data.responses);
@@ -468,7 +468,7 @@
                 `;
             }
         }
-        
+
         function updateCRAStats(responses) {
             document.getElementById('cra-total').textContent = responses.length;
             const analyzed = responses.filter(r => r.hasAnalysis).length;
@@ -476,16 +476,16 @@
             const pending = responses.filter(r => r.hasAnalysis && !r.analysisReviewed).length;
             document.getElementById('cra-pending').textContent = pending;
             document.getElementById('cra-reinsertions').textContent = '-';
-            
+
             if (pending > 0) {
                 document.getElementById('pending-analysis-count').textContent = pending;
                 document.getElementById('pending-analysis-count').style.display = 'inline';
             }
         }
-        
+
         function renderCRAResponses(responses) {
             const container = document.getElementById('cra-responses-list');
-            
+
             if (responses.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -496,7 +496,7 @@
                 `;
                 return;
             }
-            
+
             container.innerHTML = responses.map(resp => {
                 const statusClass = resp.hasAnalysis ? (resp.analysisReviewed ? 'analyzed' : 'pending-review') : '';
                 const bureauColors = {
@@ -504,15 +504,15 @@
                     'TransUnion': 'info',
                     'Equifax': 'danger'
                 };
-                
+
                 return `
                     <div class="cra-response-card ${statusClass}" data-response-id="${resp.id}">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
                                 <span class="badge bg-${bureauColors[resp.bureau] || 'secondary'}">${resp.bureau}</span>
                                 <span class="badge bg-light text-dark ms-1">Round ${resp.disputeRound}</span>
-                                ${resp.hasAnalysis ? 
-                                    (resp.analysisReviewed ? 
+                                ${resp.hasAnalysis ?
+                                    (resp.analysisReviewed ?
                                         '<span class="badge bg-success ms-1"><i class="bi bi-check-circle"></i> Reviewed</span>' :
                                         '<span class="badge bg-warning ms-1"><i class="bi bi-clock"></i> Pending Review</span>') :
                                     '<span class="badge bg-secondary ms-1">Not Analyzed</span>'
@@ -520,15 +520,15 @@
                             </div>
                             <small class="text-muted">${resp.createdAt ? new Date(resp.createdAt).toLocaleDateString() : ''}</small>
                         </div>
-                        
+
                         <h6 class="mb-2">${resp.clientName} - ${resp.fileName || 'Response Letter'}</h6>
-                        
+
                         <div class="d-flex gap-2 mb-2">
                             ${resp.itemsDeleted ? `<span class="badge bg-success"><i class="bi bi-trash"></i> ${resp.itemsDeleted} Deleted</span>` : ''}
                             ${resp.itemsVerified ? `<span class="badge bg-warning text-dark"><i class="bi bi-check"></i> ${resp.itemsVerified} Verified</span>` : ''}
                             ${resp.itemsUpdated ? `<span class="badge bg-info"><i class="bi bi-pencil"></i> ${resp.itemsUpdated} Updated</span>` : ''}
                         </div>
-                        
+
                         ${resp.confidenceScore ? `
                             <div class="mb-2">
                                 <small class="text-muted">AI Confidence: ${(resp.confidenceScore * 100).toFixed(0)}%</small>
@@ -537,7 +537,7 @@
                                 </div>
                             </div>
                         ` : ''}
-                        
+
                         <div class="mt-3 d-flex gap-2 flex-wrap">
                             ${resp.filePath ? `
                                 <a href="/${resp.filePath}" target="_blank" class="btn btn-sm btn-outline-primary">
@@ -563,20 +563,20 @@
                 `;
             }).join('');
         }
-        
+
         async function analyzeResponse(responseId) {
             showSpinner('Analyzing document with AI...');
             currentResponseId = responseId;
-            
+
             try {
                 const response = await fetch(`/api/cra-response/${responseId}/analyze`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'}
                 });
                 const data = await response.json();
-                
+
                 hideSpinner();
-                
+
                 if (data.success) {
                     currentAnalysisData = data;
                     showAnalysisModal(data);
@@ -589,17 +589,17 @@
                 alert('Error analyzing response: ' + error.message);
             }
         }
-        
+
         async function viewAnalysis(responseId) {
             showSpinner('Loading analysis...');
             currentResponseId = responseId;
-            
+
             try {
                 const response = await fetch(`/api/cra-response/${responseId}/analysis`);
                 const data = await response.json();
-                
+
                 hideSpinner();
-                
+
                 if (data.success) {
                     currentAnalysisData = data;
                     showAnalysisModal(data, true);
@@ -611,20 +611,20 @@
                 alert('Error loading analysis: ' + error.message);
             }
         }
-        
+
         function reviewAnalysis(responseId) {
             viewAnalysis(responseId);
         }
-        
+
         function showAnalysisModal(data, isReview = false) {
             const modal = new bootstrap.Modal(document.getElementById('analysisModal'));
             const body = document.getElementById('analysisModalBody');
             const applyBtn = document.getElementById('applyAnalysisBtn');
-            
+
             const matchedItems = data.matched_items || [];
             const reinsertions = data.reinsertion_violations || [];
             const summary = data.summary || {};
-            
+
             body.innerHTML = `
                 <div class="mb-4">
                     <h6><i class="bi bi-info-circle"></i> Analysis Summary</h6>
@@ -655,7 +655,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 ${reinsertions.length > 0 ? `
                     <div class="reinsertion-alert mb-4">
                         <h6><i class="bi bi-exclamation-triangle text-warning"></i> Reinsertion Violations Detected!</h6>
@@ -668,7 +668,7 @@
                         `).join('')}
                     </div>
                 ` : ''}
-                
+
                 <h6><i class="bi bi-list-check"></i> Items to Update</h6>
                 <div class="analysis-result">
                     ${matchedItems.length > 0 ? matchedItems.map((item, idx) => `
@@ -695,14 +695,14 @@
                         </div>
                     `).join('') : '<p class="text-muted text-center">No items extracted from document</p>'}
                 </div>
-                
+
                 ${data.investigation_summary ? `
                     <div class="mt-3">
                         <h6><i class="bi bi-card-text"></i> Investigation Summary</h6>
                         <p class="bg-light p-2 rounded small">${data.investigation_summary}</p>
                     </div>
                 ` : ''}
-                
+
                 <div class="mt-3">
                     <small class="text-muted">
                         Confidence: ${data.confidence_score ? (data.confidence_score * 100).toFixed(0) + '%' : 'N/A'}
@@ -710,19 +710,19 @@
                     </small>
                 </div>
             `;
-            
+
             applyBtn.disabled = data.reviewed || matchedItems.length === 0;
             applyBtn.textContent = data.reviewed ? 'Already Applied' : 'Apply Changes';
-            
+
             modal.show();
         }
-        
+
         document.getElementById('applyAnalysisBtn').addEventListener('click', async function() {
             if (!currentResponseId || !currentAnalysisData) return;
-            
+
             const selects = document.querySelectorAll('#analysisModalBody select[data-item-idx]');
             const reviewedItems = [];
-            
+
             currentAnalysisData.matched_items.forEach((item, idx) => {
                 const select = document.querySelector(`select[data-item-idx="${idx}"]`);
                 if (select) {
@@ -732,10 +732,10 @@
                     });
                 }
             });
-            
+
             showSpinner('Applying changes...');
             bootstrap.Modal.getInstance(document.getElementById('analysisModal')).hide();
-            
+
             try {
                 const response = await fetch(`/api/cra-response/${currentResponseId}/apply-analysis`, {
                     method: 'POST',
@@ -747,9 +747,9 @@
                     })
                 });
                 const data = await response.json();
-                
+
                 hideSpinner();
-                
+
                 if (data.success) {
                     alert(`Success! Applied ${data.updates_applied} updates.${data.violations_created > 0 ? ` Created ${data.violations_created} violation records.` : ''}`);
                     loadCRAResponses();
@@ -761,12 +761,12 @@
                 alert('Error applying changes: ' + error.message);
             }
         });
-        
+
         function showSpinner(text) {
             document.getElementById('spinnerText').textContent = text || 'Processing...';
             document.getElementById('spinnerOverlay').style.display = 'flex';
         }
-        
+
         function hideSpinner() {
             document.getElementById('spinnerOverlay').style.display = 'none';
         }

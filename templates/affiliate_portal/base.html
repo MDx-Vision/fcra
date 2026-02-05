@@ -76,7 +76,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .nav-item {
             display: flex;
             align-items: center;
@@ -162,7 +162,7 @@
             background: var(--theme-bg-primary, transparent);
             transition: background-color 0.2s ease;
         }
-        
+
         .page-header {
             margin-bottom: 30px;
         }
@@ -225,7 +225,7 @@
             font-weight: 600;
             color: var(--theme-text-primary, inherit);
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -248,7 +248,7 @@
         tr:hover {
             background: var(--theme-table-row-hover, rgba(255,255,255,0.02));
         }
-        
+
         .badge {
             padding: 4px 10px;
             border-radius: 20px;
@@ -298,7 +298,7 @@
 
         .money { color: var(--theme-success, #22c55e); font-weight: 600; }
         .money.pending { color: var(--theme-warning, #eab308); }
-        
+
         @media (max-width: 1024px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
@@ -307,7 +307,7 @@
             .main-content { margin-left: 0; }
             .stats-grid { grid-template-columns: 1fr; }
         }
-        
+
         {% block extra_styles %}{% endblock %}
     </style>
 </head>
@@ -326,7 +326,7 @@
                 </span>
             </button>
         </div>
-        
+
         <a href="{{ url_for('affiliate_portal.dashboard') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}" data-testid="nav-dashboard">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             Dashboard
@@ -351,7 +351,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             Settings
         </a>
-        
+
         <div class="user-section">
             <div class="user-info">
                 <div class="user-avatar">{{ session.get('affiliate_name', 'A')[0] }}</div>
@@ -363,7 +363,7 @@
             <a href="{{ url_for('affiliate_portal.logout') }}" class="logout-btn" data-testid="logout-btn">Logout</a>
         </div>
     </nav>
-    
+
     <main class="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -372,10 +372,10 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        
+
         {% block content %}{% endblock %}
     </main>
-    
+
     <script src="{{ url_for('static', filename='js/theme-service.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>

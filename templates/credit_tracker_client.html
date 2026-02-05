@@ -73,7 +73,7 @@
             <a href="/dashboard/client/{{ client.id }}">Client Details</a>
         </div>
     </div>
-    
+
     <div class="container">
         <div class="summary-cards" id="summaryCards">
             <div class="summary-card start">
@@ -97,7 +97,7 @@
                 <div class="sub" id="projectedRange">--</div>
             </div>
         </div>
-        
+
         <div class="before-after" id="beforeAfter">
             <div class="score-panel">
                 <h3>When You Started</h3>
@@ -117,7 +117,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="projection-section" id="projectionSection" style="display: none;">
             <h2>Projected Improvement</h2>
             <div class="projection-grid">
@@ -139,14 +139,14 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="chart-section">
             <h2>Score Progress Over Time</h2>
             <div class="chart-container">
                 <canvas id="scoreChart"></canvas>
             </div>
         </div>
-        
+
         <div class="add-score-section">
             <h2>Record New Score Snapshot</h2>
             <div class="score-form">
@@ -204,7 +204,7 @@
                 <button class="btn-save" onclick="saveSnapshot()">Save Score Snapshot</button>
             </div>
         </div>
-        
+
         <div class="history-section">
             <h2>Score History</h2>
             <table class="history-table">
@@ -226,11 +226,11 @@
             </table>
         </div>
     </div>
-    
+
     <script>
         const clientId = {{ client.id }};
         let scoreChart = null;
-        
+
         async function loadData() {
             await Promise.all([
                 loadSummary(),
@@ -239,12 +239,12 @@
                 loadHistory()
             ]);
         }
-        
+
         async function loadSummary() {
             try {
                 const response = await fetch(`/api/credit-score/summary/${clientId}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.data.has_data) {
                     const s = data.data;
                     document.getElementById('startScore').textContent = s.starting_score || '--';
@@ -253,7 +253,7 @@
                     document.getElementById('currentRange').textContent = s.current_range || '--';
                     document.getElementById('pointsGained').textContent = s.points_gained >= 0 ? `+${s.points_gained}` : s.points_gained;
                     document.getElementById('gainProgress').textContent = `${s.removal_percentage}% items removed`;
-                    
+
                     document.getElementById('bigStartScore').textContent = s.starting_score || '--';
                     document.getElementById('bigStartRange').textContent = s.starting_range || '--';
                     document.getElementById('bigCurrentScore').textContent = s.current_score || '--';
@@ -266,12 +266,12 @@
                 console.error('Error loading summary:', error);
             }
         }
-        
+
         async function loadProjection() {
             try {
                 const response = await fetch(`/api/credit-score/projection/${clientId}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.data) {
                     const p = data.data;
                     document.getElementById('projectedScore').textContent = p.scores?.projected?.avg || '--';
@@ -286,12 +286,12 @@
                 console.error('Error loading projection:', error);
             }
         }
-        
+
         async function loadTimeline() {
             try {
                 const response = await fetch(`/api/credit-score/timeline/${clientId}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.data.length > 0) {
                     renderChart(data.data);
                 }
@@ -299,20 +299,20 @@
                 console.error('Error loading timeline:', error);
             }
         }
-        
+
         async function loadHistory() {
             try {
                 const response = await fetch(`/api/credit-score/history/${clientId}`);
                 const data = await response.json();
-                
+
                 const tbody = document.getElementById('historyBody');
-                
+
                 if (data.success && data.data.length > 0) {
                     tbody.innerHTML = data.data.map(row => {
                         const date = row.created_at ? new Date(row.created_at).toLocaleDateString() : '--';
                         const milestone = row.milestone ? `<span class="milestone-badge">${formatMilestone(row.milestone)}</span>` : '';
                         const round = row.dispute_round ? `<span class="round-badge">R${row.dispute_round}</span>` : '';
-                        
+
                         return `
                             <tr>
                                 <td>${date}</td>
@@ -333,7 +333,7 @@
                 console.error('Error loading history:', error);
             }
         }
-        
+
         function formatMilestone(milestone) {
             const labels = {
                 'initial_pull': 'Initial Pull',
@@ -350,16 +350,16 @@
             };
             return labels[milestone] || milestone;
         }
-        
+
         function renderChart(timeline) {
             const ctx = document.getElementById('scoreChart').getContext('2d');
-            
+
             if (scoreChart) {
                 scoreChart.destroy();
             }
-            
+
             const labels = timeline.map(t => new Date(t.date).toLocaleDateString());
-            
+
             scoreChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -420,7 +420,7 @@
                 }
             });
         }
-        
+
         async function saveSnapshot() {
             const equifax = document.getElementById('inputEquifax').value;
             const experian = document.getElementById('inputExperian').value;
@@ -430,12 +430,12 @@
             const round = document.getElementById('inputRound').value;
             const milestone = document.getElementById('inputMilestone').value;
             const notes = document.getElementById('inputNotes').value;
-            
+
             if (!equifax && !experian && !transunion) {
                 alert('Please enter at least one score');
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/credit-score/snapshot', {
                     method: 'POST',
@@ -454,9 +454,9 @@
                         source: 'admin_dashboard'
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     alert('Score snapshot saved successfully!');
                     document.getElementById('inputEquifax').value = '';
@@ -476,7 +476,7 @@
                 alert('Error saving snapshot');
             }
         }
-        
+
         loadData();
     </script>
 </body>

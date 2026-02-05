@@ -175,9 +175,9 @@ describe('/dashboard/ml-insights - Staff Login Page', () => {
     it('should disable login button and show loading state on form submission', () => {
       cy.get('#email[data-testid="email-input"]').type('test@example.com');
       cy.get('#password[data-testid="password-input"]').type('password123');
-      
+
       cy.intercept('POST', '/staff/login', { delay: 1000 }).as('loginRequest');
-      
+
       cy.get('#loginBtn[data-testid="login-button"]').click();
       cy.get('#loginBtn').should('be.disabled').and('contain.text', 'Signing in...');
       cy.get('#loginBtn .spinner').should('exist');
@@ -199,11 +199,11 @@ describe('/dashboard/ml-insights - Staff Login Page', () => {
   describe('Form Submission Tests', () => {
     it('should submit form with valid credentials', () => {
       cy.intercept('POST', '/staff/login').as('loginSubmit');
-      
+
       cy.get('#email[data-testid="email-input"]').type('staff@example.com');
       cy.get('#password[data-testid="password-input"]').type('validpassword');
       cy.get('#loginBtn[data-testid="login-button"]').click();
-      
+
       cy.wait('@loginSubmit').its('request.body').should('include', 'staff@example.com');
     });
 
@@ -242,31 +242,31 @@ describe('/dashboard/ml-insights - Staff Login Page', () => {
   describe('Error Handling Tests', () => {
     it('should handle invalid login credentials', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 401, body: { error: 'Invalid credentials' } }).as('invalidLogin');
-      
+
       cy.get('#email[data-testid="email-input"]').type('invalid@example.com');
       cy.get('#password[data-testid="password-input"]').type('wrongpassword');
       cy.get('#loginBtn[data-testid="login-button"]').click();
-      
+
       cy.wait('@invalidLogin');
     });
 
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
-      
+
       cy.get('#email[data-testid="email-input"]').type('test@example.com');
       cy.get('#password[data-testid="password-input"]').type('password123');
       cy.get('#loginBtn[data-testid="login-button"]').click();
-      
+
       cy.wait('@networkError');
     });
 
     it('should handle server errors', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500, body: { error: 'Internal server error' } }).as('serverError');
-      
+
       cy.get('#email[data-testid="email-input"]').type('test@example.com');
       cy.get('#password[data-testid="password-input"]').type('password123');
       cy.get('#loginBtn[data-testid="login-button"]').click();
-      
+
       cy.wait('@serverError');
     });
   });
@@ -309,10 +309,10 @@ describe('/dashboard/ml-insights - Staff Login Page', () => {
     it('should have form submission event listeners attached', () => {
       cy.get('#email[data-testid="email-input"]').type('test@example.com');
       cy.get('#password[data-testid="password-input"]').type('password123');
-      
+
       cy.intercept('POST', '/staff/login', { delay: 100 }).as('login');
       cy.get('#loginBtn[data-testid="login-button"]').click();
-      
+
       cy.get('#loginBtn').should('contain.text', 'Signing in...');
     });
   });

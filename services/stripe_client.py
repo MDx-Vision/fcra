@@ -11,8 +11,8 @@ import os
 import requests  # type: ignore[import-untyped]
 import stripe
 
+from services.circuit_breaker_service import CircuitBreakerError, circuit_protected
 from services.retry_service import retry_http, retry_stripe, with_retry
-from services.circuit_breaker_service import circuit_protected, CircuitBreakerError
 
 logger = logging.getLogger(__name__)
 

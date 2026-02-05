@@ -84,7 +84,7 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         a { color: #319795; text-decoration: none; }
         a:hover { text-decoration: underline; }
-        
+
         .input-type-toggle {
             display: flex;
             gap: 10px;
@@ -113,7 +113,7 @@
             display: block;
             margin-bottom: 5px;
         }
-        
+
         .pdf-upload-area {
             border: 2px dashed #ddd;
             border-radius: 8px;
@@ -157,7 +157,7 @@
             cursor: pointer;
             margin-left: 10px;
         }
-        
+
         .parsed-preview {
             display: none;
             margin-top: 20px;
@@ -219,9 +219,9 @@
         .badge-success { background: #d4edda; color: #155724; }
         .badge-warning { background: #fff3cd; color: #856404; }
         .badge-info { background: #cce5ff; color: #004085; }
-        
+
         .hidden { display: none !important; }
-        
+
         .account-list {
             max-height: 300px;
             overflow-y: auto;
@@ -250,14 +250,14 @@
     <div class="card">
         <h1>FCRA Automation Admin</h1>
         <p class="subtitle">Upload credit report for AI-powered FCRA analysis and dispute letter generation</p>
-        
+
         <form id="analysisForm">
             <label for="name">Client Name *</label>
             <input type="text" id="name" placeholder="John Doe" required>
-            
+
             <label for="email">Client Email</label>
             <input type="email" id="email" placeholder="john@example.com">
-            
+
             <label for="provider">Credit Provider</label>
             <select id="provider">
                 <option>IdentityIQ.com</option>
@@ -265,7 +265,7 @@
                 <option>SmartCredit.com</option>
                 <option>MyFreeScoreNow.com</option>
             </select>
-            
+
             <label>Credit Report Input Method *</label>
             <div class="input-type-toggle">
                 <div class="toggle-btn active" data-type="html" onclick="setInputType('html')">
@@ -277,12 +277,12 @@
                     <span>Upload PDF</span>
                 </div>
             </div>
-            
+
             <div id="htmlInputSection">
                 <label for="report">Credit Report HTML *</label>
                 <textarea id="report" placeholder="Paste full HTML from credit report..."></textarea>
             </div>
-            
+
             <div id="pdfInputSection" class="hidden">
                 <label>Credit Report PDF *</label>
                 <div class="pdf-upload-area" id="pdfDropZone">
@@ -295,46 +295,46 @@
                     <span class="file-name" id="pdfFileName"></span>
                     <span class="remove-file" onclick="removePdfFile()">✕ Remove</span>
                 </div>
-                
+
                 <div class="button-group" style="margin-top: 15px;">
                     <button type="button" class="btn-secondary" id="parseBtn" onclick="parsePdf()">
                         📊 Parse PDF Preview
                     </button>
                 </div>
-                
+
                 <div class="parsed-preview" id="parsedPreview">
                     <h3>📋 Parsed Credit Report Preview</h3>
-                    
+
                     <div class="preview-section">
                         <h4>Bureau Detected</h4>
                         <div class="preview-item" id="previewBureau">-</div>
                     </div>
-                    
+
                     <div class="preview-section">
                         <h4>Personal Information</h4>
                         <div id="previewPersonalInfo">-</div>
                     </div>
-                    
+
                     <div class="preview-section">
                         <h4>Accounts Summary</h4>
                         <div id="previewAccounts">-</div>
                     </div>
-                    
+
                     <div class="preview-section">
                         <h4>Collections</h4>
                         <div id="previewCollections">-</div>
                     </div>
-                    
+
                     <div class="preview-section">
                         <h4>Inquiries</h4>
                         <div id="previewInquiries">-</div>
                     </div>
-                    
+
                     <div class="preview-section">
                         <h4>Public Records</h4>
                         <div id="previewPublicRecords">-</div>
                     </div>
-                    
+
                     <div class="preview-section">
                         <h4>Parsing Confidence</h4>
                         <div class="confidence-bar">
@@ -342,11 +342,11 @@
                         </div>
                         <div class="preview-item" id="confidenceText" style="margin-top: 5px">-</div>
                     </div>
-                    
+
                     <input type="hidden" id="parsedText" value="">
                 </div>
             </div>
-            
+
             <label for="round">Dispute Round</label>
             <select id="round">
                 <option value="1">Round 1 - Initial Dispute</option>
@@ -354,18 +354,18 @@
                 <option value="3">Round 3 - Advanced</option>
                 <option value="4">Round 4 - Final</option>
             </select>
-            
+
             <label for="mode">Analysis Mode</label>
             <select id="mode">
                 <option value="manual">Manual Review (Recommended)</option>
                 <option value="auto">Automatic (Full Report)</option>
             </select>
-            
+
             <div class="button-group">
                 <button type="submit" class="btn-primary" id="submitBtn">🔍 Generate Analysis</button>
             </div>
         </form>
-        
+
         <div id="status"></div>
     </div>
 </div>
@@ -381,14 +381,14 @@
     const parsedPreview = document.getElementById('parsedPreview');
     let currentInputType = 'html';
     let parsedData = null;
-    
+
     if (!form) {
         console.error('Form not found');
         return;
     }
-    
+
     console.log('Admin form initialized');
-    
+
     window.setInputType = function(type) {
         currentInputType = type;
         document.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -399,18 +399,18 @@
         parsedPreview.classList.remove('show');
         parsedData = null;
     };
-    
+
     pdfDropZone.addEventListener('click', () => pdfFileInput.click());
-    
+
     pdfDropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         pdfDropZone.classList.add('dragover');
     });
-    
+
     pdfDropZone.addEventListener('dragleave', () => {
         pdfDropZone.classList.remove('dragover');
     });
-    
+
     pdfDropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         pdfDropZone.classList.remove('dragover');
@@ -421,13 +421,13 @@
             showStatus('Please drop a PDF file', 'error');
         }
     });
-    
+
     pdfFileInput.addEventListener('change', (e) => {
         if (e.target.files.length) {
             handleFileSelect(e.target.files[0]);
         }
     });
-    
+
     function handleFileSelect(file) {
         pdfFileName.textContent = file.name + ' (' + formatFileSize(file.size) + ')';
         pdfFileInfo.classList.add('show');
@@ -435,7 +435,7 @@
         parsedPreview.classList.remove('show');
         parsedData = null;
     }
-    
+
     window.removePdfFile = function() {
         pdfFileInput.value = '';
         pdfFileInfo.classList.remove('show');
@@ -443,36 +443,36 @@
         parsedPreview.classList.remove('show');
         parsedData = null;
     };
-    
+
     function formatFileSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
-    
+
     window.parsePdf = async function() {
         const file = pdfFileInput.files[0];
         if (!file) {
             showStatus('Please select a PDF file first', 'error');
             return;
         }
-        
+
         const parseBtn = document.getElementById('parseBtn');
         parseBtn.disabled = true;
         parseBtn.innerHTML = '<span class="spinner"></span> Parsing...';
         showStatus('<span class="spinner"></span> Parsing PDF...', 'loading');
-        
+
         try {
             const formData = new FormData();
             formData.append('file', file);
-            
+
             const response = await fetch('/api/credit-report/parse-pdf', {
                 method: 'POST',
                 body: formData
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 parsedData = data;
                 displayParsedPreview(data);
@@ -494,12 +494,12 @@
             parseBtn.innerHTML = '📊 Parse PDF Preview';
         }
     };
-    
+
     function displayParsedPreview(data) {
-        document.getElementById('previewBureau').innerHTML = 
-            '<strong>' + data.bureau + '</strong>' + 
+        document.getElementById('previewBureau').innerHTML =
+            '<strong>' + data.bureau + '</strong>' +
             (data.bureau !== 'Unknown' ? ' <span class="badge badge-success">Detected</span>' : ' <span class="badge badge-warning">Not detected</span>');
-        
+
         const pi = data.personal_info || {};
         let personalHtml = '';
         if (pi.name) personalHtml += '<div class="preview-item"><strong>Name:</strong> ' + pi.name + '</div>';
@@ -507,7 +507,7 @@
         if (pi.ssn_last_4) personalHtml += '<div class="preview-item"><strong>SSN Last 4:</strong> ***-**-' + pi.ssn_last_4 + '</div>';
         if (pi.date_of_birth) personalHtml += '<div class="preview-item"><strong>DOB:</strong> ' + pi.date_of_birth + '</div>';
         document.getElementById('previewPersonalInfo').innerHTML = personalHtml || '<em>No personal information extracted</em>';
-        
+
         const accounts = data.accounts || [];
         if (accounts.length > 0) {
             let accountsHtml = '<div class="preview-item"><strong>' + accounts.length + ' account(s) found</strong></div><div class="account-list">';
@@ -527,7 +527,7 @@
         } else {
             document.getElementById('previewAccounts').innerHTML = '<em>No accounts extracted</em>';
         }
-        
+
         const collections = data.collections || [];
         if (collections.length > 0) {
             let collectionsHtml = '<div class="preview-item"><strong>' + collections.length + ' collection(s) found</strong></div>';
@@ -542,7 +542,7 @@
         } else {
             document.getElementById('previewCollections').innerHTML = '<em>No collections found</em>';
         }
-        
+
         const inquiries = data.inquiries || [];
         if (inquiries.length > 0) {
             let inquiriesHtml = '<div class="preview-item"><strong>' + inquiries.length + ' inquiry(ies) found</strong></div>';
@@ -556,7 +556,7 @@
         } else {
             document.getElementById('previewInquiries').innerHTML = '<em>No inquiries found</em>';
         }
-        
+
         const publicRecords = data.public_records || [];
         if (publicRecords.length > 0) {
             let prHtml = '<div class="preview-item"><strong>' + publicRecords.length + ' record(s) found</strong></div>';
@@ -570,7 +570,7 @@
         } else {
             document.getElementById('previewPublicRecords').innerHTML = '<em>No public records found</em>';
         }
-        
+
         const confidence = (data.parsing_confidence || 0) * 100;
         document.getElementById('confidenceBar').style.width = confidence + '%';
         let confText = confidence.toFixed(0) + '% confidence';
@@ -578,28 +578,28 @@
         else if (confidence >= 40) confText += ' <span class="badge badge-warning">Fair</span>';
         else confText += ' <span class="badge badge-info">Low</span>';
         document.getElementById('confidenceText').innerHTML = confText;
-        
+
         document.getElementById('parsedText').value = data.formatted_text || '';
-        
+
         parsedPreview.classList.add('show');
     }
-    
+
     function showStatus(msg, type) {
         statusEl.innerHTML = msg;
         statusEl.className = 'show ' + type;
     }
-    
+
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
-        
+
         const name = document.getElementById('name').value.trim();
         const email = document.getElementById('email').value.trim();
         const provider = document.getElementById('provider').value;
         const round = parseInt(document.getElementById('round').value);
         const mode = document.getElementById('mode').value;
-        
+
         let report = '';
-        
+
         if (currentInputType === 'html') {
             report = document.getElementById('report').value.trim();
             if (!name || !report) {
@@ -616,18 +616,18 @@
                 showStatus('❌ Please upload and parse a PDF file first', 'error');
                 return;
             }
-            
+
             if (!name) {
                 showStatus('❌ Client name is required', 'error');
                 return;
             }
         }
-        
+
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner"></span> Analyzing...';
         showStatus('<span class="spinner"></span> Analyzing credit report...', 'loading');
-        
+
         try {
             const response = await fetch('/api/analyze', {
                 method: 'POST',
@@ -641,9 +641,9 @@
                     analysisMode: mode
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 const analysisId = data.analysis_id;
                 statusEl.innerHTML = '✅ Success! Analysis ID: ' + analysisId + '<br><br>';

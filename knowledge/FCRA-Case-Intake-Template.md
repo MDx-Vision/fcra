@@ -1,6 +1,6 @@
 # FCRA CASE INTAKE QUESTIONNAIRE
 
-**Date of Intake:** _______________  
+**Date of Intake:** _______________
 **Intake Completed By:** _______________
 
 ---
@@ -15,7 +15,7 @@
 
 **Social Security Number:** ___ - __ - ____ (last 4 digits: ____)
 
-**Current Address:** 
+**Current Address:**
 - Street: _________________________________
 - City: _________________ State: ____ Zip: _________
 - County: _________________ (for venue determination)
@@ -56,7 +56,7 @@
 
 **Which Consumer Reporting Agency(ies) Involved?**
 - â˜ Equifax
-- â˜ Experian  
+- â˜ Experian
 - â˜ TransUnion
 - â˜ Specialty CRA (name: _________________)
 
@@ -334,7 +334,7 @@ _________________________________
 ## DAMAGES CALCULATION
 
 ### Statutory Damages (if willful)
-- Number of violations: _____ 
+- Number of violations: _____
 - Range: $100-$1,000 per violation
 - **Conservative estimate:** $_______ (Ã— $100)
 - **Moderate estimate:** $_______ (Ã— $500)
@@ -444,7 +444,7 @@ _________________________________
 
 **Urgency Level:**
 - â˜ **URGENT** - Less than 60 days to deadline
-- â˜ **MODERATE** - 60-180 days to deadline  
+- â˜ **MODERATE** - 60-180 days to deadline
 - â˜ **ROUTINE** - More than 180 days to deadline
 
 ---
@@ -544,7 +544,7 @@ _________________________________
 
 **How often does client want updates?**
 - â˜ Weekly
-- â˜ Bi-weekly  
+- â˜ Bi-weekly
 - â˜ Monthly
 - â˜ Only at major milestones
 

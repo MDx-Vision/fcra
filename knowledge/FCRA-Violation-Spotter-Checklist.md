@@ -3,8 +3,8 @@
 
 ---
 
-**Case Name:** ___________________________  
-**Date of Review:** _______________  
+**Case Name:** ___________________________
+**Date of Review:** _______________
 **Reviewer:** _______________
 
 **Documents Being Reviewed:**
@@ -19,10 +19,10 @@
 
 ## ðŸ“‹ HOW TO USE THIS CHECKLIST
 
-**Step 1:** Obtain all credit reports and CRA correspondence  
-**Step 2:** Go through each section below systematically  
-**Step 3:** Check every box that applies  
-**Step 4:** For each checked item, note specific details in the "Evidence" column  
+**Step 1:** Obtain all credit reports and CRA correspondence
+**Step 2:** Go through each section below systematically
+**Step 3:** Check every box that applies
+**Step 4:** For each checked item, note specific details in the "Evidence" column
 **Step 5:** Calculate violation count and assess willfulness
 
 ---
@@ -238,9 +238,9 @@
 
 **Consent Form Issues:**
 
-â˜ Consent form obtained **after** report was already pulled (check inquiry date vs. consent date)  
-â˜ Consent language not clear and conspicuous  
-â˜ No copy of consent form provided to consumer  
+â˜ Consent form obtained **after** report was already pulled (check inquiry date vs. consent date)
+â˜ Consent language not clear and conspicuous
+â˜ No copy of consent form provided to consumer
 â˜ Consumer signature appears forged or not authenticated
 
 ### B. ADVERSE ACTION NOTICE FAILURES (EMPLOYMENT)
@@ -624,8 +624,8 @@
 
 ---
 
-**Checklist Completed By:** _______________________  
-**Date:** _______________________  
+**Checklist Completed By:** _______________________
+**Date:** _______________________
 **Signature:** _______________________
 
 ---

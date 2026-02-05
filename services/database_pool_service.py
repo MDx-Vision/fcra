@@ -30,6 +30,7 @@ logger = logging.getLogger("database_pool")
 @dataclass
 class PoolMetrics:
     """Snapshot of connection pool metrics."""
+
     timestamp: datetime
     pool_size: int
     checked_out: int
@@ -132,7 +133,7 @@ class DatabasePoolMonitor:
         log_checkouts: bool = POOL_LOG_CHECKOUTS,
     ):
         self._engine = engine
-        self._pool: Optional[Pool] = engine.pool if hasattr(engine, 'pool') else None
+        self._pool: Optional[Pool] = engine.pool if hasattr(engine, "pool") else None
         self._alert_threshold = alert_threshold
         self._metrics_interval = metrics_interval
         self._log_checkouts = log_checkouts
@@ -174,6 +175,7 @@ class DatabasePoolMonitor:
         # Skip event registration for mock engines (testing)
         try:
             from sqlalchemy.engine import Engine
+
             if not isinstance(self._engine, Engine):
                 logger.debug("Skipping event registration for non-Engine object")
                 return
@@ -234,7 +236,9 @@ class DatabasePoolMonitor:
 
         # Total connections = pool size + overflow
         # But we need max possible for usage calculation
-        max_connections = pool_size + (self._engine.pool._max_overflow if self._pool else 0)
+        max_connections = pool_size + (
+            self._engine.pool._max_overflow if self._pool else 0
+        )
         total_connections = checked_out + checked_in
 
         # Usage percent: checked out / (pool_size + max_overflow)
@@ -284,11 +288,15 @@ class DatabasePoolMonitor:
 
         # Overflow alert
         if metrics.overflow > 0:
-            alerts.append(f"Pool overflow active: {metrics.overflow} overflow connections")
+            alerts.append(
+                f"Pool overflow active: {metrics.overflow} overflow connections"
+            )
 
         # Invalidation spike (more than 5 in recent history)
         if metrics.total_invalidations > 5:
-            alerts.append(f"High connection invalidations: {metrics.total_invalidations}")
+            alerts.append(
+                f"High connection invalidations: {metrics.total_invalidations}"
+            )
 
         # Trigger alerts
         for alert_msg in alerts:
@@ -319,7 +327,9 @@ class DatabasePoolMonitor:
                 with self._lock:
                     self._metrics_history.append(metrics)
                     if len(self._metrics_history) > self._max_history:
-                        self._metrics_history = self._metrics_history[-self._max_history:]
+                        self._metrics_history = self._metrics_history[
+                            -self._max_history :
+                        ]
 
                 # Check for alerts
                 self._check_alerts(metrics)
@@ -349,9 +359,7 @@ class DatabasePoolMonitor:
 
         self._stop_monitoring = False
         self._monitoring_thread = threading.Thread(
-            target=self._monitoring_loop,
-            daemon=True,
-            name="db-pool-monitor"
+            target=self._monitoring_loop, daemon=True, name="db-pool-monitor"
         )
         self._monitoring_thread.start()
 

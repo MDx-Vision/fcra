@@ -13,12 +13,7 @@ from typing import Any, Dict, List
 
 from sqlalchemy import and_
 
-from database import (
-    CaseDeadline,
-    Client,
-    SecondaryBureauFreeze,
-    get_db,
-)
+from database import CaseDeadline, Client, SecondaryBureauFreeze, get_db
 
 
 class DeadlineCheckerService:

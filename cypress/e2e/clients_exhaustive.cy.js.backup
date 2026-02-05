@@ -81,7 +81,7 @@ describe('Staff Login Page - /dashboard/clients', () => {
         .and('have.attr', 'placeholder', 'your@email.com')
         .and('have.attr', 'autocomplete', 'email')
         .and('have.attr', 'required');
-      
+
       cy.get('label[for="email"]').should('contain.text', 'Email Address');
     });
 
@@ -94,7 +94,7 @@ describe('Staff Login Page - /dashboard/clients', () => {
         .and('have.attr', 'placeholder', 'Enter your password')
         .and('have.attr', 'autocomplete', 'current-password')
         .and('have.attr', 'required');
-      
+
       cy.get('label[for="password"]').should('contain.text', 'Password');
     });
 
@@ -202,7 +202,7 @@ describe('Staff Login Page - /dashboard/clients', () => {
 
     it('should maintain form functionality on all screen sizes', () => {
       const viewports = [[1280, 720], [768, 1024], [375, 667]];
-      
+
       viewports.forEach(([width, height]) => {
         cy.viewport(width, height);
         cy.get('[data-testid="email-input"]').clear().type('test@example.com');
@@ -244,7 +244,7 @@ describe('Staff Login Page - /dashboard/clients', () => {
     it('should handle very long input values', () => {
       const longEmail = 'a'.repeat(100) + '@example.com';
       const longPassword = 'p'.repeat(200);
-      
+
       cy.get('[data-testid="email-input"]').type(longEmail);
       cy.get('[data-testid="password-input"]').type(longPassword);
       cy.get('[data-testid="login-button"]').should('be.visible');
@@ -253,7 +253,7 @@ describe('Staff Login Page - /dashboard/clients', () => {
     it('should handle special characters in input fields', () => {
       cy.get('[data-testid="email-input"]').type('test+special@example.com');
       cy.get('[data-testid="password-input"]').type('p@ssw0rd!@#$%^&*()');
-      
+
       cy.get('[data-testid="email-input"]').should('have.value', 'test+special@example.com');
       cy.get('[data-testid="password-input"]').should('have.value', 'p@ssw0rd!@#$%^&*()');
     });

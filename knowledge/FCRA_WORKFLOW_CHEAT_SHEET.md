@@ -36,7 +36,7 @@
 
 ```
 Does client have:
-â”œâ”€ Concrete harm (denial, higher rate, lost job)? 
+â”œâ”€ Concrete harm (denial, higher rate, lost job)?
 â”‚  â”œâ”€ NO â†’ DECLINE (standing issue)
 â”‚  â””â”€ YES â†’ Continue â†“
 â”‚
@@ -176,7 +176,7 @@ Does client have:
 
 **Use:** `FCRA_Litigation_Framework_Complete_v2.0.md` sections:
 - Â§ 20: Demand Letters
-- Â§ 15: Discovery Strategies  
+- Â§ 15: Discovery Strategies
 - Â§ 21: Settlement Valuation
 
 ---
@@ -271,7 +271,7 @@ Estimated hours through trial:  ___ Ã— $__/hr = $_______
 
 ```
 Conservative:  $_______
-Likely:        $_______  
+Likely:        $_______
 Maximum:       $_______
 ```
 

@@ -7,14 +7,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     {% include 'includes/dashboard_sidebar_styles.html' %}
     <style>
-        
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -31,7 +31,7 @@
             margin-top: 5px;
         }
         .header-actions { display: flex; gap: 15px; }
-        
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -74,14 +74,14 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .stat-card {
             background: white;
             border-radius: 16px;
@@ -133,7 +133,7 @@
             font-size: 48px;
             opacity: 0.2;
         }
-        
+
         .card {
             background: white;
             border-radius: 16px;
@@ -141,7 +141,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
-        
+
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -155,7 +155,7 @@
             font-weight: 600;
             color: #1a1a2e;
         }
-        
+
         .filter-bar {
             display: flex;
             gap: 15px;
@@ -177,13 +177,13 @@
             outline: none;
             border-color: #84cc16;
         }
-        
+
         .queue-list {
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
-        
+
         .queue-card {
             background: white;
             border-radius: 12px;
@@ -200,7 +200,7 @@
         .queue-card.priority-high { border-left-color: #f59e0b; }
         .queue-card.priority-normal { border-left-color: #3b82f6; }
         .queue-card.priority-low { border-left-color: #6b7280; }
-        
+
         .queue-card-header {
             display: flex;
             justify-content: space-between;
@@ -232,7 +232,7 @@
             font-size: 14px;
             color: #64748b;
         }
-        
+
         .priority-badge {
             padding: 4px 12px;
             border-radius: 20px;
@@ -244,7 +244,7 @@
         .priority-badge.high { background: #fffbeb; color: #d97706; }
         .priority-badge.normal { background: #eff6ff; color: #2563eb; }
         .priority-badge.low { background: #f3f4f6; color: #6b7280; }
-        
+
         .trigger-description {
             font-size: 13px;
             color: #64748b;
@@ -256,13 +256,13 @@
         .trigger-description strong {
             color: #1a1a2e;
         }
-        
+
         .queue-card-actions {
             display: flex;
             gap: 10px;
             justify-content: flex-end;
         }
-        
+
         .checkbox-wrapper {
             display: flex;
             align-items: center;
@@ -273,7 +273,7 @@
             height: 18px;
             cursor: pointer;
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -290,7 +290,7 @@
             margin-bottom: 10px;
             color: #1a1a2e;
         }
-        
+
         .modal-overlay {
             display: none;
             position: fixed;
@@ -330,7 +330,7 @@
             gap: 10px;
             justify-content: flex-end;
         }
-        
+
         .loading {
             display: flex;
             justify-content: center;
@@ -349,7 +349,7 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
         .toast {
             position: fixed;
             bottom: 20px;
@@ -369,7 +369,7 @@
         }
         .toast.success { background: #10b981; }
         .toast.error { background: #ef4444; }
-        
+
         @media (max-width: 1200px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
@@ -435,7 +435,7 @@
                     <label for="selectAll">Select All</label>
                 </div>
             </div>
-            
+
             <div class="filter-bar">
                 <select id="filterPriority" onchange="loadQueue()">
                     <option value="">All Priorities</option>
@@ -455,7 +455,7 @@
                     <option value="reinsertion_challenge">Reinsertion Challenge</option>
                 </select>
             </div>
-            
+
             <div id="queueContainer">
                 <div class="loading"></div>
             </div>
@@ -487,7 +487,7 @@
     <script>
         let selectedEntries = new Set();
         let currentDismissId = null;
-        
+
         const letterTypeLabels = {
             'mov_request': 'Method of Verification Request',
             'fdcpa_validation': 'FDCPA Debt Validation',
@@ -497,7 +497,7 @@
             'section_623_direct': 'Section 623 Direct Furnisher',
             'reinsertion_challenge': 'Reinsertion Challenge'
         };
-        
+
         const letterTypeIcons = {
             'mov_request': '&#128270;',
             'fdcpa_validation': '&#128176;',
@@ -511,18 +511,18 @@
         async function loadQueue() {
             const container = document.getElementById('queueContainer');
             container.innerHTML = '<div class="loading"></div>';
-            
+
             try {
                 const priority = document.getElementById('filterPriority').value;
                 const letterType = document.getElementById('filterLetterType').value;
-                
+
                 let url = '/api/letter-queue?';
                 if (priority) url += `priority=${priority}&`;
                 if (letterType) url += `letter_type=${letterType}&`;
-                
+
                 const response = await fetch(url);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     updateStats(data.stats);
                     renderQueue(data.queue);
@@ -533,17 +533,17 @@
                 container.innerHTML = '<div class="empty-state"><h3>Error loading queue</h3><p>' + error.message + '</p></div>';
             }
         }
-        
+
         function updateStats(stats) {
             document.getElementById('statsPending').textContent = stats.pending || 0;
             document.getElementById('statsUrgent').textContent = stats.urgent || 0;
             document.getElementById('statsApproved').textContent = stats.approved_today || 0;
             document.getElementById('statsGenerated').textContent = stats.generated_today || 0;
         }
-        
+
         function renderQueue(queue) {
             const container = document.getElementById('queueContainer');
-            
+
             if (!queue || queue.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -556,7 +556,7 @@
                 `;
                 return;
             }
-            
+
             container.innerHTML = '<div class="queue-list">' + queue.map(entry => `
                 <div class="queue-card priority-${entry.priority}" data-id="${entry.id}">
                     <div class="queue-card-header">
@@ -606,7 +606,7 @@
                 </div>
             `).join('') + '</div>';
         }
-        
+
         function toggleSelect(id) {
             if (selectedEntries.has(id)) {
                 selectedEntries.delete(id);
@@ -615,11 +615,11 @@
             }
             updateBulkButton();
         }
-        
+
         function toggleSelectAll() {
             const selectAll = document.getElementById('selectAll').checked;
             const checkboxes = document.querySelectorAll('.queue-card input[type="checkbox"]');
-            
+
             checkboxes.forEach(cb => {
                 cb.checked = selectAll;
                 const id = parseInt(cb.id.replace('check_', ''));
@@ -629,17 +629,17 @@
                     selectedEntries.delete(id);
                 }
             });
-            
+
             updateBulkButton();
         }
-        
+
         function updateBulkButton() {
             const btn = document.getElementById('btnBulkApprove');
             const count = document.getElementById('selectedCount');
             count.textContent = selectedEntries.size;
             btn.disabled = selectedEntries.size === 0;
         }
-        
+
         async function approveEntry(id) {
             try {
                 const response = await fetch(`/api/letter-queue/${id}/approve`, {
@@ -647,7 +647,7 @@
                     headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast('Letter approved successfully', 'success');
                     loadQueue();
@@ -658,10 +658,10 @@
                 showToast('Error: ' + error.message, 'error');
             }
         }
-        
+
         async function bulkApproveSelected() {
             if (selectedEntries.size === 0) return;
-            
+
             try {
                 const response = await fetch('/api/letter-queue/bulk-approve', {
                     method: 'POST',
@@ -669,7 +669,7 @@
                     body: JSON.stringify({ ids: Array.from(selectedEntries) })
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast(`${data.approved_count} letters approved`, 'success');
                     selectedEntries.clear();
@@ -683,23 +683,23 @@
                 showToast('Error: ' + error.message, 'error');
             }
         }
-        
+
         function dismissEntry(id) {
             currentDismissId = id;
             document.getElementById('dismissReason').value = '';
             document.getElementById('dismissModal').classList.add('active');
         }
-        
+
         function closeDismissModal() {
             document.getElementById('dismissModal').classList.remove('active');
             currentDismissId = null;
         }
-        
+
         async function confirmDismiss() {
             if (!currentDismissId) return;
-            
+
             const reason = document.getElementById('dismissReason').value.trim();
-            
+
             try {
                 const response = await fetch(`/api/letter-queue/${currentDismissId}/dismiss`, {
                     method: 'POST',
@@ -707,7 +707,7 @@
                     body: JSON.stringify({ reason: reason })
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast('Letter dismissed', 'success');
                     closeDismissModal();
@@ -719,7 +719,7 @@
                 showToast('Error: ' + error.message, 'error');
             }
         }
-        
+
         async function generateLetter(id) {
             try {
                 const response = await fetch(`/api/letter-queue/${id}/generate`, {
@@ -727,7 +727,7 @@
                     headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast('Letter generated successfully', 'success');
                     if (data.pdf_url) {
@@ -741,17 +741,17 @@
                 showToast('Error: ' + error.message, 'error');
             }
         }
-        
+
         async function runTriggerCheck() {
             showToast('Running trigger check...', 'success');
-            
+
             try {
                 const response = await fetch('/api/letter-queue/run-triggers', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast(`Found ${data.new_entries || 0} new letters to queue`, 'success');
                     loadQueue();
@@ -762,17 +762,17 @@
                 showToast('Error: ' + error.message, 'error');
             }
         }
-        
+
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = 'toast ' + type + ' show';
-            
+
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
         }
-        
+
         document.addEventListener('DOMContentLoaded', loadQueue);
     </script>
 </body>

@@ -286,11 +286,11 @@ describe('Client Portal Dashboard', () => {
       cy.get('.nav-tab').contains('Score Progress').click();
       cy.get('#progress').should('be.visible');
       cy.get('#summary').should('not.be.visible');
-      
+
       cy.get('.nav-tab').contains('Dispute Timeline').click();
       cy.get('#timeline').should('be.visible');
       cy.get('#progress').should('not.be.visible');
-      
+
       cy.get('.nav-tab').contains('Status').click();
       cy.get('#status').should('be.visible');
       cy.get('#timeline').should('not.be.visible');
@@ -301,13 +301,13 @@ describe('Client Portal Dashboard', () => {
       cy.get('.nav-tab').contains('Status').click();
       cy.get('button').contains('Show all').should('be.visible').click();
       cy.get('button').contains('Submit changes').should('be.visible').click();
-      
+
       // Test profile buttons
       cy.get('.nav-tab').contains('My Profile').click();
       cy.get('button').contains('Upload Photo').should('be.visible');
       cy.get('#removeAvatarBtn').should('be.visible');
       cy.get('button').contains('Set Password').should('be.visible').click();
-      
+
       // Test document category buttons
       cy.get('.nav-tab').contains('Upload Documents').click();
       cy.get('.doc-category-btn').contains('CRA Response').click();
@@ -367,7 +367,7 @@ describe('Client Portal Dashboard', () => {
       const today = new Date().toISOString().split('T')[0];
       cy.get('input[name="document_date"]').type(today);
       cy.get('input[name="document_date"]').should('have.value', today);
-      
+
       cy.get('input[name="received_date"]').type(today);
       cy.get('input[name="received_date"]').should('have.value', today);
     });
@@ -450,10 +450,10 @@ describe('Client Portal Dashboard', () => {
 
     it('should display loading states', () => {
       cy.get('#roiDashboard').should('contain', 'Loading');
-      
+
       cy.get('.nav-tab').contains('Score Progress').click();
       cy.get('#scoreProgressContent').should('contain', 'Loading');
-      
+
       cy.get('.nav-tab').contains('Dispute Timeline').click();
       cy.get('#timelineContainer').should('contain', 'Loading');
     });
@@ -508,17 +508,17 @@ describe('Client Portal Dashboard', () => {
       cy.get('#summary').should('be.visible');
       cy.get('.status-banner').should('be.visible');
       cy.get('.stats-grid').should('be.visible');
-      
+
       // Score Progress tab content
       cy.get('.nav-tab').contains('Score Progress').click();
       cy.get('#scoreProgressContent').should('be.visible');
       cy.get('#projectionContent').should('be.visible');
-      
+
       // Timeline tab content
       cy.get('.nav-tab').contains('Dispute Timeline').click();
       cy.get('#timelineSummary').should('be.visible');
       cy.get('#timelineContainer').should('be.visible');
-      
+
       // Status tab content
       cy.get('.nav-tab').contains('Status').click();
       cy.get('.bureau-section').should('have.length.at.least', 2);
@@ -526,11 +526,11 @@ describe('Client Portal Dashboard', () => {
 
     it('should display proper loading messages', () => {
       cy.get('#roiDashboard').should('contain', 'Loading your case value');
-      
+
       cy.get('.nav-tab').contains('Score Progress').click();
       cy.get('#scoreProgressContent').should('contain', 'Loading your progress');
       cy.get('#projectionContent').should('contain', 'Loading projections');
-      
+
       cy.get('.nav-tab').contains('Dispute Timeline').click();
       cy.get('#timelineContainer').should('contain', 'Loading timeline');
     });
