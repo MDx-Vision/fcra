@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Context
 
-## Current Status (2026-01-22)
+## Current Status (2026-02-05)
 
 ### Test Status: 100% PASSING ✅
 - **Unit tests**: 5,936 passing (98 test files) *(+3 new regression tests)*
@@ -46,7 +46,61 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 35**: ~~Task Assignment~~ ✅ COMPLETE
 - **Priority 36-39**: Scheduled Reports, SMS Templates, Client Tags, Email Tracking
 
-### Current Work (2026-01-22) - Session: "5DKO Online + Mail Methods"
+### Current Work (2026-02-05) - Session: "Credit Import Per-Bureau Display"
+
+**Task**: Fix credit report extraction to display personal info data separately per bureau (TransUnion, Experian, Equifax)
+
+**Status**: ✅ COMPLETE
+
+---
+
+### Completed Today (2026-02-05):
+
+#### 1. Per-Bureau Personal Info Extraction ✅
+
+**Problem**: Credit report personal info (names, addresses, employers) was showing same data in all 3 bureau columns instead of each bureau's actual data.
+
+**Root Cause**: Extraction was storing all data in flat arrays without tracking which bureau each item belonged to.
+
+**Fix Applied** (`services/credit_import_automation.py`):
+- Restructured extraction to organize by bureau using CSS grid classes:
+  - `col-start-2` = TransUnion
+  - `col-start-3` = Experian
+  - `col-start-4` = Equifax
+- Each bureau now stores: `names`, `dob`, `current_address`, `previous_addresses`, `employers`
+
+**Template Updated** (`templates/credit_report_simple.html`):
+- Display per-bureau data in correct columns
+- Shows different names/addresses/employers per bureau
+- Fallback to flat data for backwards compatibility
+
+#### 2. Database Path Update Bug Fix ✅
+
+**Problem**: Background import completed but didn't update `last_report_path` in database.
+
+**Root Cause**: Key mismatch - `import_report()` returns `"report_path"` but `run_import_background()` checked for `"path"`.
+
+**Fix**: Updated to check both keys: `result.get("report_path") or result.get("path")`
+
+#### 3. 5-Day Knockout Items Loading Fix ✅
+
+**Problem**: Step 2 "Accounts to Dispute" showed empty for clients with imported credit reports.
+
+**Root Cause**: API was parsing HTML file but not checking for pre-extracted JSON file.
+
+**Fix** (`app.py` - `api_5day_knockout_client_items`):
+- Check for `.json` file first (has pre-extracted accounts)
+- Fall back to HTML parsing if JSON doesn't exist
+
+#### 4. 5-Day Knockout Search Filter ✅
+
+**Feature**: Added search box to Step 2 accounts list
+- Filters by creditor name, account number, or account type
+- Shows/hides based on items loaded state
+
+---
+
+### Previous Work (2026-01-22) - Session: "5DKO Online + Mail Methods"
 
 **Task**: Add two submission methods (Online + Mail) to 5-Day Knock-Out based on updated Notion docs
 
@@ -54,7 +108,7 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 
 ---
 
-### Completed Today (2026-01-22):
+### Completed (2026-01-22):
 
 #### 1. 5-Day Knock-Out v2 - Online + Mail Methods ✅ NEW
 
