@@ -1758,6 +1758,9 @@ class CreditImportAutomation:
             except Exception as e:
                 logger.warning(f"Personal info extraction failed: {e}")
 
+            # Payment history conversion is now handled in _extract_accounts_data()
+            # This is a no-op safety net if payment_history is already in unified format
+
             json_filename = f"{client_id}_{safe_name}_{timestamp}.json"
             json_filepath = REPORTS_DIR / json_filename
             extracted_data = {
@@ -2483,6 +2486,38 @@ class CreditImportAutomation:
                                 if (match60) account.late_payments[bureauName].days_60 = parseInt(match60[1]);
                                 if (match90) account.late_payments[bureauName].days_90 = parseInt(match90[1]);
                             });
+
+                            // Merge per-bureau payment history into unified format for template
+                            const unifiedHistory = [];
+                            const tuHist = account.payment_history.transunion || [];
+                            const exHist = account.payment_history.experian || [];
+                            const eqHist = account.payment_history.equifax || [];
+                            const maxLen = Math.max(tuHist.length, exHist.length, eqHist.length);
+
+                            // Map status codes to display values
+                            const mapStatus = (entry) => {
+                                if (!entry) return '';
+                                if (entry.badge === 'OK' || entry.status === 'C') return 'OK';
+                                if (entry.status === '1' || entry.status === '30') return '30';
+                                if (entry.status === '2' || entry.status === '60') return '60';
+                                if (entry.status === '3' || entry.status === '90') return '90';
+                                if (entry.status === '4' || entry.status === '5' || entry.status === 'CO' || entry.status === 'CL') return 'CO';
+                                return entry.badge || entry.status || '';
+                            };
+
+                            for (let i = 0; i < maxLen; i++) {
+                                const tu = tuHist[i] || {};
+                                const ex = exHist[i] || {};
+                                const eq = eqHist[i] || {};
+
+                                unifiedHistory.push({
+                                    month: tu.month || ex.month || eq.month || '',
+                                    transunion: mapStatus(tu),
+                                    experian: mapStatus(ex),
+                                    equifax: mapStatus(eq)
+                                });
+                            }
+                            account.payment_history = unifiedHistory;
                         }
 
                         if (account.creditor) {
@@ -2519,6 +2554,7 @@ class CreditImportAutomation:
 
                             const account = {
                                 creditor: nameEl.textContent.trim(),
+                                _from_classic_view: true,
                                 bureaus: {
                                     transunion: { present: false },
                                     experian: { present: false },
@@ -2598,6 +2634,74 @@ class CreditImportAutomation:
                                 });
                             }
 
+                            // Parse payment history from .payment-history divs
+                            const paymentHistoryDivs = block.querySelectorAll('.payment-history');
+                            paymentHistoryDivs.forEach(phDiv => {
+                                const bureauP = phDiv.querySelector('.payment-history-heading, .fw-bold');
+                                if (!bureauP) return;
+
+                                const bureauText = bureauP.textContent.toLowerCase();
+                                let bureauName = null;
+                                if (bureauText.includes('transunion')) bureauName = 'transunion';
+                                else if (bureauText.includes('experian')) bureauName = 'experian';
+                                else if (bureauText.includes('equifax')) bureauName = 'equifax';
+                                if (!bureauName) return;
+
+                                // Find the flex container with month status divs
+                                const monthsContainer = phDiv.querySelector('.d-flex.gap-1.flex-wrap, .d-flex.flex-wrap.flex-1');
+                                if (!monthsContainer) return;
+
+                                const monthDivs = monthsContainer.querySelectorAll('[class^="status-"], [class*=" status-"]');
+                                monthDivs.forEach(md => {
+                                    const classMatch = md.className.match(/status-(\\w+)/);
+                                    const status = classMatch ? classMatch[1] : 'U';
+                                    const badge = md.querySelector('.month-badge')?.textContent.trim() || '';
+                                    const month = md.querySelector('.month-label')?.textContent.trim() || '';
+                                    account.payment_history[bureauName].push({
+                                        month: month,
+                                        status: status,
+                                        badge: badge
+                                    });
+                                });
+                            });
+
+                            // Merge per-bureau payment history into unified format for template
+                            try {
+                                const unifiedHistory = [];
+                                const tuHist = account.payment_history.transunion || [];
+                                const exHist = account.payment_history.experian || [];
+                                const eqHist = account.payment_history.equifax || [];
+                                const maxLen = Math.max(tuHist.length, exHist.length, eqHist.length);
+
+                                // Map status codes to display values
+                                const mapStatus = (entry) => {
+                                    if (!entry) return '';
+                                    if (entry.badge === 'OK' || entry.status === 'C') return 'OK';
+                                    if (entry.status === '1' || entry.status === '30') return '30';
+                                    if (entry.status === '2' || entry.status === '60') return '60';
+                                    if (entry.status === '3' || entry.status === '90') return '90';
+                                    if (entry.status === '4' || entry.status === '5' || entry.status === 'CO' || entry.status === 'CL') return 'CO';
+                                    return entry.badge || entry.status || '';
+                                };
+
+                                for (let i = 0; i < maxLen; i++) {
+                                    const tu = tuHist[i] || {};
+                                    const ex = exHist[i] || {};
+                                    const eq = eqHist[i] || {};
+
+                                    unifiedHistory.push({
+                                        month: tu.month || ex.month || eq.month || '',
+                                        transunion: mapStatus(tu),
+                                        experian: mapStatus(ex),
+                                        equifax: mapStatus(eq)
+                                    });
+                                }
+                                account.payment_history = unifiedHistory;
+                                account._merge_ran = true;
+                            } catch (mergeErr) {
+                                account._merge_error = mergeErr.message;
+                            }
+
                             if (account.creditor) {
                                 accounts.push(account);
                             }
@@ -2614,6 +2718,58 @@ class CreditImportAutomation:
 
             except Exception as e:
                 logger.warning(f"MyFreeScoreNow account extraction failed: {e}")
+
+        # Convert payment history from per-bureau dict to unified list format for template
+        def _convert_ph(acct):
+            ph = acct.get("payment_history", {})
+            if isinstance(ph, dict) and "transunion" in ph:
+                tu = ph.get("transunion", [])
+                ex = ph.get("experian", [])
+                eq = ph.get("equifax", [])
+                max_len = max(len(tu), len(ex), len(eq), default=0)
+                unified = []
+                for i in range(max_len):
+                    t = tu[i] if i < len(tu) else {}
+                    e = ex[i] if i < len(ex) else {}
+                    q = eq[i] if i < len(eq) else {}
+
+                    # Map status: C/OK -> OK, 1/30 -> 30, etc
+                    def _map(entry):
+                        if not entry:
+                            return ""
+                        b = entry.get("badge", "")
+                        s = entry.get("status", "")
+                        if b == "OK" or s == "C":
+                            return "OK"
+                        if s in ("1", "30"):
+                            return "30"
+                        if s in ("2", "60"):
+                            return "60"
+                        if s in ("3", "90"):
+                            return "90"
+                        if s in ("4", "5", "CO", "CL"):
+                            return "CO"
+                        return b or s or ""
+
+                    unified.append(
+                        {
+                            "month": t.get("month")
+                            or e.get("month")
+                            or q.get("month")
+                            or "",
+                            "transunion": _map(t),
+                            "experian": _map(e),
+                            "equifax": _map(q),
+                        }
+                    )
+                acct["payment_history"] = unified
+            return acct
+
+        if accounts:
+            accounts = [_convert_ph(a) for a in accounts]
+            logger.info(
+                f"Converted payment history for {len(accounts)} accounts to unified format"
+            )
 
         return accounts
 
