@@ -183,6 +183,9 @@
                             <div class="spinner-border spinner-border-sm text-primary"></div>
                             <span class="ms-2">Loading...</span>
                         </div>
+                        <div id="itemSearchBox" class="mb-2 d-none">
+                            <input type="text" id="itemSearch" class="form-control form-control-sm" placeholder="Search accounts..." oninput="filterItems()">
+                        </div>
                         <div id="itemsContainer" class="item-checkbox-container d-none">
                             <!-- Loaded items go here -->
                         </div>
@@ -594,6 +597,7 @@
         loadedItems = [];
         renderManualItems();
         document.getElementById('itemsContainer').classList.add('d-none');
+        document.getElementById('itemSearchBox').classList.add('d-none');
         updateGenerateButton();
     }
 
@@ -654,6 +658,8 @@
             if (data.success && data.items && data.items.length > 0) {
                 loadedItems = data.items;
                 container.classList.remove('d-none');
+                document.getElementById('itemSearchBox').classList.remove('d-none');
+                document.getElementById('itemSearch').value = '';
                 const sourceLabel = data.has_credit_report ? 'From credit report:' : 'From database:';
                 container.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -685,11 +691,13 @@
             } else {
                 loadedItems = [];
                 container.classList.add('d-none');
+                document.getElementById('itemSearchBox').classList.add('d-none');
             }
         } catch (e) {
             loading.classList.add('d-none');
             loadedItems = [];
             container.classList.add('d-none');
+            document.getElementById('itemSearchBox').classList.add('d-none');
         }
     }
 
@@ -698,6 +706,21 @@
         const manualChecked = document.querySelectorAll('.manual-checkbox:checked').length;
         const total = dbChecked + manualChecked;
         document.getElementById('itemCount').textContent = total + ' item' + (total !== 1 ? 's' : '');
+    }
+
+    function filterItems() {
+        const query = document.getElementById('itemSearch').value.toLowerCase();
+        document.querySelectorAll('.item-checkbox').forEach(cb => {
+            const creditor = (cb.dataset.creditor || '').toLowerCase();
+            const account = (cb.dataset.account || '').toLowerCase();
+            const type = (cb.dataset.type || '').toLowerCase();
+            const parent = cb.closest('.form-check');
+            if (creditor.includes(query) || account.includes(query) || type.includes(query)) {
+                parent.style.display = '';
+            } else {
+                parent.style.display = 'none';
+            }
+        });
     }
 
     function selectAllItems() {
