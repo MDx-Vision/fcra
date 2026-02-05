@@ -42956,7 +42956,7 @@ def api_5day_knockout_client_items(client_id):
                     except Exception as e:
                         print(f"Error parsing credit report HTML: {e}")
 
-            # Try parsing from CreditMonitoringCredential's last_report_path (saved HTML file)
+            # Try parsing from CreditMonitoringCredential's last_report_path (saved HTML/JSON file)
             if not items:
                 credential = (
                     db.query(CreditMonitoringCredential)
@@ -42970,6 +42970,7 @@ def api_5day_knockout_client_items(client_id):
 
                 if credential and credential.last_report_path:
                     try:
+                        import json
                         import os
 
                         report_path = credential.last_report_path
@@ -42979,7 +42980,16 @@ def api_5day_knockout_client_items(client_id):
                                 os.path.dirname(__file__), report_path
                             )
 
-                        if os.path.exists(report_path):
+                        # First try the JSON file (has pre-extracted data)
+                        json_path = report_path.replace(".html", ".json")
+                        parsed_data = None
+
+                        if os.path.exists(json_path):
+                            with open(json_path, "r", encoding="utf-8") as f:
+                                parsed_data = json.load(f)
+                            print(f"Loaded pre-extracted data from JSON: {json_path}")
+                        elif os.path.exists(report_path):
+                            # Fall back to parsing HTML
                             with open(report_path, "r", encoding="utf-8") as f:
                                 html_content = f.read()
 
@@ -42987,57 +42997,62 @@ def api_5day_knockout_client_items(client_id):
 
                             parser = CreditReportParser(html_content)
                             parsed_data = parser.parse()
-                            accounts = parsed_data.get("accounts", [])
 
-                            print(
-                                f"Parsed {len(accounts)} accounts from credential report: {report_path}"
+                        accounts = (
+                            parsed_data.get("accounts", []) if parsed_data else []
+                        )
+
+                        print(
+                            f"Parsed {len(accounts)} accounts from credential report: {report_path}"
+                        )
+
+                        for idx, acct in enumerate(accounts):
+                            bureaus = []
+                            if acct.get("equifax") or acct.get("efx_status"):
+                                bureaus.append("Equifax")
+                            if acct.get("experian") or acct.get("exp_status"):
+                                bureaus.append("Experian")
+                            if acct.get("transunion") or acct.get("tu_status"):
+                                bureaus.append("TransUnion")
+                            if not bureaus:
+                                bureaus = ["Equifax", "Experian", "TransUnion"]
+
+                            items.append(
+                                {
+                                    "id": f"cred_{idx}",
+                                    "creditor": acct.get("creditor")
+                                    or acct.get("creditor_name")
+                                    or "Unknown",
+                                    "account_number": acct.get("account_number")
+                                    or "N/A",
+                                    "bureau": ", ".join(bureaus),
+                                    "type": acct.get("account_type") or "Unknown",
+                                    "status": acct.get("status")
+                                    or acct.get("account_status")
+                                    or "Unknown",
+                                    "balance": acct.get("balance")
+                                    or acct.get("balance_owed"),
+                                    "source": "credential_import",
+                                }
                             )
 
-                            for idx, acct in enumerate(accounts):
-                                bureaus = []
-                                if acct.get("equifax") or acct.get("efx_status"):
-                                    bureaus.append("Equifax")
-                                if acct.get("experian") or acct.get("exp_status"):
-                                    bureaus.append("Experian")
-                                if acct.get("transunion") or acct.get("tu_status"):
-                                    bureaus.append("TransUnion")
-                                if not bureaus:
-                                    bureaus = ["Equifax", "Experian", "TransUnion"]
-
-                                items.append(
-                                    {
-                                        "id": f"cred_{idx}",
-                                        "creditor": acct.get("creditor")
-                                        or acct.get("creditor_name")
-                                        or "Unknown",
-                                        "account_number": acct.get("account_number")
-                                        or "N/A",
-                                        "bureau": ", ".join(bureaus),
-                                        "type": acct.get("account_type") or "Unknown",
-                                        "status": acct.get("status")
-                                        or acct.get("account_status")
-                                        or "Unknown",
-                                        "balance": acct.get("balance")
-                                        or acct.get("balance_owed"),
-                                        "source": "credential_import",
-                                    }
-                                )
-
-                            # Also extract inquiries
-                            inquiries = parsed_data.get("inquiries", [])
-                            for idx, inq in enumerate(inquiries):
-                                items.append(
-                                    {
-                                        "id": f"inq_{idx}",
-                                        "creditor": inq.get("creditor") or "Unknown",
-                                        "account_number": inq.get("date") or "N/A",
-                                        "bureau": inq.get("bureau") or "Unknown",
-                                        "type": "Inquiry",
-                                        "status": inq.get("type") or "Hard Inquiry",
-                                        "balance": None,
-                                        "source": "inquiry",
-                                    }
-                                )
+                        # Also extract inquiries
+                        inquiries = (
+                            parsed_data.get("inquiries", []) if parsed_data else []
+                        )
+                        for idx, inq in enumerate(inquiries):
+                            items.append(
+                                {
+                                    "id": f"inq_{idx}",
+                                    "creditor": inq.get("creditor") or "Unknown",
+                                    "account_number": inq.get("date") or "N/A",
+                                    "bureau": inq.get("bureau") or "Unknown",
+                                    "type": "Inquiry",
+                                    "status": inq.get("type") or "Hard Inquiry",
+                                    "balance": None,
+                                    "source": "inquiry",
+                                }
+                            )
                     except Exception as e:
                         import traceback
 
