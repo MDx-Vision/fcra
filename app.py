@@ -43569,12 +43569,13 @@ Follow the exact format and structure from the prompt. Use professional formatti
             from services.ai_usage_service import log_ai_usage
 
             log_ai_usage(
-                client_id=client_id,
-                staff_id=session.get("staff_id"),
+                service="inquiry_disputes",
                 operation="inquiry_dispute_generation",
                 model="claude-sonnet-4-20250514",
                 input_tokens=response.usage.input_tokens,
                 output_tokens=response.usage.output_tokens,
+                client_id=client_id,
+                staff_id=session.get("staff_id"),
             )
 
             return jsonify(
