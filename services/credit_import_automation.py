@@ -1393,6 +1393,44 @@ class CreditImportAutomation:
                         }
                     }
 
+                    // MYSCOREIQ Summary fallback - uses #Summary id and rpt_content_table
+                    if (!summary.total_accounts) {
+                        const summaryHeader = document.querySelector('#Summary, .rpt_fullReport_header[id="Summary"]');
+                        if (summaryHeader) {
+                            // Find the rpt_content_table after the summary header
+                            let summaryTable = null;
+                            let el = summaryHeader.nextElementSibling;
+                            while (el && !summaryTable) {
+                                if (el.tagName === 'TABLE' && el.classList?.contains('rpt_content_table')) {
+                                    summaryTable = el;
+                                }
+                                el = el.nextElementSibling;
+                            }
+                            if (summaryTable) {
+                                const rows = summaryTable.querySelectorAll('tr');
+                                rows.forEach(row => {
+                                    const labelCell = row.querySelector('td.label');
+                                    if (!labelCell) return;
+                                    const label = labelCell.textContent.toLowerCase().trim();
+                                    // Get first info cell (TransUnion column)
+                                    const infoCell = row.querySelector('td.info');
+                                    if (!infoCell) return;
+                                    const value = infoCell.textContent.trim();
+                                    if (!value || value === '-') return;
+
+                                    if (label.includes('total accounts')) summary.total_accounts = value;
+                                    else if (label.includes('open accounts')) summary.open_accounts = value;
+                                    else if (label.includes('closed accounts')) summary.closed_accounts = value;
+                                    else if (label.includes('delinquent')) summary.delinquent_accounts = value;
+                                    else if (label.includes('derogatory')) summary.derogatory_accounts = value;
+                                    else if (label.includes('balance')) summary.total_balances = value;
+                                    else if (label.includes('payment') && !label.includes('late')) summary.total_payments = value;
+                                    else if (label.includes('inquir')) summary.total_inquiries = value;
+                                });
+                            }
+                        }
+                    }
+
                     // Parse Inquiries section - try multiple formats
                     // Method 1: Classic View format - uses #Inquiries wrapper with table rows
                     const classicInquiries = document.querySelector('#Inquiries, .rpt_content_wrapper[id*="nquir"]');
@@ -1743,10 +1781,43 @@ class CreditImportAutomation:
                         // MYSCOREIQ FALLBACK: If still no names, try MyScoreIQ format
                         // MyScoreIQ uses tables with class rpt_content_table and columns headerTUC, headerEXP, headerEQF
                         if (data.names.length === 0) {
-                            const personalHeader = document.querySelector('.rpt_fullReport_header');
-                            if (personalHeader && personalHeader.textContent.includes('Personal Information')) {
-                                const personalTable = personalHeader.parentElement?.querySelector('table.rpt_content_table');
-                                if (personalTable) {
+                            // Find all headers and look for Personal Information
+                            let personalTable = null;
+                            document.querySelectorAll('.rpt_fullReport_header').forEach(header => {
+                                if (header.textContent.includes('Personal Information')) {
+                                    // Find the next table.rpt_content_table after this header
+                                    // Walk through siblings and parent's children
+                                    let el = header.nextElementSibling;
+                                    while (el && !personalTable) {
+                                        if (el.classList?.contains('rpt_content_table')) {
+                                            personalTable = el;
+                                        } else if (el.querySelector) {
+                                            personalTable = el.querySelector('table.rpt_content_table');
+                                        }
+                                        el = el.nextElementSibling;
+                                    }
+                                    // Also check parent's siblings
+                                    if (!personalTable) {
+                                        let parent = header.parentElement;
+                                        let sib = parent?.nextElementSibling;
+                                        while (sib && !personalTable) {
+                                            if (sib.tagName === 'TABLE' && sib.classList?.contains('rpt_content_table')) {
+                                                personalTable = sib;
+                                            } else if (sib.querySelector) {
+                                                personalTable = sib.querySelector('table.rpt_content_table');
+                                            }
+                                            sib = sib.nextElementSibling;
+                                        }
+                                    }
+                                }
+                            });
+
+                            // Also try direct table selection with 4-column layout
+                            if (!personalTable) {
+                                personalTable = document.querySelector('table.rpt_content_table.rpt_table4column');
+                            }
+
+                            if (personalTable) {
                                     const rows = personalTable.querySelectorAll('tr');
                                     rows.forEach(row => {
                                         const labelCell = row.querySelector('td.label');
@@ -1791,6 +1862,17 @@ class CreditImportAutomation:
                                                         data[bureau].current_address = text;
                                                         if (!data.addresses.includes(text)) {
                                                             data.addresses.push(text);
+                                                        }
+                                                    }
+                                                }
+                                                else if (label.includes('Employer')) {
+                                                    if (text.length > 2) {
+                                                        const empObj = { name: text, date_updated: null };
+                                                        if (!data[bureau].employers.find(e => e.name === text)) {
+                                                            data[bureau].employers.push(empObj);
+                                                        }
+                                                        if (!data.employers.find(e => e.name === text)) {
+                                                            data.employers.push(empObj);
                                                         }
                                                     }
                                                 }
