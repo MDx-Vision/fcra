@@ -99,6 +99,14 @@ class AIDisputeWriterService:
             "focus": "Quick fixes for funding/approval - portal submission + phone follow-up",
             "requires": [],
         },
+        "inquirydispute": {
+            "name": "Inquiry Dispute (Professional)",
+            "description": "FCRA §604/609 unauthorized inquiry disputes via FTC, CFPB, and certified mail",
+            "prompt_key": "inquirydispute",
+            "focus": "Remove unauthorized hard inquiries - 7-14 day timeline",
+            "requires": [],
+            "output_files": 7,  # FTC instructions, CFPB templates, 609 letters (TU/EQ), phone guide, checklist
+        },
     }
 
     # Bureaus
@@ -109,6 +117,13 @@ class AIDisputeWriterService:
         "Experian": "P.O. Box 9554, Allen, TX 75013",
         "Equifax": "P.O. Box 105069, Atlanta, GA 30348",
         "TransUnion": "Fraud Victim Assistance Dept, P.O. Box 2000, Chester, PA 19016",
+    }
+
+    # Bureau inquiry dispute addresses (for 609 letters)
+    BUREAU_INQUIRY_ADDRESSES = {
+        "TransUnion": "P.O. Box 2000, Chester, PA 19016",
+        "Equifax": "P.O. BOX 740256, Atlanta, GA 30374",
+        "Experian": "P.O. Box 4500, Allen, TX 75013",
     }
 
     def __init__(self, db: Session):

@@ -1739,6 +1739,67 @@ class CreditImportAutomation:
                                 });
                             }
                         }
+
+                        // MYSCOREIQ FALLBACK: If still no names, try MyScoreIQ format
+                        // MyScoreIQ uses tables with class rpt_content_table and columns headerTUC, headerEXP, headerEQF
+                        if (data.names.length === 0) {
+                            const personalHeader = document.querySelector('.rpt_fullReport_header');
+                            if (personalHeader && personalHeader.textContent.includes('Personal Information')) {
+                                const personalTable = personalHeader.parentElement?.querySelector('table.rpt_content_table');
+                                if (personalTable) {
+                                    const rows = personalTable.querySelectorAll('tr');
+                                    rows.forEach(row => {
+                                        const labelCell = row.querySelector('td.label');
+                                        if (!labelCell) return;
+                                        const label = labelCell.textContent.trim();
+
+                                        const infoCells = row.querySelectorAll('td.info');
+                                        if (infoCells.length >= 3) {
+                                            // Column order: TransUnion, Experian, Equifax
+                                            const bureaus = ['transunion', 'experian', 'equifax'];
+                                            infoCells.forEach((cell, idx) => {
+                                                if (idx >= 3) return;
+                                                const bureau = bureaus[idx];
+                                                const text = cell.textContent.replace(/\\s+/g, ' ').trim();
+                                                if (!text || text === '-') return;
+
+                                                if (label.includes('Name')) {
+                                                    // Extract name from Angular template
+                                                    const nameText = text.replace(/[\\n\\t]+/g, ' ').trim();
+                                                    if (nameText && nameText.length > 2) {
+                                                        if (!data[bureau].names.includes(nameText)) {
+                                                            data[bureau].names.push(nameText);
+                                                        }
+                                                        if (!data.names.includes(nameText)) {
+                                                            data.names.push(nameText);
+                                                        }
+                                                    }
+                                                }
+                                                else if (label.includes('Date of Birth') || label.includes('Birth Year')) {
+                                                    const dateMatch = text.match(/(\\d{1,2}\\/\\d{1,2}\\/\\d{4})/);
+                                                    const yearMatch = text.match(/(19[4-9]\\d|20[0-2]\\d)/);
+                                                    if (dateMatch) {
+                                                        data[bureau].dob = dateMatch[1];
+                                                        if (!data.dob) data.dob = dateMatch[1];
+                                                    } else if (yearMatch) {
+                                                        data[bureau].dob = yearMatch[1];
+                                                        if (!data.dob) data.dob = yearMatch[1];
+                                                    }
+                                                }
+                                                else if (label.includes('Current Address') || label.includes('Address')) {
+                                                    if (text.length > 5 && !data[bureau].current_address) {
+                                                        data[bureau].current_address = text;
+                                                        if (!data.addresses.includes(text)) {
+                                                            data.addresses.push(text);
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            }
+                        }
                     }
 
                     return { personal: data, summary: summary, inquiries: inquiries, creditor_contacts: creditorContacts };

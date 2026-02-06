@@ -670,6 +670,51 @@ def send_message():
     flash('Message sent successfully! We will respond within 24-48 hours.', 'success')
     return redirect(url_for('portal.profile'))
 
+
+@portal.route('/api/portal/identity-info', methods=['POST'])
+@portal_login_required
+def save_identity_info():
+    """Save identity verification info (DL, address_since) for FTC Affidavit"""
+    from database import get_db, Client
+
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+    data = request.get_json() or {}
+    dl_state = data.get('dl_state', '').strip()
+    dl_number = data.get('dl_number', '').strip()
+    address_since = data.get('address_since', '').strip()
+
+    # Validate dl_state (2-letter state code)
+    if dl_state and len(dl_state) != 2:
+        return jsonify({"success": False, "error": "Invalid state code"}), 400
+
+    # Validate address_since format (mm/yyyy)
+    if address_since:
+        import re
+        if not re.match(r'^\d{2}/\d{4}$', address_since):
+            return jsonify({"success": False, "error": "Address since must be in mm/yyyy format"}), 400
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=get_client_id()).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        # Update fields
+        client.dl_state = dl_state or None
+        client.dl_number = dl_number or None
+        client.address_since = address_since or None
+
+        db.commit()
+        return jsonify({"success": True, "message": "Identity info saved"})
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
 @portal.route('/profile/referral', methods=['POST'])
 @portal_login_required
 def submit_referral():

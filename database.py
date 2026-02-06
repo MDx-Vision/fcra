@@ -157,6 +157,13 @@ class Client(Base):
     ssn_last_four = Column(String(4))
     date_of_birth = Column(Date)
 
+    # Driver's License (for FTC Affidavit)
+    dl_state = Column(String(2))  # 2-letter state code (e.g., "NJ")
+    dl_number = Column(String(50))  # Driver's license number
+
+    # Address history (for FTC Affidavit)
+    address_since = Column(String(10))  # mm/yyyy format - when moved to current address
+
     # Credit monitoring credentials (NOTE: Encrypt in production)
     credit_monitoring_service = Column(String(100))  # IdentityIQ, MyScoreIQ, etc.
     credit_monitoring_username = Column(String(255))
@@ -8395,6 +8402,10 @@ def init_db():
         ("email_click_logs", "clicked_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("email_click_logs", "user_agent", "VARCHAR(500)"),
         ("email_click_logs", "ip_address", "VARCHAR(45)"),
+        # Driver's License and Address History for FTC Affidavit
+        ("clients", "dl_state", "VARCHAR(2)"),
+        ("clients", "dl_number", "VARCHAR(50)"),
+        ("clients", "address_since", "VARCHAR(10)"),
     ]
 
     conn = engine.connect()

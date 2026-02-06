@@ -268,8 +268,11 @@
                                 <input type="text" id="ftcReferenceNumber" class="form-control" placeholder="FTC-123456789">
                             </div>
                         </div>
-                        <button id="generateBtn" class="btn btn-knockout w-100" onclick="generateDocuments()" disabled>
+                        <button id="generateBtn" class="btn btn-knockout w-100 mb-2" onclick="generateDocuments()" disabled>
                             <i class="bi bi-lightning-fill me-2"></i>Generate Documents
+                        </button>
+                        <button id="downloadAffidavitBtn" class="btn btn-outline-primary w-100" onclick="downloadFTCAffidavit()" disabled>
+                            <i class="bi bi-file-earmark-pdf me-2"></i>Download FTC Affidavit (Fillable PDF)
                         </button>
                     </div>
                 </div>
@@ -745,7 +748,97 @@
         if (phase === '2' && !policeNum) enabled = false;
 
         document.getElementById('generateBtn').disabled = !enabled;
+        // Enable affidavit download if client and items selected (no police # needed for Phase 1)
+        document.getElementById('downloadAffidavitBtn').disabled = !(clientId && totalItems > 0);
         updateItemCount();
+    }
+
+    // Download FTC Identity Theft Affidavit filled with client data
+    async function downloadFTCAffidavit() {
+        const clientId = document.getElementById('selectedClientId').value;
+        const ftcNum = document.getElementById('ftcReferenceNumber').value;
+        const policeNum = document.getElementById('policeCaseNumber').value;
+
+        if (!clientId) {
+            alert('Please select a client first');
+            return;
+        }
+
+        // Gather selected accounts
+        const selectedAccounts = [];
+
+        // Get checked database items
+        document.querySelectorAll('.item-checkbox:checked').forEach(cb => {
+            selectedAccounts.push({
+                creditor_name: cb.dataset.creditor,
+                account_number: cb.dataset.account,
+                account_type: cb.dataset.type || 'credit',
+                date_opened: cb.dataset.dateOpened || '',
+                balance: cb.dataset.balance || '',
+            });
+        });
+
+        // Get checked manual items
+        document.querySelectorAll('.manual-checkbox:checked').forEach(cb => {
+            const idx = parseInt(cb.dataset.idx);
+            if (manualItems[idx]) {
+                selectedAccounts.push({
+                    creditor_name: manualItems[idx].creditor,
+                    account_number: manualItems[idx].account_number || '',
+                    account_type: manualItems[idx].type || 'credit',
+                    date_opened: '',
+                    balance: '',
+                });
+            }
+        });
+
+        if (selectedAccounts.length === 0) {
+            alert('Please select at least one account to include in the affidavit');
+            return;
+        }
+
+        // Build police report object if available
+        let policeReport = null;
+        if (policeNum) {
+            policeReport = {
+                report_number: policeNum,
+                filing_date: new Date().toLocaleDateString('en-US'),
+                automated: true,
+            };
+        }
+
+        try {
+            const response = await fetch('/api/5day-knockout/fill-affidavit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    client_id: parseInt(clientId),
+                    accounts: selectedAccounts,
+                    police_report: policeReport,
+                    ftc_number: ftcNum || null,
+                }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                alert('Error generating affidavit: ' + (err.error || 'Unknown error'));
+                return;
+            }
+
+            // Download the PDF
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'FTC_Affidavit.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+        } catch (e) {
+            alert('Download failed: ' + e.message);
+        }
     }
 
     async function generateDocuments() {

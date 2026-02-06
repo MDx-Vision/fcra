@@ -43266,6 +43266,430 @@ def api_5day_knockout_sendcertified_status():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/api/5day-knockout/fill-affidavit", methods=["POST"])
+@require_staff()
+def api_5day_knockout_fill_affidavit():
+    """Fill FTC Identity Theft Affidavit PDF with client and account data"""
+    try:
+        from services.ftc_affidavit_generator import generate_ftc_affidavit
+
+        data = request.get_json()
+        client_id = data.get("client_id")
+        selected_accounts = data.get("accounts", [])
+        police_report = data.get("police_report")
+        ftc_number = data.get("ftc_number")
+
+        if not client_id:
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+
+        # Get client data
+        db = get_db()
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        # Build client data dict
+        client_data = {
+            "name": client.name,
+            "email": client.email,
+            "phone": client.phone,
+            "address": client.address_street or "",
+            "city": client.address_city or "",
+            "state": client.address_state or "",
+            "zip": client.address_zip or "",
+            "dob": (
+                client.date_of_birth.strftime("%m/%d/%Y")
+                if client.date_of_birth
+                else ""
+            ),
+            "ssn": client.ssn_last_four or "",
+            "dl_state": getattr(client, "dl_state", "") or "",
+            "dl_number": getattr(client, "dl_number", "") or "",
+            "address_since": getattr(client, "address_since", "") or "",
+        }
+
+        # Generate the PDF
+        pdf_bytes = generate_ftc_affidavit(
+            client_data=client_data,
+            accounts=selected_accounts,
+            police_report=police_report,
+            ftc_number=ftc_number,
+        )
+
+        # Return as downloadable PDF
+        import io
+
+        from flask import send_file
+
+        pdf_io = io.BytesIO(pdf_bytes)
+        pdf_io.seek(0)
+
+        filename = f"FTC_Affidavit_{client.name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+
+        return send_file(
+            pdf_io,
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=filename,
+        )
+
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# =============================================================================
+# INQUIRY DISPUTES ENDPOINTS
+# =============================================================================
+
+
+@app.route("/dashboard/inquiry-disputes", methods=["GET"])
+@require_staff()
+def dashboard_inquiry_disputes():
+    """Inquiry Disputes dashboard page"""
+    return render_template("inquiry_disputes.html", active_page="inquiry-disputes")
+
+
+@app.route("/api/inquiry-disputes/client/<int:client_id>/inquiries", methods=["GET"])
+@require_staff()
+def api_inquiry_disputes_client_inquiries(client_id):
+    """Get inquiries for a client from their credit report"""
+    try:
+        with get_db() as db:
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                return jsonify({"success": False, "error": "Client not found"}), 404
+
+            inquiries = []
+
+            # Try to get from Analysis first
+            analysis = (
+                db.query(Analysis)
+                .filter(Analysis.client_id == client_id)
+                .order_by(Analysis.created_at.desc())
+                .first()
+            )
+
+            if analysis and analysis.stage_1_analysis:
+                try:
+                    parsed = json.loads(analysis.stage_1_analysis)
+                    if isinstance(parsed, dict) and "inquiries" in parsed:
+                        for inq in parsed.get("inquiries", []):
+                            inquiries.append(
+                                {
+                                    "creditor": inq.get(
+                                        "company",
+                                        inq.get("creditor", inq.get("name", "Unknown")),
+                                    ),
+                                    "date": inq.get("date", "Unknown"),
+                                    "bureau": inq.get("bureau", "Unknown"),
+                                }
+                            )
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+            # Also try from CreditMonitoringCredential
+            from database import CreditMonitoringCredential
+
+            cred = (
+                db.query(CreditMonitoringCredential)
+                .filter(CreditMonitoringCredential.client_id == client_id)
+                .first()
+            )
+
+            if cred and cred.last_report_path:
+                # Check for JSON file with extracted data
+                json_path = cred.last_report_path.replace(".html", ".json")
+                if os.path.exists(json_path):
+                    try:
+                        with open(json_path, "r") as f:
+                            report_data = json.load(f)
+                            if "inquiries" in report_data:
+                                for inq in report_data.get("inquiries", []):
+                                    inquiries.append(
+                                        {
+                                            "creditor": inq.get(
+                                                "company",
+                                                inq.get(
+                                                    "creditor",
+                                                    inq.get("name", "Unknown"),
+                                                ),
+                                            ),
+                                            "date": inq.get("date", "Unknown"),
+                                            "bureau": inq.get("bureau", "Unknown"),
+                                        }
+                                    )
+                    except (json.JSONDecodeError, FileNotFoundError):
+                        pass
+
+            # Deduplicate
+            seen = set()
+            unique_inquiries = []
+            for inq in inquiries:
+                key = f"{inq['creditor']}-{inq['date']}-{inq['bureau']}"
+                if key not in seen:
+                    seen.add(key)
+                    unique_inquiries.append(inq)
+
+            return jsonify(
+                {
+                    "success": True,
+                    "client_id": client_id,
+                    "inquiries": unique_inquiries,
+                }
+            )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/inquiry-disputes/generate", methods=["POST"])
+@require_staff()
+def api_inquiry_disputes_generate():
+    """Generate Inquiry Dispute documents for a client"""
+    try:
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        data = request.get_json() or {}
+
+        client_id = data.get("client_id")
+        if not client_id:
+            return jsonify({"success": False, "error": "client_id required"}), 400
+
+        phase = int(data.get("phase", 1))
+        inquiries = data.get("inquiries", [])
+        ftc_number = data.get("ftc_number", "")
+        cfpb_transunion = data.get("cfpb_transunion", "")
+        cfpb_equifax = data.get("cfpb_equifax", "")
+
+        if not inquiries:
+            return jsonify({"success": False, "error": "No inquiries to dispute"}), 400
+
+        with get_db() as db:
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                return jsonify({"success": False, "error": "Client not found"}), 404
+
+            service = AIDisputeWriterService(db)
+
+            # Build client info for the prompt
+            client_info = {
+                "name": client.name,
+                "address": client.address_street or "",
+                "city": client.address_city or "",
+                "state": client.address_state or "",
+                "zip": client.address_zip or "",
+                "dob": (
+                    client.date_of_birth.strftime("%m/%d/%Y")
+                    if client.date_of_birth
+                    else ""
+                ),
+                "ssn_last4": client.ssn_last_four or "",
+            }
+
+            # Load the inquiry dispute prompt
+            prompt_content = (
+                service.prompt_loader.get_inquiry_dispute_professional_prompt()
+            )
+
+            # Build the user message
+            today = datetime.now().strftime("%B %d, %Y")
+            inquiries_text = "\n".join(
+                [
+                    f"- {inq['creditor']} | Date: {inq.get('date', 'Unknown')} | Bureau: {inq.get('bureau', 'Both')}"
+                    for inq in inquiries
+                ]
+            )
+
+            if phase == 1:
+                user_message = f"""Generate Phase 1 Inquiry Dispute documents for this client.
+
+CLIENT INFORMATION:
+- Name: {client_info['name']}
+- Address: {client_info['address']}, {client_info['city']}, {client_info['state']} {client_info['zip']}
+- DOB: {client_info['dob']}
+- SSN Last 4: {client_info['ssn_last4']}
+
+DISPUTED INQUIRIES:
+{inquiries_text}
+
+TODAY'S DATE: {today}
+
+Generate:
+1. FTC_Report_Instructions_{client_info['name'].replace(' ', '_')}.md
+2. CFPB_Complaint_Instructions_{client_info['name'].replace(' ', '_')}.md
+3. Inquiry_Dispute_Summary_{client_info['name'].replace(' ', '_')}.md
+
+Follow the exact format and structure from the prompt. Use professional formatting with ASCII tables. No emojis."""
+            else:
+                user_message = f"""Generate Phase 2 Inquiry Dispute documents (609 letters) for this client.
+
+CLIENT INFORMATION:
+- Name: {client_info['name']}
+- Address: {client_info['address']}, {client_info['city']}, {client_info['state']} {client_info['zip']}
+- DOB: {client_info['dob']}
+- SSN Last 4: {client_info['ssn_last4']}
+
+DISPUTED INQUIRIES:
+{inquiries_text}
+
+REFERENCE NUMBERS:
+- FTC Report Number: {ftc_number or '[NOT PROVIDED]'}
+- CFPB Complaint (TransUnion): {cfpb_transunion or '[NOT PROVIDED]'}
+- CFPB Complaint (Equifax): {cfpb_equifax or '[NOT PROVIDED]'}
+
+TODAY'S DATE: {today}
+
+Generate:
+1. TransUnion_609_Letter_{client_info['name'].replace(' ', '_')}.md
+2. Equifax_609_Letter_{client_info['name'].replace(' ', '_')}.md
+3. Phone_Follow_Up_Guide_{client_info['name'].replace(' ', '_')}.md
+4. Mailing_Checklist_{client_info['name'].replace(' ', '_')}.md
+
+Follow the exact format and structure from the prompt. Use professional formatting with ASCII tables. No emojis."""
+
+            # Call AI
+            response = service.anthropic_client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=16000,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt_content + "\n\n---\n\n" + user_message,
+                    }
+                ],
+            )
+
+            # Parse documents from response
+            ai_content = response.content[0].text
+            documents = parse_multiple_documents(ai_content)
+
+            # Log AI usage
+            from services.ai_usage_service import log_ai_usage
+
+            log_ai_usage(
+                client_id=client_id,
+                staff_id=session.get("staff_id"),
+                operation="inquiry_dispute_generation",
+                model="claude-sonnet-4-20250514",
+                input_tokens=response.usage.input_tokens,
+                output_tokens=response.usage.output_tokens,
+            )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "documents": documents,
+                    "phase": phase,
+                }
+            )
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/inquiry-disputes/save-files", methods=["POST"])
+@require_staff()
+def api_inquiry_disputes_save_files():
+    """Save generated inquiry dispute documents to files"""
+    try:
+        data = request.get_json() or {}
+        client_id = data.get("client_id")
+        documents = data.get("documents", {})
+
+        if not client_id:
+            return jsonify({"success": False, "error": "client_id required"}), 400
+
+        if not documents:
+            return jsonify({"success": False, "error": "No documents to save"}), 400
+
+        with get_db() as db:
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                return jsonify({"success": False, "error": "Client not found"}), 404
+
+            # Create folder
+            safe_name = client.name.replace(" ", "_").replace("/", "_")
+            folder_path = f"uploads/inquiry_disputes/{client_id}_{safe_name}"
+            os.makedirs(folder_path, exist_ok=True)
+
+            # Save each document
+            saved_files = []
+            for filename, content in documents.items():
+                file_path = os.path.join(folder_path, filename)
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                saved_files.append(file_path)
+
+            return jsonify(
+                {
+                    "success": True,
+                    "folder": folder_path,
+                    "files": saved_files,
+                }
+            )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+def parse_multiple_documents(ai_content):
+    """Parse multiple markdown documents from AI response"""
+    documents = {}
+
+    # Try to split by document markers
+    # Look for patterns like "### DOCUMENT 1:" or "## [FILENAME].md" or "---" separators
+    lines = ai_content.split("\n")
+    current_doc_name = None
+    current_doc_content = []
+
+    for line in lines:
+        # Check for document name patterns
+        if line.startswith("### DOCUMENT") or line.startswith("## DOCUMENT"):
+            # Save previous document
+            if current_doc_name and current_doc_content:
+                documents[current_doc_name] = "\n".join(current_doc_content).strip()
+            # Extract new document name
+            current_doc_name = None
+            current_doc_content = []
+            continue
+
+        # Check for filename in line
+        if ".md" in line and (
+            "_Letter_" in line
+            or "_Instructions_" in line
+            or "_Summary_" in line
+            or "_Checklist_" in line
+            or "_Guide_" in line
+        ):
+            # Extract filename
+            import re
+
+            match = re.search(r"([A-Za-z0-9_]+\.md)", line)
+            if match:
+                if current_doc_name and current_doc_content:
+                    documents[current_doc_name] = "\n".join(current_doc_content).strip()
+                current_doc_name = match.group(1)
+                current_doc_content = []
+                continue
+
+        # Add line to current document
+        if current_doc_name:
+            current_doc_content.append(line)
+
+    # Save last document
+    if current_doc_name and current_doc_content:
+        documents[current_doc_name] = "\n".join(current_doc_content).strip()
+
+    # If no documents were parsed, treat entire content as single document
+    if not documents:
+        documents["Generated_Document.md"] = ai_content
+
+    return documents
+
+
 # =============================================================================
 # ROI CALCULATOR ENDPOINTS
 # =============================================================================

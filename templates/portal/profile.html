@@ -111,6 +111,139 @@
     <p style="font-size: 13px; color: #9ca3af; margin: 20px 0 0 0;">Need to update your contact information? Contact us and we'll help.</p>
 </div>
 
+<!-- Identity Verification (for FTC Affidavit) -->
+<div class="card animate-fade-in-up" data-delay="450" style="margin-bottom: 24px;" data-testid="identity-verification">
+    <div class="card-title">🪪 Identity Verification</div>
+    <p style="font-size: 14px; color: #6b7280; margin: 0 0 20px 0;">
+        This information is required for the FTC Identity Theft Affidavit. Please ensure accuracy.
+    </p>
+    <form id="identity-form">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;" class="two-col-responsive">
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Driver's License State</label>
+                <select id="dl_state" name="dl_state" style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: white; color: #1e3a5f;">
+                    <option value="">Select State</option>
+                    <option value="AL" {% if client and client.dl_state == 'AL' %}selected{% endif %}>Alabama (AL)</option>
+                    <option value="AK" {% if client and client.dl_state == 'AK' %}selected{% endif %}>Alaska (AK)</option>
+                    <option value="AZ" {% if client and client.dl_state == 'AZ' %}selected{% endif %}>Arizona (AZ)</option>
+                    <option value="AR" {% if client and client.dl_state == 'AR' %}selected{% endif %}>Arkansas (AR)</option>
+                    <option value="CA" {% if client and client.dl_state == 'CA' %}selected{% endif %}>California (CA)</option>
+                    <option value="CO" {% if client and client.dl_state == 'CO' %}selected{% endif %}>Colorado (CO)</option>
+                    <option value="CT" {% if client and client.dl_state == 'CT' %}selected{% endif %}>Connecticut (CT)</option>
+                    <option value="DE" {% if client and client.dl_state == 'DE' %}selected{% endif %}>Delaware (DE)</option>
+                    <option value="DC" {% if client and client.dl_state == 'DC' %}selected{% endif %}>District of Columbia (DC)</option>
+                    <option value="FL" {% if client and client.dl_state == 'FL' %}selected{% endif %}>Florida (FL)</option>
+                    <option value="GA" {% if client and client.dl_state == 'GA' %}selected{% endif %}>Georgia (GA)</option>
+                    <option value="HI" {% if client and client.dl_state == 'HI' %}selected{% endif %}>Hawaii (HI)</option>
+                    <option value="ID" {% if client and client.dl_state == 'ID' %}selected{% endif %}>Idaho (ID)</option>
+                    <option value="IL" {% if client and client.dl_state == 'IL' %}selected{% endif %}>Illinois (IL)</option>
+                    <option value="IN" {% if client and client.dl_state == 'IN' %}selected{% endif %}>Indiana (IN)</option>
+                    <option value="IA" {% if client and client.dl_state == 'IA' %}selected{% endif %}>Iowa (IA)</option>
+                    <option value="KS" {% if client and client.dl_state == 'KS' %}selected{% endif %}>Kansas (KS)</option>
+                    <option value="KY" {% if client and client.dl_state == 'KY' %}selected{% endif %}>Kentucky (KY)</option>
+                    <option value="LA" {% if client and client.dl_state == 'LA' %}selected{% endif %}>Louisiana (LA)</option>
+                    <option value="ME" {% if client and client.dl_state == 'ME' %}selected{% endif %}>Maine (ME)</option>
+                    <option value="MD" {% if client and client.dl_state == 'MD' %}selected{% endif %}>Maryland (MD)</option>
+                    <option value="MA" {% if client and client.dl_state == 'MA' %}selected{% endif %}>Massachusetts (MA)</option>
+                    <option value="MI" {% if client and client.dl_state == 'MI' %}selected{% endif %}>Michigan (MI)</option>
+                    <option value="MN" {% if client and client.dl_state == 'MN' %}selected{% endif %}>Minnesota (MN)</option>
+                    <option value="MS" {% if client and client.dl_state == 'MS' %}selected{% endif %}>Mississippi (MS)</option>
+                    <option value="MO" {% if client and client.dl_state == 'MO' %}selected{% endif %}>Missouri (MO)</option>
+                    <option value="MT" {% if client and client.dl_state == 'MT' %}selected{% endif %}>Montana (MT)</option>
+                    <option value="NE" {% if client and client.dl_state == 'NE' %}selected{% endif %}>Nebraska (NE)</option>
+                    <option value="NV" {% if client and client.dl_state == 'NV' %}selected{% endif %}>Nevada (NV)</option>
+                    <option value="NH" {% if client and client.dl_state == 'NH' %}selected{% endif %}>New Hampshire (NH)</option>
+                    <option value="NJ" {% if client and client.dl_state == 'NJ' %}selected{% endif %}>New Jersey (NJ)</option>
+                    <option value="NM" {% if client and client.dl_state == 'NM' %}selected{% endif %}>New Mexico (NM)</option>
+                    <option value="NY" {% if client and client.dl_state == 'NY' %}selected{% endif %}>New York (NY)</option>
+                    <option value="NC" {% if client and client.dl_state == 'NC' %}selected{% endif %}>North Carolina (NC)</option>
+                    <option value="ND" {% if client and client.dl_state == 'ND' %}selected{% endif %}>North Dakota (ND)</option>
+                    <option value="OH" {% if client and client.dl_state == 'OH' %}selected{% endif %}>Ohio (OH)</option>
+                    <option value="OK" {% if client and client.dl_state == 'OK' %}selected{% endif %}>Oklahoma (OK)</option>
+                    <option value="OR" {% if client and client.dl_state == 'OR' %}selected{% endif %}>Oregon (OR)</option>
+                    <option value="PA" {% if client and client.dl_state == 'PA' %}selected{% endif %}>Pennsylvania (PA)</option>
+                    <option value="RI" {% if client and client.dl_state == 'RI' %}selected{% endif %}>Rhode Island (RI)</option>
+                    <option value="SC" {% if client and client.dl_state == 'SC' %}selected{% endif %}>South Carolina (SC)</option>
+                    <option value="SD" {% if client and client.dl_state == 'SD' %}selected{% endif %}>South Dakota (SD)</option>
+                    <option value="TN" {% if client and client.dl_state == 'TN' %}selected{% endif %}>Tennessee (TN)</option>
+                    <option value="TX" {% if client and client.dl_state == 'TX' %}selected{% endif %}>Texas (TX)</option>
+                    <option value="UT" {% if client and client.dl_state == 'UT' %}selected{% endif %}>Utah (UT)</option>
+                    <option value="VT" {% if client and client.dl_state == 'VT' %}selected{% endif %}>Vermont (VT)</option>
+                    <option value="VA" {% if client and client.dl_state == 'VA' %}selected{% endif %}>Virginia (VA)</option>
+                    <option value="WA" {% if client and client.dl_state == 'WA' %}selected{% endif %}>Washington (WA)</option>
+                    <option value="WV" {% if client and client.dl_state == 'WV' %}selected{% endif %}>West Virginia (WV)</option>
+                    <option value="WI" {% if client and client.dl_state == 'WI' %}selected{% endif %}>Wisconsin (WI)</option>
+                    <option value="WY" {% if client and client.dl_state == 'WY' %}selected{% endif %}>Wyoming (WY)</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Driver's License Number</label>
+                <input type="text" id="dl_number" name="dl_number" value="{{ client.dl_number|default('') if client else '' }}" placeholder="Enter your DL number" style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: white; color: #1e3a5f;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Address Since (mm/yyyy)</label>
+                <input type="text" id="address_since" name="address_since" value="{{ client.address_since|default('') if client else '' }}" placeholder="01/2020" pattern="\d{2}/\d{4}" style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: white; color: #1e3a5f;">
+                <p style="font-size: 11px; color: #9ca3af; margin: 4px 0 0 0;">When did you move to your current address?</p>
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button type="submit" id="save-identity-btn" style="width: 100%; padding: 12px 24px; background: #0d9488; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                    Save Identity Info
+                </button>
+            </div>
+        </div>
+    </form>
+    <div id="identity-save-status" style="display: none; margin-top: 16px; padding: 12px 16px; border-radius: 8px;"></div>
+</div>
+
+<script>
+document.getElementById('identity-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('save-identity-btn');
+    const statusDiv = document.getElementById('identity-save-status');
+
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    const data = {
+        dl_state: document.getElementById('dl_state').value,
+        dl_number: document.getElementById('dl_number').value,
+        address_since: document.getElementById('address_since').value
+    };
+
+    fetch('/api/portal/identity-info', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = 'rgba(13, 148, 136, 0.1)';
+            statusDiv.style.color = '#0d9488';
+            statusDiv.innerHTML = '✓ Identity information saved successfully!';
+            setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+        } else {
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#fee2e2';
+            statusDiv.style.color = '#991b1b';
+            statusDiv.innerHTML = result.error || 'Failed to save. Please try again.';
+        }
+    })
+    .catch(err => {
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#991b1b';
+        statusDiv.innerHTML = 'Error saving. Please try again.';
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Save Identity Info';
+    });
+});
+</script>
+
 <!-- Contact -->
 <div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;" data-testid="contact-section">
     <div class="card-title">📞 Get in Touch</div>

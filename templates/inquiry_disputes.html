@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inquiry Disputes - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .step-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            height: 100%;
+        }
+        .step-card .card-header {
+            padding: 15px 20px;
+            font-weight: 600;
+            border-radius: 12px 12px 0 0;
+        }
+        .step-card .card-body {
+            padding: 20px;
+        }
+        .btn-inquiry {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+        .btn-inquiry:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            color: white;
+        }
+        .info-box {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .info-box h5 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+        .bureau-address {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .document-output {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .inquiry-checkbox-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .phase-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .phase-item {
+            text-align: center;
+            flex: 1;
+            position: relative;
+        }
+        .phase-item::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background: #cbd5e1;
+        }
+        .phase-item:last-child::after {
+            display: none;
+        }
+        .phase-number {
+            width: 30px;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+        .phase-item.active .phase-number {
+            background: #3b82f6;
+            color: white;
+        }
+        .phase-item.completed .phase-number {
+            background: #22c55e;
+            color: white;
+        }
+        .phase-label {
+            font-size: 11px;
+            color: #64748b;
+        }
+        @media print {
+            .sidebar, .header, .btn, nav { display: none !important; }
+            .main-content { margin-left: 0; }
+            .document-output { max-height: none; }
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>Inquiry Disputes</h1>
+                <p class="text-muted mb-0">FCRA Section 604/609 - Remove Unauthorized Hard Inquiries</p>
+            </div>
+            <a href="/dashboard/ai-dispute-writer" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to AI Writer
+            </a>
+        </div>
+
+        <!-- Phase Timeline -->
+        <div class="phase-timeline">
+            <div class="phase-item" id="phase1">
+                <div class="phase-number">1</div>
+                <div class="phase-label">FTC Report</div>
+            </div>
+            <div class="phase-item" id="phase2">
+                <div class="phase-number">2</div>
+                <div class="phase-label">CFPB Complaint</div>
+            </div>
+            <div class="phase-item" id="phase3">
+                <div class="phase-number">3</div>
+                <div class="phase-label">609 Letters</div>
+            </div>
+            <div class="phase-item" id="phase4">
+                <div class="phase-number">4</div>
+                <div class="phase-label">Phone Follow-up</div>
+            </div>
+            <div class="phase-item" id="phase5">
+                <div class="phase-number">5</div>
+                <div class="phase-label">2nd CFPB</div>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <h5><i class="bi bi-info-circle me-2"></i>How Inquiry Disputes Work</h5>
+            <p class="mb-2">This process removes <strong>unauthorized hard inquiries</strong> from your credit report under FCRA Section 604 (Permissible Purposes) and Section 609 (Disclosure).</p>
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <strong>When to Use:</strong>
+                    <ul class="mb-0 small">
+                        <li>Inquiries NOT attached to open accounts</li>
+                        <li>Inquiries you did not authorize</li>
+                        <li>Fraudulent/identity theft inquiries</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <strong>Process:</strong>
+                    <ul class="mb-0 small">
+                        <li>File FTC Report (identity theft basis)</li>
+                        <li>Submit CFPB complaints (per bureau)</li>
+                        <li>Send certified 609 letters</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <strong>Timeline:</strong>
+                    <ul class="mb-0 small">
+                        <li>Typical removal: 7-14 business days</li>
+                        <li>CFPB response: 15 days required</li>
+                        <li>Bureau investigation: 30 days max</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Step 1: Client Selection -->
+            <div class="col-lg-4 mb-4">
+                <div class="step-card">
+                    <div class="card-header bg-primary text-white">
+                        <i class="bi bi-person me-2"></i>Step 1: Select Client
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <input type="text" id="clientSearch" class="form-control" placeholder="Search by name or email...">
+                        </div>
+                        <div id="clientResults" class="list-group mb-3" style="max-height: 200px; overflow-y: auto;"></div>
+                        <div id="selectedClient" class="alert alert-success d-none">
+                            <strong>Selected:</strong> <span id="selectedClientName"></span>
+                            <input type="hidden" id="selectedClientId">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Inquiries -->
+            <div class="col-lg-4 mb-4">
+                <div class="step-card">
+                    <div class="card-header bg-warning text-dark">
+                        <i class="bi bi-search me-2"></i>Step 2: Inquiries to Dispute
+                    </div>
+                    <div class="card-body">
+                        <div id="inquiriesLoading" class="text-center py-3 d-none">
+                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                            <span class="ms-2">Loading...</span>
+                        </div>
+                        <div id="inquirySearchBox" class="mb-2 d-none">
+                            <input type="text" id="inquirySearch" class="form-control form-control-sm" placeholder="Search inquiries..." oninput="filterInquiries()">
+                        </div>
+                        <div id="inquiriesContainer" class="inquiry-checkbox-container d-none">
+                            <!-- Loaded inquiries go here -->
+                        </div>
+
+                        <!-- Manual Entry Section -->
+                        <div id="manualEntrySection">
+                            <p class="text-muted small mb-2">Add inquiries to dispute:</p>
+                            <div id="manualInquiriesList"></div>
+                            <div class="input-group input-group-sm mb-2">
+                                <input type="text" id="newCreditor" class="form-control" placeholder="Creditor name">
+                                <input type="date" id="newInquiryDate" class="form-control" placeholder="Date">
+                                <button class="btn btn-outline-primary" type="button" onclick="addManualInquiry()">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                            <div class="d-flex gap-1 flex-wrap">
+                                <select id="newBureau" class="form-select form-select-sm" style="width: auto;">
+                                    <option value="All">All 3 Bureaus</option>
+                                    <option value="TransUnion">TransUnion</option>
+                                    <option value="Equifax">Equifax</option>
+                                    <option value="Experian">Experian</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 pt-2 border-top">
+                            <span id="inquiryCount" class="badge bg-secondary">0 inquiries</span>
+                            <button type="button" class="btn btn-sm btn-outline-danger float-end" onclick="clearAllInquiries()">Clear All</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Generate -->
+            <div class="col-lg-4 mb-4">
+                <div class="step-card">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-gear me-2"></i>Step 3: Generate Documents
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Phase</label>
+                            <select id="phase" class="form-select" onchange="updatePhaseFields()">
+                                <option value="1">Phase 1 - FTC & CFPB Instructions</option>
+                                <option value="2">Phase 2 - Full 609 Letters</option>
+                            </select>
+                        </div>
+                        <div id="phase2Fields" class="d-none">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">FTC Report # <span class="text-danger">*</span></label>
+                                <input type="text" id="ftcNumber" class="form-control" placeholder="FTC-123456789">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">CFPB # (TransUnion)</label>
+                                <input type="text" id="cfpbTransunion" class="form-control" placeholder="CFPB complaint #">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">CFPB # (Equifax)</label>
+                                <input type="text" id="cfpbEquifax" class="form-control" placeholder="CFPB complaint #">
+                            </div>
+                        </div>
+                        <button id="generateBtn" type="button" class="btn btn-inquiry w-100 mb-2" onclick="generateDocuments()">
+                            <i class="bi bi-file-earmark-text me-2"></i>Generate Documents
+                        </button>
+                        <button id="saveFilesBtn" class="btn btn-outline-success w-100 d-none" onclick="saveToFiles()">
+                            <i class="bi bi-download me-2"></i>Save to Files
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bureau Addresses -->
+        <div class="content-card">
+            <h5 class="mb-3"><i class="bi bi-geo-alt me-2"></i>Bureau Addresses (Certified Mail)</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="bureau-address">
+                        <strong>TransUnion</strong><br>
+                        <small class="text-muted">P.O. Box 2000<br>Chester, PA 19016</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="bureau-address">
+                        <strong>Equifax</strong><br>
+                        <small class="text-muted">P.O. BOX 740256<br>Atlanta, GA 30374</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="bureau-address">
+                        <strong>Experian</strong><br>
+                        <small class="text-muted">P.O. Box 4500<br>Allen, TX 75013</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div class="content-card" id="outputSection" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="bi bi-file-text me-2"></i>Generated Documents</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard()">
+                        <i class="bi bi-clipboard me-1"></i>Copy All
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary ms-2" onclick="printDocuments()">
+                        <i class="bi bi-printer me-1"></i>Print
+                    </button>
+                </div>
+            </div>
+            <div id="documentTabs" class="nav nav-tabs mb-3"></div>
+            <div id="documentOutput" class="document-output"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        console.log('=== INQUIRY DISPUTES JS LOADED ===');
+
+        // State
+        let selectedClientId = null;
+        let manualInquiries = [];
+        let generatedDocuments = {};
+        let clients = [];
+
+        // Load all clients on page load
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/clients?limit=500');
+                const data = await response.json();
+                clients = data.clients || [];
+
+                document.getElementById('clientSearch').addEventListener('input', function() {
+                    const query = this.value.toLowerCase();
+                    if (query.length < 2) {
+                        document.getElementById('clientResults').innerHTML = '';
+                        return;
+                    }
+
+                    const results = clients.filter(c =>
+                        c.name.toLowerCase().includes(query) ||
+                        (c.email && c.email.toLowerCase().includes(query))
+                    ).slice(0, 8);
+
+                    document.getElementById('clientResults').innerHTML = results.map(c => `
+                        <button type="button" class="list-group-item list-group-item-action py-2"
+                                onclick="selectClient(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
+                            <strong>${c.name}</strong><br>
+                            <small class="text-muted">${c.email || 'No email'}</small>
+                        </button>
+                    `).join('') || '<div class="list-group-item text-muted small">No clients found</div>';
+                });
+            } catch (e) {
+                console.error('Failed to load clients:', e);
+            }
+        }
+
+        function selectClient(id, name) {
+            selectedClientId = id;
+            document.getElementById('selectedClient').classList.remove('d-none');
+            document.getElementById('selectedClientName').textContent = name;
+            document.getElementById('selectedClientId').value = id;
+            document.getElementById('clientResults').innerHTML = '';
+            document.getElementById('clientSearch').value = '';
+
+            loadClientInquiries(id);
+            updateGenerateButton();
+        }
+
+        async function loadClientInquiries(clientId) {
+            const container = document.getElementById('inquiriesContainer');
+            const loading = document.getElementById('inquiriesLoading');
+            const searchBox = document.getElementById('inquirySearchBox');
+
+            loading.classList.remove('d-none');
+            container.classList.add('d-none');
+            searchBox.classList.add('d-none');
+
+            try {
+                const response = await fetch(`/api/inquiry-disputes/client/${clientId}/inquiries`);
+                const data = await response.json();
+
+                if (data.inquiries && data.inquiries.length > 0) {
+                    container.innerHTML = data.inquiries.map((inq, idx) => `
+                        <div class="form-check inquiry-item" data-creditor="${inq.creditor.toLowerCase()}" data-bureau="${inq.bureau.toLowerCase()}">
+                            <input class="form-check-input" type="checkbox" value="${idx}"
+                                   id="inq${idx}" onchange="updateInquiryCount(); updateGenerateButton()">
+                            <label class="form-check-label small" for="inq${idx}">
+                                <strong>${inq.creditor}</strong><br>
+                                <span class="text-muted">${inq.date || 'Unknown date'} - ${inq.bureau}</span>
+                            </label>
+                        </div>
+                    `).join('');
+                    container.classList.remove('d-none');
+                    searchBox.classList.remove('d-none');
+                }
+            } catch (error) {
+                console.error('Error loading inquiries:', error);
+            } finally {
+                loading.classList.add('d-none');
+            }
+        }
+
+        function filterInquiries() {
+            const search = document.getElementById('inquirySearch').value.toLowerCase();
+            document.querySelectorAll('.inquiry-item').forEach(item => {
+                const creditor = item.dataset.creditor || '';
+                const bureau = item.dataset.bureau || '';
+                const visible = creditor.includes(search) || bureau.includes(search);
+                item.style.display = visible ? '' : 'none';
+            });
+        }
+
+        function addManualInquiry() {
+            const creditor = document.getElementById('newCreditor').value.trim();
+            const date = document.getElementById('newInquiryDate').value;
+            const bureau = document.getElementById('newBureau').value;
+
+            if (!creditor) {
+                alert('Please enter a creditor name');
+                return;
+            }
+
+            manualInquiries.push({ creditor, date, bureau });
+            renderManualInquiries();
+
+            document.getElementById('newCreditor').value = '';
+            document.getElementById('newInquiryDate').value = '';
+            updateInquiryCount();
+            updateGenerateButton();
+        }
+
+        function renderManualInquiries() {
+            const list = document.getElementById('manualInquiriesList');
+            list.innerHTML = manualInquiries.map((inq, idx) => `
+                <div class="d-flex justify-content-between align-items-center mb-1 p-2 bg-light rounded">
+                    <small>
+                        <strong>${inq.creditor}</strong><br>
+                        ${inq.date || 'No date'} - ${inq.bureau}
+                    </small>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeManualInquiry(${idx})">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeManualInquiry(idx) {
+            manualInquiries.splice(idx, 1);
+            renderManualInquiries();
+            updateInquiryCount();
+            updateGenerateButton();
+        }
+
+        function clearAllInquiries() {
+            manualInquiries = [];
+            renderManualInquiries();
+            document.querySelectorAll('#inquiriesContainer input[type="checkbox"]').forEach(cb => cb.checked = false);
+            updateInquiryCount();
+            updateGenerateButton();
+        }
+
+        function updateInquiryCount() {
+            const checkedCount = document.querySelectorAll('#inquiriesContainer input:checked').length;
+            const totalCount = checkedCount + manualInquiries.length;
+            document.getElementById('inquiryCount').textContent = `${totalCount} inquiries`;
+        }
+
+        function updatePhaseFields() {
+            const phase = document.getElementById('phase').value;
+            document.getElementById('phase2Fields').classList.toggle('d-none', phase === '1');
+
+            // Update phase timeline
+            document.querySelectorAll('.phase-item').forEach((item, idx) => {
+                item.classList.remove('active', 'completed');
+                if (idx + 1 < parseInt(phase)) {
+                    item.classList.add('completed');
+                } else if (idx + 1 == parseInt(phase)) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        function updateGenerateButton() {
+            // Button is always enabled now - validation happens on click
+            const hasClient = selectedClientId !== null;
+            const checkedCount = document.querySelectorAll('#inquiriesContainer input:checked').length;
+            const hasInquiries = checkedCount > 0 || manualInquiries.length > 0;
+            console.log('updateGenerateButton:', { hasClient, checkedCount, manualInquiries: manualInquiries.length });
+        }
+
+        async function generateDocuments() {
+            alert('Generate button clicked!');
+            console.log('generateDocuments called');
+            console.log('selectedClientId:', selectedClientId);
+
+            // Validate requirements
+            if (!selectedClientId) {
+                alert('Please select a client first');
+                return;
+            }
+
+            const checkedCount = document.querySelectorAll('#inquiriesContainer input:checked').length;
+            if (checkedCount === 0 && manualInquiries.length === 0) {
+                alert('Please select at least one inquiry to dispute');
+                return;
+            }
+
+            const btn = document.getElementById('generateBtn');
+            if (!btn) {
+                console.error('Generate button not found');
+                return;
+            }
+
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+            btn.disabled = true;
+
+            // Gather selected inquiries
+            const selectedInquiries = [];
+            document.querySelectorAll('#inquiriesContainer input:checked').forEach(cb => {
+                const label = cb.parentElement.querySelector('.form-check-label');
+                const strong = label ? label.querySelector('strong') : null;
+                const span = label ? label.querySelector('span') : null;
+                const spanText = span ? span.textContent : '';
+                const parts = spanText.split(' - ');
+                const inquiryDate = parts[0] || 'Unknown';
+                const bureau = parts[1] || 'Unknown';
+                selectedInquiries.push({
+                    creditor: strong ? strong.textContent : 'Unknown',
+                    date: inquiryDate.trim(),
+                    bureau: bureau.trim()
+                });
+            });
+
+            // Add manual inquiries
+            const allInquiries = [...selectedInquiries, ...manualInquiries];
+
+            const payload = {
+                client_id: selectedClientId,
+                phase: document.getElementById('phase').value,
+                inquiries: allInquiries,
+                ftc_number: document.getElementById('ftcNumber')?.value || '',
+                cfpb_transunion: document.getElementById('cfpbTransunion')?.value || '',
+                cfpb_equifax: document.getElementById('cfpbEquifax')?.value || ''
+            };
+
+            console.log('Sending payload:', JSON.stringify(payload, null, 2));
+
+            try {
+                const response = await fetch('/api/inquiry-disputes/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (data.success) {
+                    generatedDocuments = data.documents;
+                    displayDocuments(data.documents);
+                    document.getElementById('saveFilesBtn').classList.remove('d-none');
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Generation error:', error);
+                console.error('Error details:', error.message, error.stack);
+                alert('Error generating documents: ' + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function displayDocuments(documents) {
+            const outputSection = document.getElementById('outputSection');
+            const tabsDiv = document.getElementById('documentTabs');
+            const outputDiv = document.getElementById('documentOutput');
+
+            outputSection.style.display = 'block';
+
+            // Create tabs
+            const docNames = Object.keys(documents);
+            tabsDiv.innerHTML = docNames.map((name, idx) => `
+                <button class="nav-link ${idx === 0 ? 'active' : ''}" onclick="showDocument('${name}')" data-doc="${name}">
+                    ${name.replace(/_/g, ' ').replace('.md', '')}
+                </button>
+            `).join('');
+
+            // Show first document
+            if (docNames.length > 0) {
+                outputDiv.textContent = documents[docNames[0]];
+            }
+
+            outputSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showDocument(name) {
+            document.querySelectorAll('#documentTabs .nav-link').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.doc === name);
+            });
+            document.getElementById('documentOutput').textContent = generatedDocuments[name] || '';
+        }
+
+        async function saveToFiles() {
+            const btn = document.getElementById('saveFilesBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/inquiry-disputes/save-files', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: selectedClientId,
+                        documents: generatedDocuments
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Documents saved to: ' + data.folder);
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('Error saving documents');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('documentOutput').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            });
+        }
+
+        function printDocuments() {
+            window.print();
+        }
+
+        // Initialize
+        loadClients();
+        updatePhaseFields();
+
+        // Debug: Add click listener to verify button is receiving clicks
+        document.getElementById('generateBtn').addEventListener('click', function(e) {
+            console.log('Button click event fired!', e);
+            console.log('Button disabled:', this.disabled);
+        });
+    </script>
+</body>
+</html>

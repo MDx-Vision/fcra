@@ -33,7 +33,8 @@ class PromptLoader:
         "inquiry": "FCRA_PROMPT_15A_INQUIRY_PERMISSIBLE_PURPOSE.md",
         "inquirytheft": "FCRA_PROMPT_15B_INQUIRY_IDENTITY_THEFT.md",
         "portalfix": "FCRA_PROMPT_16_PORTAL_QUICK_FIX.md",
-        "5dayknockout": "FCRA_PROMPT_17_v6_5DAY_KNOCKOUT_ONLINE_MAIL.md",
+        "5dayknockout": "FCRA_PROMPT_17_v7_5DAY_KNOCKOUT_PROFESSIONAL.md",
+        "inquirydispute": "FCRA_PROMPT_18_INQUIRY_DISPUTE_PROFESSIONAL.md",
         # Reference docs
         "framework": "FCRA_Litigation_Framework_Complete_v2_0__3_.md",
         "workflow": "FCRA_WORKFLOW_CHEAT_SHEET.md",
@@ -211,6 +212,10 @@ class PromptLoader:
         """Get the portal quick fix prompt for fast PII/inquiry disputes"""
         return self.load_prompt("portalfix")
 
+    def get_inquiry_dispute_professional_prompt(self):
+        """Get the professional inquiry dispute prompt (Prompt 18)"""
+        return self.load_prompt("inquirydispute")
+
     def get_violation_checklist(self):
         """Get the violation spotter checklist"""
         return self.load_prompt("checklist")
@@ -247,6 +252,7 @@ if __name__ == "__main__":
             "inquirytheft",
             "portalfix",
             "5dayknockout",
+            "inquirydispute",
         ],
         "Reference": ["framework", "workflow", "checklist", "quickref", "intake"],
     }
