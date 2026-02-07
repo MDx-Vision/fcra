@@ -1123,11 +1123,12 @@ class TestDownloadReport:
 
         mock_page.content = AsyncMock(return_value="<html>report</html>")
         mock_page.evaluate = AsyncMock(side_effect=[
-            3,  # score count
+            {"scoreCount": 3, "hasUnrenderedTemplates": False},  # score check result
             None,  # scroll height
             0,  # new height
             None,  # scroll to top
             [],  # accounts
+            {"personal": {}, "summary": {}, "inquiries": [], "creditor_contacts": []},  # personal data extraction
         ])
         mock_page.query_selector = AsyncMock(return_value=None)
 

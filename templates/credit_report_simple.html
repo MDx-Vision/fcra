@@ -71,15 +71,31 @@
                     <td>{{ report_date }}</td>
                     <td>{{ report_date }}</td>
                 </tr>
+                {% set tu = personal_info.get('transunion', {}) %}
+                {% set ex = personal_info.get('experian', {}) %}
+                {% set eq = personal_info.get('equifax', {}) %}
                 <tr>
                     <td class="label-col">Name:</td>
-                    {% set tu = personal_info.get('transunion', {}) %}
-                    {% set ex = personal_info.get('experian', {}) %}
-                    {% set eq = personal_info.get('equifax', {}) %}
                     <td>{{ tu.get('names', [])|join('<br>')|safe or personal_info.get('name', 'N/A') }}</td>
                     <td>{{ ex.get('names', [])|join('<br>')|safe or personal_info.get('name', 'N/A') }}</td>
                     <td>{{ eq.get('names', [])|join('<br>')|safe or personal_info.get('name', 'N/A') }}</td>
                 </tr>
+                {% if tu.get('also_known_as') or ex.get('also_known_as') or eq.get('also_known_as') %}
+                <tr>
+                    <td class="label-col">Also Known As:</td>
+                    <td>{% for aka in tu.get('also_known_as', []) %}{{ aka }}<br>{% endfor %}-</td>
+                    <td>{% for aka in ex.get('also_known_as', []) %}{{ aka }}<br>{% endfor %}-</td>
+                    <td>{% for aka in eq.get('also_known_as', []) %}{{ aka }}<br>{% endfor %}-</td>
+                </tr>
+                {% endif %}
+                {% if tu.get('former_names') or ex.get('former_names') or eq.get('former_names') %}
+                <tr>
+                    <td class="label-col">Former:</td>
+                    <td>{% for name in tu.get('former_names', []) %}{{ name }}<br>{% endfor %}-</td>
+                    <td>{% for name in ex.get('former_names', []) %}{{ name }}<br>{% endfor %}-</td>
+                    <td>{% for name in eq.get('former_names', []) %}{{ name }}<br>{% endfor %}-</td>
+                </tr>
+                {% endif %}
                 <tr>
                     <td class="label-col">Date of Birth:</td>
                     <td>{{ tu.get('dob') or personal_info.get('dob', 'N/A') }}</td>
@@ -95,19 +111,17 @@
                 {% if tu.get('previous_addresses') or ex.get('previous_addresses') or eq.get('previous_addresses') %}
                 <tr>
                     <td class="label-col">Previous Address(es):</td>
-                    <td>{% for addr in tu.get('previous_addresses', []) %}{{ addr }}<br>{% endfor %}</td>
-                    <td>{% for addr in ex.get('previous_addresses', []) %}{{ addr }}<br>{% endfor %}</td>
-                    <td>{% for addr in eq.get('previous_addresses', []) %}{{ addr }}<br>{% endfor %}</td>
+                    <td>{% for addr in tu.get('previous_addresses', []) %}{% if addr is mapping %}{{ addr.address }}{% if addr.date %} <small>({{ addr.date }})</small>{% endif %}{% else %}{{ addr }}{% endif %}<br>{% endfor %}</td>
+                    <td>{% for addr in ex.get('previous_addresses', []) %}{% if addr is mapping %}{{ addr.address }}{% if addr.date %} <small>({{ addr.date }})</small>{% endif %}{% else %}{{ addr }}{% endif %}<br>{% endfor %}</td>
+                    <td>{% for addr in eq.get('previous_addresses', []) %}{% if addr is mapping %}{{ addr.address }}{% if addr.date %} <small>({{ addr.date }})</small>{% endif %}{% else %}{{ addr }}{% endif %}<br>{% endfor %}</td>
                 </tr>
                 {% endif %}
-                {% if tu.get('employers') or ex.get('employers') or eq.get('employers') %}
                 <tr>
                     <td class="label-col">Employers:</td>
                     <td>{% for emp in tu.get('employers', []) %}{{ emp.name }}{% if emp.date_updated %} ({{ emp.date_updated }}){% endif %}<br>{% endfor %}</td>
                     <td>{% for emp in ex.get('employers', []) %}{{ emp.name }}{% if emp.date_updated %} ({{ emp.date_updated }}){% endif %}<br>{% endfor %}</td>
                     <td>{% for emp in eq.get('employers', []) %}{{ emp.name }}{% if emp.date_updated %} ({{ emp.date_updated }}){% endif %}<br>{% endfor %}</td>
                 </tr>
-                {% endif %}
             </tbody>
         </table>
     </div>
@@ -146,6 +160,9 @@
     <div class="section">
         <div class="section-header">Summary</div>
         <div class="section-note">Below is an overview of your present and past credit status.</div>
+        {% set s_tu = summary.get('transunion', {}) %}
+        {% set s_ex = summary.get('experian', {}) %}
+        {% set s_eq = summary.get('equifax', {}) %}
         <table>
             <thead>
                 <tr>
@@ -158,63 +175,63 @@
             <tbody>
                 <tr>
                     <td class="label-col">Total Accounts:</td>
-                    <td>{{ summary.get('total_accounts', '0') }}</td>
-                    <td>{{ summary.get('total_accounts', '0') }}</td>
-                    <td>{{ summary.get('total_accounts', '0') }}</td>
+                    <td>{{ s_tu.get('total_accounts') or summary.get('total_accounts', '-') }}</td>
+                    <td>{{ s_ex.get('total_accounts') or summary.get('total_accounts', '-') }}</td>
+                    <td>{{ s_eq.get('total_accounts') or summary.get('total_accounts', '-') }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Open Accounts:</td>
-                    <td>{{ summary.get('open_accounts', '0') }}</td>
-                    <td>{{ summary.get('open_accounts', '0') }}</td>
-                    <td>{{ summary.get('open_accounts', '0') }}</td>
+                    <td>{{ s_tu.get('open_accounts') or summary.get('open_accounts', '-') }}</td>
+                    <td>{{ s_ex.get('open_accounts') or summary.get('open_accounts', '-') }}</td>
+                    <td>{{ s_eq.get('open_accounts') or summary.get('open_accounts', '-') }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Closed Accounts:</td>
-                    <td>{{ summary.get('closed_accounts', '0') }}</td>
-                    <td>{{ summary.get('closed_accounts', '0') }}</td>
-                    <td>{{ summary.get('closed_accounts', '0') }}</td>
+                    <td>{{ s_tu.get('closed_accounts') or summary.get('closed_accounts', '-') }}</td>
+                    <td>{{ s_ex.get('closed_accounts') or summary.get('closed_accounts', '-') }}</td>
+                    <td>{{ s_eq.get('closed_accounts') or summary.get('closed_accounts', '-') }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Delinquent:</td>
-                    <td>{{ summary.get('delinquent_accounts', '0') }}</td>
-                    <td>{{ summary.get('delinquent_accounts', '0') }}</td>
-                    <td>{{ summary.get('delinquent_accounts', '0') }}</td>
+                    <td>{{ s_tu.get('delinquent') or summary.get('delinquent_accounts', '-') }}</td>
+                    <td>{{ s_ex.get('delinquent') or summary.get('delinquent_accounts', '-') }}</td>
+                    <td>{{ s_eq.get('delinquent') or summary.get('delinquent_accounts', '-') }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Derogatory:</td>
-                    <td>{{ summary.get('derogatory_accounts', '0') }}</td>
-                    <td>{{ summary.get('derogatory_accounts', '0') }}</td>
-                    <td>{{ summary.get('derogatory_accounts', '0') }}</td>
+                    <td>{{ s_tu.get('derogatory') or summary.get('derogatory_accounts', '-') }}</td>
+                    <td>{{ s_ex.get('derogatory') or summary.get('derogatory_accounts', '-') }}</td>
+                    <td>{{ s_eq.get('derogatory') or summary.get('derogatory_accounts', '-') }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Collection:</td>
-                    <td>{{ summary.get('total_collections', '0') }}</td>
-                    <td>{{ summary.get('total_collections', '0') }}</td>
-                    <td>{{ summary.get('total_collections', '0') }}</td>
+                    <td>{{ s_tu.get('collection') or summary.get('collection', '-') }}</td>
+                    <td>{{ s_ex.get('collection') or summary.get('collection', '-') }}</td>
+                    <td>{{ s_eq.get('collection') or summary.get('collection', '-') }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Balances:</td>
-                    <td>{{ summary.get('total_balances', '$0') }}</td>
-                    <td>{{ summary.get('total_balances', '$0') }}</td>
-                    <td>{{ summary.get('total_balances', '$0') }}</td>
+                    <td>{{ s_tu.get('balances') or summary.get('total_balances', '-') }}</td>
+                    <td>{{ s_ex.get('balances') or summary.get('total_balances', '-') }}</td>
+                    <td>{{ s_eq.get('balances') or summary.get('total_balances', '-') }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Payments:</td>
-                    <td>{{ summary.get('total_payments', '$0') }}</td>
-                    <td>{{ summary.get('total_payments', '$0') }}</td>
-                    <td>{{ summary.get('total_payments', '$0') }}</td>
+                    <td>{{ s_tu.get('payments') or summary.get('total_payments', '-') }}</td>
+                    <td>{{ s_ex.get('payments') or summary.get('total_payments', '-') }}</td>
+                    <td>{{ s_eq.get('payments') or summary.get('total_payments', '-') }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Public Records:</td>
-                    <td>{{ summary.get('total_public_records', '0') }}</td>
-                    <td>{{ summary.get('total_public_records', '0') }}</td>
-                    <td>{{ summary.get('total_public_records', '0') }}</td>
+                    <td>{{ s_tu.get('public_records') or summary.get('public_records', '-') }}</td>
+                    <td>{{ s_ex.get('public_records') or summary.get('public_records', '-') }}</td>
+                    <td>{{ s_eq.get('public_records') or summary.get('public_records', '-') }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Inquiries (2 years):</td>
-                    <td>{{ summary.get('total_inquiries', '0') }}</td>
-                    <td>{{ summary.get('total_inquiries', '0') }}</td>
-                    <td>{{ summary.get('total_inquiries', '0') }}</td>
+                    <td>{{ s_tu.get('inquiries') or summary.get('total_inquiries', '-') }}</td>
+                    <td>{{ s_ex.get('inquiries') or summary.get('total_inquiries', '-') }}</td>
+                    <td>{{ s_eq.get('inquiries') or summary.get('total_inquiries', '-') }}</td>
                 </tr>
             </tbody>
         </table>
@@ -405,7 +422,17 @@
                     <td>{{ inq.company or inq.creditor or 'N/A' }}</td>
                     <td>{{ inq.type or 'N/A' }}</td>
                     <td>{{ inq.date or 'N/A' }}</td>
-                    <td>{{ inq.bureau or 'N/A' }}</td>
+                    <td>
+                        {% if inq.bureau %}
+                            {{ inq.bureau }}
+                        {% else %}
+                            {% set bureaus = [] %}
+                            {% if inq.transunion %}{% set _ = bureaus.append('TU') %}{% endif %}
+                            {% if inq.experian %}{% set _ = bureaus.append('EX') %}{% endif %}
+                            {% if inq.equifax %}{% set _ = bureaus.append('EQ') %}{% endif %}
+                            {{ bureaus|join(', ') or 'N/A' }}
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

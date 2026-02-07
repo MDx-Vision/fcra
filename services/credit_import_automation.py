@@ -300,12 +300,17 @@ class CreditImportAutomation:
                 status="info",
             )
             report_data = await self._download_report(config, client_id, client_name)
-            if report_data:
+            if report_data and report_data.get("success") != False:
                 result["success"] = True
                 result["report_path"] = report_data.get("path")
                 result["html_content"] = report_data.get("html")
                 result["scores"] = report_data.get("scores")
                 logger.info(f"Successfully imported report for {client_name}")
+            elif report_data and report_data.get("error"):
+                result["error"] = report_data.get("error")
+                log_credit_import_failed(
+                    client_id, service_name, report_data.get("error")
+                )
 
                 # Log success with scores
                 log_credit_import(client_id, service_name, result["scores"])
@@ -709,32 +714,60 @@ class CreditImportAutomation:
                 except Exception as e:
                     logger.warning(f"Initial selector wait failed: {e}")
 
-                logger.info("Waiting for scores to populate with numeric values...")
-                max_attempts = 15
+                logger.info("Waiting for Angular to render and scores to populate...")
+                # Wait for Angular to fully render - 30 attempts x 2 seconds = 60 seconds max
+                max_attempts = 30
                 for attempt in range(max_attempts):
                     try:
-                        score_count = await self.page.evaluate(
+                        # Check both: scores are present AND no unrendered {{}} templates
+                        check_result = await self.page.evaluate(
                             """() => {
+                            // Check for unrendered Angular templates
+                            const bodyText = document.body.textContent;
+                            const hasUnrenderedTemplates = bodyText.includes('{{') && bodyText.includes('}}');
+
                             const tds = document.querySelectorAll('td.info.ng-binding');
-                            let count = 0;
+                            let scoreCount = 0;
                             tds.forEach(td => {
                                 const text = td.textContent.trim();
                                 if (/^[3-8]\\d{2}$/.test(text)) {
-                                    count++;
+                                    scoreCount++;
                                 }
                             });
-                            return count;
+                            return { scoreCount, hasUnrenderedTemplates };
                         }"""
                         )
+                        score_count = check_result.get("scoreCount", 0)
+                        has_templates = check_result.get("hasUnrenderedTemplates", True)
+
                         logger.info(
-                            f"Attempt {attempt + 1}: Found {score_count} score values"
+                            f"Attempt {attempt + 1}: Found {score_count} scores, unrendered templates: {has_templates}"
                         )
+
+                        # If we have 3 scores, proceed even if some templates haven't rendered
+                        # (some parts of MyScoreIQ pages have templates that never render)
                         if score_count >= 3:
-                            logger.info("All three bureau scores detected!")
+                            if not has_templates:
+                                logger.info(
+                                    "All three bureau scores detected and Angular fully rendered!"
+                                )
+                            else:
+                                logger.info(
+                                    "All three bureau scores detected (some templates still unrendered, but proceeding)"
+                                )
                             break
                     except Exception as e:
                         logger.warning(f"Score check attempt {attempt + 1} failed: {e}")
-                    await asyncio.sleep(1)  # Reduced from 3s
+                    await asyncio.sleep(2)  # Wait 2 seconds between attempts
+                else:
+                    # Loop completed without finding 3 scores - fail the import
+                    logger.error(
+                        "FAILED: Could not find credit score data after 30 attempts. Page may not have loaded properly."
+                    )
+                    return {
+                        "success": False,
+                        "error": "Page failed to load credit report data. Please try again.",
+                    }
 
                 await asyncio.sleep(1)  # Reduced from 3s
 
@@ -1289,7 +1322,11 @@ class CreditImportAutomation:
                         addresses: [],
                         dob: null,
                         employers: [],
-                        ssn_last4: null
+                        ssn_last4: null,
+                        // Per-bureau data for MyScoreIQ format
+                        transunion: { names: [], dob: null, current_address: null, previous_addresses: [], employers: [] },
+                        experian: { names: [], dob: null, current_address: null, previous_addresses: [], employers: [] },
+                        equifax: { names: [], dob: null, current_address: null, previous_addresses: [], employers: [] }
                     };
                     const summary = {
                         total_accounts: null,
@@ -1297,9 +1334,15 @@ class CreditImportAutomation:
                         closed_accounts: null,
                         delinquent_accounts: null,
                         derogatory_accounts: null,
+                        collection: null,
                         total_balances: null,
                         total_payments: null,
-                        total_inquiries: null
+                        public_records: null,
+                        total_inquiries: null,
+                        // Per-bureau summary data
+                        transunion: {},
+                        experian: {},
+                        equifax: {}
                     };
                     const inquiries = [];
 
@@ -1397,14 +1440,22 @@ class CreditImportAutomation:
                     if (!summary.total_accounts) {
                         const summaryHeader = document.querySelector('#Summary, .rpt_fullReport_header[id="Summary"]');
                         if (summaryHeader) {
-                            // Find the rpt_content_table after the summary header
+                            // Find the rpt_content_table within the wrapper or after the summary header
                             let summaryTable = null;
-                            let el = summaryHeader.nextElementSibling;
-                            while (el && !summaryTable) {
-                                if (el.tagName === 'TABLE' && el.classList?.contains('rpt_content_table')) {
-                                    summaryTable = el;
+                            // First try: look in the wrapper
+                            const wrapper = summaryHeader.closest('.rpt_content_wrapper');
+                            if (wrapper) {
+                                summaryTable = wrapper.querySelector('table.rpt_content_table.rpt_table4column');
+                            }
+                            // Fallback: walk through siblings
+                            if (!summaryTable) {
+                                let el = summaryHeader.nextElementSibling;
+                                while (el && !summaryTable) {
+                                    if (el.tagName === 'TABLE' && el.classList?.contains('rpt_content_table') && !el.classList?.contains('help_text')) {
+                                        summaryTable = el;
+                                    }
+                                    el = el.nextElementSibling;
                                 }
-                                el = el.nextElementSibling;
                             }
                             if (summaryTable) {
                                 const rows = summaryTable.querySelectorAll('tr');
@@ -1412,42 +1463,104 @@ class CreditImportAutomation:
                                     const labelCell = row.querySelector('td.label');
                                     if (!labelCell) return;
                                     const label = labelCell.textContent.toLowerCase().trim();
-                                    // Get first info cell (TransUnion column)
-                                    const infoCell = row.querySelector('td.info');
-                                    if (!infoCell) return;
-                                    const value = infoCell.textContent.trim();
-                                    if (!value || value === '-') return;
+                                    // Get all info cells (TransUnion, Experian, Equifax columns)
+                                    const infoCells = row.querySelectorAll('td.info');
+                                    if (infoCells.length === 0) return;
 
-                                    if (label.includes('total accounts')) summary.total_accounts = value;
-                                    else if (label.includes('open accounts')) summary.open_accounts = value;
-                                    else if (label.includes('closed accounts')) summary.closed_accounts = value;
-                                    else if (label.includes('delinquent')) summary.delinquent_accounts = value;
-                                    else if (label.includes('derogatory')) summary.derogatory_accounts = value;
-                                    else if (label.includes('balance')) summary.total_balances = value;
-                                    else if (label.includes('payment') && !label.includes('late')) summary.total_payments = value;
-                                    else if (label.includes('inquir')) summary.total_inquiries = value;
+                                    // Column order: TransUnion, Experian, Equifax
+                                    const bureaus = ['transunion', 'experian', 'equifax'];
+
+                                    // Parse values for each bureau
+                                    infoCells.forEach((cell, idx) => {
+                                        if (idx >= 3) return;
+                                        const bureau = bureaus[idx];
+                                        const value = cell.textContent.trim();
+                                        if (!value || value === '-') return;
+
+                                        // Store per-bureau values
+                                        if (label.includes('total accounts')) {
+                                            summary[bureau].total_accounts = value;
+                                            if (!summary.total_accounts) summary.total_accounts = value;
+                                        }
+                                        else if (label.includes('open accounts')) {
+                                            summary[bureau].open_accounts = value;
+                                            if (!summary.open_accounts) summary.open_accounts = value;
+                                        }
+                                        else if (label.includes('closed accounts')) {
+                                            summary[bureau].closed_accounts = value;
+                                            if (!summary.closed_accounts) summary.closed_accounts = value;
+                                        }
+                                        else if (label.includes('delinquent')) {
+                                            summary[bureau].delinquent = value;
+                                            if (!summary.delinquent_accounts) summary.delinquent_accounts = value;
+                                        }
+                                        else if (label.includes('derogatory')) {
+                                            summary[bureau].derogatory = value;
+                                            if (!summary.derogatory_accounts) summary.derogatory_accounts = value;
+                                        }
+                                        else if (label.includes('collection')) {
+                                            summary[bureau].collection = value;
+                                            if (!summary.collection) summary.collection = value;
+                                        }
+                                        else if (label.includes('balance')) {
+                                            summary[bureau].balances = value;
+                                            if (!summary.total_balances) summary.total_balances = value;
+                                        }
+                                        else if (label.includes('payment') && !label.includes('late')) {
+                                            summary[bureau].payments = value;
+                                            if (!summary.total_payments) summary.total_payments = value;
+                                        }
+                                        else if (label.includes('public record')) {
+                                            summary[bureau].public_records = value;
+                                            if (!summary.public_records) summary.public_records = value;
+                                        }
+                                        else if (label.includes('inquir')) {
+                                            summary[bureau].inquiries = value;
+                                            if (!summary.total_inquiries) summary.total_inquiries = value;
+                                        }
+                                    });
                                 });
                             }
                         }
                     }
 
                     // Parse Inquiries section - try multiple formats
-                    // Method 1: Classic View format - uses #Inquiries wrapper with table rows
-                    const classicInquiries = document.querySelector('#Inquiries, .rpt_content_wrapper[id*="nquir"]');
+                    // Method 1: MyScoreIQ format - uses #Inquiries wrapper with table rows
+                    // Columns: Creditor Name | Type of Business | Date of Inquiry | Credit Bureau
+                    const classicInquiries = document.querySelector('#Inquiries, .rpt_content_wrapper[id="Inquiries"]');
                     if (classicInquiries) {
-                        // Classic view: Table rows with creditor name, date, type columns
-                        const rows = classicInquiries.querySelectorAll('tr, .inquiry-row');
-                        rows.forEach(row => {
-                            const cells = row.querySelectorAll('td');
-                            if (cells.length >= 2) {
-                                const company = cells[0]?.textContent.trim();
-                                const date = cells[1]?.textContent.trim();
-                                const bureau = cells.length > 2 ? cells[2]?.textContent.trim() : null;
-                                if (company && company.length > 2 && !company.includes('Creditor') && !company.includes('Date')) {
-                                    inquiries.push({ company, date, bureau, source: 'classic' });
+                        // Get the table inside the inquiries wrapper
+                        const inquiryTable = classicInquiries.querySelector('table.rpt_content_table');
+                        if (inquiryTable) {
+                            const rows = inquiryTable.querySelectorAll('tr');
+                            rows.forEach(row => {
+                                // Skip header rows (th elements)
+                                if (row.querySelector('th')) return;
+
+                                const cells = row.querySelectorAll('td.info');
+                                if (cells.length >= 4) {
+                                    const company = cells[0]?.textContent.trim();
+                                    const type = cells[1]?.textContent.trim();  // Type of Business
+                                    const date = cells[2]?.textContent.trim();  // Date of Inquiry
+                                    const bureau = cells[3]?.textContent.trim();  // Credit Bureau
+
+                                    if (company && company.length > 2 && !company.includes('Creditor')) {
+                                        // Parse bureau to set flags
+                                        const bureauLower = (bureau || '').toLowerCase();
+                                        inquiries.push({
+                                            company,
+                                            type: type || null,
+                                            date: date || null,
+                                            bureau: bureau || null,
+                                            transunion: bureauLower.includes('transunion'),
+                                            experian: bureauLower.includes('experian'),
+                                            equifax: bureauLower.includes('equifax'),
+                                            source: 'myscoreiq'
+                                        });
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
 
                     // Method 2: Modern 3B View - look for Inquiries headline section
@@ -1543,6 +1656,87 @@ class CreditImportAutomation:
                                             source: 'original-view'
                                         });
                                     }
+                                }
+                            });
+                        }
+                    }
+
+                    // Method 5: MyScoreIQ format - uses rpt_content_table with headerTUC, headerEXP, headerEQF columns
+                    if (inquiries.length === 0) {
+                        // Find Inquiries section header
+                        let inquiryTable = null;
+                        document.querySelectorAll('.rpt_fullReport_header, h3, h4').forEach(header => {
+                            if (header.textContent.includes('Inquiries') || header.textContent.includes('INQUIRIES')) {
+                                // Find the next table.rpt_content_table after this header
+                                let el = header.nextElementSibling;
+                                while (el && !inquiryTable) {
+                                    if (el.classList?.contains('rpt_content_table')) {
+                                        inquiryTable = el;
+                                    } else if (el.querySelector) {
+                                        inquiryTable = el.querySelector('table.rpt_content_table');
+                                    }
+                                    el = el.nextElementSibling;
+                                }
+                                // Also check parent's siblings
+                                if (!inquiryTable) {
+                                    let parent = header.parentElement;
+                                    let sib = parent?.nextElementSibling;
+                                    while (sib && !inquiryTable) {
+                                        if (sib.tagName === 'TABLE' && sib.classList?.contains('rpt_content_table')) {
+                                            inquiryTable = sib;
+                                        } else if (sib.querySelector) {
+                                            inquiryTable = sib.querySelector('table.rpt_content_table');
+                                        }
+                                        sib = sib.nextElementSibling;
+                                    }
+                                }
+                            }
+                        });
+
+                        if (inquiryTable) {
+                            const rows = inquiryTable.querySelectorAll('tr');
+                            rows.forEach(row => {
+                                const labelCell = row.querySelector('td.label');
+                                if (!labelCell) return;
+                                const label = labelCell.textContent.trim().toLowerCase();
+
+                                // Skip header rows
+                                if (label.includes('creditor') || label.includes('inquiry') || label.includes('date')) return;
+
+                                const infoCells = row.querySelectorAll('td.info');
+                                if (infoCells.length >= 3) {
+                                    // Column order: TransUnion, Experian, Equifax
+                                    const bureaus = ['transunion', 'experian', 'equifax'];
+                                    infoCells.forEach((cell, idx) => {
+                                        if (idx >= 3) return;
+                                        const bureau = bureaus[idx];
+                                        const text = cell.textContent.replace(/\\s+/g, ' ').trim();
+                                        if (!text || text === '-' || text === 'N/A') return;
+
+                                        // Parse creditor name and date from the cell
+                                        // Format could be "CREDITOR NAME\\n01/15/2024" or just "CREDITOR NAME"
+                                        const lines = text.split(/[\\n\\r]+/);
+                                        const company = lines[0]?.trim();
+                                        const date = lines.length > 1 ? lines[1]?.trim() : null;
+
+                                        if (company && company.length > 2) {
+                                            // Check if this inquiry already exists for this company
+                                            const existing = inquiries.find(i => i.company === company);
+                                            if (existing) {
+                                                // Add bureau flag to existing
+                                                existing[bureau] = true;
+                                            } else {
+                                                inquiries.push({
+                                                    company,
+                                                    date: date || null,
+                                                    transunion: bureau === 'transunion',
+                                                    experian: bureau === 'experian',
+                                                    equifax: bureau === 'equifax',
+                                                    source: 'myscoreiq'
+                                                });
+                                            }
+                                        }
+                                    });
                                 }
                             });
                         }
@@ -1785,26 +1979,35 @@ class CreditImportAutomation:
                             let personalTable = null;
                             document.querySelectorAll('.rpt_fullReport_header').forEach(header => {
                                 if (header.textContent.includes('Personal Information')) {
-                                    // Find the next table.rpt_content_table after this header
-                                    // Walk through siblings and parent's children
-                                    let el = header.nextElementSibling;
-                                    while (el && !personalTable) {
-                                        if (el.classList?.contains('rpt_content_table')) {
-                                            personalTable = el;
-                                        } else if (el.querySelector) {
-                                            personalTable = el.querySelector('table.rpt_content_table');
+                                    // Find the next table.rpt_content_table after this header (skip help_text tables)
+                                    // Look in parent wrapper first
+                                    const wrapper = header.closest('.rpt_content_wrapper');
+                                    if (wrapper) {
+                                        // Find table.rpt_content_table.rpt_table4column within the wrapper
+                                        personalTable = wrapper.querySelector('table.rpt_content_table.rpt_table4column');
+                                    }
+                                    // Fallback: Walk through siblings
+                                    if (!personalTable) {
+                                        let el = header.nextElementSibling;
+                                        while (el && !personalTable) {
+                                            // Skip help_text tables
+                                            if (el.tagName === 'TABLE' && el.classList?.contains('rpt_content_table') && !el.classList?.contains('help_text')) {
+                                                personalTable = el;
+                                            } else if (el.querySelector) {
+                                                personalTable = el.querySelector('table.rpt_content_table.rpt_table4column');
+                                            }
+                                            el = el.nextElementSibling;
                                         }
-                                        el = el.nextElementSibling;
                                     }
                                     // Also check parent's siblings
                                     if (!personalTable) {
                                         let parent = header.parentElement;
                                         let sib = parent?.nextElementSibling;
                                         while (sib && !personalTable) {
-                                            if (sib.tagName === 'TABLE' && sib.classList?.contains('rpt_content_table')) {
+                                            if (sib.tagName === 'TABLE' && sib.classList?.contains('rpt_content_table') && !sib.classList?.contains('help_text')) {
                                                 personalTable = sib;
                                             } else if (sib.querySelector) {
-                                                personalTable = sib.querySelector('table.rpt_content_table');
+                                                personalTable = sib.querySelector('table.rpt_content_table.rpt_table4column');
                                             }
                                             sib = sib.nextElementSibling;
                                         }
@@ -1814,72 +2017,250 @@ class CreditImportAutomation:
 
                             // Also try direct table selection with 4-column layout
                             if (!personalTable) {
+                                // Get the first 4-column table that follows a Personal Information header
+                                const piWrapper = document.querySelector('.rpt_content_wrapper:has(.rpt_fullReport_header)');
+                                if (piWrapper && piWrapper.textContent.includes('Personal Information')) {
+                                    personalTable = piWrapper.querySelector('table.rpt_content_table.rpt_table4column');
+                                }
+                            }
+                            if (!personalTable) {
                                 personalTable = document.querySelector('table.rpt_content_table.rpt_table4column');
                             }
 
                             if (personalTable) {
-                                    const rows = personalTable.querySelectorAll('tr');
-                                    rows.forEach(row => {
-                                        const labelCell = row.querySelector('td.label');
-                                        if (!labelCell) return;
-                                        const label = labelCell.textContent.trim();
+                                // Initialize per-bureau data if not already
+                                if (!data.transunion) data.transunion = { names: [], also_known_as: [], former_names: [], dob: null, current_address: null, current_address_date: null, previous_addresses: [], employers: [] };
+                                if (!data.experian) data.experian = { names: [], also_known_as: [], former_names: [], dob: null, current_address: null, current_address_date: null, previous_addresses: [], employers: [] };
+                                if (!data.equifax) data.equifax = { names: [], also_known_as: [], former_names: [], dob: null, current_address: null, current_address_date: null, previous_addresses: [], employers: [] };
 
-                                        const infoCells = row.querySelectorAll('td.info');
-                                        if (infoCells.length >= 3) {
-                                            // Column order: TransUnion, Experian, Equifax
-                                            const bureaus = ['transunion', 'experian', 'equifax'];
-                                            infoCells.forEach((cell, idx) => {
-                                                if (idx >= 3) return;
-                                                const bureau = bureaus[idx];
-                                                const text = cell.textContent.replace(/\\s+/g, ' ').trim();
-                                                if (!text || text === '-') return;
+                                // Helper function to clean text - removes trailing " -" from MyScoreIQ Angular templates
+                                const cleanText = (text) => {
+                                    if (!text) return '';
+                                    return text.replace(/\\s+-\\s*$/, '').replace(/\\s+/g, ' ').trim();
+                                };
 
-                                                if (label.includes('Name')) {
-                                                    // Extract name from Angular template
-                                                    const nameText = text.replace(/[\\n\\t]+/g, ' ').trim();
-                                                    if (nameText && nameText.length > 2) {
-                                                        if (!data[bureau].names.includes(nameText)) {
-                                                            data[bureau].names.push(nameText);
+                                // Helper function to extract name from ng-include template (ignores hidden "-" elements)
+                                const extractName = (cell) => {
+                                    const nameInclude = cell.querySelector('ng-include[src*="personNameTemplate"]');
+                                    if (nameInclude) {
+                                        // Get text from ng-if elements inside the template
+                                        const parts = [];
+                                        nameInclude.querySelectorAll('ng-if').forEach(el => {
+                                            const txt = el.textContent.replace(/&nbsp;/g, ' ').trim();
+                                            if (txt && txt !== '-') parts.push(txt);
+                                        });
+                                        return parts.join(' ').replace(/\\s+/g, ' ').trim();
+                                    }
+                                    return cleanText(cell.textContent);
+                                };
+
+                                // Helper function to extract address with date separated
+                                const extractAddress = (cell) => {
+                                    const result = { address: null, date: null };
+                                    // First ng-repeat contains the address div
+                                    const addrContainer = cell.querySelector('ng-repeat');
+                                    if (addrContainer) {
+                                        // ng-include contains the address parts
+                                        const addrInclude = addrContainer.querySelector('ng-include');
+                                        if (addrInclude) {
+                                            const parts = [];
+                                            addrInclude.querySelectorAll('ng-if').forEach(el => {
+                                                const txt = el.textContent.replace(/&nbsp;/g, ' ').trim();
+                                                if (txt && txt !== '-') parts.push(txt);
+                                            });
+                                            result.address = parts.join(' ').replace(/\\s+/g, ' ').trim();
+                                        }
+                                        // Date is in a separate div with ng-if containing the date
+                                        const dateDiv = addrContainer.querySelector('div[ng-if*="date_last_updated"], div[ng-if*="date_first_reported"]');
+                                        if (dateDiv) {
+                                            result.date = dateDiv.textContent.trim();
+                                        }
+                                    }
+                                    // Fallback: just get the address from text content, clean it
+                                    if (!result.address) {
+                                        const text = cleanText(cell.textContent);
+                                        // Try to separate date from address (MM/YYYY pattern at end)
+                                        const dateMatch = text.match(/\\s+(\\d{2}\\/\\d{4})\\s*$/);
+                                        if (dateMatch) {
+                                            result.address = text.replace(dateMatch[0], '').trim();
+                                            result.date = dateMatch[1];
+                                        } else {
+                                            result.address = text;
+                                        }
+                                    }
+                                    return result;
+                                };
+
+                                // Helper function to extract multiple addresses from a cell (for Previous Addresses)
+                                const extractMultipleAddresses = (cell) => {
+                                    const addresses = [];
+                                    // Each address is in a separate ng-repeat div
+                                    const addrContainers = cell.querySelectorAll('ng-repeat');
+                                    addrContainers.forEach(container => {
+                                        const addrInclude = container.querySelector('ng-include');
+                                        if (addrInclude) {
+                                            const parts = [];
+                                            addrInclude.querySelectorAll('ng-if').forEach(el => {
+                                                const txt = el.textContent.replace(/&nbsp;/g, ' ').trim();
+                                                if (txt && txt !== '-') parts.push(txt);
+                                            });
+                                            const addrText = parts.join(' ').replace(/\\s+/g, ' ').trim();
+                                            // Get date if present
+                                            const dateDiv = container.querySelector('div[ng-if*="date_last_updated"], div[ng-if*="date_first_reported"]');
+                                            const dateText = dateDiv ? dateDiv.textContent.trim() : null;
+                                            if (addrText) {
+                                                addresses.push({ address: addrText, date: dateText });
+                                            }
+                                        }
+                                    });
+                                    return addresses;
+                                };
+
+                                const rows = personalTable.querySelectorAll('tr');
+                                rows.forEach(row => {
+                                    const labelCell = row.querySelector('td.label');
+                                    if (!labelCell) return;
+                                    const label = labelCell.textContent.trim();
+
+                                    const infoCells = row.querySelectorAll('td.info');
+                                    if (infoCells.length >= 3) {
+                                        // Column order: TransUnion, Experian, Equifax
+                                        const bureaus = ['transunion', 'experian', 'equifax'];
+                                        infoCells.forEach((cell, idx) => {
+                                            if (idx >= 3) return;
+                                            const bureau = bureaus[idx];
+                                            const rawText = cell.textContent.replace(/\\s+/g, ' ').trim();
+                                            // Skip if cell only contains "-" (placeholder)
+                                            if (!rawText || rawText === '-') return;
+
+                                            // Primary Name (not AKA or Former)
+                                            if (label === 'Name:' || label.match(/^Name$/i)) {
+                                                const nameText = extractName(cell);
+                                                if (nameText && nameText.length > 2 && nameText !== '-') {
+                                                    if (!data[bureau].names.includes(nameText)) {
+                                                        data[bureau].names.push(nameText);
+                                                    }
+                                                    if (!data.names.includes(nameText)) {
+                                                        data.names.push(nameText);
+                                                    }
+                                                }
+                                            }
+                                            // Also Known As names - get all names beyond index 0
+                                            else if (label.includes('Also Known As')) {
+                                                // AKA names are in ng-repeat with ng-if="$index > 0"
+                                                const akaRepeats = cell.querySelectorAll('ng-repeat[ng-if*="$index > 0"]');
+                                                akaRepeats.forEach(rep => {
+                                                    const nameInclude = rep.querySelector('ng-include');
+                                                    if (nameInclude) {
+                                                        const parts = [];
+                                                        nameInclude.querySelectorAll('ng-if').forEach(el => {
+                                                            const txt = el.textContent.replace(/&nbsp;/g, ' ').trim();
+                                                            if (txt && txt !== '-') parts.push(txt);
+                                                        });
+                                                        const akaName = parts.join(' ').replace(/\\s+/g, ' ').trim();
+                                                        if (akaName && akaName !== '-' && !data[bureau].also_known_as.includes(akaName)) {
+                                                            data[bureau].also_known_as.push(akaName);
                                                         }
-                                                        if (!data.names.includes(nameText)) {
-                                                            data.names.push(nameText);
+                                                    }
+                                                });
+                                            }
+                                            // Former names
+                                            else if (label.includes('Former')) {
+                                                const formerRepeats = cell.querySelectorAll('ng-repeat');
+                                                formerRepeats.forEach(rep => {
+                                                    const nameInclude = rep.querySelector('ng-include');
+                                                    if (nameInclude) {
+                                                        const parts = [];
+                                                        nameInclude.querySelectorAll('ng-if').forEach(el => {
+                                                            const txt = el.textContent.replace(/&nbsp;/g, ' ').trim();
+                                                            if (txt && txt !== '-') parts.push(txt);
+                                                        });
+                                                        const formerName = parts.join(' ').replace(/\\s+/g, ' ').trim();
+                                                        if (formerName && formerName !== '-' && !data[bureau].former_names.includes(formerName)) {
+                                                            data[bureau].former_names.push(formerName);
+                                                        }
+                                                    }
+                                                });
+                                            }
+                                            else if (label.includes('Date of Birth') || label.includes('Birth Year')) {
+                                                // DOB is in ng-repeat > div.ng-binding
+                                                const dobDiv = cell.querySelector('ng-repeat div.ng-binding');
+                                                let dobText = dobDiv ? dobDiv.textContent.trim() : cleanText(rawText);
+                                                const dateMatch = dobText.match(/(\\d{1,2}\\/\\d{1,2}\\/\\d{4})/);
+                                                const yearMatch = dobText.match(/(19[4-9]\\d|20[0-2]\\d)/);
+                                                if (dateMatch) {
+                                                    data[bureau].dob = dateMatch[1];
+                                                    if (!data.dob) data.dob = dateMatch[1];
+                                                } else if (yearMatch) {
+                                                    data[bureau].dob = yearMatch[1];
+                                                    if (!data.dob) data.dob = yearMatch[1];
+                                                }
+                                            }
+                                            // Current Address(es) - first address only
+                                            else if (label.includes('Current Address')) {
+                                                if (!data[bureau].current_address) {
+                                                    const addrData = extractAddress(cell);
+                                                    if (addrData.address && addrData.address.length > 5) {
+                                                        data[bureau].current_address = addrData.address;
+                                                        data[bureau].current_address_date = addrData.date;
+                                                        if (!data.addresses.includes(addrData.address)) {
+                                                            data.addresses.push(addrData.address);
                                                         }
                                                     }
                                                 }
-                                                else if (label.includes('Date of Birth') || label.includes('Birth Year')) {
-                                                    const dateMatch = text.match(/(\\d{1,2}\\/\\d{1,2}\\/\\d{4})/);
-                                                    const yearMatch = text.match(/(19[4-9]\\d|20[0-2]\\d)/);
-                                                    if (dateMatch) {
-                                                        data[bureau].dob = dateMatch[1];
-                                                        if (!data.dob) data.dob = dateMatch[1];
-                                                    } else if (yearMatch) {
-                                                        data[bureau].dob = yearMatch[1];
-                                                        if (!data.dob) data.dob = yearMatch[1];
-                                                    }
-                                                }
-                                                else if (label.includes('Current Address') || label.includes('Address')) {
-                                                    if (text.length > 5 && !data[bureau].current_address) {
-                                                        data[bureau].current_address = text;
-                                                        if (!data.addresses.includes(text)) {
-                                                            data.addresses.push(text);
+                                            }
+                                            // Previous Address(es) - can have multiple
+                                            else if (label.includes('Previous Address')) {
+                                                const prevAddrs = extractMultipleAddresses(cell);
+                                                prevAddrs.forEach(addrData => {
+                                                    if (addrData.address && addrData.address.length > 5) {
+                                                        // Store as object with address and date
+                                                        const addrObj = { address: addrData.address, date: addrData.date };
+                                                        const exists = data[bureau].previous_addresses.find(a => a.address === addrData.address);
+                                                        if (!exists) {
+                                                            data[bureau].previous_addresses.push(addrObj);
+                                                        }
+                                                        if (!data.addresses.includes(addrData.address)) {
+                                                            data.addresses.push(addrData.address);
                                                         }
                                                     }
-                                                }
-                                                else if (label.includes('Employer')) {
-                                                    if (text.length > 2) {
-                                                        const empObj = { name: text, date_updated: null };
-                                                        if (!data[bureau].employers.find(e => e.name === text)) {
+                                                });
+                                            }
+                                            else if (label.includes('Employer')) {
+                                                // Employers are in ng-repeat elements, each with ng-if for the name
+                                                const empRepeats = cell.querySelectorAll('ng-repeat');
+                                                empRepeats.forEach(rep => {
+                                                    const nameEl = rep.querySelector('ng-if[ng-if*="emp[\\'name\\']"]');
+                                                    if (nameEl) {
+                                                        const empName = nameEl.textContent.replace(/&nbsp;/g, ' ').trim();
+                                                        if (empName && empName.length > 2 && empName !== '-') {
+                                                            const empObj = { name: empName, date_updated: null };
+                                                            if (!data[bureau].employers.find(e => e.name === empName)) {
+                                                                data[bureau].employers.push(empObj);
+                                                            }
+                                                            if (!data.employers.find(e => e.name === empName)) {
+                                                                data.employers.push(empObj);
+                                                            }
+                                                        }
+                                                    }
+                                                });
+                                                // Fallback: if no ng-repeat found, try cleanText approach
+                                                if (data[bureau].employers.length === 0) {
+                                                    const empText = cleanText(rawText);
+                                                    if (empText && empText.length > 2 && empText !== '-') {
+                                                        const empObj = { name: empText, date_updated: null };
+                                                        if (!data[bureau].employers.find(e => e.name === empText)) {
                                                             data[bureau].employers.push(empObj);
                                                         }
-                                                        if (!data.employers.find(e => e.name === text)) {
+                                                        if (!data.employers.find(e => e.name === empText)) {
                                                             data.employers.push(empObj);
                                                         }
                                                     }
                                                 }
-                                            });
-                                        }
-                                    });
-                                }
+                                            }
+                                        });
+                                    }
+                                });
                             }
                         }
                     }
@@ -2218,11 +2599,22 @@ class CreditImportAutomation:
             "creditor": name,
             "account_number": None,
             "account_type": None,
+            "account_type_detail": None,
+            "bureau_code": None,
+            "account_status": None,
             "status": None,
             "balance": None,
             "credit_limit": None,
+            "high_credit": None,
+            "monthly_payment": None,
             "payment_status": None,
             "date_opened": None,
+            "last_reported": None,
+            "last_active": None,
+            "last_payment": None,
+            "past_due": None,
+            "term_length": None,
+            "comments": None,
             "bureaus": {},
         }
 
@@ -2323,9 +2715,24 @@ class CreditImportAutomation:
                         creditor: creditorName,
                         account_number: null,
                         account_type: null,
-                        status: null,
+                        account_type_detail: null,
+                        bureau_code: null,
+                        account_status: null,
                         balance: null,
                         credit_limit: null,
+                        high_credit: null,
+                        monthly_payment: null,
+                        payment_status: null,
+                        date_opened: null,
+                        last_reported: null,
+                        last_active: null,
+                        last_payment: null,
+                        past_due: null,
+                        date_closed: null,
+                        account_rating: null,
+                        creditor_type: null,
+                        term_length: null,
+                        comments: null,
                         bureaus: {
                             transunion: { present: false },
                             experian: { present: false },
@@ -2347,25 +2754,51 @@ class CreditImportAutomation:
                                     cell.textContent.trim().replace(/\\s+/g, ' ')
                                 );
 
-                                if (labelText.includes('account number') || labelText.includes('number')) {
+                                if (labelText.includes('account number') || labelText.includes('account #') || labelText === 'number') {
                                     account.account_number = values.find(v => v && v !== '-') || null;
                                     if (values[0] && values[0] !== '-') account.bureaus.transunion.number = values[0];
                                     if (values[1] && values[1] !== '-') account.bureaus.experian.number = values[1];
                                     if (values[2] && values[2] !== '-') account.bureaus.equifax.number = values[2];
                                 }
 
-                                if (labelText.includes('classification') || labelText.includes('type')) {
+                                // Account Type (not detail)
+                                if (labelText === 'account type:' || labelText === 'account type' || labelText.includes('classification')) {
                                     account.account_type = values.find(v => v && v !== '-') || null;
                                     if (values[0] && values[0] !== '-') account.bureaus.transunion.type = values[0];
                                     if (values[1] && values[1] !== '-') account.bureaus.experian.type = values[1];
                                     if (values[2] && values[2] !== '-') account.bureaus.equifax.type = values[2];
                                 }
 
-                                if (labelText.includes('status') || labelText.includes('condition')) {
-                                    account.status = values.find(v => v && v !== '-') || null;
-                                    if (values[0] && values[0] !== '-') account.bureaus.transunion.status = values[0];
-                                    if (values[1] && values[1] !== '-') account.bureaus.experian.status = values[1];
-                                    if (values[2] && values[2] !== '-') account.bureaus.equifax.status = values[2];
+                                // Account Type - Detail
+                                if (labelText.includes('account type - detail') || labelText.includes('type - detail') || labelText.includes('account type detail')) {
+                                    account.account_type_detail = values.find(v => v && v !== '-') || null;
+                                    if (values[0] && values[0] !== '-') account.bureaus.transunion.type_detail = values[0];
+                                    if (values[1] && values[1] !== '-') account.bureaus.experian.type_detail = values[1];
+                                    if (values[2] && values[2] !== '-') account.bureaus.equifax.type_detail = values[2];
+                                }
+
+                                // Bureau Code (e.g., Individual Account, Joint Account)
+                                if (labelText.includes('bureau code')) {
+                                    account.bureau_code = values.find(v => v && v !== '-') || null;
+                                    if (values[0] && values[0] !== '-') account.bureaus.transunion.bureau_code = values[0];
+                                    if (values[1] && values[1] !== '-') account.bureaus.experian.bureau_code = values[1];
+                                    if (values[2] && values[2] !== '-') account.bureaus.equifax.bureau_code = values[2];
+                                }
+
+                                // Account Status (separate from Payment Status)
+                                if (labelText === 'account status:' || labelText === 'account status') {
+                                    account.account_status = values.find(v => v && v !== '-') || null;
+                                    if (values[0] && values[0] !== '-') account.bureaus.transunion.account_status = values[0];
+                                    if (values[1] && values[1] !== '-') account.bureaus.experian.account_status = values[1];
+                                    if (values[2] && values[2] !== '-') account.bureaus.equifax.account_status = values[2];
+                                }
+
+                                // Comments
+                                if (labelText === 'comments:' || labelText === 'comments') {
+                                    account.comments = values.find(v => v && v !== '-') || null;
+                                    if (values[0] && values[0] !== '-') account.bureaus.transunion.comments = values[0];
+                                    if (values[1] && values[1] !== '-') account.bureaus.experian.comments = values[1];
+                                    if (values[2] && values[2] !== '-') account.bureaus.equifax.comments = values[2];
                                 }
 
                                 if (labelText.includes('balance')) {
@@ -2424,6 +2857,22 @@ class CreditImportAutomation:
                                     if (dueVal) {
                                         account.past_due = dueVal;
                                     }
+                                }
+
+                                if (labelText.includes('date closed') || labelText.includes('closed date')) {
+                                    account.date_closed = values.find(v => v && v !== '-' && v.includes('/')) || null;
+                                }
+
+                                if (labelText.includes('rating') || labelText.includes('account rating')) {
+                                    account.account_rating = values.find(v => v && v !== '-') || null;
+                                }
+
+                                if (labelText.includes('creditor type') || labelText.includes('type of creditor')) {
+                                    account.creditor_type = values.find(v => v && v !== '-') || null;
+                                }
+
+                                if (labelText.includes('term') || labelText.includes('term length') || labelText.includes('terms')) {
+                                    account.term_length = values.find(v => v && v !== '-') || null;
                                 }
 
                                 // Check bureau presence
