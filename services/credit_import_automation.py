@@ -2921,8 +2921,11 @@ class CreditImportAutomation:
                                     account.creditor_type = values.find(v => v && v !== '-') || null;
                                 }
 
-                                if (labelText.includes('term') || labelText.includes('term length') || labelText.includes('terms')) {
+                                if (labelText.includes('term') || labelText.includes('term length') || labelText.includes('terms') || labelText.includes('no. of months') || labelText.includes('number of months') || labelText.includes('months')) {
                                     account.term_length = values.find(v => v && v !== '-') || null;
+                                    if (values[0] && values[0] !== '-') account.bureaus.transunion.term_length = values[0];
+                                    if (values[1] && values[1] !== '-') account.bureaus.experian.term_length = values[1];
+                                    if (values[2] && values[2] !== '-') account.bureaus.equifax.term_length = values[2];
                                 }
 
                                 // Check bureau presence

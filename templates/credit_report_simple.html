@@ -277,16 +277,28 @@
                         <td>{{ eq.account_type or eq.type or account.account_type or '' }}</td>
                     </tr>
                     <tr>
+                        <td class="label-col">Account Type - Detail:</td>
+                        <td>{{ tu.type_detail or account.account_type_detail or '' }}</td>
+                        <td>{{ ex.type_detail or account.account_type_detail or '' }}</td>
+                        <td>{{ eq.type_detail or account.account_type_detail or '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Bureau Code:</td>
+                        <td>{{ tu.bureau_code or account.bureau_code or '' }}</td>
+                        <td>{{ ex.bureau_code or account.bureau_code or '' }}</td>
+                        <td>{{ eq.bureau_code or account.bureau_code or '' }}</td>
+                    </tr>
+                    <tr>
                         <td class="label-col">Account Status:</td>
-                        <td>{{ tu.status or account.status or '' }}</td>
-                        <td>{{ ex.status or account.status or '' }}</td>
-                        <td>{{ eq.status or account.status or '' }}</td>
+                        <td>{{ tu.account_status or tu.status or account.account_status or '' }}</td>
+                        <td>{{ ex.account_status or ex.status or account.account_status or '' }}</td>
+                        <td>{{ eq.account_status or eq.status or account.account_status or '' }}</td>
                     </tr>
                     <tr>
                         <td class="label-col">Monthly Payment:</td>
-                        <td>{{ tu.payment_amount or tu.monthly_payment or account.payment_amount or '' }}</td>
-                        <td>{{ ex.payment_amount or ex.monthly_payment or account.payment_amount or '' }}</td>
-                        <td>{{ eq.payment_amount or eq.monthly_payment or account.payment_amount or '' }}</td>
+                        <td>{{ tu.payment_amount or tu.monthly_payment or account.monthly_payment or '' }}</td>
+                        <td>{{ ex.payment_amount or ex.monthly_payment or account.monthly_payment or '' }}</td>
+                        <td>{{ eq.payment_amount or eq.monthly_payment or account.monthly_payment or '' }}</td>
                     </tr>
                     <tr>
                         <td class="label-col">Date Opened:</td>
@@ -301,10 +313,16 @@
                         <td>{{ eq.balance or account.balance or '' }}</td>
                     </tr>
                     <tr>
+                        <td class="label-col">No. of Months (terms):</td>
+                        <td>{{ tu.term_length or account.term_length or '' }}</td>
+                        <td>{{ ex.term_length or account.term_length or '' }}</td>
+                        <td>{{ eq.term_length or account.term_length or '' }}</td>
+                    </tr>
+                    <tr>
                         <td class="label-col">High Credit:</td>
-                        <td>{{ tu.high_balance or tu.high_credit or account.high_balance or '' }}</td>
-                        <td>{{ ex.high_balance or ex.high_credit or account.high_balance or '' }}</td>
-                        <td>{{ eq.high_balance or eq.high_credit or account.high_balance or '' }}</td>
+                        <td>{{ tu.high_balance or tu.high_credit or account.high_credit or '' }}</td>
+                        <td>{{ ex.high_balance or ex.high_credit or account.high_credit or '' }}</td>
+                        <td>{{ eq.high_balance or eq.high_credit or account.high_credit or '' }}</td>
                     </tr>
                     <tr>
                         <td class="label-col">Credit Limit:</td>
@@ -326,45 +344,27 @@
                     </tr>
                     <tr>
                         <td class="label-col">Last Reported:</td>
-                        <td>{{ tu.date_reported or account.date_reported or '' }}</td>
-                        <td>{{ ex.date_reported or account.date_reported or '' }}</td>
-                        <td>{{ eq.date_reported or account.date_reported or '' }}</td>
+                        <td>{{ tu.date_reported or tu.last_reported or account.last_reported or '' }}</td>
+                        <td>{{ ex.date_reported or ex.last_reported or account.last_reported or '' }}</td>
+                        <td>{{ eq.date_reported or eq.last_reported or account.last_reported or '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Comments:</td>
+                        <td>{{ tu.comments or account.comments or '' }}</td>
+                        <td>{{ ex.comments or account.comments or '' }}</td>
+                        <td>{{ eq.comments or account.comments or '' }}</td>
                     </tr>
                     <tr>
                         <td class="label-col">Date Last Active:</td>
-                        <td>{{ tu.last_activity or account.last_activity or '' }}</td>
-                        <td>{{ ex.last_activity or account.last_activity or '' }}</td>
-                        <td>{{ eq.last_activity or account.last_activity or '' }}</td>
+                        <td>{{ tu.last_activity or tu.last_active or account.last_active or '' }}</td>
+                        <td>{{ ex.last_activity or ex.last_active or account.last_active or '' }}</td>
+                        <td>{{ eq.last_activity or eq.last_active or account.last_active or '' }}</td>
                     </tr>
                     <tr>
                         <td class="label-col">Date of Last Payment:</td>
                         <td>{{ tu.last_payment or account.last_payment or '' }}</td>
                         <td>{{ ex.last_payment or account.last_payment or '' }}</td>
                         <td>{{ eq.last_payment or account.last_payment or '' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label-col">Date Closed:</td>
-                        <td>{{ tu.date_closed or account.date_closed or '' }}</td>
-                        <td>{{ ex.date_closed or account.date_closed or '' }}</td>
-                        <td>{{ eq.date_closed or account.date_closed or '' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label-col">Account Rating:</td>
-                        <td>{{ tu.account_rating or account.account_rating or '' }}</td>
-                        <td>{{ ex.account_rating or account.account_rating or '' }}</td>
-                        <td>{{ eq.account_rating or account.account_rating or '' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label-col">Creditor Type:</td>
-                        <td>{{ tu.creditor_type or account.creditor_type or '' }}</td>
-                        <td>{{ ex.creditor_type or account.creditor_type or '' }}</td>
-                        <td>{{ eq.creditor_type or account.creditor_type or '' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label-col">Term Length:</td>
-                        <td>{{ tu.term_length or account.term_length or '' }}</td>
-                        <td>{{ ex.term_length or account.term_length or '' }}</td>
-                        <td>{{ eq.term_length or account.term_length or '' }}</td>
                     </tr>
                 </tbody>
             </table>
