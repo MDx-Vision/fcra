@@ -43521,14 +43521,7 @@ Generate these 3 documents:
 2. CFPB_Complaint_Instructions_{client_info['name'].replace(' ', '_')}.md
 3. Inquiry_Dispute_Summary_{client_info['name'].replace(' ', '_')}.md
 
-FORMATTING RULES - FOLLOW STRICTLY:
-- Keep each document to 1-2 pages maximum
-- Use minimal headers (3-4 sections max per document)
-- NO emoji, NO checkbox symbols (☐), NO decorative elements
-- Write direct instructions, not meta-descriptions
-- Questions should be listed simply: "Question 1: Select X" - not with sub-headers
-- Copy-paste text should have the client's actual info pre-filled, not brackets
-- No "Important Notes", "Timeline", or "Next Steps" filler sections"""
+Keep documents clean and minimal. Follow the formatting rules in the system prompt."""
             else:
                 user_message = f"""Generate Phase 2 Inquiry Dispute documents (609 letters) for this client.
 
@@ -43554,12 +43547,45 @@ Generate:
 3. Phone_Follow_Up_Guide_{client_info['name'].replace(' ', '_')}.md
 4. Mailing_Checklist_{client_info['name'].replace(' ', '_')}.md
 
-Follow the exact format and structure from the prompt. Use professional formatting with ASCII tables. No emojis."""
+FORMATTING RULES - FOLLOW STRICTLY:
+- Keep each document to 1-2 pages maximum
+- Use minimal headers (3-4 sections max per document)
+- NO emoji, NO checkbox symbols (☐), NO decorative elements
+- NO ASCII boxes or tables (no ┌─────┐ characters)
+- Write direct instructions, not meta-descriptions
+- Copy-paste text should have the client's actual info pre-filled, not brackets
+- No "Important Notes", "Timeline", or "Next Steps" filler sections"""
+
+            # System prompt enforcing clean formatting
+            system_prompt = """You are a professional legal document generator. Generate CLEAN, MINIMAL documents.
+
+STRICT FORMATTING RULES:
+1. Maximum 3-4 sections per document
+2. No emoji, no checkbox symbols (☐ ✓ ✗), no decorative characters
+3. No ASCII boxes or tables (no ┌─────┐ │ └─────┘ characters)
+4. Write prose and direct instructions, not verbose structure
+5. Each document should be 1-2 pages, not 4-5 pages
+6. Questions listed simply: "Question 1: Select X" — no sub-headers explaining each question
+7. Pre-fill client information directly, no [BRACKETS] for the client to fill in
+8. No sections like "Important Notes", "Success Indicators", "Timeline", "What to Expect"
+
+BAD (too verbose):
+## Question 1: Category Selection
+**Prompt:** "What is this about?"
+**Action Required:** Select the option that says...
+**Why This Matters:** This establishes...
+
+GOOD (clean and direct):
+Question 1: Select "Credit reporting"
+Question 2: Select "Improper use of your report"
+
+Generate professional documents a law firm would produce."""
 
             # Call AI
             response = service.anthropic_client.messages.create(
                 model="claude-sonnet-4-20250514",
                 max_tokens=16000,
+                system=system_prompt,
                 messages=[
                     {
                         "role": "user",
