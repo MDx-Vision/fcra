@@ -96,6 +96,57 @@
             border-radius: 8px;
             padding: 10px;
         }
+        .phase-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .phase-item {
+            text-align: center;
+            flex: 1;
+            position: relative;
+        }
+        .phase-item::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background: #cbd5e1;
+        }
+        .phase-item:last-child::after {
+            display: none;
+        }
+        .phase-number {
+            width: 30px;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+        .phase-item.active .phase-number {
+            background: #22c55e;
+            color: white;
+        }
+        .phase-item.completed .phase-number {
+            background: #16a34a;
+            color: white;
+        }
+        .phase-label {
+            font-size: 11px;
+            color: #64748b;
+        }
         @media print {
             .sidebar, .header, .btn, nav { display: none !important; }
             .main-content { margin-left: 0; }
@@ -116,6 +167,38 @@
             <a href="/dashboard/ai-dispute-writer" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-2"></i>Back to AI Writer
             </a>
+        </div>
+
+        <!-- Phase Timeline -->
+        <div class="phase-timeline">
+            <div class="phase-item active" id="phase1">
+                <div class="phase-number">1</div>
+                <div class="phase-label">3rd Party Freeze</div>
+            </div>
+            <div class="phase-item" id="phase2">
+                <div class="phase-number">2</div>
+                <div class="phase-label">Police Report</div>
+            </div>
+            <div class="phase-item" id="phase3">
+                <div class="phase-number">3</div>
+                <div class="phase-label">FTC Complaint</div>
+            </div>
+            <div class="phase-item" id="phase4">
+                <div class="phase-number">4</div>
+                <div class="phase-label">Notarized Affidavit</div>
+            </div>
+            <div class="phase-item" id="phase5">
+                <div class="phase-number">5</div>
+                <div class="phase-label">Dispute Letter</div>
+            </div>
+            <div class="phase-item" id="phase6">
+                <div class="phase-number">6</div>
+                <div class="phase-label">Submit Online</div>
+            </div>
+            <div class="phase-item" id="phase7">
+                <div class="phase-number">7</div>
+                <div class="phase-label">Call Follow-Up</div>
+            </div>
         </div>
 
         <!-- Info Box -->
