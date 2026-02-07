@@ -428,9 +428,10 @@
                             <td>{{ cred.next_scheduled_import[:10] if cred.next_scheduled_import else '-' }}</td>
                             <td>
                                 <div class="actions-cell">
-                                    <button class="action-btn primary" onclick="triggerImport({{ cred.client_id }})" data-testid="import-btn-{{ cred.id }}">Import Now</button>
+                                    <button class="action-btn primary" onclick="triggerImport({{ cred.client_id }}, {{ cred.id }})" data-testid="import-btn-{{ cred.id }}">Import</button>
+                                    <button class="action-btn" onclick="forceRefresh({{ cred.client_id }}, {{ cred.id }})" style="background: #f59e0b; color: white;" data-testid="force-refresh-btn-{{ cred.id }}" title="Bypass cache and pull fresh report">Force Refresh</button>
                                     {% if cred.last_report_path %}
-                                    <a href="/api/credit-import/report/{{ cred.id }}" target="_blank" class="action-btn" style="background: #10b981; color: white;" data-testid="view-btn-{{ cred.id }}">View Report</a>
+                                    <a href="/api/credit-import/report/{{ cred.id }}" target="_blank" class="action-btn" style="background: #10b981; color: white;" data-testid="view-btn-{{ cred.id }}">View</a>
                                     {% endif %}
                                     <button class="action-btn" onclick="openEditModal({{ cred.id }})" data-testid="edit-btn-{{ cred.id }}">Edit</button>
                                     <button class="action-btn btn-danger btn-sm" onclick="deleteCredential({{ cred.id }})" data-testid="delete-btn-{{ cred.id }}">Delete</button>
@@ -531,6 +532,32 @@
 
     <script>
         let credentialsData = {{ credentials | tojson | safe if credentials else '[]' }};
+
+        // Restore search state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedSearch = sessionStorage.getItem('creditImportSearch');
+            const savedStatus = sessionStorage.getItem('creditImportStatus');
+
+            if (savedSearch) {
+                document.getElementById('searchInput').value = savedSearch;
+            }
+            if (savedStatus) {
+                document.getElementById('statusFilter').value = savedStatus;
+            }
+            if (savedSearch || savedStatus) {
+                searchCredentials();
+                // Clear after restoring
+                sessionStorage.removeItem('creditImportSearch');
+                sessionStorage.removeItem('creditImportStatus');
+            }
+        });
+
+        function saveSearchState() {
+            const search = document.getElementById('searchInput').value;
+            const status = document.getElementById('statusFilter').value;
+            if (search) sessionStorage.setItem('creditImportSearch', search);
+            if (status) sessionStorage.setItem('creditImportStatus', status);
+        }
 
         function searchCredentials() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -707,10 +734,10 @@
             }
         }
 
-        async function triggerImport(clientId) {
+        async function triggerImport(clientId, credId) {
             const btn = event.target;
             const originalText = btn.textContent;
-            btn.innerHTML = '<span class="loading-spinner"></span> Importing...';
+            btn.innerHTML = '<span class="loading-spinner"></span> Starting...';
             btn.disabled = true;
 
             try {
@@ -721,11 +748,115 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    showAlert(result.message || 'Import completed! Refreshing...', 'success');
-                    // Reload page after short delay to show updated status
-                    setTimeout(() => window.location.reload(), 1500);
+                    if (result.processing) {
+                        showAlert('🔄 Import started! Waiting for completion...', 'info');
+                        btn.innerHTML = '<span class="loading-spinner"></span> Importing...';
+                        // Start polling for status
+                        pollCredentialStatus(credId, btn, originalText);
+                    } else if (result.cached) {
+                        showAlert('⚡ Using cached report!', 'success');
+                        saveSearchState();
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        showAlert(result.message || 'Import completed!', 'success');
+                        saveSearchState();
+                        setTimeout(() => window.location.reload(), 1500);
+                    }
                 } else {
                     showAlert(result.error || 'Failed to trigger import', 'error');
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                showAlert('Network error: ' + error.message, 'error');
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function pollCredentialStatus(credId, btn, originalText) {
+            // Poll every 5 seconds for up to 3 minutes
+            const maxAttempts = 36;
+            let attempts = 0;
+
+            const poll = async () => {
+                attempts++;
+                try {
+                    const response = await fetch('/api/credit-import/credentials');
+                    const data = await response.json();
+                    // Use == for loose equality (handles string/number mismatch)
+                    const cred = (data.credentials || data).find(c => c.id == credId);
+                    console.log(`Poll attempt ${attempts}: credId=${credId} (${typeof credId}), found=${!!cred}, status=${cred?.last_import_status}`);
+
+                    if (cred && cred.last_import_status !== 'pending') {
+                        // Status changed - reload page
+                        saveSearchState();
+                        showAlert(cred.last_import_status === 'success' ?
+                            '✅ Import completed successfully!' :
+                            '❌ Import failed: ' + (cred.last_import_error || 'Unknown error'),
+                            cred.last_import_status === 'success' ? 'success' : 'error');
+                        setTimeout(() => window.location.reload(), 1500);
+                        return;
+                    }
+
+                    if (attempts < maxAttempts) {
+                        btn.innerHTML = `<span class="loading-spinner"></span> Importing... (${Math.floor(attempts * 5 / 60)}:${String((attempts * 5) % 60).padStart(2, '0')})`;
+                        setTimeout(poll, 5000);
+                    } else {
+                        // Timeout - just reload
+                        showAlert('Import is taking longer than expected. Refreshing page...', 'warning');
+                        saveSearchState();
+                        setTimeout(() => window.location.reload(), 1500);
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                    if (attempts < maxAttempts) {
+                        setTimeout(poll, 5000);
+                    }
+                }
+            };
+
+            // Start first poll after 5 seconds
+            setTimeout(poll, 5000);
+
+            // Safety fallback - force reload after 2 minutes regardless of poll status
+            setTimeout(() => {
+                console.log('⏰ Safety reload after 2 minutes');
+                saveSearchState();
+                window.location.reload();
+            }, 120000);
+        }
+
+        async function forceRefresh(clientId, credId) {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="loading-spinner"></span> Starting...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/credit-import/trigger/${clientId}?force=true`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+                console.log('Force Refresh API Response:', result);
+
+                if (response.ok) {
+                    if (result.processing) {
+                        showAlert('🔄 Fresh import started! Waiting for completion...', 'info');
+                        btn.innerHTML = '<span class="loading-spinner"></span> Importing...';
+                        // Start polling for status
+                        pollCredentialStatus(credId, btn, originalText);
+                    } else if (result.cached) {
+                        showAlert('⚡ Using cached report!', 'success');
+                        saveSearchState();
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        saveSearchState();
+                        setTimeout(() => window.location.reload(), 1500);
+                    }
+                } else {
+                    showAlert(result.error || 'Failed to force refresh', 'error');
                     btn.textContent = originalText;
                     btn.disabled = false;
                 }

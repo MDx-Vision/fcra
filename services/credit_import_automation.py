@@ -779,6 +779,82 @@ class CreditImportAutomation:
                 except:
                     pass
 
+            elif flow == "identityiq":
+                logger.info("IdentityIQ: Navigating to credit report page...")
+
+                # IdentityIQ uses Angular.js similar to MyScoreIQ
+                # Navigate to the credit report page
+                await self.page.goto(
+                    "https://member.identityiq.com/CreditReport.aspx",
+                    wait_until="networkidle",
+                    timeout=60000,
+                )
+
+                logger.info("Waiting for IdentityIQ Angular content to render...")
+                try:
+                    await self.page.wait_for_selector(
+                        "td.info.ng-binding", state="visible", timeout=45000
+                    )
+                except Exception as e:
+                    logger.warning(f"Initial selector wait failed: {e}")
+
+                # Wait for Angular to render scores - same logic as MyScoreIQ
+                max_attempts = 30
+                for attempt in range(max_attempts):
+                    try:
+                        check_result = await self.page.evaluate(
+                            """() => {
+                            const bodyText = document.body.textContent;
+                            const hasUnrenderedTemplates = bodyText.includes('{{') && bodyText.includes('}}');
+
+                            const tds = document.querySelectorAll('td.info.ng-binding');
+                            let scoreCount = 0;
+                            tds.forEach(td => {
+                                const text = td.textContent.trim();
+                                if (/^[3-8]\\d{2}$/.test(text)) {
+                                    scoreCount++;
+                                }
+                            });
+                            return { scoreCount, hasUnrenderedTemplates };
+                        }"""
+                        )
+                        score_count = check_result.get("scoreCount", 0)
+                        has_templates = check_result.get("hasUnrenderedTemplates", True)
+
+                        logger.info(
+                            f"IdentityIQ attempt {attempt + 1}: Found {score_count} scores, unrendered: {has_templates}"
+                        )
+
+                        if score_count >= 3:
+                            logger.info("IdentityIQ: All three bureau scores detected!")
+                            break
+                    except Exception as e:
+                        logger.warning(
+                            f"IdentityIQ score check attempt {attempt + 1} failed: {e}"
+                        )
+                    await asyncio.sleep(2)
+                else:
+                    logger.error(
+                        "IdentityIQ: Could not find credit score data after 30 attempts."
+                    )
+                    return {
+                        "success": False,
+                        "error": "IdentityIQ page failed to load credit report data. Please try again.",
+                    }
+
+                await asyncio.sleep(1)
+
+                # Try to click "Show All" to expand all sections
+                try:
+                    show_all = await self.page.query_selector('a:has-text("Show All")')
+                    if show_all:
+                        await show_all.click()
+                        await asyncio.sleep(1)
+                except:
+                    pass
+
+                report_found = True
+
             elif flow == "myfreescorenow":
                 logger.info("MyFreeScoreNow: Navigating directly to 3B Report page...")
 
@@ -2448,8 +2524,9 @@ class CreditImportAutomation:
                             if (infoCells.length >= 3) {
                                 const values = Array.from(infoCells).map(td => td.textContent.trim());
 
-                                // FICO Score row
-                                if (labelText.includes('fico') && labelText.includes('score')) {
+                                // FICO Score row (MyScoreIQ) or Credit Score row (IdentityIQ)
+                                if ((labelText.includes('fico') && labelText.includes('score')) ||
+                                    (labelText.includes('credit score') && !labelText.includes('factor'))) {
                                     const tuMatch = values[0]?.match(/^([3-8]\\d{2})$/);
                                     const exMatch = values[1]?.match(/^([3-8]\\d{2})$/);
                                     const eqMatch = values[2]?.match(/^([3-8]\\d{2})$/);
@@ -3154,7 +3231,12 @@ class CreditImportAutomation:
                                 'payment status': 'payment_status',
                                 'creditor type': 'creditor_type',
                                 'dispute status': 'dispute_status',
-                                'term length': 'term_length'
+                                'term length': 'term_length',
+                                // MyFreeScoreNow-specific fields
+                                'last verified': 'last_verified',
+                                'account description': 'account_description',
+                                'creditor remarks': 'creditor_remarks',
+                                'payment frequency': 'payment_frequency'
                             };
 
                             let currentLabel = null;
@@ -3344,7 +3426,12 @@ class CreditImportAutomation:
                                     'account status:': 'status',
                                     'payment status:': 'payment_status',
                                     'creditor type:': 'creditor_type',
-                                    'term length:': 'term_length'
+                                    'term length:': 'term_length',
+                                    // MyFreeScoreNow-specific fields (Classic View)
+                                    'last verified:': 'last_verified',
+                                    'account description:': 'account_description',
+                                    'creditor remarks:': 'creditor_remarks',
+                                    'payment frequency:': 'payment_frequency'
                                 };
 
                                 // Parse each row by index

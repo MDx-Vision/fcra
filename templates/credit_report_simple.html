@@ -355,6 +355,30 @@
                         <td>{{ eq.comments or account.comments or '' }}</td>
                     </tr>
                     <tr>
+                        <td class="label-col">Creditor Remarks:</td>
+                        <td>{{ tu.creditor_remarks or account.creditor_remarks or '' }}</td>
+                        <td>{{ ex.creditor_remarks or account.creditor_remarks or '' }}</td>
+                        <td>{{ eq.creditor_remarks or account.creditor_remarks or '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Account Description:</td>
+                        <td>{{ tu.account_description or account.account_description or '' }}</td>
+                        <td>{{ ex.account_description or account.account_description or '' }}</td>
+                        <td>{{ eq.account_description or account.account_description or '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Last Verified:</td>
+                        <td>{{ tu.last_verified or account.last_verified or '' }}</td>
+                        <td>{{ ex.last_verified or account.last_verified or '' }}</td>
+                        <td>{{ eq.last_verified or account.last_verified or '' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-col">Payment Frequency:</td>
+                        <td>{{ tu.payment_frequency or account.payment_frequency or '' }}</td>
+                        <td>{{ ex.payment_frequency or account.payment_frequency or '' }}</td>
+                        <td>{{ eq.payment_frequency or account.payment_frequency or '' }}</td>
+                    </tr>
+                    <tr>
                         <td class="label-col">Date Last Active:</td>
                         <td>{{ tu.last_activity or tu.last_active or account.last_active or '' }}</td>
                         <td>{{ ex.last_activity or ex.last_active or account.last_active or '' }}</td>
