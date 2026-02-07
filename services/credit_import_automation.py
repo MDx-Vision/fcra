@@ -2936,6 +2936,107 @@ class CreditImportAutomation:
                         });
                     }
 
+                    // Extract Extended Payment History for MyScoreIQ
+                    // The payment history is inside the same parent container (ng-include or table wrapper)
+                    // We need to find the hstry-header that follows this account's sub_header
+                    let historyHeader = null;
+                    let sibling = header.nextElementSibling;
+
+                    // Walk through siblings until we find the history header or another sub_header
+                    while (sibling) {
+                        if (sibling.classList?.contains('sub_header')) {
+                            // Found another account, stop looking
+                            break;
+                        }
+                        if (sibling.classList?.contains('hstry-header') ||
+                            sibling.querySelector?.('.hstry-header')) {
+                            historyHeader = sibling.classList?.contains('hstry-header') ?
+                                            sibling : sibling.querySelector('.hstry-header');
+                            break;
+                        }
+                        // Also check inside tables for the history header
+                        if (sibling.tagName === 'TABLE') {
+                            const innerHeader = sibling.parentElement?.querySelector('.hstry-header');
+                            if (innerHeader) {
+                                historyHeader = innerHeader;
+                                break;
+                            }
+                        }
+                        sibling = sibling.nextElementSibling;
+                    }
+
+                    // If not found as sibling, try within the container
+                    if (!historyHeader) {
+                        const container = header.closest('ng-include') || header.closest('td') || header.parentElement;
+                        historyHeader = container?.querySelector('.hstry-header, .hstry-header-2yr');
+                    }
+
+                    if (historyHeader) {
+                        // Find the payment history table (has class addr_hsrty)
+                        let historyTable = historyHeader.nextElementSibling;
+                        if (!historyTable || historyTable.tagName !== 'TABLE') {
+                            // Try finding it as a sibling or in parent
+                            historyTable = historyHeader.parentElement?.querySelector('table.addr_hsrty');
+                        }
+
+                        if (historyTable && historyTable.tagName === 'TABLE') {
+                            const rows = historyTable.querySelectorAll('tr');
+                            const months = [];
+                            const years = [];
+                            const tuValues = [];
+                            const expValues = [];
+                            const eqfValues = [];
+
+                            rows.forEach(row => {
+                                const headerCell = row.querySelector('td.label.leftHeader, td.leftHeader');
+                                const dataCells = row.querySelectorAll('td.info');
+
+                                if (headerCell) {
+                                    const headerText = headerCell.textContent.trim().toLowerCase();
+                                    const cellValues = Array.from(dataCells).map(c => c.textContent.trim());
+
+                                    if (headerText === 'month') {
+                                        months.push(...cellValues);
+                                    } else if (headerText === 'year') {
+                                        years.push(...cellValues);
+                                    } else if (headerText.includes('transunion')) {
+                                        tuValues.push(...cellValues);
+                                    } else if (headerText.includes('experian')) {
+                                        expValues.push(...cellValues);
+                                    } else if (headerText.includes('equifax')) {
+                                        eqfValues.push(...cellValues);
+                                    }
+                                }
+                            });
+
+                            // Build unified payment history array
+                            if (months.length > 0) {
+                                const paymentHistory = [];
+                                for (let i = 0; i < months.length; i++) {
+                                    const month = months[i] || '';
+                                    const year = years[i] || '';
+                                    const tu = tuValues[i] || '';
+                                    const exp = expValues[i] || '';
+                                    const eqf = eqfValues[i] || '';
+
+                                    // Map empty or dash to empty string, keep OK/30/60/90/CO/CL
+                                    const mapVal = (v) => {
+                                        if (!v || v === '-' || v === '') return '';
+                                        return v.toUpperCase();
+                                    };
+
+                                    paymentHistory.push({
+                                        month: month + (year ? ' \\'' + year : ''),
+                                        transunion: mapVal(tu),
+                                        experian: mapVal(exp),
+                                        equifax: mapVal(eqf)
+                                    });
+                                }
+                                account.payment_history = paymentHistory;
+                            }
+                        }
+                    }
+
                     accounts.push(account);
                 });
 

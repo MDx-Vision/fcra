@@ -371,11 +371,11 @@
 
             {% if account.payment_history and account.payment_history|length > 0 %}
             <div style="margin-top: 10px;">
-                <strong>Two-Year payment history</strong>
+                <strong>Extended Payment History</strong>
                 <table class="payment-grid" style="margin-top: 5px;">
                     <thead>
                         <tr>
-                            <th style="width: 80px;">Month</th>
+                            <th style="width: 80px;"></th>
                             {% for entry in account.payment_history[:24] %}
                             <th>{{ entry.month[:3] if entry.month else '' }}</th>
                             {% endfor %}
