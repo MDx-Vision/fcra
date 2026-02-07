@@ -147,10 +147,16 @@
                     <td class="score-value">{{ scores.get('equifax', 'N/A') }}</td>
                 </tr>
                 <tr>
+                    <td class="label-col">Lender Rank:</td>
+                    <td>{{ scores.get('lender_rank', {}).get('transunion', 'N/A') if scores.get('lender_rank') else 'N/A' }}</td>
+                    <td>{{ scores.get('lender_rank', {}).get('experian', 'N/A') if scores.get('lender_rank') else 'N/A' }}</td>
+                    <td>{{ scores.get('lender_rank', {}).get('equifax', 'N/A') if scores.get('lender_rank') else 'N/A' }}</td>
+                </tr>
+                <tr>
                     <td class="label-col">Score Scale:</td>
-                    <td>300-850</td>
-                    <td>300-850</td>
-                    <td>300-850</td>
+                    <td>{{ scores.get('score_scale', {}).get('transunion', '300-850') if scores.get('score_scale') else '300-850' }}</td>
+                    <td>{{ scores.get('score_scale', {}).get('experian', '300-850') if scores.get('score_scale') else '300-850' }}</td>
+                    <td>{{ scores.get('score_scale', {}).get('equifax', '300-850') if scores.get('score_scale') else '300-850' }}</td>
                 </tr>
             </tbody>
         </table>

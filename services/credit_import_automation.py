@@ -2419,33 +2419,83 @@ class CreditImportAutomation:
             if not scores:
                 scores = self._extract_scores_from_html(html_content)
 
-            # Fallback to MyScoreIQ-specific JavaScript
-            if not scores:
-                try:
-                    js_scores = await self.page.evaluate(
-                        """() => {
-                        const scores = {};
-                        const infoTds = document.querySelectorAll('td.info.ng-binding');
-                        const scoreValues = [];
-                        infoTds.forEach(td => {
-                            const text = td.textContent.trim();
-                            const match = text.match(/^([3-8]\\d{2})$/);
-                            if (match) {
-                                scoreValues.push(parseInt(match[1]));
+            # Always run MyScoreIQ-specific JavaScript to extract lender rank and scale
+            # This also extracts scores if they weren't found above
+            try:
+                js_scores = await self.page.evaluate(
+                    """() => {
+                    const result = {
+                        transunion: null,
+                        experian: null,
+                        equifax: null,
+                        lender_rank: { transunion: null, experian: null, equifax: null },
+                        score_scale: { transunion: null, experian: null, equifax: null }
+                    };
+
+                    // Find the score table - look for rpt_content_table with 4 columns
+                    const tables = document.querySelectorAll('table.rpt_content_table.rpt_table4column');
+
+                    for (const table of tables) {
+                        const rows = table.querySelectorAll('tr');
+
+                        for (const row of rows) {
+                            const labelCell = row.querySelector('td.label');
+                            if (!labelCell) continue;
+
+                            const labelText = labelCell.textContent.toLowerCase();
+                            const infoCells = row.querySelectorAll('td.info, td.info.ng-binding');
+
+                            if (infoCells.length >= 3) {
+                                const values = Array.from(infoCells).map(td => td.textContent.trim());
+
+                                // FICO Score row
+                                if (labelText.includes('fico') && labelText.includes('score')) {
+                                    const tuMatch = values[0]?.match(/^([3-8]\\d{2})$/);
+                                    const exMatch = values[1]?.match(/^([3-8]\\d{2})$/);
+                                    const eqMatch = values[2]?.match(/^([3-8]\\d{2})$/);
+
+                                    if (tuMatch) result.transunion = parseInt(tuMatch[1]);
+                                    if (exMatch) result.experian = parseInt(exMatch[1]);
+                                    if (eqMatch) result.equifax = parseInt(eqMatch[1]);
+                                }
+
+                                // Lender Rank row
+                                if (labelText.includes('lender') && labelText.includes('rank')) {
+                                    result.lender_rank.transunion = values[0] || null;
+                                    result.lender_rank.experian = values[1] || null;
+                                    result.lender_rank.equifax = values[2] || null;
+                                }
+
+                                // Score Scale row
+                                if (labelText.includes('scale')) {
+                                    result.score_scale.transunion = values[0] || null;
+                                    result.score_scale.experian = values[1] || null;
+                                    result.score_scale.equifax = values[2] || null;
+                                }
                             }
-                        });
-                        if (scoreValues.length >= 3) {
-                            scores.transunion = scoreValues[0];
-                            scores.experian = scoreValues[1];
-                            scores.equifax = scoreValues[2];
                         }
-                        return scores;
-                    }"""
-                    )
-                    if js_scores:
-                        scores.update(js_scores)
-                except Exception as e:
-                    logger.warning(f"MyScoreIQ JS fallback failed: {e}")
+                    }
+
+                    return result;
+                }"""
+                )
+                if js_scores:
+                    # Merge: keep existing scores, add lender_rank and score_scale
+                    if not scores:
+                        scores = {}
+                    if js_scores.get("transunion") and not scores.get("transunion"):
+                        scores["transunion"] = js_scores["transunion"]
+                    if js_scores.get("experian") and not scores.get("experian"):
+                        scores["experian"] = js_scores["experian"]
+                    if js_scores.get("equifax") and not scores.get("equifax"):
+                        scores["equifax"] = js_scores["equifax"]
+                    # Always add lender_rank and score_scale
+                    if js_scores.get("lender_rank"):
+                        scores["lender_rank"] = js_scores["lender_rank"]
+                    if js_scores.get("score_scale"):
+                        scores["score_scale"] = js_scores["score_scale"]
+            except Exception as e:
+                logger.warning(f"MyScoreIQ lender rank extraction failed: {e}")
 
             logger.info(f"Final extracted scores: {scores}")
             return scores if scores else None
