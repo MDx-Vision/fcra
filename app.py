@@ -43516,12 +43516,19 @@ DISPUTED INQUIRIES:
 
 TODAY'S DATE: {today}
 
-Generate:
+Generate these 3 documents:
 1. FTC_Report_Instructions_{client_info['name'].replace(' ', '_')}.md
 2. CFPB_Complaint_Instructions_{client_info['name'].replace(' ', '_')}.md
 3. Inquiry_Dispute_Summary_{client_info['name'].replace(' ', '_')}.md
 
-Follow the exact format and structure from the prompt. Use professional formatting with ASCII tables. No emojis."""
+FORMATTING RULES - FOLLOW STRICTLY:
+- Keep each document to 1-2 pages maximum
+- Use minimal headers (3-4 sections max per document)
+- NO emoji, NO checkbox symbols (☐), NO decorative elements
+- Write direct instructions, not meta-descriptions
+- Questions should be listed simply: "Question 1: Select X" - not with sub-headers
+- Copy-paste text should have the client's actual info pre-filled, not brackets
+- No "Important Notes", "Timeline", or "Next Steps" filler sections"""
             else:
                 user_message = f"""Generate Phase 2 Inquiry Dispute documents (609 letters) for this client.
 

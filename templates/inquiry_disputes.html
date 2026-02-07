@@ -79,15 +79,28 @@
             margin-bottom: 8px;
         }
         .document-output {
-            background: #1e293b;
-            color: #e2e8f0;
-            border-radius: 8px;
-            padding: 15px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
+            background: #ffffff;
+            color: #1a1a2e;
+            border-radius: 4px;
+            padding: 48px 56px;
+            font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 13px;
+            line-height: 1.7;
             white-space: pre-wrap;
-            max-height: 400px;
+            max-height: 600px;
             overflow-y: auto;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+            border: 1px solid #e5e5e5;
+            letter-spacing: 0.01em;
+        }
+        .document-output::before {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #0a2540 0%, #1a365d 100%);
+            margin: -48px -56px 32px -56px;
+            width: calc(100% + 112px);
         }
         .inquiry-checkbox-container {
             max-height: 300px;
@@ -644,8 +657,27 @@
 
             outputSection.style.display = 'block';
 
-            // Create tabs
-            const docNames = Object.keys(documents);
+            // Define preferred document order
+            const docOrder = [
+                'FTC_Report_Instructions',
+                'CFPB_Complaint_Instructions',
+                'Inquiry_Dispute_Summary',
+                'TransUnion_609_Letter',
+                'Equifax_609_Letter',
+                'Phone_Follow_Up_Guide',
+                'Mailing_Checklist'
+            ];
+
+            // Sort documents by preferred order
+            const docNames = Object.keys(documents).sort((a, b) => {
+                const aOrder = docOrder.findIndex(prefix => a.includes(prefix));
+                const bOrder = docOrder.findIndex(prefix => b.includes(prefix));
+                if (aOrder === -1 && bOrder === -1) return a.localeCompare(b);
+                if (aOrder === -1) return 1;
+                if (bOrder === -1) return -1;
+                return aOrder - bOrder;
+            });
+
             tabsDiv.innerHTML = docNames.map((name, idx) => `
                 <button class="nav-link ${idx === 0 ? 'active' : ''}" onclick="showDocument('${name}')" data-doc="${name}">
                     ${name.replace(/_/g, ' ').replace('.md', '')}
