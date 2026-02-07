@@ -43,54 +43,226 @@ Duration:       10-15 minutes
 Document Type:  Identity Theft Report
 ```
 
-## Step-by-Step Instructions
+---
+
+## FTC REPORT - QUESTION BY QUESTION GUIDE
 
 ```
 ________________________________________________________________________________
 
-                         FTC REPORT SUBMISSION GUIDE
+                    FTC IDENTITY THEFT REPORT - COPY/PASTE GUIDE
+
+                    Website: https://www.identitytheft.gov
 
 ________________________________________________________________________________
 
-STEP 1:  Navigate to https://www.identitytheft.gov
-         Select: "Report Identity Theft"
-
-STEP 2:  When prompted "Which statement best describes your situation?"
-         Select: "I want to report identity theft"
-
-STEP 3:  When prompted "What did the identity thief do?"
-         Select: "Other"
-
-STEP 4:  When prompted "Tell us how your information was misused"
-         Select: "Someone opened an account or made a purchase without
-                  my permission"
-
-STEP 5:  Enter the following information for each disputed inquiry:
-         - Company Name: [CREDITOR NAME]
-         - Date Noticed: [CURRENT MONTH/YEAR]
-         - Description: "Unauthorized credit inquiry"
-
-STEP 6:  Complete personal information screens as prompted
-
-STEP 7:  In the narrative section, enter:
-         "The following inquiry/inquiries were made without my knowledge,
-         authorization, or consent. I did not apply for credit with this
-         company and did not authorize any third party to do so. This is
-         identity theft."
-
-STEP 8:  Submit and IMMEDIATELY download the PDF report
-
-         CRITICAL: The PDF cannot be retrieved after leaving this page.
+STEP 1: Go to https://www.identitytheft.gov
+        Click: "Get started"
 
 ________________________________________________________________________________
 
-RECORD YOUR INFORMATION
+QUESTION 1: "My info was exposed in a data breach"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Equifax                                                           │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 2: "Yes, someone used my info..."
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Credit card accounts                                              │
+        │  (or select "loans or leases" if that applies to your inquiries)   │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 3: "To open a fraudulent account"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  To open a fraudulent account                                      │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 4: "Theft Details Page"
+            "What company or bank issued the credit card?"
+
+        TYPE:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Not applicable                                                    │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        Everything else on this page: LEAVE BLANK
+
+________________________________________________________________________________
+
+QUESTION 5: "Your Information Page"
+
+        - Input your name
+        - Input phone # (you will receive a verification code)
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Myself                                                            │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        - Input your Birthday
+        - Input your Address
+
+________________________________________________________________________________
+
+QUESTION 6: Series of Yes/No Questions
+
+        SELECT FOR EACH:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  No                                                                │
+        │  No                                                                │
+        │  No, not at this time                                              │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 7: "Yes (review report)"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Yes (review report)                                               │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 8: "Yes (fraudulent accounts)"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Yes (fraudulent accounts)                                         │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 9: Checkboxes
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  None of the checkboxes                                            │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 10: "Company Name"
+
+        Input the inquiry information EXACTLY how it is shown on the report
+        + type in date
+
+        EXAMPLE:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  BK OF AMER 07/11/2023                                             │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        (Upload up to three - we will attach the rest later)
+
+________________________________________________________________________________
+
+QUESTION 11: "No (requested fraud alert)"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  No (requested fraud alert)                                        │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 12: "No (contacted police)"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  No (contacted police)                                             │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 13: "Yes (info exposed in breach)"
+
+        Check boxes:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  [X] YES Equifax                                                   │
+        │  [X] YES Marriott                                                  │
+        │  [X] YES Breach not listed                                         │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 14: "Yes (debt collector contacted you)"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Yes (debt collector contacted you)                                │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 15: Statement Box
+
+        COPY THIS EXACT TEXT (replace bracketed items with your inquiries):
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │                                                                     │
+        │  These inquiries do not belong to me, please have them removed     │
+        │  from my credit report:                                            │
+        │                                                                     │
+        │  BK OF AMER (04/05/2023), LIGHTSTRM (04/04/2023),                  │
+        │  US BANK (04/04/2023), ELAN FINANI (03/07/2023)                    │
+        │                                                                     │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        ** LIST ALL YOUR INQUIRIES WITH DATES - EXACTLY AS SHOWN ON REPORT **
+
+________________________________________________________________________________
+
+QUESTION 16: Input inquiry information
+
+        Input the inquiry information exactly how it is shown on the report
+
+________________________________________________________________________________
+
+FINALIZE:
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Submit without an account                                         │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Text message                                                      │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+*** CRITICAL - DO NOT SKIP ***
+
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │                                                                     │
+        │  DOWNLOAD PDF DOC                                                  │
+        │                                                                     │
+        │  The PDF report CANNOT be retrieved after you leave this page!     │
+        │  Download it NOW and save it to your computer.                     │
+        │                                                                     │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+RECORD YOUR FTC INFORMATION
 
 FTC Report Number:  _________________________________
 
 Date Filed:         _________________________________
 
-PDF Downloaded:     [ ] Confirmed
+PDF Downloaded:     [ ] Yes - Saved to computer
 
 ________________________________________________________________________________
 ```
@@ -104,6 +276,7 @@ Submit IMMEDIATELY after completing FTC Report.
 
 ## Important Requirement
 Submit SEPARATE complaints for each credit bureau (TransUnion and Equifax).
+You will go through this process TWICE - once for each bureau.
 
 ## Portal Information
 ```
@@ -112,50 +285,263 @@ Duration:       10-15 minutes per bureau
 Response:       15 business days (federal requirement)
 ```
 
-## Complaint Template
+---
+
+## CFPB COMPLAINT - QUESTION BY QUESTION GUIDE
 
 ```
 ________________________________________________________________________________
 
-                         CFPB COMPLAINT SUBMISSION
+                    CFPB COMPLAINT - COPY/PASTE GUIDE
+
+                    Website: https://www.consumerfinance.gov/complaint/
 
 ________________________________________________________________________________
 
-Bureau:         [ ] TransUnion    [ ] Equifax
+                    *** FILE SEPARATE COMPLAINTS FOR EACH BUREAU ***
+
+                    Complete this form TWICE:
+                    [ ] Once for TransUnion
+                    [ ] Once for Equifax
 
 ________________________________________________________________________________
 
-COMPLAINT NARRATIVE (Copy and customize):
-
---------------------------------------------------------------------------------
-I am filing this complaint regarding unauthorized credit inquiries that appear
-on my [BUREAU NAME] credit report. These inquiries were made without my
-knowledge, authorization, or consent.
-
-DISPUTED INQUIRIES:
-
-Creditor:       [CREDITOR NAME]
-Inquiry Date:   [DATE]
-Authorization:  NONE PROVIDED
-
-I have filed an FTC Identity Theft Report (Reference: [FTC NUMBER]).
-
-Under FCRA Section 604, consumer reporting agencies may only furnish reports
-for permissible purposes. I did not apply for credit with the creditor(s)
-listed above and did not authorize any third party to access my credit file.
-
-I request immediate investigation and removal of these unauthorized inquiries.
---------------------------------------------------------------------------------
+STEP 1: Go to https://www.consumerfinance.gov/complaint/
+        Click: "Submit A Complaint" (top right)
 
 ________________________________________________________________________________
 
-RECORD YOUR INFORMATION
+STEP 2: Select "Start a new complaint"
+        Create an account and verify email address
 
-CFPB Complaint (TransUnion): _________________________________
+________________________________________________________________________________
 
-CFPB Complaint (Equifax):    _________________________________
+QUESTION 1: "What is this complaint about?"
 
-Date Filed:                  _________________________________
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Credit reporting or other personal consumer reports               │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 2: "What type of credit reporting product?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Credit reporting                                                  │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        Click: Next
+
+________________________________________________________________________________
+
+QUESTION 3: "What type of problem are you having?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Improper use of your report                                       │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 4: "Which best describes your problem?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Credit inquiries on your report that you don't recognize          │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 5: "Have you already tried to fix this problem with the company?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Yes                                                               │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 6: "Did you request information from the company?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Yes                                                               │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 7: "Did the company provide you this information?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Yes                                                               │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        Click: Next
+
+________________________________________________________________________________
+
+QUESTION 8: "What happened?"
+
+        COPY THIS EXACT TEXT (replace items in brackets):
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │                                                                     │
+        │  I just recently looked at my report from [CREDIT BUREAU] on       │
+        │  [TODAY DATE], and I saw some hard inquiries that are the result   │
+        │  of Identity Theft.                                                │
+        │                                                                     │
+        │  Please block and/or remove all information resulting from         │
+        │  Identity Theft pursuant to FCRA 605B (15 U.S.C. & 1681 c-2)      │
+        │  which states that these accounts must be removed within           │
+        │  4 Business Days of receipt.                                       │
+        │                                                                     │
+        │  These accounts are causing me hardship and they are hindering     │
+        │  me from obtaining new credit.                                     │
+        │                                                                     │
+        │  1. [Name of inquiry and Date] Please block and/or remove all      │
+        │     information resulting from Identity Theft pursuant to          │
+        │     FCRA 605B (15 U.S.C. & 1681 c-2).                             │
+        │                                                                     │
+        │  2. [Name of inquiry and Date] Please block and/or remove all      │
+        │     information resulting from Identity Theft pursuant to          │
+        │     FCRA 605B (15 U.S.C. & 1681 c-2).                             │
+        │                                                                     │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        EXAMPLE (filled in):
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │                                                                     │
+        │  I just recently looked at my report from TRANSUNION on            │
+        │  January 15, 2026, and I saw some hard inquiries that are the      │
+        │  result of Identity Theft.                                         │
+        │                                                                     │
+        │  Please block and/or remove all information resulting from         │
+        │  Identity Theft pursuant to FCRA 605B (15 U.S.C. & 1681 c-2)      │
+        │  which states that these accounts must be removed within           │
+        │  4 Business Days of receipt.                                       │
+        │                                                                     │
+        │  These accounts are causing me hardship and they are hindering     │
+        │  me from obtaining new credit.                                     │
+        │                                                                     │
+        │  1. BK OF AMER (04/05/2023) Please block and/or remove all         │
+        │     information resulting from Identity Theft pursuant to          │
+        │     FCRA 605B (15 U.S.C. & 1681 c-2).                             │
+        │                                                                     │
+        │  2. LIGHTSTRM (04/04/2023) Please block and/or remove all          │
+        │     information resulting from Identity Theft pursuant to          │
+        │     FCRA 605B (15 U.S.C. & 1681 c-2).                             │
+        │                                                                     │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 9: "What would be a fair resolution to this issue?"
+
+        COPY THIS EXACT TEXT (replace items in brackets):
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │                                                                     │
+        │  Delete these hard inquiries; [Name of inquiry and Date],          │
+        │  [Name of inquiry and Date], [Name of inquiry and Date],           │
+        │  has violated my rights.                                           │
+        │                                                                     │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        EXAMPLE (filled in):
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │                                                                     │
+        │  Delete these hard inquiries; BK OF AMER (04/05/2023),             │
+        │  LIGHTSTRM (04/04/2023), US BANK (04/04/2023),                     │
+        │  has violated my rights.                                           │
+        │                                                                     │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 10: "Select a file to attach?"
+
+        UPLOAD:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Upload the PDF FTC Report                                         │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        Click: Next
+
+________________________________________________________________________________
+
+QUESTION 11: "What company is this complaint about?"
+
+        TYPE:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Type the credit bureau name:                                      │
+        │                                                                     │
+        │  For TransUnion complaint: TRANSUNION                              │
+        │  For Equifax complaint:    EQUIFAX                                 │
+        │  (For Experian complaint:  EXPERIAN)                               │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 12: "Your information"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  SSN, Name, and date of birth                                      │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        Fill out all the necessary information
+
+________________________________________________________________________________
+
+QUESTION 13: "Do you want to complain about another company?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  No                                                                │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 14: "Who are you submitting this complaint for?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Myself                                                            │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+STEP 3: Review the complaint
+
+        Double-check all information is correct
+
+________________________________________________________________________________
+
+STEP 4: Submit the complaint
+
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  *** DO NOT REFRESH ***                                            │
+        │                                                                     │
+        │  It will restart everything. It may take time to process.          │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+NOTE: This process may remove the inquiries by itself within 72 hours.
+      If it doesn't, then continue to the next step (609 Letters).
+
+________________________________________________________________________________
+
+RECORD YOUR CFPB INFORMATION
+
+CFPB Complaint # (TransUnion):  _________________________________
+
+CFPB Complaint # (Equifax):     _________________________________
+
+Date Filed (TransUnion):        _________________________________
+
+Date Filed (Equifax):           _________________________________
 
 ________________________________________________________________________________
 ```
@@ -173,12 +559,98 @@ Certified Mail with Return Receipt Requested
 +-------------+----------------------------------------------------------+
 | Bureau      | Address                                                  |
 +-------------+----------------------------------------------------------+
-| TransUnion  | P.O. Box 2000                                           |
+| TransUnion  | TransUnion Consumer Solutions                            |
+|             | P.O. Box 2000                                           |
 |             | Chester, PA 19016                                       |
 +-------------+----------------------------------------------------------+
-| Equifax     | P.O. BOX 740256                                         |
+| Equifax     | Equifax Credit Information Services INC                  |
+|             | P.O. BOX 740256                                         |
 |             | Atlanta, GA 30374                                       |
 +-------------+----------------------------------------------------------+
+```
+
+---
+
+## PREPARING LETTERS FOR CREDIT BUREAUS
+
+```
+________________________________________________________________________________
+
+                    STEP 1: GATHER YOUR INFO & DOCS
+
+________________________________________________________________________________
+
+Documents Needed:
+
+[ ] Your Full Name
+[ ] Your Address
+[ ] Your Birthdate
+[ ] Copy of Driver's License
+[ ] Copy of Social Security Card
+[ ] Proof of Residency (e.g. utility bill, phone bill, or bank statement)
+
+________________________________________________________________________________
+
+                    STEP 2: DOCUMENT PREPARATION
+
+________________________________________________________________________________
+
+1. Use the letter template below
+
+2. Reference your FTC complaint in your letter
+
+3. List all inquiries that you believe are incorrect and should be removed
+
+4. Input the "Bank Name" EXACTLY as shown on report
+   Example: FAIRWINDS CREDIT UNI
+
+5. Input the date in the following format: Month Day, Year
+   Example: January 17, 2023
+
+6. Repeat the entire process for both bureaus
+
+________________________________________________________________________________
+
+                    STEP 3: VERIFICATION
+
+________________________________________________________________________________
+
+Double-check all the information in your letter:
+
+[ ] Verify today's date
+[ ] Verify Name
+[ ] Verify Address (look at driver's license)
+[ ] Input SSN (look at SSN Card)
+[ ] Verify typed name at the bottom as the "signature"
+
+Make sure the details match what's in your FTC report:
+
+[ ] Match the inquiries and the dates
+[ ] Make sure none of them are Experian (that is a different process)
+
+[ ] Save and keep a copy of everything
+
+*** VERIFY - VERIFY - VERIFY everything ***
+
+________________________________________________________________________________
+
+                    STEP 4: SEND THE LETTERS
+
+________________________________________________________________________________
+
+MAKE SURE ALL DOCS ARE THERE:
+
+[ ] 609 Letters
+[ ] FTC Report
+[ ] Copy of Driver's License
+[ ] Copy of SSN card
+[ ] Proof of Address
+
+Mail the letters to the respective credit bureaus as CERTIFIED MAIL (IMPORTANT).
+
+Make sure to keep a record of your mail and the receipt.
+
+________________________________________________________________________________
 ```
 
 ---
@@ -384,7 +856,9 @@ ________________________________________________________________________________
 # PHASE 4: TELEPHONE FOLLOW-UP
 
 ## Timing
-5-8 business days after mailing 609 letters
+The documentation will take 5 full business days to process once it arrives.
+If you still see the inquiries there after the 8th full business day of
+processing, call them and ask politely to have them removed.
 
 ## Bureau Contact Information
 
@@ -399,49 +873,70 @@ TRANSUNION
 ----------
 Telephone:      1-800-916-8800
 Hold Time:      Approximately 30 minutes
-Best Time:      Tuesday-Thursday, 9:00 AM - 11:00 AM EST
 
-Navigation:
-1. Press 2 for English
-2. Press 1 for Credit Report
-3. Press 2 for Dispute
-4. When prompted, say "Representative"
-5. Request transfer to Fraud Department if needed
+STEPS:
+1. Call the number
+2. Select the "Dispute" option
+3. Do NOT select option #1
+4. If prompted for text confirmation, hit # multiple times
+5. Once connected to an agent, provide your information
+6. Mention: "I recently sent a letter about fraudulent inquiries due to
+   identity theft on my credit report. An FTC report was attached.
+   I'd like to confirm the inquiries removal."
+7. You'll be asked for identity verification
+   - If they suggest text/email verification, clarify that you're on
+     your business phone and cannot receive texts
+   - Request to answer security questions instead
+8. They will ask about report specifics. E.g., "Name the lender and
+   monthly payment for an auto loan/mortgage/credit card."
+   Scan the report and answer accordingly.
+9. If needed, be persistent in your request
+10. If uncooperative, ask to speak with a supervisor.
+    This might need repetition.
 
 ________________________________________________________________________________
 
 EQUIFAX
 -------
 Telephone:      1-800-525-6285
-Hold Time:      Approximately 15-20 minutes
-Best Time:      Tuesday-Thursday, 10:00 AM - 12:00 PM EST
+Hold Time:      Approximately 15 minutes
 
-Navigation:
-1. Press 3 for Credit Report Questions
-2. Press 1 for Personal Credit Report
-3. Press 0 for Representative
-4. Request transfer to Fraud/Dispute Department
+STEPS:
+1. Call the number
+2. Connect directly with an agent
+3. Provide your information
+4. Mention: "I recently sent a letter about fraudulent inquiries due to
+   identity theft on my credit report. An FTC report was attached.
+   I'd like to confirm the inquiries' removal."
+5. You'll be asked for identity verification
+   - If they suggest text/email verification, clarify that you're on
+     your business phone and cannot receive texts
+   - Request to answer security questions instead
+6. They will ask about report specifics. E.g., "Name the lender and
+   monthly payment for an auto loan/mortgage/credit card."
+   Scan the report and answer accordingly.
+7. If needed, be persistent in your request
+8. If uncooperative, ask to speak with a supervisor.
+   This might need repetition.
 
 ________________________________________________________________________________
 
-CALL SCRIPT
+IMPORTANT NOTES:
 
-"Hello, my name is [CLIENT NAME]. I am calling to follow up on a dispute
-letter I mailed regarding unauthorized credit inquiries on my report.
+- Be prepared for potential multiple calls
+- It might take 3-4 calls for a successful resolution
 
-I sent the letter via certified mail on [DATE]. The tracking number is
-[TRACKING NUMBER].
+________________________________________________________________________________
 
-I would like to verify that my dispute has been received and processed.
-Can you provide me with a status update and expected completion date?"
+IF THEY WON'T REMOVE OVER THE PHONE:
 
-If resistance is encountered:
+If you are not able to confirm the removal or they won't let you remove
+them over the phone after this strategy (try calling multiple times),
+they should be able to tell you WHY.
 
-"I understand. However, under FCRA Section 611, you are required to
-investigate disputes within 30 days. I have also filed complaints with
-the FTC and CFPB. My FTC reference number is [FTC NUMBER] and my CFPB
-complaint number is [CFPB NUMBER]. Please escalate this matter to your
-compliance department."
+Make the adjustment and submit everything again.
+
+If still facing issues, proceed to 2nd CFPB Complaint (Phase 5).
 
 ________________________________________________________________________________
 
@@ -468,48 +963,249 @@ Submit second CFPB complaint if:
 - Bureau fails to respond to 609 letter within 30 days
 - Inquiries reinstated after removal
 
-## Escalation Language
+## 2nd CFPB COMPLAINT - QUESTION BY QUESTION GUIDE
 
 ```
 ________________________________________________________________________________
 
-                    ESCALATED CFPB COMPLAINT NARRATIVE
+                    2nd CFPB COMPLAINT - ESCALATION
+
+                    Website: https://www.consumerfinance.gov/complaint/
 
 ________________________________________________________________________________
 
-I am filing this escalated complaint regarding the continued presence of
-unauthorized credit inquiries on my [BUREAU NAME] credit report.
+                    *** FILE SEPARATE COMPLAINTS FOR EACH BUREAU ***
 
-PREVIOUS COMPLAINT HISTORY:
+________________________________________________________________________________
 
-Initial CFPB Complaint:     [PREVIOUS CFPB NUMBER]
-Date Filed:                 [DATE]
-FTC Reference Number:       [FTC NUMBER]
-609 Letter Sent:            [DATE]
-Certified Mail Tracking:    [TRACKING NUMBER]
+STEP 1: Go to https://www.consumerfinance.gov/complaint/
+        Click: "Submit A Complaint" (top right)
 
-BUREAU RESPONSE:
+________________________________________________________________________________
 
-The bureau has [failed to respond / provided inadequate response / reinstated
-disputed inquiries] despite receiving proper documentation of identity theft.
+STEP 2: Select "Start a new complaint"
+        Create an account and verify email address (or log in)
 
-CONTINUED VIOLATIONS:
+________________________________________________________________________________
 
-The following inquiries remain on my credit report in violation of FCRA
-Section 604 and Section 605B:
+QUESTION 1: "What is this complaint about?"
 
-+------------------------+---------------------+
-| Creditor Name          | Date of Inquiry     |
-+------------------------+---------------------+
-| [CREDITOR 1]           | [DATE]              |
-+------------------------+---------------------+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Credit reporting or other personal consumer reports               │
+        └─────────────────────────────────────────────────────────────────────┘
 
-REQUEST FOR ENFORCEMENT ACTION:
+________________________________________________________________________________
 
-I request that the CFPB:
-1. Compel immediate removal of these unauthorized inquiries
-2. Document this violation in the bureau's regulatory record
-3. Consider enforcement action for continued non-compliance
+QUESTION 2: "What type of credit reporting product?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Credit reporting                                                  │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        Click: Next
+
+________________________________________________________________________________
+
+QUESTION 3: "What type of problem are you having?"
+
+        *** DIFFERENT FROM FIRST COMPLAINT ***
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Problem with a company's investigation into an existing problem   │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 4: "Which best describes your problem?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Their investigation did not fix an error on your report           │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 5: "Have you already tried to fix this problem with the company?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Yes                                                               │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 6: "Did you request information from the company?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  No                                                                │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        Click: Next
+
+________________________________________________________________________________
+
+QUESTION 7: "What happened?"
+
+        COPY THIS EXACT TEXT (replace items in brackets):
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │                                                                     │
+        │  I am writing to follow up on a previous complaint I submitted     │
+        │  concerning inaccuracies in my credit report, specifically         │
+        │  related to unauthorized inquiries that are a result of identity   │
+        │  theft. Despite my diligent efforts to resolve this issue          │
+        │  through various means, the credit bureau has failed to rectify    │
+        │  the inaccuracies in compliance with the Fair Credit Reporting     │
+        │  Act (FCRA).                                                       │
+        │                                                                     │
+        │  On reviewing my credit report after filing an FTC report for      │
+        │  identity theft, I identified unauthorized inquiries that should   │
+        │  not be present. Pursuant to FCRA Section 609B and under the       │
+        │  guidelines of Identity Theft pursuant to FCRA 605B (15 U.S.C.     │
+        │  & 1681c-2), I demanded the immediate removal of these inquiries   │
+        │  within four business days. Despite this, the credit bureau has    │
+        │  not taken the required action.                                    │
+        │                                                                     │
+        │  Furthermore, I have contacted the credit bureau directly to       │
+        │  request the removal of these inquiries, but my requests were      │
+        │  not honored, demonstrating a lack of adherence to 15 U.S.C.       │
+        │  1681s-2, which mandates that no inaccurate information should     │
+        │  be furnished by any entity if it knows or has reason to believe   │
+        │  the information is inaccurate.                                    │
+        │                                                                     │
+        │  I provided a detailed dispute letter (Letter 609B) and followed   │
+        │  up with a phone call. Despite these efforts, the bureau's         │
+        │  investigation concluded without rectifying the inaccuracies,      │
+        │  contradicting 15 USC 1681i 5, which requires the agency to        │
+        │  delete or modify unverified or inaccurate information promptly.   │
+        │                                                                     │
+        │  Moreover, the bureau has failed to provide a comprehensive        │
+        │  description of the reinvestigation process as stipulated under    │
+        │  15 USC 1681i(7), leaving me without the necessary transparency    │
+        │  and clarity on the actions taken (or not taken) regarding my      │
+        │  dispute.                                                          │
+        │                                                                     │
+        │  The continued presence of these inaccuracies on my credit         │
+        │  report not only violates the FCRA but also has a detrimental      │
+        │  impact on my financial wellbeing. I seek the Bureau's             │
+        │  intervention to ensure that the credit reporting agency adheres   │
+        │  to the stipulated laws and rectifies the errors on my credit      │
+        │  report without further delay.                                     │
+        │                                                                     │
+        │  Enclosed, please find all relevant documentation, including       │
+        │  copies of my previous correspondences, the FTC identity theft     │
+        │  report, and evidence supporting the unauthorized nature of the    │
+        │  inquiries in question.                                            │
+        │                                                                     │
+        │  I appreciate your attention to this urgent matter and look        │
+        │  forward to your swift action to enforce compliance with the       │
+        │  FCRA and safeguard my consumer rights.                            │
+        │                                                                     │
+        │  These accounts are causing me hardship and they are hindering     │
+        │  me from obtaining new credit.                                     │
+        │                                                                     │
+        │  1. [Name of inquiry and Date] Please block and/or remove all      │
+        │     information resulting from Identity Theft pursuant to          │
+        │     FCRA 605B (15 U.S.C. & 1681 c-2).                             │
+        │                                                                     │
+        │  2. [Name of inquiry and Date] Please block and/or remove all      │
+        │     information resulting from Identity Theft pursuant to          │
+        │     FCRA 605B (15 U.S.C. & 1681 c-2).                             │
+        │                                                                     │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 8: "What would be a fair resolution to this issue?"
+
+        COPY THIS EXACT TEXT (replace items in brackets):
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │                                                                     │
+        │  Delete these hard inquiries; [Name of inquiry and Date],          │
+        │  [Name of inquiry and Date], [Name of inquiry and Date],           │
+        │  has violated my rights.                                           │
+        │                                                                     │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 9: "Select a file to attach?"
+
+        UPLOAD:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Upload the PDF FTC Report AND the 609B Letter                     │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        Click: Next
+
+________________________________________________________________________________
+
+QUESTION 10: "What company is this complaint about?"
+
+        TYPE:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Type the credit bureau name:                                      │
+        │                                                                     │
+        │  For TransUnion complaint: TRANSUNION                              │
+        │  For Equifax complaint:    EQUIFAX                                 │
+        │  (For Experian complaint:  EXPERIAN)                               │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 11: "Your information"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  SSN, Name, and date of birth                                      │
+        └─────────────────────────────────────────────────────────────────────┘
+
+        Fill out all the necessary information
+
+________________________________________________________________________________
+
+QUESTION 12: "Do you want to complain about another company?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  No                                                                │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+QUESTION 13: "Who are you submitting this complaint for?"
+
+        SELECT:
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  Myself                                                            │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+STEP 3: Review the complaint
+
+        Double-check all information is correct
+
+________________________________________________________________________________
+
+STEP 4: Submit the complaint
+
+        ┌─────────────────────────────────────────────────────────────────────┐
+        │  *** DO NOT REFRESH ***                                            │
+        │                                                                     │
+        │  It will restart everything. It may take time to process.          │
+        └─────────────────────────────────────────────────────────────────────┘
+
+________________________________________________________________________________
+
+Within a week you should see the inquiries removed.
+
+Remember to always keep records of every interaction and document you send
+or receive. It'll be crucial in the event of any discrepancies or further
+disputes.
 
 ________________________________________________________________________________
 ```

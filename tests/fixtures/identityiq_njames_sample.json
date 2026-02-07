@@ -1,0 +1,3998 @@
+{
+  "scores": {
+    "transunion": 723,
+    "experian": 724,
+    "equifax": 730,
+    "lender_rank": {
+      "transunion": "Great",
+      "experian": "Great",
+      "equifax": "Great"
+    },
+    "score_scale": {
+      "transunion": "300-850",
+      "experian": "300-850",
+      "equifax": "300-850"
+    }
+  },
+  "personal_info": {
+    "name": "NICHOLAS JAMES STEWART",
+    "dob": "6/25/2000",
+    "address": "510 FENCE LINE DR BLUE GRASS, IA 52726",
+    "transunion": {
+      "names": [
+        "NICHOLAS JAMES STEWART"
+      ],
+      "dob": "6/25/2000",
+      "current_address": "510 FENCE LINE DR BLUE GRASS, IA 52726",
+      "previous_addresses": [],
+      "employers": []
+    },
+    "experian": {
+      "names": [
+        "NICHOLAS STEWART"
+      ],
+      "dob": "2000",
+      "current_address": "1176 DEVILS GLEN RD APT 210 BETTENDORF, IA 52722-4571",
+      "previous_addresses": [
+        {
+          "address": "510 FENCE LINE DR BLUE GRASS, IA 52726-9446",
+          "date": "04/2025"
+        }
+      ],
+      "employers": [
+        {
+          "name": "QUAD CITY CONSTRUCTION"
+        }
+      ]
+    },
+    "equifax": {
+      "names": [
+        "NICHOLAS STEWART"
+      ],
+      "dob": "6/25/2000",
+      "current_address": "510 FENCE LINE DR BLUE GRASS, IA 52726",
+      "previous_addresses": [],
+      "employers": []
+    }
+  },
+  "accounts": [
+    {
+      "creditor": "NAVY FCU",
+      "original_creditor": null,
+      "account_number": "379550****",
+      "account_type": "Revolving",
+      "account_type_detail": "Credit Card",
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$25,000.00",
+      "high_balance": "$3,205.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "09/28/2022",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": true,
+      "responsibility": "Authorized User",
+      "payment_history": [
+        {
+          "month": "JanJ",
+          "year": "26",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "FebF",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "FebF",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$25,000.00",
+          "date_opened": "09/28/2022",
+          "status": null,
+          "number": "379550****",
+          "type": "Revolving"
+        },
+        "experian": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$25,000.00",
+          "date_opened": "09/01/2022",
+          "status": null,
+          "number": "964",
+          "type": "Revolving"
+        },
+        "equifax": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$25,000.00",
+          "date_opened": "09/01/2022",
+          "status": null,
+          "number": "379550XXXXX****",
+          "type": "Revolving"
+        }
+      }
+    },
+    {
+      "creditor": "AMER HONDA",
+      "original_creditor": null,
+      "account_number": "46499****",
+      "account_type": "Installment",
+      "account_type_detail": "Auto Loan",
+      "status": "Current",
+      "balance": "$19,072.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$39,171.00",
+      "monthly_payment": "$613.00",
+      "payment_status": null,
+      "date_opened": "09/28/2022",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "DecD",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$19,072.00",
+          "credit_limit": "$0.00",
+          "date_opened": "09/28/2022",
+          "status": null,
+          "number": "46499****",
+          "type": "Installment"
+        },
+        "experian": {
+          "present": true,
+          "balance": "$19,072.00",
+          "credit_limit": "$0.00",
+          "date_opened": "09/01/2022",
+          "status": null,
+          "number": "46499****",
+          "type": "Installment"
+        },
+        "equifax": {
+          "present": true,
+          "balance": "$19,072.00",
+          "credit_limit": "$0.00",
+          "date_opened": "09/01/2022",
+          "status": null,
+          "number": "46499****",
+          "type": "Installment"
+        }
+      }
+    },
+    {
+      "creditor": "AFFIRM INC",
+      "original_creditor": null,
+      "account_number": "XE7Y****",
+      "account_type": "Installment",
+      "account_type_detail": "Unsecured loan",
+      "status": "Current",
+      "balance": "$110.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$443.00",
+      "monthly_payment": "$239.00",
+      "payment_status": null,
+      "date_opened": "11/21/2025",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "DecD",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$110.00",
+          "credit_limit": "$0.00",
+          "date_opened": "11/21/2025",
+          "status": null,
+          "number": "XE7Y****",
+          "type": "Installment"
+        },
+        "experian": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        },
+        "equifax": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        }
+      }
+    },
+    {
+      "creditor": "AUSTINCAPBK",
+      "original_creditor": null,
+      "account_number": "85QR**",
+      "account_type": "Credit Line",
+      "account_type_detail": "Credit line secured",
+      "status": "Current",
+      "balance": "$10.00",
+      "credit_limit": "$1,750.00",
+      "high_balance": "$10.00",
+      "monthly_payment": "$10.00",
+      "payment_status": null,
+      "date_opened": "10/17/2024",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "DecD",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "24",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$10.00",
+          "credit_limit": "$1,750.00",
+          "date_opened": "10/17/2024",
+          "status": null,
+          "number": "85QR**",
+          "type": "Credit Line"
+        },
+        "experian": {
+          "present": true,
+          "balance": "$10.00",
+          "credit_limit": "$1,750.00",
+          "date_opened": "10/01/2024",
+          "status": null,
+          "number": "85QR**",
+          "type": "Credit Line"
+        },
+        "equifax": {
+          "present": true,
+          "balance": "$10.00",
+          "credit_limit": "$1,750.00",
+          "date_opened": "10/01/2024",
+          "status": null,
+          "number": "85QRVB****",
+          "type": "Credit Line"
+        }
+      }
+    },
+    {
+      "creditor": "PINATA RENT",
+      "original_creditor": null,
+      "account_number": "6KFKRSW0R2****",
+      "account_type": "Open Account",
+      "account_type_detail": "Rental agreement",
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$1,215.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "02/02/2024",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "NovN",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "25",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "02/02/2024",
+          "status": null,
+          "number": "6KFKRSW0R2****",
+          "type": "Open Account"
+        },
+        "experian": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        },
+        "equifax": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        }
+      }
+    },
+    {
+      "creditor": "EDC/PINATA/JOCEBEE",
+      "original_creditor": null,
+      "account_number": "1JD9NY66KFKRSW0****",
+      "account_type": "Open Account",
+      "account_type_detail": "Rental agreement",
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$1,215.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "02/01/2024",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "OctO",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "25",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "24",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "24",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "24",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "24",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "24",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "24",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "24",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "24",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "24",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "24",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        },
+        "experian": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "02/01/2024",
+          "status": null,
+          "number": "1JD9NY66KFKRSW0****",
+          "type": "Open Account"
+        },
+        "equifax": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        }
+      }
+    },
+    {
+      "creditor": "BLUE GRASS",
+      "original_creditor": null,
+      "account_number": "1269**",
+      "account_type": "Installment",
+      "account_type_detail": "Unsecured loan",
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$2,000.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "06/03/2022",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "MayM",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "23",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "23",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "23",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "23",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "06/03/2022",
+          "status": null,
+          "number": "1269**",
+          "type": "Installment"
+        },
+        "experian": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "06/01/2022",
+          "status": null,
+          "number": "1269**",
+          "type": "Installment"
+        },
+        "equifax": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "06/01/2022",
+          "status": null,
+          "number": "1269**",
+          "type": "Installment"
+        }
+      }
+    },
+    {
+      "creditor": "AMER HONDA",
+      "original_creditor": null,
+      "account_number": "45802****",
+      "account_type": "Installment",
+      "account_type_detail": "Auto Lease",
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$22,080.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "08/20/2021",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "OctO",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "08/20/2021",
+          "status": null,
+          "number": "45802****",
+          "type": "Installment"
+        },
+        "experian": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "08/01/2021",
+          "status": null,
+          "number": "45802****",
+          "type": "Installment"
+        },
+        "equifax": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "08/01/2021",
+          "status": null,
+          "number": "45802****",
+          "type": "Installment"
+        }
+      }
+    },
+    {
+      "creditor": "BLUE GRASS",
+      "original_creditor": null,
+      "account_number": "1266**",
+      "account_type": "Installment",
+      "account_type_detail": null,
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$1,500.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "08/12/2021",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "AprA",
+          "year": "22",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "22",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "22",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "22",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "21",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "21",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "21",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "21",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "21",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "08/12/2021",
+          "status": null,
+          "number": "1266**",
+          "type": "Installment"
+        },
+        "experian": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        },
+        "equifax": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "08/01/2021",
+          "status": null,
+          "number": "1266**",
+          "type": "Installment"
+        }
+      }
+    },
+    {
+      "creditor": "BLUE GRASS",
+      "original_creditor": null,
+      "account_number": "1264**",
+      "account_type": "Installment",
+      "account_type_detail": null,
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$1,500.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "04/09/2021",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "JulJ",
+          "year": "21",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "21",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "21",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "21",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "19",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "19",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "19",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "19",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "19",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "04/09/2021",
+          "status": null,
+          "number": "1264**",
+          "type": "Installment"
+        },
+        "experian": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        },
+        "equifax": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "04/01/2021",
+          "status": null,
+          "number": "1264**",
+          "type": "Installment"
+        }
+      }
+    },
+    {
+      "creditor": "TAB/SUNBIT",
+      "original_creditor": null,
+      "account_number": "9559****",
+      "account_type": "Installment",
+      "account_type_detail": "Installment sales contract",
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$188.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "04/13/2022",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "AprA",
+          "year": "22",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "20",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "04/13/2022",
+          "status": null,
+          "number": "9559****",
+          "type": "Installment"
+        },
+        "experian": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        },
+        "equifax": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        }
+      }
+    },
+    {
+      "creditor": "BLUE GRASS",
+      "original_creditor": null,
+      "account_number": "1275**",
+      "account_type": "Installment",
+      "account_type_detail": null,
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$3,000.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "07/31/2023",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "AprA",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "23",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "23",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "23",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "23",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "23",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "23",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "22",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "07/31/2023",
+          "status": null,
+          "number": "1275**",
+          "type": "Installment"
+        },
+        "experian": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        },
+        "equifax": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "07/01/2023",
+          "status": null,
+          "number": "1275**",
+          "type": "Installment"
+        }
+      }
+    },
+    {
+      "creditor": "IH MS VLY CU",
+      "original_creditor": null,
+      "account_number": "702898****",
+      "account_type": "Installment",
+      "account_type_detail": "Auto Loan",
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$19,711.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "10/12/2019",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Joint",
+      "payment_history": [
+        {
+          "month": "OctO",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "21",
+          "transunion": null,
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "21",
+          "transunion": null,
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "20",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "19",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "19",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "10/12/2019",
+          "status": null,
+          "number": "702898****",
+          "type": "Installment"
+        },
+        "experian": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "10/01/2019",
+          "status": null,
+          "number": "70289859L****",
+          "type": "Installment"
+        },
+        "equifax": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "10/01/2019",
+          "status": null,
+          "number": "70289859L****",
+          "type": "Installment"
+        }
+      }
+    },
+    {
+      "creditor": "GS BANK USA",
+      "original_creditor": null,
+      "account_number": "12**",
+      "account_type": "Revolving",
+      "account_type_detail": "Credit Card",
+      "status": "Collection/Chargeoff",
+      "balance": "$3,981.00",
+      "credit_limit": "$3,500.00",
+      "high_balance": "$3,981.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "09/11/2021",
+      "date_reported": null,
+      "past_due_amount": "$3,981.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "DecD",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$3,981.00",
+          "credit_limit": "$3,500.00",
+          "date_opened": "09/11/2021",
+          "status": null,
+          "number": "12**",
+          "type": "Revolving"
+        },
+        "experian": {
+          "present": true,
+          "balance": "$3,981.00",
+          "credit_limit": "$3,500.00",
+          "date_opened": "09/01/2021",
+          "status": null,
+          "number": "12000120****",
+          "type": "Revolving"
+        },
+        "equifax": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        }
+      }
+    },
+    {
+      "creditor": "ECREDABLE",
+      "original_creditor": null,
+      "account_number": "598**",
+      "account_type": "Open Account",
+      "account_type_detail": "Utility company",
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_balance": "$88.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "02/22/2024",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "JulJ",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "25",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JulJ",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JunJ",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MayM",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AprA",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "MarM",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "24",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "JanJ",
+          "year": "24",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "DecD",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "OctO",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "SepS",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "AugA",
+          "year": "23",
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "02/22/2024",
+          "status": null,
+          "number": "598**",
+          "type": "Open Account"
+        },
+        "experian": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        },
+        "equifax": {
+          "present": false,
+          "balance": null,
+          "credit_limit": null,
+          "date_opened": null,
+          "status": null
+        }
+      }
+    },
+    {
+      "creditor": "DISCOVERCARD",
+      "original_creditor": null,
+      "account_number": "60110014****",
+      "account_type": "Revolving",
+      "account_type_detail": "Credit Card",
+      "status": "Collection/Chargeoff",
+      "balance": "$4,782.00",
+      "credit_limit": "$3,700.00",
+      "high_balance": "$4,782.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "07/10/2020",
+      "date_reported": null,
+      "past_due_amount": "$4,782.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "DecD",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "NovN",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "25",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "24",
+          "transunion": null,
+          "experian": "CO",
+          "equifax": "OK"
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$4,782.00",
+          "credit_limit": "$3,700.00",
+          "date_opened": "07/10/2020",
+          "status": null,
+          "number": "60110014****",
+          "type": "Revolving"
+        },
+        "experian": {
+          "present": true,
+          "balance": "$4,782.00",
+          "credit_limit": "$3,700.00",
+          "date_opened": "07/01/2020",
+          "status": null,
+          "number": "60110014****",
+          "type": "Revolving"
+        },
+        "equifax": {
+          "present": true,
+          "balance": "$4,782.00",
+          "credit_limit": "$0.00",
+          "date_opened": "07/01/2020",
+          "status": null,
+          "number": "60110014****",
+          "type": "Revolving"
+        }
+      }
+    },
+    {
+      "creditor": "SYNCB/JCP",
+      "original_creditor": null,
+      "account_number": "60088924****",
+      "account_type": "Revolving",
+      "account_type_detail": "Charge account",
+      "status": "Current",
+      "balance": "$0.00",
+      "credit_limit": "$500.00",
+      "high_balance": "$55.00",
+      "monthly_payment": "$0.00",
+      "payment_status": null,
+      "date_opened": "07/30/2020",
+      "date_reported": null,
+      "past_due_amount": "$0.00",
+      "times_30_late": null,
+      "times_60_late": null,
+      "times_90_late": null,
+      "is_authorized_user": false,
+      "responsibility": "Individual",
+      "payment_history": [
+        {
+          "month": "AprA",
+          "year": "23",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "23",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "23",
+          "transunion": "OK",
+          "experian": null,
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "23",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AprA",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MarM",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": null
+        },
+        {
+          "month": "FebF",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JanJ",
+          "year": "22",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "DecD",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "NovN",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "OctO",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "SepS",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "AugA",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JulJ",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "JunJ",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        },
+        {
+          "month": "MayM",
+          "year": "21",
+          "transunion": "OK",
+          "experian": "OK",
+          "equifax": "OK"
+        }
+      ],
+      "discrepancies": [],
+      "has_discrepancy": false,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$500.00",
+          "date_opened": "07/30/2020",
+          "status": null,
+          "number": "60088924****",
+          "type": "Revolving"
+        },
+        "experian": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$500.00",
+          "date_opened": "07/01/2020",
+          "status": null,
+          "number": "60088924****",
+          "type": "Revolving"
+        },
+        "equifax": {
+          "present": true,
+          "balance": "$0.00",
+          "credit_limit": "$0.00",
+          "date_opened": "07/01/2020",
+          "status": null,
+          "number": "60088924****",
+          "type": "Revolving"
+        }
+      }
+    }
+  ],
+  "inquiries": [
+    {
+      "creditor": "CAPITAL ONE",
+      "type": "Bank Credit Cards",
+      "date": "02/23/2025",
+      "bureau": "TransUnion"
+    },
+    {
+      "creditor": "JPMCB CARD",
+      "type": "Bank Credit Cards",
+      "date": "11/15/2024",
+      "bureau": "Experian"
+    },
+    {
+      "creditor": "NAVY FCU",
+      "type": "Credit Unions",
+      "date": "11/15/2024",
+      "bureau": "TransUnion"
+    }
+  ],
+  "public_records": [],
+  "collections": [],
+  "creditor_contacts": [
+    {
+      "creditor": "CAPITAL ONE",
+      "address": "15000 CAPITAL ONE RICHMOND, VA 23238",
+      "phone": "(800) 955-7070"
+    },
+    {
+      "creditor": "JPMORGAN CHASE BANK NA",
+      "address": "PO BOX 15077 WILMINGTON, DE 19850",
+      "phone": "(800) 453-9719"
+    },
+    {
+      "creditor": "NAVY FCU",
+      "address": "820 FOLLIN LANE VIENNA, VA 22180",
+      "phone": "(803) 255-8062"
+    },
+    {
+      "creditor": "DISCOVER CARD",
+      "address": "PO BOX 30939 SALT LAKE CITY, UT 84130",
+      "phone": "(800) 347-2683"
+    },
+    {
+      "creditor": "BLUE GRASS SVGS BK",
+      "address": "104 E. MAYNE BLUE GRASS, IA 52726",
+      "phone": "(319) 381-1732"
+    },
+    {
+      "creditor": "NAVY FEDERAL CR UN",
+      "address": "PO BOX 3700 MERRIFIELD, VA 22119",
+      "phone": "(800) 336-3333"
+    },
+    {
+      "creditor": "AMERICAN HONDA FINANCE",
+      "address": "PO BOX 168128 IRVING, TX 75016",
+      "phone": "(800) 542-6632"
+    },
+    {
+      "creditor": "PINATA RENT",
+      "address": "131 VARICK STREET #1013 NEW YORK, NY 10019",
+      "phone": "(909) 314-1712"
+    },
+    {
+      "creditor": "ECREDABLE.COM, LLC",
+      "address": "5755 N POINT PKWY SUITE 77 ALPHARETTA, GA 30022",
+      "phone": "(888) 732-7337"
+    },
+    {
+      "creditor": "APPLE CARD - GS BANK USA",
+      "address": "LOCKBOX 6112 P.O. BOX 7247 PHILADELPHIA, PA 19170",
+      "phone": "(877) 255-5923"
+    },
+    {
+      "creditor": "TAB/SUNBIT",
+      "address": "10940 WILSHIRE BLVD SUITE 1850 LOS ANGELES, CA 90024",
+      "phone": "(855) 466-6476"
+    },
+    {
+      "creditor": "AFFIRM INC",
+      "address": "ATTN CREDIT BUREAU DISPUTES 30 ISABELLA STREET - 4TH FLOOR PITTSBURGH, PA 15212",
+      "phone": "(855) 423-3729"
+    },
+    {
+      "creditor": "AUSTIN CAPITAL BANK SSB",
+      "address": "PO BOX 530069 ATLANTA, GA 30353",
+      "phone": "(512) 693-3600"
+    },
+    {
+      "creditor": "IH MISSISSIPPI VALLEY CU",
+      "address": "2500 RIVER DRIVE MOLINE, IL 61265",
+      "phone": "(309) 793-6200"
+    },
+    {
+      "creditor": "SYNCB/JC PENNEY",
+      "address": "PO BOX 71729 PHILADELPHIA, PA 19176",
+      "phone": "(866) 227-5213"
+    },
+    {
+      "creditor": "SYNCB/JCP",
+      "address": "PO BOX 71746 PHILADELPHIA, PA 19176",
+      "phone": "(800) 542-0800"
+    },
+    {
+      "creditor": "NAVY FEDERAL CR UNION",
+      "address": "PO BOX 3700 MERRIFIELD, VA 22119",
+      "phone": "(888) 842-6328"
+    },
+    {
+      "creditor": "JPMCB CARD",
+      "address": "PO BOX 15298 WILMINGTON, DE 19850",
+      "phone": "(800) 432-3117"
+    },
+    {
+      "creditor": "I H MISSISSIPPI VALLEY",
+      "address": "2500 RIVER DR MOLINE, IL 61265",
+      "phone": "(309) 793-6200"
+    },
+    {
+      "creditor": "EDC/PINATA/JOCEBEE",
+      "address": "110 E 25TH ST NEW YORK, NY 10010",
+      "phone": "(909) 314-1712"
+    },
+    {
+      "creditor": "DISCOVERC",
+      "address": "PO BOX 30939 SALT LAKE CITY, UT 84130",
+      "phone": "(800) 347-2683"
+    },
+    {
+      "creditor": "BLUE GRASS SVNGS BANK",
+      "address": "104 E MAYNE ST BLUE GRASS, IA 52726",
+      "phone": "(563) 381-1732"
+    },
+    {
+      "creditor": "AUSTIN CAPITAL BANK SS",
+      "address": "PO BOX 530069 ATLANTA, GA 30353",
+      "phone": "(512) 693-3600"
+    },
+    {
+      "creditor": "APPLE CARD/GS BANK USA",
+      "address": "LOCKBOX 6112 PO BOX 7247 PHILADELPHIA, PA 19170",
+      "phone": "(877) 255-5923"
+    },
+    {
+      "creditor": "AMERICAN HONDA FINANCE",
+      "address": "2170 POINT BLVD STE 100 ELGIN, IL 60123",
+      "phone": "(800) 916-9930"
+    },
+    {
+      "creditor": "AFFIRM INC",
+      "address": "650 CALIFORNIA ST FL 12 SAN FRANCISCO, CA 94108",
+      "phone": "(855) 423-3729"
+    }
+  ],
+  "summary": {
+    "total_accounts": 16,
+    "open_accounts": 5,
+    "closed_accounts": 11,
+    "delinquent": 0,
+    "derogatory": 2,
+    "collection": 0,
+    "public_records": 0,
+    "inquiries_2years": 3,
+    "transunion": {
+      "total_accounts": 16,
+      "open_accounts": 5,
+      "closed_accounts": 11,
+      "delinquent": 0,
+      "derogatory": 2,
+      "balances": "$27,955.00",
+      "payments": "$862.00"
+    },
+    "experian": {
+      "total_accounts": 10,
+      "open_accounts": 4,
+      "closed_accounts": 6,
+      "delinquent": 0,
+      "derogatory": 2,
+      "balances": "$27,845.00",
+      "payments": "$623.00"
+    },
+    "equifax": {
+      "total_accounts": 11,
+      "open_accounts": 4,
+      "closed_accounts": 7,
+      "delinquent": 0,
+      "derogatory": 1,
+      "balances": "$23,864.00",
+      "payments": "$885.00"
+    }
+  },
+  "parse_errors": []
+}

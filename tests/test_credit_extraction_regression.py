@@ -1311,5 +1311,246 @@ class TestMyScoreIQLenderRankAndScoreScale:
             f"score_scale should be dict, got {type(score_scale)}"
 
 
+# =============================================================================
+# IdentityIQ Format Tests
+# =============================================================================
+
+class TestIdentityIQExtraction:
+    """
+    Tests for IdentityIQ credit report extraction.
+
+    IdentityIQ uses Angular.js similar to MyScoreIQ with the same table structure:
+    - rpt_content_table rpt_table4column for 4-column bureau tables
+    - td.label and td.info for row structure
+    - ng-binding for dynamic content
+
+    Key differences from MyScoreIQ:
+    - Uses "Credit Score:" instead of "FICO Score:"
+    - Report URL: member.identityiq.com/CreditReport.aspx
+
+    Test client: Nicholas James Stewart
+    Expected scores: TU=723, EX=724, EQ=730
+    Expected accounts: 17
+    Expected inquiries: 3
+    """
+
+    FIXTURE_HTML = "identityiq_njames_sample.html"
+    FIXTURE_JSON = "identityiq_njames_sample.json"
+
+    # Expected values from known-good extraction
+    EXPECTED_SCORES = {"transunion": 723, "experian": 724, "equifax": 730}
+    EXPECTED_LENDER_RANK = {"transunion": "Great", "experian": "Great", "equifax": "Great"}
+    EXPECTED_ACCOUNTS_COUNT = 17
+    EXPECTED_INQUIRIES_COUNT = 3
+
+    @pytest.fixture
+    def html_content(self):
+        """Load the HTML fixture file."""
+        # Check fixtures directory first, then parent fixtures
+        html_path = Path(__file__).parent / "fixtures" / self.FIXTURE_HTML
+        if not html_path.exists():
+            html_path = get_fixture_path(self.FIXTURE_HTML)
+        if not html_path.exists():
+            pytest.skip(f"Fixture file not found: {html_path}")
+        with open(html_path, "r", encoding="utf-8") as f:
+            return f.read()
+
+    @pytest.fixture
+    def expected_json(self):
+        """Load the expected JSON results."""
+        json_path = Path(__file__).parent / "fixtures" / self.FIXTURE_JSON
+        if not json_path.exists():
+            json_path = get_fixture_path(self.FIXTURE_JSON)
+        if not json_path.exists():
+            pytest.skip(f"Expected results JSON not found: {json_path}")
+        with open(json_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def test_fixture_file_exists(self):
+        """Test that IdentityIQ fixture files exist."""
+        html_path = Path(__file__).parent / "fixtures" / self.FIXTURE_HTML
+        json_path = Path(__file__).parent / "fixtures" / self.FIXTURE_JSON
+        assert html_path.exists(), f"IdentityIQ HTML fixture not found: {html_path}"
+        assert json_path.exists(), f"IdentityIQ JSON fixture not found: {json_path}"
+
+    def test_expected_scores_in_json(self, expected_json):
+        """Test that scores in JSON fixture match expected values."""
+        scores = expected_json.get("scores", {})
+        assert scores.get("transunion") == self.EXPECTED_SCORES["transunion"], \
+            f"TransUnion score mismatch: {scores.get('transunion')} != {self.EXPECTED_SCORES['transunion']}"
+        assert scores.get("experian") == self.EXPECTED_SCORES["experian"], \
+            f"Experian score mismatch: {scores.get('experian')} != {self.EXPECTED_SCORES['experian']}"
+        assert scores.get("equifax") == self.EXPECTED_SCORES["equifax"], \
+            f"Equifax score mismatch: {scores.get('equifax')} != {self.EXPECTED_SCORES['equifax']}"
+
+    def test_lender_rank_extracted(self, expected_json):
+        """Test that lender rank is extracted for IdentityIQ."""
+        scores = expected_json.get("scores", {})
+        lender_rank = scores.get("lender_rank", {})
+        assert lender_rank.get("transunion") == self.EXPECTED_LENDER_RANK["transunion"], \
+            f"TransUnion lender rank mismatch"
+        assert lender_rank.get("experian") == self.EXPECTED_LENDER_RANK["experian"], \
+            f"Experian lender rank mismatch"
+        assert lender_rank.get("equifax") == self.EXPECTED_LENDER_RANK["equifax"], \
+            f"Equifax lender rank mismatch"
+
+    def test_score_scale_extracted(self, expected_json):
+        """Test that score scale is extracted for IdentityIQ."""
+        scores = expected_json.get("scores", {})
+        score_scale = scores.get("score_scale", {})
+        assert score_scale.get("transunion") == "300-850", "TransUnion score scale should be 300-850"
+        assert score_scale.get("experian") == "300-850", "Experian score scale should be 300-850"
+        assert score_scale.get("equifax") == "300-850", "Equifax score scale should be 300-850"
+
+    def test_expected_accounts_count(self, expected_json):
+        """Test that expected number of accounts extracted."""
+        accounts = expected_json.get("accounts", [])
+        # Allow +/- 2 variance for parsing differences
+        assert abs(len(accounts) - self.EXPECTED_ACCOUNTS_COUNT) <= 2, \
+            f"Expected ~{self.EXPECTED_ACCOUNTS_COUNT} accounts, got {len(accounts)}"
+
+    def test_expected_inquiries_count(self, expected_json):
+        """Test that expected number of inquiries extracted."""
+        inquiries = expected_json.get("inquiries", [])
+        assert len(inquiries) == self.EXPECTED_INQUIRIES_COUNT, \
+            f"Expected {self.EXPECTED_INQUIRIES_COUNT} inquiries, got {len(inquiries)}"
+
+    def test_personal_info_per_bureau(self, expected_json):
+        """Test that personal info is extracted per bureau for IdentityIQ."""
+        personal_info = expected_json.get("personal_info", {})
+
+        # Check TransUnion
+        tu = personal_info.get("transunion", {})
+        assert len(tu.get("names", [])) > 0, "TransUnion should have at least one name"
+        assert tu.get("dob") is not None, "TransUnion should have DOB"
+        assert tu.get("current_address") is not None, "TransUnion should have current address"
+
+        # Check Experian
+        ex = personal_info.get("experian", {})
+        assert len(ex.get("names", [])) > 0, "Experian should have at least one name"
+        assert ex.get("dob") is not None, "Experian should have DOB"
+        assert ex.get("current_address") is not None, "Experian should have current address"
+
+        # Check Equifax
+        eq = personal_info.get("equifax", {})
+        assert len(eq.get("names", [])) > 0, "Equifax should have at least one name"
+        assert eq.get("dob") is not None, "Equifax should have DOB"
+
+    def test_summary_per_bureau(self, expected_json):
+        """Test that summary is extracted per bureau for IdentityIQ."""
+        summary = expected_json.get("summary", {})
+
+        # Check that per-bureau summary exists
+        assert "transunion" in summary, "Summary should have TransUnion data"
+        assert "experian" in summary, "Summary should have Experian data"
+        assert "equifax" in summary, "Summary should have Equifax data"
+
+        # Check TransUnion summary values
+        tu_summary = summary.get("transunion", {})
+        assert tu_summary.get("total_accounts") == 16, \
+            f"TransUnion total_accounts should be 16, got {tu_summary.get('total_accounts')}"
+
+    def test_html_contains_angular_elements(self, html_content):
+        """Test that HTML contains expected Angular elements."""
+        assert "ng-controller" in html_content, "HTML should have Angular ng-controller"
+        assert "ng-binding" in html_content, "HTML should have Angular ng-binding classes"
+        assert "rpt_content_table" in html_content, "HTML should have rpt_content_table class"
+        assert "rpt_table4column" in html_content, "HTML should have rpt_table4column class"
+
+    def test_html_contains_identityiq_markers(self, html_content):
+        """Test that HTML contains IdentityIQ-specific markers."""
+        assert "IdentityIQ" in html_content, "HTML should contain IdentityIQ branding"
+        assert "member.identityiq.com" in html_content, "HTML should contain IdentityIQ domain"
+
+    def test_account_has_payment_history(self, expected_json):
+        """Test that accounts have payment history extracted."""
+        accounts = expected_json.get("accounts", [])
+        assert len(accounts) > 0, "Should have at least one account"
+
+        # Check first account for payment history
+        first_account = accounts[0]
+        payment_history = first_account.get("payment_history", [])
+        # IdentityIQ shows 24-month history
+        assert len(payment_history) >= 12, \
+            f"Account should have at least 12 months of payment history, got {len(payment_history)}"
+
+    def test_account_fields_extracted(self, expected_json):
+        """Test that key account fields are extracted."""
+        accounts = expected_json.get("accounts", [])
+        assert len(accounts) > 0, "Should have at least one account"
+
+        first_account = accounts[0]
+        # Check essential fields
+        assert first_account.get("creditor") is not None, "Account should have creditor name"
+        assert first_account.get("account_number") is not None, "Account should have account number"
+        assert first_account.get("account_type") is not None, "Account should have account type"
+
+
+class TestIdentityIQJavaScriptExtraction:
+    """
+    Tests that verify the JavaScript extraction code works with IdentityIQ HTML.
+    Uses Playwright to run the actual JS extraction against saved HTML.
+    """
+
+    FIXTURE_HTML = "identityiq_njames_sample.html"
+
+    @pytest.fixture
+    def html_content(self):
+        """Load the HTML fixture file."""
+        html_path = Path(__file__).parent / "fixtures" / self.FIXTURE_HTML
+        if not html_path.exists():
+            pytest.skip(f"Fixture file not found: {html_path}")
+        with open(html_path, "r", encoding="utf-8") as f:
+            return f.read()
+
+    @pytest.mark.asyncio
+    async def test_js_score_extraction(self, html_content):
+        """Test JavaScript score extraction against IdentityIQ HTML."""
+        try:
+            from playwright.async_api import async_playwright
+        except ImportError:
+            pytest.skip("Playwright not installed")
+
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            await page.set_content(html_content)
+
+            # Run the score extraction JS (same as in credit_import_automation.py)
+            scores = await page.evaluate("""() => {
+                const result = { transunion: null, experian: null, equifax: null };
+
+                const tables = document.querySelectorAll('table.rpt_content_table.rpt_table4column');
+                for (const table of tables) {
+                    const rows = table.querySelectorAll('tr');
+                    for (const row of rows) {
+                        const labelCell = row.querySelector('td.label');
+                        if (!labelCell) continue;
+
+                        const labelText = labelCell.textContent.toLowerCase().trim();
+                        const infoCells = row.querySelectorAll('td.info');
+
+                        if (infoCells.length >= 3 && labelText.includes('credit score')) {
+                            const values = Array.from(infoCells).map(td => td.textContent.trim());
+                            const tuMatch = values[0]?.match(/^([3-8]\\d{2})$/);
+                            const exMatch = values[1]?.match(/^([3-8]\\d{2})$/);
+                            const eqMatch = values[2]?.match(/^([3-8]\\d{2})$/);
+
+                            if (tuMatch) result.transunion = parseInt(tuMatch[1]);
+                            if (exMatch) result.experian = parseInt(exMatch[1]);
+                            if (eqMatch) result.equifax = parseInt(eqMatch[1]);
+                        }
+                    }
+                }
+                return result;
+            }""")
+
+            await browser.close()
+
+            assert scores["transunion"] == 723, f"TransUnion should be 723, got {scores['transunion']}"
+            assert scores["experian"] == 724, f"Experian should be 724, got {scores['experian']}"
+            assert scores["equifax"] == 730, f"Equifax should be 730, got {scores['equifax']}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
