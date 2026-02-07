@@ -1,0 +1,1112 @@
+{
+  "client_id": 407,
+  "client_name": "Carlos Del Carmen",
+  "extracted_at": "2026-02-07T03:53:41.202987",
+  "scores": {
+    "transunion": 793,
+    "experian": 795,
+    "equifax": 800
+  },
+  "personal_info": {
+    "names": [
+      "CARLOS DELCARMEN"
+    ],
+    "addresses": [
+      "108136 MARTIN LUTHER KING JR BV 2209B NEWARK, NJ 07104",
+      "108-136 MARTIN APT 1907 NEWARK, NJ 07104",
+      "108-136 MARTIN LUTHER KING JR BLVD APT 2209B NEWARK, NJ 07104",
+      "351 BROAD ST APT 190 NEWARK, NJ 07104-3304",
+      "2209 B NEWARK, NJ 07104"
+    ],
+    "dob": "1979",
+    "employers": [],
+    "ssn_last4": null,
+    "transunion": {
+      "names": [
+        "CARLOS DELCARMEN"
+      ],
+      "dob": "1979",
+      "current_address": "108136 MARTIN LUTHER KING JR BV 2209B NEWARK, NJ 07104",
+      "previous_addresses": [],
+      "employers": [],
+      "current_address_date": "04/2014"
+    },
+    "experian": {
+      "names": [
+        "CARLOS DELCARMEN"
+      ],
+      "dob": "1979",
+      "current_address": "108-136 MARTIN APT 1907 NEWARK, NJ 07104",
+      "previous_addresses": [
+        {
+          "address": "351 BROAD ST APT 190 NEWARK, NJ 07104-3304",
+          "date": "10/2025"
+        },
+        {
+          "address": "2209 B NEWARK, NJ 07104",
+          "date": "10/2025"
+        }
+      ],
+      "employers": [],
+      "current_address_date": "10/2025"
+    },
+    "equifax": {
+      "names": [
+        "CARLOS DELCARMEN"
+      ],
+      "dob": "1979",
+      "current_address": "108-136 MARTIN LUTHER KING JR BLVD APT 2209B NEWARK, NJ 07104",
+      "previous_addresses": [],
+      "employers": [],
+      "current_address_date": "01/2026"
+    }
+  },
+  "summary": {
+    "total_accounts": "14",
+    "open_accounts": "6",
+    "closed_accounts": "8",
+    "delinquent_accounts": null,
+    "derogatory_accounts": null,
+    "collection": null,
+    "total_balances": "$3,530.00",
+    "total_payments": "$150.00",
+    "public_records": null,
+    "total_inquiries": "3",
+    "transunion": {
+      "total_accounts": "14",
+      "open_accounts": "6",
+      "closed_accounts": "8",
+      "balances": "$3,530.00",
+      "payments": "$150.00",
+      "inquiries": "3"
+    },
+    "experian": {
+      "total_accounts": "15",
+      "open_accounts": "6",
+      "closed_accounts": "9",
+      "balances": "$3,530.00",
+      "payments": "$150.00",
+      "inquiries": "1"
+    },
+    "equifax": {
+      "total_accounts": "15",
+      "open_accounts": "6",
+      "closed_accounts": "9",
+      "balances": "$3,530.00",
+      "payments": "$150.00"
+    }
+  },
+  "accounts": [
+    {
+      "creditor": "AMERICAN EXPRESS",
+      "account_number": "-34999XXXXXXXXXXX",
+      "account_type": "Open Account",
+      "account_type_detail": "Open Account",
+      "bureau_code": "Individual Account",
+      "account_status": "Open",
+      "balance": "$0.00",
+      "credit_limit": null,
+      "high_credit": "$325.00",
+      "monthly_payment": null,
+      "payment_status": "Pays account as agreed",
+      "date_opened": "08/05/2023",
+      "last_reported": "01/16/2026",
+      "last_active": "01/16/2026",
+      "last_payment": null,
+      "past_due": null,
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Monthly (due every month)",
+      "comments": null,
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": false
+        },
+        "equifax": {
+          "present": true,
+          "number": "-34999XXXXXXXXXXX",
+          "type": "Open Account",
+          "type_detail": "Open Account",
+          "bureau_code": "Individual Account",
+          "account_status": "Open",
+          "balance": "$0.00"
+        }
+      }
+    },
+    {
+      "creditor": "AMERICAN EXPRESS",
+      "account_number": "-34999XXXXXXXXXXX",
+      "account_type": "Open Account",
+      "account_type_detail": "Open Account",
+      "bureau_code": "Individual Account",
+      "account_status": "Closed",
+      "balance": "$0.00",
+      "credit_limit": null,
+      "high_credit": "$3,097.00",
+      "monthly_payment": null,
+      "payment_status": "Pays account as agreed",
+      "date_opened": "08/05/2005",
+      "last_reported": "12/28/2020",
+      "last_active": "12/28/2020",
+      "last_payment": null,
+      "past_due": null,
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Monthly (due every month)",
+      "comments": null,
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": false
+        },
+        "equifax": {
+          "present": true,
+          "number": "-34999XXXXXXXXXXX",
+          "type": "Open Account",
+          "type_detail": "Open Account",
+          "bureau_code": "Individual Account",
+          "account_status": "Closed",
+          "balance": "$0.00"
+        }
+      }
+    },
+    {
+      "creditor": "FIFTH THIRD BANK",
+      "account_number": "880595XXX",
+      "account_type": "Installment",
+      "account_type_detail": "Installment",
+      "bureau_code": "Individual Account",
+      "account_status": "Closed",
+      "balance": "$0.00",
+      "credit_limit": null,
+      "high_credit": "$28,639.00",
+      "monthly_payment": null,
+      "payment_status": "Pays account as agreed",
+      "date_opened": "12/14/2015",
+      "last_reported": "08/31/2020",
+      "last_active": "08/31/2020",
+      "last_payment": "08/01/2020",
+      "past_due": null,
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Monthly (due every month)",
+      "comments": "FIXED RATE",
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": false
+        },
+        "equifax": {
+          "present": true,
+          "number": "880595XXX",
+          "type": "Installment",
+          "type_detail": "Installment",
+          "bureau_code": "Individual Account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "FIXED RATE"
+        }
+      }
+    },
+    {
+      "creditor": "FIFTH THIRD BANK NA",
+      "account_number": "8XXXX",
+      "account_type": "Installment account",
+      "account_type_detail": "Installment account",
+      "bureau_code": "Individual account",
+      "account_status": "Closed",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_credit": "$28,639.00",
+      "monthly_payment": "$0.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "12/14/2015",
+      "last_reported": "08/17/2020",
+      "last_active": "08/17/2020",
+      "last_payment": "08/17/2020",
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Monthly",
+      "comments": "Closed",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "8XXXX",
+          "type": "Installment account",
+          "type_detail": "Installment account",
+          "bureau_code": "Individual account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "Closed"
+        },
+        "experian": {
+          "present": true,
+          "number": "8XXXX",
+          "type": "INSTALLMENT",
+          "type_detail": "Auto Loan",
+          "bureau_code": "Individual",
+          "account_status": "Closed"
+        },
+        "equifax": {
+          "present": false
+        }
+      }
+    },
+    {
+      "creditor": "AMEX",
+      "account_number": "349993XXXXXXXXXX",
+      "account_type": "Open account",
+      "account_type_detail": "Open account",
+      "bureau_code": "Individual account",
+      "account_status": "Open",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_credit": "$325.00",
+      "monthly_payment": "$0.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "08/05/2023",
+      "last_reported": "01/16/2026",
+      "last_active": "01/16/2026",
+      "last_payment": null,
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "1 Month",
+      "comments": null,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "349993XXXXXXXXXX",
+          "type": "Open account",
+          "type_detail": "Open account",
+          "bureau_code": "Individual account",
+          "account_status": "Open",
+          "balance": "$0.00"
+        },
+        "experian": {
+          "present": true,
+          "number": "349993XXXXXX",
+          "type": "REVOLVING",
+          "type_detail": "Credit Card",
+          "bureau_code": "Individual",
+          "account_status": "Open",
+          "balance": "$0.00"
+        },
+        "equifax": {
+          "present": false
+        }
+      }
+    },
+    {
+      "creditor": "CITICARDS CBNA",
+      "account_number": "542418XXXXXX",
+      "account_type": "Revolving account",
+      "account_type_detail": "Revolving account",
+      "bureau_code": "Individual account",
+      "account_status": "Open",
+      "balance": "$156.00",
+      "credit_limit": "$700.00",
+      "high_credit": "$919.00",
+      "monthly_payment": "$41.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "02/24/2005",
+      "last_reported": "01/16/2026",
+      "last_active": "01/16/2026",
+      "last_payment": "01/05/2026",
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Revolving",
+      "comments": null,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "542418XXXXXX",
+          "type": "Revolving account",
+          "type_detail": "Revolving account",
+          "bureau_code": "Individual account",
+          "account_status": "Open",
+          "balance": "$156.00"
+        },
+        "experian": {
+          "present": true,
+          "number": "542418XXXXXX",
+          "type": "REVOLVING",
+          "type_detail": "Credit Card",
+          "bureau_code": "Individual",
+          "account_status": "Open",
+          "balance": "$156.00"
+        },
+        "equifax": {
+          "present": true,
+          "number": "542418XXXXXX",
+          "type": "Revolving",
+          "type_detail": "Revolving",
+          "bureau_code": "Individual Account",
+          "account_status": "Open",
+          "balance": "$156.00"
+        }
+      }
+    },
+    {
+      "creditor": "CAP1/KOHLS DEPT STORE",
+      "account_number": "639305XXXXXX",
+      "account_type": "Revolving account",
+      "account_type_detail": "Revolving account",
+      "bureau_code": "Individual account",
+      "account_status": "Open",
+      "balance": "$0.00",
+      "credit_limit": "$1,000.00",
+      "high_credit": "$320.00",
+      "monthly_payment": "$0.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "03/11/2014",
+      "last_reported": "01/10/2026",
+      "last_active": "01/10/2026",
+      "last_payment": "03/29/2022",
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Revolving",
+      "comments": null,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "639305XXXXXX",
+          "type": "Revolving account",
+          "type_detail": "Revolving account",
+          "bureau_code": "Individual account",
+          "account_status": "Open",
+          "balance": "$0.00"
+        },
+        "experian": {
+          "present": true,
+          "number": "639305XXXXXX",
+          "type": "REVOLVING",
+          "type_detail": "Charge Card",
+          "bureau_code": "Individual",
+          "account_status": "Open",
+          "balance": "$0.00"
+        },
+        "equifax": {
+          "present": true,
+          "number": "639305XXXXXXXXXX",
+          "type": "Revolving",
+          "type_detail": "Revolving",
+          "bureau_code": "Individual Account",
+          "account_status": "Open",
+          "balance": "$0.00"
+        }
+      }
+    },
+    {
+      "creditor": "CITICARDS CBNA",
+      "account_number": "542418XXXXXX",
+      "account_type": "Revolving account",
+      "account_type_detail": "Revolving account",
+      "bureau_code": "Individual account",
+      "account_status": "Open",
+      "balance": "$306.00",
+      "credit_limit": "$6,000.00",
+      "high_credit": "$4,537.00",
+      "monthly_payment": "$41.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "01/30/2007",
+      "last_reported": "01/08/2026",
+      "last_active": "01/08/2026",
+      "last_payment": "01/05/2026",
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Revolving",
+      "comments": null,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "542418XXXXXX",
+          "type": "Revolving account",
+          "type_detail": "Revolving account",
+          "bureau_code": "Individual account",
+          "account_status": "Open",
+          "balance": "$306.00"
+        },
+        "experian": {
+          "present": true,
+          "number": "542418XXXXXX",
+          "type": "REVOLVING",
+          "type_detail": "Credit Card",
+          "bureau_code": "Individual",
+          "account_status": "Open",
+          "balance": "$306.00"
+        },
+        "equifax": {
+          "present": true,
+          "number": "542418XXXXXX",
+          "type": "Revolving",
+          "type_detail": "Revolving",
+          "bureau_code": "Individual Account",
+          "account_status": "Open",
+          "balance": "$306.00"
+        }
+      }
+    },
+    {
+      "creditor": "DISCOVERC",
+      "account_number": "601101XXXXXX",
+      "account_type": "Revolving account",
+      "account_type_detail": "Revolving account",
+      "bureau_code": "Individual account",
+      "account_status": "Open",
+      "balance": "$3,068.00",
+      "credit_limit": "$12,500.00",
+      "high_credit": "$4,572.00",
+      "monthly_payment": "$68.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "08/05/2023",
+      "last_reported": "01/18/2026",
+      "last_active": "01/18/2026",
+      "last_payment": "01/05/2026",
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Revolving",
+      "comments": null,
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "601101XXXXXX",
+          "type": "Revolving account",
+          "type_detail": "Revolving account",
+          "bureau_code": "Individual account",
+          "account_status": "Open",
+          "balance": "$3,068.00"
+        },
+        "experian": {
+          "present": true,
+          "number": "601101XXXXXX",
+          "type": "REVOLVING",
+          "type_detail": "Credit Card",
+          "bureau_code": "Individual",
+          "account_status": "Open",
+          "balance": "$3,068.00"
+        },
+        "equifax": {
+          "present": true,
+          "number": "601101XXXXXX",
+          "type": "Revolving",
+          "type_detail": "Revolving",
+          "bureau_code": "Individual Account",
+          "account_status": "Open",
+          "balance": "$3,068.00"
+        }
+      }
+    },
+    {
+      "creditor": "MACYS/CBNA",
+      "account_number": "603535XXXXXX",
+      "account_type": "Revolving account",
+      "account_type_detail": "Revolving account",
+      "bureau_code": "Individual account",
+      "account_status": "Closed",
+      "balance": "$0.00",
+      "credit_limit": "$4,000.00",
+      "high_credit": "$650.00",
+      "monthly_payment": "$0.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "12/14/2017",
+      "last_reported": "05/28/2021",
+      "last_active": "05/28/2021",
+      "last_payment": "02/07/2019",
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Revolving",
+      "comments": "Inactive account",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "603535XXXXXX",
+          "type": "Revolving account",
+          "type_detail": "Revolving account",
+          "bureau_code": "Individual account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "Inactive account"
+        },
+        "experian": {
+          "present": true,
+          "number": "603534XXXXXX",
+          "type": "REVOLVING",
+          "type_detail": "Charge Card",
+          "bureau_code": "Individual",
+          "account_status": "Open",
+          "balance": "$0.00"
+        },
+        "equifax": {
+          "present": true,
+          "number": "603535XXXXXXXXXX",
+          "type": "Revolving",
+          "type_detail": "Revolving",
+          "bureau_code": "Individual Account",
+          "account_status": "Closed",
+          "balance": "$0.00"
+        }
+      }
+    },
+    {
+      "creditor": "AMEX",
+      "account_number": "349990XXXXXXXXXX",
+      "account_type": "Open account",
+      "account_type_detail": "Open account",
+      "bureau_code": "Individual account",
+      "account_status": "Closed",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "high_credit": "$3,097.00",
+      "monthly_payment": "$0.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "08/05/2005",
+      "last_reported": "12/28/2020",
+      "last_active": "12/28/2020",
+      "last_payment": null,
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "1 Month",
+      "comments": "Inactive account",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "349990XXXXXXXXXX",
+          "type": "Open account",
+          "type_detail": "Open account",
+          "bureau_code": "Individual account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "Inactive account"
+        },
+        "experian": {
+          "present": true,
+          "number": "349990XXXXXX",
+          "type": "REVOLVING",
+          "type_detail": "Credit Card",
+          "bureau_code": "Individual",
+          "account_status": "Closed"
+        },
+        "equifax": {
+          "present": false
+        }
+      }
+    },
+    {
+      "creditor": "COMENITY BANK/EXPRESS",
+      "account_number": "4XXXX",
+      "account_type": "Revolving account",
+      "account_type_detail": "Revolving account",
+      "bureau_code": "Individual account",
+      "account_status": "Closed",
+      "balance": "$0.00",
+      "credit_limit": "$500.00",
+      "high_credit": "$162.00",
+      "monthly_payment": "$0.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "05/04/2019",
+      "last_reported": "11/06/2021",
+      "last_active": "11/06/2021",
+      "last_payment": "09/17/2019",
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Revolving",
+      "comments": "Canceled by credit grantor",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "4XXXX",
+          "type": "Revolving account",
+          "type_detail": "Revolving account",
+          "bureau_code": "Individual account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "Canceled by credit grantor"
+        },
+        "experian": {
+          "present": true,
+          "number": "4XXXX",
+          "type": "REVOLVING",
+          "type_detail": "Charge Card",
+          "bureau_code": "Individual",
+          "account_status": "Closed"
+        },
+        "equifax": {
+          "present": true,
+          "number": "162840XXXXXXXXX",
+          "type": "Revolving",
+          "type_detail": "Revolving",
+          "bureau_code": "Individual Account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "ACCOUNT CLOSED BY CREDIT GRANTOR"
+        }
+      }
+    },
+    {
+      "creditor": "COMENITYBANK/EDDIEBAUR",
+      "account_number": "585637XXXXXX",
+      "account_type": "Revolving account",
+      "account_type_detail": "Revolving account",
+      "bureau_code": "Individual account",
+      "account_status": "Closed",
+      "balance": "$0.00",
+      "credit_limit": "$350.00",
+      "high_credit": "$53.00",
+      "monthly_payment": "$0.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "10/23/2018",
+      "last_reported": "08/08/2020",
+      "last_active": "08/08/2020",
+      "last_payment": "11/26/2018",
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Revolving",
+      "comments": "Canceled by credit grantor",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "585637XXXXXX",
+          "type": "Revolving account",
+          "type_detail": "Revolving account",
+          "bureau_code": "Individual account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "Canceled by credit grantor"
+        },
+        "experian": {
+          "present": true,
+          "number": "585637XXXXXX",
+          "type": "REVOLVING",
+          "type_detail": "Charge Card",
+          "bureau_code": "Individual",
+          "account_status": "Closed"
+        },
+        "equifax": {
+          "present": true,
+          "number": "585637XXXXXX",
+          "type": "Revolving",
+          "type_detail": "Revolving",
+          "bureau_code": "Individual Account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "ACCOUNT CLOSED BY CREDIT GRANTOR"
+        }
+      }
+    },
+    {
+      "creditor": "CCB/ZALESCC",
+      "account_number": "578097XXXXXX",
+      "account_type": "Revolving account",
+      "account_type_detail": "Revolving account",
+      "bureau_code": "Individual account",
+      "account_status": "Closed",
+      "balance": "$0.00",
+      "credit_limit": "$1,000.00",
+      "high_credit": "$0.00",
+      "monthly_payment": "$0.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "10/24/2018",
+      "last_reported": "04/18/2020",
+      "last_active": "04/18/2020",
+      "last_payment": null,
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Revolving",
+      "comments": "Canceled by credit grantor",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "578097XXXXXX",
+          "type": "Revolving account",
+          "type_detail": "Revolving account",
+          "bureau_code": "Individual account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "Canceled by credit grantor"
+        },
+        "experian": {
+          "present": true,
+          "number": "578097XXXXXX",
+          "type": "REVOLVING",
+          "type_detail": "Charge Card",
+          "bureau_code": "Individual",
+          "account_status": "Closed"
+        },
+        "equifax": {
+          "present": true,
+          "number": "578097XXXXXXXXXX",
+          "type": "Revolving",
+          "type_detail": "Revolving",
+          "bureau_code": "Individual Account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "ACCOUNT CLOSED BY CREDIT GRANTOR"
+        }
+      }
+    },
+    {
+      "creditor": "CITIBANK NA",
+      "account_number": "XXXX",
+      "account_type": "Overdraft / reserve checking account",
+      "account_type_detail": "Overdraft / reserve checking account",
+      "bureau_code": "Individual account",
+      "account_status": "Closed",
+      "balance": "$0.00",
+      "credit_limit": "$300.00",
+      "high_credit": "$100.00",
+      "monthly_payment": "$0.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "03/01/2005",
+      "last_reported": "05/31/2017",
+      "last_active": "05/31/2017",
+      "last_payment": "10/20/2016",
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Revolving",
+      "comments": "Canceled by credit grantor",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "XXXX",
+          "type": "Overdraft / reserve checking account",
+          "type_detail": "Overdraft / reserve checking account",
+          "bureau_code": "Individual account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "Canceled by credit grantor"
+        },
+        "experian": {
+          "present": true,
+          "number": "XXXX",
+          "type": "REVOLVING",
+          "type_detail": "Line Of Credit",
+          "bureau_code": "Individual",
+          "account_status": "Closed"
+        },
+        "equifax": {
+          "present": true,
+          "number": "695760XX",
+          "type": "Line of Credit",
+          "type_detail": "Line of Credit",
+          "bureau_code": "Individual Account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "ACCOUNT CLOSED BY CREDIT GRANTOR"
+        }
+      }
+    },
+    {
+      "creditor": "JPMCB CARD",
+      "account_number": "426684XXXXXX",
+      "account_type": "REVOLVING",
+      "account_type_detail": "Credit Card",
+      "bureau_code": "Individual",
+      "account_status": "Closed",
+      "balance": "$0.00",
+      "credit_limit": "$1,000.00",
+      "high_credit": "$1,143.00",
+      "monthly_payment": null,
+      "payment_status": "Paid satisfactorily",
+      "date_opened": "07/27/2001",
+      "last_reported": "08/22/2018",
+      "last_active": "08/01/2018",
+      "last_payment": "06/03/2014",
+      "past_due": null,
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Revolving",
+      "comments": null,
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": true,
+          "number": "426684XXXXXX",
+          "type": "REVOLVING",
+          "type_detail": "Credit Card",
+          "bureau_code": "Individual",
+          "account_status": "Closed"
+        },
+        "equifax": {
+          "present": true,
+          "number": "426684XXXXXX",
+          "type": "Revolving",
+          "type_detail": "Revolving",
+          "bureau_code": "Individual Account",
+          "account_status": "Closed",
+          "balance": "$0.00"
+        }
+      }
+    },
+    {
+      "creditor": "SYNCB/NTWK",
+      "account_number": "650172XXXXXX",
+      "account_type": "Revolving account",
+      "account_type_detail": "Revolving account",
+      "bureau_code": "Individual account",
+      "account_status": "Closed",
+      "balance": "$0.00",
+      "credit_limit": "$1,500.00",
+      "high_credit": "$3,927.00",
+      "monthly_payment": "$0.00",
+      "payment_status": "Paid or paying as agreed",
+      "date_opened": "01/21/2018",
+      "last_reported": "07/05/2022",
+      "last_active": "07/05/2022",
+      "last_payment": "02/08/2019",
+      "past_due": "$0.00",
+      "date_closed": null,
+      "account_rating": null,
+      "creditor_type": null,
+      "term_length": "Revolving",
+      "comments": "Closed",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "number": "650172XXXXXX",
+          "type": "Revolving account",
+          "type_detail": "Revolving account",
+          "bureau_code": "Individual account",
+          "account_status": "Closed",
+          "balance": "$0.00",
+          "comments": "Closed"
+        },
+        "experian": {
+          "present": true,
+          "number": "650172XXXXXX",
+          "type": "REVOLVING",
+          "type_detail": "Charge Card",
+          "bureau_code": "Individual",
+          "account_status": "Closed"
+        },
+        "equifax": {
+          "present": true,
+          "number": "650172XXXXXX",
+          "type": "Revolving",
+          "type_detail": "Revolving",
+          "bureau_code": "Individual Account",
+          "account_status": "Closed",
+          "balance": "$0.00"
+        }
+      }
+    }
+  ],
+  "inquiries": [
+    {
+      "company": "JPMCB CARD",
+      "type": "Bank Credit Cards",
+      "date": "12/19/2025",
+      "bureau": "Experian",
+      "transunion": false,
+      "experian": true,
+      "equifax": false,
+      "source": "myscoreiq"
+    },
+    {
+      "company": "LIGHTSTREAM",
+      "type": "Banks and S&Ls",
+      "date": "12/19/2025",
+      "bureau": "TransUnion",
+      "transunion": true,
+      "experian": false,
+      "equifax": false,
+      "source": "myscoreiq"
+    },
+    {
+      "company": "US BANK",
+      "type": "Banks and S&Ls",
+      "date": "11/20/2025",
+      "bureau": "TransUnion",
+      "transunion": true,
+      "experian": false,
+      "equifax": false,
+      "source": "myscoreiq"
+    },
+    {
+      "company": "US BANK",
+      "type": "Banks and S&Ls",
+      "date": "11/19/2025",
+      "bureau": "TransUnion",
+      "transunion": true,
+      "experian": false,
+      "equifax": false,
+      "source": "myscoreiq"
+    }
+  ],
+  "creditor_contacts": [
+    {
+      "name": "AMERICAN EXPRESS",
+      "address": "PO BOX 981537\n                    EL PASO,\u00a0TX\u00a079998-1537",
+      "phone": "(800) 874-2717",
+      "source": "classic"
+    },
+    {
+      "name": "AMEX",
+      "address": "PO BOX 297871\n                    FORT LAUDERDALE,\u00a0FL\u00a033329",
+      "phone": "(800) 874-2717",
+      "source": "classic"
+    },
+    {
+      "name": "BEST BUY/CBNA",
+      "address": "5800 SOUTH CORPORATE PLACE MAIL CODE 234\n                    SIOUX FALLS,\u00a0SD\u00a057108",
+      "phone": "(800) 950-5114",
+      "source": "classic"
+    },
+    {
+      "name": "CITICARDS CBNA",
+      "address": "5800 SOUTH CORPORATE PLACE MAIL CODE 234\n                    SIOUX FALLS,\u00a0SD\u00a057108",
+      "phone": "(800) 950-5114",
+      "source": "classic"
+    },
+    {
+      "name": "CAP1/KOHLS DEPARTMEN",
+      "address": "PO BOX 31293\n                    SALT LAKE CITY,\u00a0UT\u00a084131-0293",
+      "phone": "(800) 955-7070",
+      "source": "classic"
+    },
+    {
+      "name": "COMENITY BANK/EXPRES",
+      "address": "PO BOX 182789\n                    COLUMBUS,\u00a0OH\u00a043218-2789",
+      "phone": "(855) 796-9632",
+      "source": "classic"
+    },
+    {
+      "name": "COMENITY BANK/EDDIEB",
+      "address": "PO BOX 182789\n                    COLUMBUS,\u00a0OH\u00a043218-2789",
+      "phone": "(855) 796-9632",
+      "source": "classic"
+    },
+    {
+      "name": "CITIBANK NA",
+      "address": "5800 SOUTH CORPORATE PLACE MAIL CODE 234\n                    SIOUX FALLS,\u00a0SD\u00a057108",
+      "phone": "(800) 950-5114",
+      "source": "classic"
+    },
+    {
+      "name": "COMENITY BANK/EXPRESS",
+      "address": "PO BOX 182789\n                    COLUMBUS,\u00a0OH\u00a043218",
+      "phone": "-",
+      "source": "classic"
+    },
+    {
+      "name": "COMENITYBANK/EDDIEBAUR",
+      "address": "PO BOX 182789\n                    COLUMBUS,\u00a0OH\u00a043218",
+      "phone": "-",
+      "source": "classic"
+    },
+    {
+      "name": "CCB/ZALESCC",
+      "address": "PO BOX 182120\n                    COLUMBUS,\u00a0OH\u00a043218",
+      "phone": "-",
+      "source": "classic"
+    },
+    {
+      "name": "CAP1/KOHLS DEPT STORE",
+      "address": "PO BOX 31293\n                    SALT LAKE CITY,\u00a0UT\u00a084131",
+      "phone": "(800) 955-7070",
+      "source": "classic"
+    },
+    {
+      "name": "DISCOVER CARD",
+      "address": "PO BOX 30939 ATT:CMS/PROD DEVELOP\n                    SALT LAKE CITY,\u00a0UT\u00a084130-0939",
+      "phone": "(800) 347-2683",
+      "source": "classic"
+    },
+    {
+      "name": "DISCOVERC",
+      "address": "PO BOX 30939\n                    SALT LAKE CITY,\u00a0UT\u00a084130",
+      "phone": "(800) 347-2683",
+      "source": "classic"
+    },
+    {
+      "name": "FIFTH THIRD BANK",
+      "address": "5050 KINGSLEY DRIVE MD 1MOC2N\n                    CINCINNATI,\u00a0OH\u00a045263-0001",
+      "phone": "(800) 972-3030",
+      "source": "classic"
+    },
+    {
+      "name": "FIFTH THIRD BANK NA",
+      "address": "5050 KINGSLEY DR\n                    CINCINNATI,\u00a0OH\u00a045227",
+      "phone": "(800) 972-3030",
+      "source": "classic"
+    },
+    {
+      "name": "JPMCB CARD SERVICES",
+      "address": "PO BOX 15369\n                    WILMINGTON,\u00a0DE\u00a019850-5369",
+      "phone": "(800) 945-2000",
+      "source": "classic"
+    },
+    {
+      "name": "JPMCB CARD",
+      "address": "PO BOX 15369\n                    WILMINGTON,\u00a0DE\u00a019850",
+      "phone": "(800) 945-2000",
+      "source": "classic"
+    },
+    {
+      "name": "MACYS/CITIBANK NA",
+      "address": "PO BOX 6789\n                    SIOUX FALLS,\u00a0SD\u00a057117-6789",
+      "phone": "(800) 243-6552",
+      "source": "classic"
+    },
+    {
+      "name": "MACYS/CBNA",
+      "address": "PO BOX 6789\n                    SIOUX FALLS,\u00a0SD\u00a057117",
+      "phone": "(800) 243-6552",
+      "source": "classic"
+    },
+    {
+      "name": "SYNCB/SYNCHRONY NETW",
+      "address": "PO BOX 71757\n                    PHILADELPHIA,\u00a0PA\u00a019176-1757",
+      "phone": "(866) 396-8254",
+      "source": "classic"
+    },
+    {
+      "name": "SYNCB/NTWK",
+      "address": "PO BOX 71757\n                    PHILADELPHIA,\u00a0PA\u00a019176",
+      "phone": "(866) 396-8254",
+      "source": "classic"
+    },
+    {
+      "name": "ZALES CREDIT CARD",
+      "address": "PO BOX 182120\n                    COLUMBUS,\u00a0OH\u00a043218-2120",
+      "phone": "(855) 796-9632",
+      "source": "classic"
+    }
+  ]
+}
