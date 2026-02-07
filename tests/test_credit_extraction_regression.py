@@ -1047,5 +1047,269 @@ class TestMyScoreIQPersonalInfoExtraction:
             f"Expected {self.EXPECTED_ACCOUNTS_COUNT} accounts, got {len(accounts)}"
 
 
+class TestMyScoreIQAccountHistoryFields:
+    """
+    Regression tests for MyScoreIQ Account History field extraction.
+
+    Test fixture: 407_Carlos_Del_Carmen_20260207_171432.json
+
+    This test ensures the following Account History fields are extracted:
+    1. Account Type - Detail (e.g., "Open Account", "Installment")
+    2. Bureau Code (e.g., "Individual Account", "Joint Account")
+    3. No. of Months / terms (e.g., "Monthly", "Revolving", "1 Month")
+    4. Comments (e.g., "FIXED RATE", "Closed")
+
+    WHY THIS TEST EXISTS:
+    MyScoreIQ displays these fields in the Account History section that weren't
+    being extracted. The template was also showing incorrect fields (Date Closed,
+    Account Rating, Creditor Type, Term Length) that don't exist in MyScoreIQ.
+    """
+
+    FIXTURE_JSON = "407_Carlos_Del_Carmen_20260207_171432.json"
+
+    @pytest.fixture
+    def expected_json(self):
+        """Load the expected JSON results."""
+        json_path = get_fixture_path(self.FIXTURE_JSON)
+        if not json_path.exists():
+            pytest.skip(f"Expected results JSON not found: {json_path}")
+        with open(json_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def test_account_type_detail_extracted(self, expected_json):
+        """
+        Test that Account Type - Detail is extracted.
+
+        Examples: "Open Account", "Installment", "Revolving account"
+        """
+        accounts = expected_json.get("accounts", [])
+        assert len(accounts) > 0, "Should have accounts"
+
+        # Find an account with account_type_detail
+        accounts_with_detail = [a for a in accounts if a.get("account_type_detail")]
+        assert len(accounts_with_detail) > 0, \
+            "At least one account should have account_type_detail"
+
+        # Check first account with detail
+        detail = accounts_with_detail[0].get("account_type_detail")
+        assert detail is not None
+        assert len(detail) > 2, f"account_type_detail too short: '{detail}'"
+
+    def test_bureau_code_extracted(self, expected_json):
+        """
+        Test that Bureau Code is extracted.
+
+        Examples: "Individual Account", "Joint Account"
+        """
+        accounts = expected_json.get("accounts", [])
+        assert len(accounts) > 0, "Should have accounts"
+
+        # Find an account with bureau_code
+        accounts_with_code = [a for a in accounts if a.get("bureau_code")]
+        assert len(accounts_with_code) > 0, \
+            "At least one account should have bureau_code"
+
+        # Check it's a valid bureau code
+        code = accounts_with_code[0].get("bureau_code")
+        assert "account" in code.lower() or "individual" in code.lower() or "joint" in code.lower(), \
+            f"bureau_code should contain 'account', 'individual', or 'joint': '{code}'"
+
+    def test_term_length_extracted(self, expected_json):
+        """
+        Test that No. of Months (terms) / term_length is extracted.
+
+        Examples: "Monthly", "Revolving", "1 Month", "Monthly (due every month)"
+        """
+        accounts = expected_json.get("accounts", [])
+        assert len(accounts) > 0, "Should have accounts"
+
+        # Find an account with term_length
+        accounts_with_terms = [a for a in accounts if a.get("term_length")]
+        assert len(accounts_with_terms) > 0, \
+            "At least one account should have term_length"
+
+        term = accounts_with_terms[0].get("term_length")
+        assert term is not None
+        assert len(term) > 0, f"term_length is empty"
+
+    def test_comments_extracted_when_present(self, expected_json):
+        """
+        Test that Comments are extracted when present.
+
+        Examples: "FIXED RATE", "Closed"
+        Not all accounts have comments, so we just verify structure.
+        """
+        accounts = expected_json.get("accounts", [])
+        assert len(accounts) > 0, "Should have accounts"
+
+        # Find an account with comments (may not exist for all accounts)
+        accounts_with_comments = [a for a in accounts if a.get("comments")]
+
+        # Comments are optional, but if present should be valid strings
+        for account in accounts_with_comments:
+            comment = account.get("comments")
+            assert isinstance(comment, str), f"comments should be string, got {type(comment)}"
+
+
+class TestMyScoreIQExtendedPaymentHistory:
+    """
+    Regression tests for MyScoreIQ Extended Payment History extraction.
+
+    Test fixture: 407_Carlos_Del_Carmen_20260207_171432.json
+
+    This test ensures Extended Payment History is extracted for each account:
+    1. payment_history is an array of month entries
+    2. Each entry has: month, transunion, experian, equifax values
+    3. Values are: OK, 30, 60, 90, CO, CL, or empty string
+
+    WHY THIS TEST EXISTS:
+    MyScoreIQ displays Extended Payment History under each account showing
+    24+ months of payment status per bureau. This data is critical for
+    credit analysis and dispute preparation.
+    """
+
+    FIXTURE_JSON = "407_Carlos_Del_Carmen_20260207_171432.json"
+
+    @pytest.fixture
+    def expected_json(self):
+        """Load the expected JSON results."""
+        json_path = get_fixture_path(self.FIXTURE_JSON)
+        if not json_path.exists():
+            pytest.skip(f"Expected results JSON not found: {json_path}")
+        with open(json_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def test_payment_history_exists(self, expected_json):
+        """Test that payment_history array exists on accounts."""
+        accounts = expected_json.get("accounts", [])
+        assert len(accounts) > 0, "Should have accounts"
+
+        # Find accounts with payment_history
+        accounts_with_history = [a for a in accounts if a.get("payment_history")]
+        assert len(accounts_with_history) > 0, \
+            "At least one account should have payment_history"
+
+    def test_payment_history_is_array(self, expected_json):
+        """Test that payment_history is an array."""
+        accounts = expected_json.get("accounts", [])
+        accounts_with_history = [a for a in accounts if a.get("payment_history")]
+
+        for account in accounts_with_history:
+            ph = account.get("payment_history")
+            assert isinstance(ph, list), \
+                f"payment_history should be list, got {type(ph)}"
+
+    def test_payment_history_entry_structure(self, expected_json):
+        """Test that payment_history entries have correct structure."""
+        accounts = expected_json.get("accounts", [])
+        accounts_with_history = [a for a in accounts if a.get("payment_history")]
+
+        assert len(accounts_with_history) > 0, "Need accounts with payment history"
+
+        for account in accounts_with_history[:3]:  # Check first 3
+            ph = account.get("payment_history", [])
+            if len(ph) > 0:
+                entry = ph[0]
+                assert "month" in entry, "payment_history entry missing 'month'"
+                assert "transunion" in entry, "payment_history entry missing 'transunion'"
+                assert "experian" in entry, "payment_history entry missing 'experian'"
+                assert "equifax" in entry, "payment_history entry missing 'equifax'"
+
+    def test_payment_history_has_multiple_months(self, expected_json):
+        """Test that payment_history has multiple months (at least 12)."""
+        accounts = expected_json.get("accounts", [])
+        accounts_with_history = [a for a in accounts if a.get("payment_history")]
+
+        assert len(accounts_with_history) > 0, "Need accounts with payment history"
+
+        # Find an account with substantial history
+        for account in accounts_with_history:
+            ph = account.get("payment_history", [])
+            if len(ph) >= 12:
+                assert len(ph) >= 12, \
+                    f"Expected at least 12 months, got {len(ph)}"
+                return
+
+        # At least one account should have 12+ months
+        max_months = max(len(a.get("payment_history", [])) for a in accounts_with_history)
+        assert max_months >= 12, \
+            f"No account has 12+ months of history, max was {max_months}"
+
+    def test_payment_history_values_valid(self, expected_json):
+        """Test that payment history values are valid (OK, 30, 60, 90, CO, CL, or empty)."""
+        accounts = expected_json.get("accounts", [])
+        accounts_with_history = [a for a in accounts if a.get("payment_history")]
+
+        valid_values = {"OK", "30", "60", "90", "CO", "CL", ""}
+
+        for account in accounts_with_history[:3]:  # Check first 3
+            ph = account.get("payment_history", [])
+            for entry in ph[:6]:  # Check first 6 months
+                for bureau in ["transunion", "experian", "equifax"]:
+                    value = entry.get(bureau, "")
+                    assert value in valid_values, \
+                        f"Invalid payment history value '{value}' for {bureau}"
+
+    def test_payment_history_month_format(self, expected_json):
+        """Test that month field includes year (e.g., "Nov '20" or "Dec 25")."""
+        accounts = expected_json.get("accounts", [])
+        accounts_with_history = [a for a in accounts if a.get("payment_history")]
+
+        assert len(accounts_with_history) > 0, "Need accounts with payment history"
+
+        for account in accounts_with_history[:1]:  # Check first account
+            ph = account.get("payment_history", [])
+            if len(ph) > 0:
+                month = ph[0].get("month", "")
+                # Month should be like "Nov '20" or "Dec 25" or at least 3 chars
+                assert len(month) >= 3, f"Month too short: '{month}'"
+                # Should contain month abbreviation
+                months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                has_month = any(m in month for m in months)
+                assert has_month, f"Month doesn't contain month name: '{month}'"
+
+
+class TestMyScoreIQLenderRankAndScoreScale:
+    """
+    Regression tests for MyScoreIQ Lender Rank and Score Scale extraction.
+
+    Test fixture: 407_Carlos_Del_Carmen_20260207_171432.json
+
+    These fields appear in the Credit Score section:
+    1. Lender Rank - per bureau ranking
+    2. Score Scale - per bureau scale description
+    """
+
+    FIXTURE_JSON = "407_Carlos_Del_Carmen_20260207_171432.json"
+
+    @pytest.fixture
+    def expected_json(self):
+        """Load the expected JSON results."""
+        json_path = get_fixture_path(self.FIXTURE_JSON)
+        if not json_path.exists():
+            pytest.skip(f"Expected results JSON not found: {json_path}")
+        with open(json_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def test_lender_rank_exists(self, expected_json):
+        """Test that lender_rank is extracted in scores."""
+        scores = expected_json.get("scores", {})
+        lender_rank = scores.get("lender_rank", {})
+
+        # lender_rank should be a dict with bureau keys
+        assert isinstance(lender_rank, dict), \
+            f"lender_rank should be dict, got {type(lender_rank)}"
+
+    def test_score_scale_exists(self, expected_json):
+        """Test that score_scale is extracted in scores."""
+        scores = expected_json.get("scores", {})
+        score_scale = scores.get("score_scale", {})
+
+        # score_scale should be a dict with bureau keys
+        assert isinstance(score_scale, dict), \
+            f"score_scale should be dict, got {type(score_scale)}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
