@@ -1,9 +1,9 @@
 # CLAUDE.md - Project Context
 
-## Current Status (2026-02-05)
+## Current Status (2026-02-07)
 
 ### Test Status: 100% PASSING ✅
-- **Unit tests**: 5,936 passing (98 test files) *(+3 new regression tests)*
+- **Unit tests**: 7,507 passing (99 test files) *(+11 new 5KO timeline tests)*
 - **Cypress E2E tests**: 88/88 passing (100%)
 - **Exhaustive tests**: 51 test files (46 dashboard + 5 portal)
 - **Integration tests**: 2 test files (tests/integration/)
@@ -46,7 +46,67 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 35**: ~~Task Assignment~~ ✅ COMPLETE
 - **Priority 36-39**: Scheduled Reports, SMS Templates, Client Tags, Email Tracking
 
-### Current Work (2026-02-05) - Session: "Credit Import Per-Bureau Display"
+### Current Work (2026-02-07) - Session: "5-Day Knockout Timeline (Issue #97)"
+
+**Task**: Add Visual Timeline to 5-Day Knockout Page (Issue #97)
+
+**Status**: ✅ COMPLETE
+
+---
+
+### Completed Today (2026-02-07):
+
+#### 1. 5-Day Knockout Visual Timeline (Issue #97) ✅
+
+**What**: Added per-client timeline tracking for the 5-Day Knockout process with visual progress indicators.
+
+**Database Fields Added** (`database.py` - Client model):
+- `fko_started_at` - Day 0, process initiated
+- `fko_ftc_filed_at` - Day 0, FTC complaint filed
+- `fko_cfpb_filed_at` - Day 0, CFPB complaints filed
+- `fko_police_filed_at` - Day 0-1, police report filed
+- `fko_letters_sent_at` - Day 1-2, §605B letters sent
+- `fko_followup_called_at` - Day 5-6, follow-up calls made
+- `fko_verified_at` - Day 7+, credit reports pulled to verify
+- `fko_completed_at` - Day 30+, process complete
+- `fko_status` - not_started, in_progress, completed, stalled
+- `fko_notes` - Staff notes on progress
+
+**API Endpoints Added** (`app.py`):
+- `GET /api/5day-knockout/client/<id>/timeline` - Get timeline status
+- `POST /api/5day-knockout/client/<id>/timeline` - Update step (complete/uncomplete)
+- `POST /api/5day-knockout/client/<id>/timeline/start` - Start 5KO process
+- `POST /api/5day-knockout/client/<id>/timeline/notes` - Update notes
+
+**UI Features** (`templates/5day_knockout.html`):
+- Visual timeline with 10 steps (8 actionable + 2 milestones)
+- Click-to-complete steps with green checkmarks
+- Progress bar with percentage
+- Overdue highlighting (red) for missed deadlines
+- Auto-calculated expected dates based on start date
+- Status badge (Not Started / In Progress / Completed / Stalled)
+- Staff notes section with auto-save
+
+**Timeline Steps**:
+| Day | Step | Description |
+|-----|------|-------------|
+| 0 | Process Started | 5-Day Knockout initiated |
+| 0 | FTC Complaint | File at identitytheft.gov |
+| 0 | CFPB Complaints | File for all 3 bureaus |
+| 0-1 | Police Report | File identity theft report |
+| 1-2 | §605B Letters | Submit to all 3 bureaus |
+| 4 | 4-Day Deadline | ⚠️ Milestone - bureaus must block |
+| 5-6 | Follow-Up Calls | Call all 3 bureaus |
+| 7 | Verify Removal | Pull credit reports |
+| 15 | CFPB Response | ⚠️ Milestone - response deadline |
+| 30 | Complete | All accounts verified removed |
+
+**Unit Tests Added** (`tests/test_5ko_timeline.py`):
+- 11 tests covering all endpoints and database columns
+
+---
+
+### Previous Work (2026-02-05) - Session: "Credit Import Per-Bureau Display"
 
 **Task**: Fix credit report extraction to display personal info data separately per bureau (TransUnion, Experian, Equifax)
 
@@ -54,7 +114,7 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 
 ---
 
-### Completed Today (2026-02-05):
+### Completed (2026-02-05):
 
 #### 1. Per-Bureau Personal Info Extraction ✅
 

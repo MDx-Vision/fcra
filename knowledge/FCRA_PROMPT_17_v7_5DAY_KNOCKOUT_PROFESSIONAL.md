@@ -20,6 +20,7 @@ This prompt generates professional documentation for identity theft disputes pur
 - Document 2: Federal Trade Commission Report Guide
 - Document 3: Client Information Summary
 - Document 4: FTC Identity Theft Affidavit (Pre-populated)
+- Document 5: CFPB Complaint Instructions (file WITH FTC - same day)
 
 ---
 
@@ -188,57 +189,172 @@ ________________________________________________________________________________
 
 STEP-BY-STEP INSTRUCTIONS
 
-1.  Navigate to https://www.identitytheft.gov
-    Select: "Report Identity Theft"
+Navigate to https://www.identitytheft.gov and click "Report identity theft"
 
-2.  When prompted "Which statement best describes your situation?"
-    Select: "I want to report identity theft"
+--------------------------------------------------------------------------------
 
-3.  When prompted "What did the identity thief do?"
-    Select the category matching your account type:
-    - Credit Card Accounts
-    - Loans or Leases
-    - Bank Accounts
-    - Other
+STEP 1: THEFT DETAILS
 
-4.  When prompted "Tell us how your information was misused"
-    Select: "To open a fraudulent account"
+"What did the identity thief use your information for?"
+Select the category matching your disputed account:
+- Credit card accounts
+- Loans or leases (student loans, auto loans, mortgages, etc.)
+- Debit, checking, or savings accounts
+- Other account types
 
-5.  Enter account details for each disputed item:
+"Tell us how your information was misused"
+Select: to open a fraudulent account
 
-    ACCOUNT DETAILS:
-    +-----------------+----------------------------------------+
-    | Field           | Value                                  |
-    +-----------------+----------------------------------------+
-    | Company Name    | [CREDITOR NAME]                        |
-    | Date Noticed    | [MONTH YEAR]                           |
-    | Date Opened     | [DATE FROM CREDIT REPORT]              |
-    | Account Number  | [ACCOUNT NUMBER]                       |
-    +-----------------+----------------------------------------+
+If you selected Credit card accounts, you will see a form:
+"Credit Card Opened by the Thief"
 
-6.  Complete personal information screens as prompted.
++-------------------------------+----------------------------------------+
+| Field                         | Value                                  |
++-------------------------------+----------------------------------------+
+| Company or bank that issued   | [CREDITOR NAME from credit report]     |
+| the credit card               |                                        |
++-------------------------------+----------------------------------------+
+| When did you first notice     | Month: [Select]  Year: [Select]        |
+| the problem?                  |                                        |
++-------------------------------+----------------------------------------+
+| When was the account opened?  | Month: [Select]  Year: [Select]        |
+| (if known)                    |                                        |
++-------------------------------+----------------------------------------+
+| Estimate total fraudulent     | $[AMOUNT] (leave blank if unknown)     |
+| charges (if known)            |                                        |
++-------------------------------+----------------------------------------+
+| Account number (if known)     | [ACCOUNT NUMBER]                       |
++-------------------------------+----------------------------------------+
 
-7.  When asked "Have you contacted your local police department?"
-    Select: "No" (this will be completed in Section B)
+Click "+ Add another fraudulent credit card account" for additional accounts.
 
-8.  When asked about data breach history:
-    Select: "Yes" and check all applicable options
+--------------------------------------------------------------------------------
 
-9.  In the narrative section, enter the following statement:
+STEP 2: YOUR INFORMATION
 
-    ----------------------------------------------------------------
-    The following account(s) do not belong to me and were opened
-    without my knowledge, authorization, or consent. This is identity
-    theft. I am filing this report with the Federal Trade Commission
-    and will subsequently file a police report. I request immediate
-    removal of all fraudulent accounts from my credit file.
-    ----------------------------------------------------------------
+Enter your personal information:
 
-10. Submit the form and IMMEDIATELY download the PDF report.
++-------------------------------+----------------------------------------+
+| Field                         | Value                                  |
++-------------------------------+----------------------------------------+
+| First name (required)         | [YOUR FIRST NAME]                      |
++-------------------------------+----------------------------------------+
+| Middle name                   | [YOUR MIDDLE NAME]                     |
++-------------------------------+----------------------------------------+
+| Last name (required)          | [YOUR LAST NAME]                       |
++-------------------------------+----------------------------------------+
+| Primary phone number          | [YOUR PHONE - verification code sent]  |
++-------------------------------+----------------------------------------+
+| Phone type                    | Mobile / Home / Work                   |
++-------------------------------+----------------------------------------+
+| Email address                 | [YOUR EMAIL]                           |
++-------------------------------+----------------------------------------+
+| Confirm email address         | [YOUR EMAIL]                           |
++-------------------------------+----------------------------------------+
 
-    CRITICAL: The PDF cannot be retrieved after leaving this page.
+"Who are you filing this complaint for?"
+Select: myself
 
-    Save as: FTC_Report_[YOUR_NAME]_[DATE].pdf
+Date of Birth: Year [Select] Month [Select] Day [Select]
+
+Current Mailing Address:
+- Street address
+- Apt. Number / PO Box (if applicable)
+- City
+- State [Select]
+- Zip code
+
+"You have lived at this address since:"
+Select: Year [Select] Month [Select]
+
+"Has the victim's legal name or address changed since the theft occurred?"
+Select: No
+
+"Is the victim a military service member or veteran — or a spouse or
+dependent of one?"
+Select: No (unless applicable)
+
+--------------------------------------------------------------------------------
+
+STEP 3: SUSPECT INFORMATION
+
+"Do you know anything about the person who stole your identity?"
+Select: No, not at this time
+
+--------------------------------------------------------------------------------
+
+STEP 4: ADDITIONAL INFORMATION
+
+CREDIT BUREAUS SECTION:
+
+"Have you reviewed a copy of your credit report?"
+Select: Yes
+
+"Were there any fraudulent accounts included in your credit report?"
+Select: Yes
+
+"Was any personal information wrong in your credit report?"
+Check any that apply or "None of the above"
+
+COMPANY INQUIRIES (for hard inquiries):
+If you see inquiries you didn't initiate, enter up to 3:
+- Company name: [CREDITOR NAME] [DATE]
+- Click "+ Add Company" for additional entries
+
+LAW ENFORCEMENT DETAILS:
+
+"Have you requested a fraud alert from one of the three national bureaus?"
+Select: No, not yet
+
+"Have you contacted your local police department?"
+Select: No, not yet (will complete after FTC report)
+
+DATA BREACH HISTORY:
+
+"Was your personal information exposed in a data breach?"
+Select: Yes
+Check all applicable breaches (Equifax, Marriott, etc.)
+
+DEBT COLLECTORS:
+
+"Has a debt collector contacted you about an account that isn't yours?"
+Select: No (or Yes if applicable)
+
+--------------------------------------------------------------------------------
+
+STEP 5: PERSONAL STATEMENT
+
+"Tell us what happened in your own words"
+
+This statement will be included in your FTC Identity Theft Report.
+Do NOT include account numbers, SSN, or other sensitive data.
+1000 character limit.
+
+COPY AND CUSTOMIZE:
+
+The following account(s) were opened fraudulently using my personal
+information without my knowledge, authorization, or consent:
+
+[CREDITOR 1] - Account #[XXXX] - Opened [DATE]
+[CREDITOR 2] - Account #[XXXX] - Opened [DATE]
+
+This is identity theft. I am filing this report with the Federal Trade
+Commission and will file a police report. I request immediate blocking
+of all fraudulent information from my credit file pursuant to FCRA
+Section 605B.
+
+--------------------------------------------------------------------------------
+
+STEP 6: REVIEW YOUR COMPLAINT
+
+Review all information for accuracy.
+
+Click "Submit" to complete your report.
+
+CRITICAL: Download the PDF report IMMEDIATELY.
+The PDF cannot be retrieved after leaving this page.
+
+Save as: FTC_Report_[YOUR_NAME]_[DATE].pdf
 
 ________________________________________________________________________________
 
@@ -1323,6 +1439,8 @@ SECTION 3: PHASE 1 COMPLETION
 +--------------------------------------+----------+-------------+
 | FTC Identity Theft Report filed      | [ ]      |             |
 +--------------------------------------+----------+-------------+
+| CFPB complaints filed (3 bureaus)    | [ ]      |             |
++--------------------------------------+----------+-------------+
 | Police report filed                  | [ ]      |             |
 +--------------------------------------+----------+-------------+
 | Affidavit(s) notarized               | [ ]      |             |
@@ -1366,15 +1484,23 @@ SECTION 6: COMPLIANCE TIMELINE
 +------+----------------------------------------+----------+----------+
 | Day  | Action Required                        | Due Date | Complete |
 +------+----------------------------------------+----------+----------+
-| 0    | Submit disputes to bureaus             |          | [ ]      |
+| 0    | File FTC Report at identitytheft.gov   |          | [ ]      |
 +------+----------------------------------------+----------+----------+
-| 4    | 605B statutory deadline                |          | [ ]      |
+| 0    | File CFPB complaints (all 3 bureaus)   |          | [ ]      |
 +------+----------------------------------------+----------+----------+
-| 5-6  | Verify credit reports / phone follow-up|          | [ ]      |
+| 0-1  | File police report (online or in-person)|         | [ ]      |
 +------+----------------------------------------+----------+----------+
-| 7    | CFPB complaint if block not processed  |          | [ ]      |
+| 1-2  | Submit 605B letters to bureaus         |          | [ ]      |
++------+----------------------------------------+----------+----------+
+| 4    | 605B statutory deadline (4 bus. days)  |          | [ ]      |
++------+----------------------------------------+----------+----------+
+| 5-6  | Phone follow-up with bureaus           |          | [ ]      |
++------+----------------------------------------+----------+----------+
+| 7    | Pull credit reports to verify removal  |          | [ ]      |
 +------+----------------------------------------+----------+----------+
 | 10   | BBB complaint (if collection account)  |          | [ ]      |
++------+----------------------------------------+----------+----------+
+| 15   | CFPB response deadline (federal req.)  |          | [ ]      |
 +------+----------------------------------------+----------+----------+
 | 30   | Confirm removal across all bureaus     |          | [ ]      |
 +------+----------------------------------------+----------+----------+
@@ -1406,99 +1532,189 @@ ________________________________________________________________________________
 SECTION 8: ESCALATION REFERENCE
 
 If block request denied or item reinserted:
-- CFPB Escalation: Document 12
-- Reinsertion Dispute: Document 13
+- 2nd CFPB Complaint: Refile citing bureau's failure to comply
+- Reinsertion Dispute: Document 13 (FCRA §611 violation)
 - BBB Strategy (collections): Document 14
+- State Attorney General complaint
+- FCRA litigation consultation
 
 ________________________________________________________________________________
 ```
 
 ---
 
-### DOCUMENT 12: CFPB_Escalation_[CLIENT].md
+### DOCUMENT 12: CFPB_Complaint_[CLIENT].md
 
 ```markdown
 ________________________________________________________________________________
 
-                    CFPB COMPLAINT ESCALATION PROCEDURE
+                    CFPB COMPLAINT INSTRUCTIONS
 
 ________________________________________________________________________________
 
 Client:         [CLIENT NAME]
-Timing:         7+ business days after bureau submission without resolution
+Timing:         File IMMEDIATELY after FTC Report (same day recommended)
 
 Portal:         https://www.consumerfinance.gov/complaint
 
-NOTE: File a separate CFPB complaint for each non-compliant bureau.
+IMPORTANT: File SEPARATE complaints for each bureau where accounts appear.
+Complete this process for TransUnion, Experian, AND Equifax.
 
 ________________________________________________________________________________
 
-COMPLAINT SUBMISSION PROCEDURE
+STEP-BY-STEP INSTRUCTIONS
 
-1. Navigate to: https://www.consumerfinance.gov/complaint
-2. Select: "Submit a Complaint"
-3. Select product: "Credit reporting or other personal consumer reports"
-4. Select sub-product: "Credit reporting"
-5. Select issue: "Improper use of your report"
-6. Select sub-issue: "Reporting company used your report improperly"
-7. When asked if you attempted resolution: Select "Yes"
+Navigate to https://www.consumerfinance.gov/complaint
+Click "Submit a complaint"
 
 ________________________________________________________________________________
 
-COMPLAINT NARRATIVE
+STEP 1 OF 5: PRODUCT SELECTION
 
-Enter the following in the "Describe what happened" section:
+"What is this complaint about?"
+Select: Credit reporting or other personal consumer reports
 
---------------------------------------------------------------------------------
-In accordance with the Fair Credit Reporting Act, the account identified
-below has violated my federally protected consumer rights under 15 U.S.C.
-Section 1681.
+"What type of credit reporting product?"
+Select: Credit reporting
 
-DISPUTED ACCOUNT:
-[CREDITOR NAME]: Account No. [ACCOUNT NUMBER]
-
-STATUTORY VIOLATIONS:
-
-15 U.S.C. Section 1681e(b) requires consumer reporting agencies to maintain
-reasonable procedures to assure maximum possible accuracy of the information
-concerning the individual about whom the report relates.
-
-15 U.S.C. Section 1681s-2(A)(1) prohibits any person from furnishing
-information to a consumer reporting agency if the person knows or has
-reasonable cause to believe that the information is inaccurate.
-
-DOCUMENTATION SUBMITTED:
-
-I submitted the following documentation on [DATE]:
-- Police Report (Case No. [CASE NUMBER], [DEPARTMENT])
-- FTC Identity Theft Report (Report No. [FTC NUMBER])
-- Notarized Identity Theft Affidavit
-
-The consumer reporting agency has failed to block this fraudulent
-information within four (4) business days as required by FCRA Section 605B
-(15 U.S.C. Section 1681c-2).
---------------------------------------------------------------------------------
+Click Next
 
 ________________________________________________________________________________
 
-REQUESTED RESOLUTION
+STEP 2 OF 5: PROBLEM TYPE
 
-Enter the following in the resolution section:
+"What type of problem are you having?"
+Select: Incorrect information on your report
+        (account or personal information incorrect, information not mine)
 
---------------------------------------------------------------------------------
-Immediate deletion of [CREDITOR NAME] account number [ACCOUNT NUMBER]
-from my consumer credit file, and confirmation of deletion in writing.
---------------------------------------------------------------------------------
+"Which best describes your problem?"
+Select: Account information incorrect
+        OR: Information belongs to someone else
+
+"Have you already tried to fix this problem with the company?"
+Select: Yes
+
+Click Next
 
 ________________________________________________________________________________
 
-REQUIRED ATTACHMENTS
+STEP 3 OF 5: WHAT HAPPENED
 
-Upload copies of:
-[ ] FTC Identity Theft Report PDF
-[ ] Government-issued identification
-[ ] Certified mail receipt (if applicable)
-[ ] Prior bureau correspondence (if any)
+"Describe what happened"
+
+Include dates, amounts, and actions. Do NOT include SSN, account numbers,
+or addresses in the narrative.
+
+COPY AND CUSTOMIZE:
+
+I am a victim of identity theft. The following account(s) were opened
+fraudulently using my personal information without my knowledge,
+authorization, or consent:
+
+[CREDITOR NAME 1] - Account opened [DATE]
+[CREDITOR NAME 2] - Account opened [DATE]
+
+I have filed an FTC Identity Theft Report (Report #[FTC NUMBER]) and a
+police report (Case #[CASE NUMBER], [POLICE DEPARTMENT]) documenting
+this fraud.
+
+Pursuant to FCRA Section 605B (15 U.S.C. § 1681c-2), I demand that
+[BUREAU NAME] block all information resulting from this identity theft
+within four (4) business days of receipt of my Identity Theft Report.
+
+This fraudulent account is negatively impacting my credit score and
+ability to obtain credit.
+
+--------------------------------------------------------------------------------
+
+"What would be a fair resolution to this issue?"
+
+COPY AND CUSTOMIZE:
+
+Immediately block and permanently delete the following fraudulent
+account(s) from my credit report: [CREDITOR NAME] - Account #[LAST 4].
+Provide written confirmation of deletion within 15 days.
+
+--------------------------------------------------------------------------------
+
+"Attach documents" (optional but recommended)
+
+Upload your FTC Identity Theft Report PDF
+
+Click Next
+
+________________________________________________________________________________
+
+STEP 4 OF 5: COMPANY INFORMATION
+
+"What company is this complaint about?"
+
+Type the bureau name:
+- For TransUnion: TransUnion
+- For Experian: Experian
+- For Equifax: Equifax
+
+"We need this information to help the company find you in their system"
+
+Check these boxes:
+[X] Social Security number (last 4 digits)
+[X] Date of birth
+[X] Name as it appears on credit report
+
+Enter:
+- SSN (last 4): [XXXX]
+- Date of birth: [MM] / [DD] / [YYYY]
+- Name on credit report: [YOUR FULL NAME]
+
+"Do you want to complain about another company?"
+Select: No
+
+Click Next
+
+________________________________________________________________________________
+
+STEP 5 OF 5: YOUR INFORMATION
+
+"Who are you submitting this complaint for?"
+Select: Myself
+
+Verify your contact information:
+- Name
+- Phone number
+- Email address
+- Country: United States
+- Address
+- City, State, ZIP
+
+"Preferred Language" (optional): English
+
+Skip demographic information or complete if desired.
+
+Click Review
+
+________________________________________________________________________________
+
+REVIEW AND SUBMIT
+
+Review Steps 1-5 for accuracy.
+
+Check the required boxes:
+[X] "I authorize and direct (1) the consumer reporting agency identified
+     in my complaint to share determinations of and actions taken..."
+[X] "The information given is true to the best of my knowledge..."
+
+Click "Submit your complaint"
+
+________________________________________________________________________________
+
+AFTER SUBMISSION
+
+- Save your CFPB complaint confirmation number immediately
+- The bureau MUST respond within 15 days
+- Log in to consumerfinance.gov to track complaint status
+- You will receive email updates
+
+REPEAT THIS ENTIRE PROCESS for each additional bureau.
 
 ________________________________________________________________________________
 

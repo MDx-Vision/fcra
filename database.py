@@ -282,6 +282,18 @@ class Client(Base):
 
     organization_id = Column(Integer, nullable=True, index=True)
 
+    # 5-Day Knock-Out (§605B) Timeline Tracking
+    fko_started_at = Column(DateTime)  # Day 0 - Process initiated
+    fko_ftc_filed_at = Column(DateTime)  # Day 0 - FTC complaint filed
+    fko_cfpb_filed_at = Column(DateTime)  # Day 0 - CFPB complaints filed
+    fko_police_filed_at = Column(DateTime)  # Day 0-1 - Police report filed
+    fko_letters_sent_at = Column(DateTime)  # Day 1-2 - §605B letters sent
+    fko_followup_called_at = Column(DateTime)  # Day 5-6 - Follow-up calls made
+    fko_verified_at = Column(DateTime)  # Day 7+ - Credit reports pulled to verify removal
+    fko_completed_at = Column(DateTime)  # Day 30+ - Process complete
+    fko_status = Column(String(30), default='not_started')  # not_started, in_progress, completed, stalled
+    fko_notes = Column(Text)  # Staff notes on 5KO progress
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -8406,6 +8418,17 @@ def init_db():
         ("clients", "dl_state", "VARCHAR(2)"),
         ("clients", "dl_number", "VARCHAR(50)"),
         ("clients", "address_since", "VARCHAR(10)"),
+        # 5-Day Knock-Out (§605B) Timeline Tracking
+        ("clients", "fko_started_at", "TIMESTAMP"),
+        ("clients", "fko_ftc_filed_at", "TIMESTAMP"),
+        ("clients", "fko_cfpb_filed_at", "TIMESTAMP"),
+        ("clients", "fko_police_filed_at", "TIMESTAMP"),
+        ("clients", "fko_letters_sent_at", "TIMESTAMP"),
+        ("clients", "fko_followup_called_at", "TIMESTAMP"),
+        ("clients", "fko_verified_at", "TIMESTAMP"),
+        ("clients", "fko_completed_at", "TIMESTAMP"),
+        ("clients", "fko_status", "VARCHAR(30) DEFAULT 'not_started'"),
+        ("clients", "fko_notes", "TEXT"),
     ]
 
     conn = engine.connect()

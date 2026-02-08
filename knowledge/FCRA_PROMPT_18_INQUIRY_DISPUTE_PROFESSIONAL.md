@@ -75,140 +75,164 @@ Submit FTC Report ONLY when inquiries are NOT attached to an open account.
 
 **Website:** https://www.identitytheft.gov
 
+Navigate to identitytheft.gov and click "Report identity theft" or "Get started"
 
-### Step 1: Getting Started
+---
 
-Navigate to https://www.identitytheft.gov and click "Get started"
+### STEP 1: THEFT DETAILS
 
+**Question: "What did the identity thief use your information for?"**
 
-### Question 1: Data Breach Source
+Select: Credit card accounts
 
-**Prompt:** "My info was exposed in a data breach"
+(If your inquiries relate to auto loans or other loans, select "Loans or leases" instead)
 
-**Select:** Equifax
+**Question: "Tell us how your information was misused"**
 
+Select: to open a fraudulent credit card account
 
-### Question 2: Type of Misuse
+---
 
-**Prompt:** "Yes, someone used my info..."
+### STEP 2: YOUR INFORMATION
 
-**Select:** Credit card accounts
-*(or select "loans or leases" if applicable to your inquiries)*
+Fill in your personal information:
 
+- First name (required)
+- Middle name (optional)
+- Last name (required)
+- Primary phone number (required) — they will send a verification code
+- Phone type (Mobile/Home/Work)
+- Email address
+- Confirm email address
 
-### Question 3: Purpose of Misuse
+**Question: "Who are you filing this complaint for?"**
 
-**Prompt:** "To open a fraudulent account"
+Select: myself
 
-**Select:** To open a fraudulent account
+**Date of Birth Information:**
+- Year, Month, Day (all required)
 
+**Current Mailing Address:**
+- Street address
+- Apt/Unit (if applicable)
+- City
+- State
+- Zip code
 
-### Question 4: Theft Details
+**Question: "You have lived at this address since:"**
 
-**Prompt:** "What company or bank issued the credit card?"
+Select the month and year you moved to your current address
 
-**Type:** Not applicable
+**Question: "Has the victim's legal name or address changed since the theft occurred?"**
 
-*Leave all other fields on this page blank*
+Select: No
 
+**Question: "Is the victim a military service member or veteran — or a spouse or dependent of one?"**
 
-### Question 5: Your Information
+Select: No (unless applicable)
 
-Enter your personal information:
-- Full legal name
-- Phone number (for verification code)
-- Date of birth
-- Current address
+---
 
-**Select:** Myself
+### STEP 3: SUSPECT INFORMATION
 
+**Question: "Do you know anything about the person who stole your identity?"**
 
-### Question 6: Additional Questions
+Select: No, not at this time
 
-**For each question, select:**
-- No
-- No
-- No, not at this time
+---
 
+### STEP 4: ADDITIONAL INFORMATION
 
-### Question 7: Review Report
+**CREDIT BUREAUS SECTION:**
 
-**Select:** Yes (review report)
+**Question: "Have you reviewed a copy of your credit report?"**
 
+Select: Yes
 
-### Question 8: Fraudulent Accounts
+**Question: "Were there any fraudulent accounts included in your credit report?"**
 
-**Select:** Yes (fraudulent accounts)
+Select: Yes
 
+**Question: "Was any personal information wrong in your credit report?"**
 
-### Question 9: Checkbox Selection
+Check any that apply (Social Security number, Date of birth, Names, Addresses, Phone numbers, Employment information) or select "None of the above"
 
-**Select:** None of the checkboxes
+**INQUIRIES SECTION:**
 
+The form states: "When you apply for credit, the lender places an inquiry in your file. Inquiries are listed near the end of your credit report. If you see any inquiries that you didn't initiate, please list up to three here."
 
-### Question 10: Company Information
+Enter each unauthorized inquiry:
+- Company name field: Type the creditor name exactly as shown on report
+- Click "+ Add Company" for each additional inquiry (up to 3)
 
-Enter the inquiry information exactly as shown on your credit report, including the date.
+Example entries:
+- LIGHTSTREAM 12/19/2025
+- US BANK 11/20/2025
+- BANK 11/19/2025
 
-**Example:** BK OF AMER 07/11/2023
+(If more than 3 inquiries, list additional ones in the Personal Statement section)
 
-*(Upload up to three items—additional inquiries will be added in the statement)*
+**Question: "Have you requested a fraud alert from one of the three national bureaus (Equifax, Experian, TransUnion)?"**
 
+Select: No, not yet
 
-### Question 11: Fraud Alert
+**LAW ENFORCEMENT DETAILS:**
 
-**Select:** No (requested fraud alert)
+**Question: "Have you contacted your local police department?"**
 
+Select: No, not yet
 
-### Question 12: Police Contact
+**DATA BREACH HISTORY:**
 
-**Select:** No (contacted police)
+**Question: "Was your personal information exposed in a data breach?"**
 
+Select: Yes
 
-### Question 13: Data Breach Confirmation
+Check applicable breaches (Equifax, etc.) or "I don't know"
 
-**Check the following boxes:**
-- YES Equifax
-- YES Marriott
-- YES Breach not listed
+**DEBT COLLECTORS:**
 
+**Question: "Has a debt collector contacted you about an account that isn't yours?"**
 
-### Question 14: Debt Collector Contact
+Select: No (or Yes if applicable)
 
-**Select:** Yes (debt collector contacted you)
+---
 
+### STEP 5: PERSONAL STATEMENT
 
-### Question 15: Statement
+**Prompt: "Tell us what happened in your own words"**
 
-**Copy and paste the following text, replacing the bracketed items with your actual inquiries:**
+This is your statement about what happened. It will be included in your FTC Identity Theft Report. Do NOT include account numbers, SSN, or other sensitive data.
 
-These inquiries do not belong to me, please have them removed from my credit report:
+**Copy and customize:**
 
-[CREDITOR 1] ([DATE]), [CREDITOR 2] ([DATE]), [CREDITOR 3] ([DATE])
+The following hard inquiries appear on my credit report without my authorization. I did not apply for credit with these companies. These inquiries are the result of identity theft and I request they be removed from my credit file:
 
+[CREDITOR 1] ([DATE])
+[CREDITOR 2] ([DATE])
+[CREDITOR 3] ([DATE])
 
-### Question 16: Final Inquiry Entry
+(You have 1000 characters maximum)
 
-Enter any remaining inquiry information exactly as shown on your report.
+---
 
+### STEP 6: REVIEW YOUR COMPLAINT
 
-### Finalize
+Review all information for accuracy before submitting.
 
-**Select:** Submit without an account
+Click "Submit" to complete your report.
 
-**Select:** Text message
+**CRITICAL: Download your report PDF immediately.** This document cannot be retrieved after you leave the page.
 
+Save the PDF to your computer as: FTC_Report_[YourName]_[Date].pdf
 
-### Critical: Download Your Report
+---
 
-**IMPORTANT:** Download the PDF report immediately. This document cannot be retrieved after you leave the page. Save it to your computer before proceeding.
+### RECORD YOUR INFORMATION
 
-
-### Record Your Information
-
-- FTC Report Number: _______________
-- Date Filed: _______________
-- PDF Downloaded: ☐ Confirmed
+FTC Report Number: _______________
+Date Filed: _______________
+PDF Downloaded: [ ] Confirmed
 
 ---
 
@@ -231,159 +255,180 @@ Submit SEPARATE complaints for each credit bureau (TransUnion and Equifax). Comp
 
 **Website:** https://www.consumerfinance.gov/complaint/
 
-**Note:** File separate complaints for TransUnion and Equifax
+**IMPORTANT:** File SEPARATE complaints for each bureau (TransUnion and Equifax). Complete this process twice.
 
+Navigate to consumerfinance.gov/complaint and click "Submit a complaint"
 
-### Step 1: Access Portal
+---
 
-Navigate to https://www.consumerfinance.gov/complaint/ and click "Submit A Complaint" (top right)
+### STEP 1 OF 5: PRODUCT SELECTION
 
+**Question: "What is this complaint about?"**
 
-### Step 2: Account Setup
+Select: Credit reporting or other personal consumer reports
+(includes background checks, employment, or tenant screening)
 
-Select "Start a new complaint" and create an account or log in. Verify your email address.
+**Question: "What type of credit reporting product?"**
 
-
-### Question 1: Complaint Category
-
-**Prompt:** "What is this complaint about?"
-
-**Select:** Credit reporting or other personal consumer reports
-
-
-### Question 2: Product Type
-
-**Prompt:** "What type of credit reporting product?"
-
-**Select:** Credit reporting
+Select: Credit reporting
 
 Click Next
 
+---
 
-### Question 3: Problem Type
+### STEP 2 OF 5: PROBLEM TYPE
 
-**Prompt:** "What type of problem are you having?"
+**Question: "What type of problem are you having?"**
 
-**Select:** Improper use of your report
+Select: Improper use of your report
+(shared without consent, credit inquiries from unknown sources)
 
+**Question: "Which best describes your problem?"**
 
-### Question 4: Problem Description
+Select: Credit inquiries on your report that you don't recognize
 
-**Prompt:** "Which best describes your problem?"
+**Question: "Have you already tried to fix this problem with the company?"**
 
-**Select:** Credit inquiries on your report that you don't recognize
+Select: Yes
 
+**Question: "Did you request information from the company?"**
 
-### Question 5: Prior Resolution Attempts
+Select: Yes
 
-**Prompt:** "Have you already tried to fix this problem with the company?"
+**Question: "What information did you request?" (optional)**
 
-**Select:** Yes
+Leave blank or type: Proof of permissible purpose for inquiries
 
+**Question: "Did the company provide this information?"**
 
-### Question 6: Information Request
-
-**Prompt:** "Did you request information from the company?"
-
-**Select:** Yes
-
-
-### Question 7: Information Received
-
-**Prompt:** "Did the company provide you this information?"
-
-**Select:** Yes
+Select: Yes
 
 Click Next
 
+---
 
-### Question 8: Narrative Statement
+### STEP 3 OF 5: WHAT HAPPENED
 
-**Prompt:** "What happened?"
+**Question: "Describe what happened, and we'll send your comments to the companies involved."**
 
-**Copy and customize the following text:**
-
-I recently reviewed my report from [BUREAU NAME] on [TODAY'S DATE], and I identified hard inquiries that are the result of identity theft.
-
-Please block and remove all information resulting from identity theft pursuant to FCRA 605B (15 U.S.C. § 1681c-2), which mandates removal within four (4) business days of receipt.
-
-These unauthorized inquiries are causing financial hardship and preventing me from obtaining new credit.
-
-Disputed Inquiries:
-
-1. [CREDITOR NAME] ([DATE]) — Remove pursuant to FCRA 605B (15 U.S.C. § 1681c-2)
-2. [CREDITOR NAME] ([DATE]) — Remove pursuant to FCRA 605B (15 U.S.C. § 1681c-2)
-3. [CREDITOR NAME] ([DATE]) — Remove pursuant to FCRA 605B (15 U.S.C. § 1681c-2)
-
-
-### Question 9: Desired Resolution
-
-**Prompt:** "What would be a fair resolution to this issue?"
+Include dates, amounts, and actions taken by you or the company. Do NOT include personal info like SSN, account numbers, or address.
 
 **Copy and customize:**
 
-Delete these hard inquiries: [CREDITOR 1] ([DATE]), [CREDITOR 2] ([DATE]), [CREDITOR 3] ([DATE]). The presence of these unauthorized inquiries has violated my rights under the Fair Credit Reporting Act.
+I recently reviewed my credit report from [BUREAU NAME] and identified unauthorized hard inquiries that I did not initiate. These inquiries are the result of identity theft.
 
+I have filed an FTC Identity Theft Report (Report #[FTC NUMBER]) documenting this fraud.
 
-### Question 10: Document Upload
+Pursuant to FCRA Section 605B (15 U.S.C. § 1681c-2), I request that [BUREAU NAME] block and remove all information resulting from identity theft within four (4) business days of receipt.
 
-**Prompt:** "Select a file to attach"
+Unauthorized Inquiries:
+1. [CREDITOR NAME] - [DATE]
+2. [CREDITOR NAME] - [DATE]
+3. [CREDITOR NAME] - [DATE]
 
-**Upload:** Your FTC Identity Theft Report PDF
+These unauthorized inquiries are negatively impacting my credit score and ability to obtain credit.
+
+**Checkbox (optional):** "I want the CFPB to publish this description on consumerfinance.gov so that others can learn from my experience."
+
+Check this box if you want your complaint published (personal info will be removed).
+
+**Question: "What would be a fair resolution to this issue?"**
+
+**Copy and customize:**
+
+Immediately delete the following unauthorized hard inquiries from my credit report: [CREDITOR 1] ([DATE]), [CREDITOR 2] ([DATE]), [CREDITOR 3] ([DATE]). Provide written confirmation of deletion within 15 days.
+
+**Attach documents (optional):**
+
+Upload your FTC Identity Theft Report PDF
 
 Click Next
 
+---
 
-### Question 11: Company Identification
+### STEP 4 OF 5: COMPANY INFORMATION
 
-**Prompt:** "What company is this complaint about?"
+**Question: "What company is this complaint about?"**
 
-**Type:**
-- For TransUnion complaint: TRANSUNION
-- For Equifax complaint: EQUIFAX
+Type the bureau name:
+- For TransUnion complaint: TransUnion
+- For Equifax complaint: Equifax
 
+**Question: "We need this information to help the company find you in their system and respond to your complaint." (optional)**
 
-### Question 12: Personal Information
+Check these boxes:
+- Social Security number (last 4 digits)
+- Date of birth
+- Name as it appears on credit report
 
-**Select:** SSN, Name, and date of birth
+Enter your information:
+- SSN (last 4 digits): [XXXX]
+- Date of birth: [MM/DD/YYYY]
+- Name as it appears on credit report: [YOUR NAME]
 
-Complete all required fields with your information.
+**Question: "Do you want to complain about another company?"**
 
+Select: No
 
-### Question 13: Additional Companies
+Click Next
 
-**Prompt:** "Do you want to complain about another company?"
+---
 
-**Select:** No
+### STEP 5 OF 5: YOUR INFORMATION
 
+**Question: "Who are you submitting this complaint for?"**
 
-### Question 14: Filing Party
+Select: Myself
+(I am submitting this complaint for myself)
 
-**Prompt:** "Who are you submitting this complaint for?"
+**Your contact information:**
 
-**Select:** Myself
+Verify your name, phone, and email are correct.
 
+**Address:**
+- Country: United States
+- Address line 1
+- Address line 2 (optional)
+- City
+- State
+- ZIP code
 
-### Step 3: Review
+**Preferred Language (optional):** English
 
-Verify all information is accurate before submission.
+**Your demographic information (optional):** Skip these fields or complete if desired.
 
+Click Review
 
-### Step 4: Submit
+---
 
-Click Submit. **Do not refresh the page** — this may cause you to lose your progress.
+### REVIEW AND SUBMIT
 
+Review all 5 steps for accuracy.
 
-### Important Note
+Check the required boxes:
+- "I authorize and direct (1) the consumer reporting agency identified in my complaint to share determinations of and actions taken by the company for the purpose of responding to my complaint, and (2) the CFPB to share this information with certain government agencies."
+- "The information given is true to the best of my knowledge and belief. I understand that the CFPB cannot act as my lawyer, a court of law, or a financial advisor."
 
-This process may result in inquiry removal within 72 hours. If inquiries remain after this period, proceed to Phase 3 (609 Letters).
+Click "Submit your complaint"
 
+---
 
-### Record Your Information
+### AFTER SUBMISSION
 
-- CFPB Complaint # (TransUnion): _______________
-- CFPB Complaint # (Equifax): _______________
-- Date Filed: _______________
+- Save your CFPB complaint confirmation number
+- The bureau must respond within 15 days
+- You will receive email updates on your complaint status
+- Log in to consumerfinance.gov to track progress
+
+**REPEAT this entire process for the second bureau.**
+
+---
+
+### RECORD YOUR INFORMATION
+
+CFPB Complaint # (TransUnion): _______________
+CFPB Complaint # (Equifax): _______________
+Date Filed: _______________
 
 ---
 

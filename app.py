@@ -43340,6 +43340,328 @@ def api_5day_knockout_fill_affidavit():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/api/5day-knockout/client/<int:client_id>/timeline", methods=["GET"])
+@require_staff()
+def api_5day_knockout_client_timeline(client_id):
+    """Get 5-Day Knockout timeline status for a client"""
+    try:
+        with get_db() as db:
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                return jsonify({"success": False, "error": "Client not found"}), 404
+
+            # Calculate expected dates based on start date
+            start_date = getattr(client, "fko_started_at", None)
+            expected_dates = {}
+            if start_date:
+                from datetime import timedelta
+
+                # Calculate business days for each milestone
+                def add_business_days(start, days):
+                    current = start
+                    added = 0
+                    while added < days:
+                        current += timedelta(days=1)
+                        if current.weekday() < 5:  # Mon-Fri
+                            added += 1
+                    return current
+
+                expected_dates = {
+                    "ftc_expected": start_date.isoformat(),  # Same day
+                    "cfpb_expected": start_date.isoformat(),  # Same day
+                    "police_expected": add_business_days(
+                        start_date, 1
+                    ).isoformat(),  # Day 0-1
+                    "letters_expected": add_business_days(
+                        start_date, 2
+                    ).isoformat(),  # Day 1-2
+                    "deadline_4day": add_business_days(
+                        start_date, 4
+                    ).isoformat(),  # §605B deadline
+                    "followup_expected": add_business_days(
+                        start_date, 6
+                    ).isoformat(),  # Day 5-6
+                    "verify_expected": add_business_days(
+                        start_date, 7
+                    ).isoformat(),  # Day 7
+                    "cfpb_response_expected": add_business_days(
+                        start_date, 15
+                    ).isoformat(),  # Day 15
+                    "complete_expected": add_business_days(
+                        start_date, 30
+                    ).isoformat(),  # Day 30
+                }
+
+            # Build timeline steps
+            steps = [
+                {
+                    "id": "started",
+                    "label": "Process Started",
+                    "description": "5-Day Knock-Out initiated",
+                    "day": 0,
+                    "completed_at": getattr(client, "fko_started_at", None),
+                    "expected_at": expected_dates.get("ftc_expected"),
+                },
+                {
+                    "id": "ftc_filed",
+                    "label": "FTC Complaint",
+                    "description": "File complaint at identitytheft.gov",
+                    "day": 0,
+                    "completed_at": getattr(client, "fko_ftc_filed_at", None),
+                    "expected_at": expected_dates.get("ftc_expected"),
+                },
+                {
+                    "id": "cfpb_filed",
+                    "label": "CFPB Complaints",
+                    "description": "File complaints for all 3 bureaus",
+                    "day": 0,
+                    "completed_at": getattr(client, "fko_cfpb_filed_at", None),
+                    "expected_at": expected_dates.get("cfpb_expected"),
+                },
+                {
+                    "id": "police_filed",
+                    "label": "Police Report",
+                    "description": "File identity theft police report",
+                    "day": "0-1",
+                    "completed_at": getattr(client, "fko_police_filed_at", None),
+                    "expected_at": expected_dates.get("police_expected"),
+                },
+                {
+                    "id": "letters_sent",
+                    "label": "§605B Letters Sent",
+                    "description": "Submit letters to all 3 bureaus",
+                    "day": "1-2",
+                    "completed_at": getattr(client, "fko_letters_sent_at", None),
+                    "expected_at": expected_dates.get("letters_expected"),
+                },
+                {
+                    "id": "deadline_4day",
+                    "label": "4-Day Deadline",
+                    "description": "Bureaus must block within 4 business days",
+                    "day": 4,
+                    "is_milestone": True,
+                    "expected_at": expected_dates.get("deadline_4day"),
+                },
+                {
+                    "id": "followup_called",
+                    "label": "Follow-Up Calls",
+                    "description": "Call all 3 bureaus to verify",
+                    "day": "5-6",
+                    "completed_at": getattr(client, "fko_followup_called_at", None),
+                    "expected_at": expected_dates.get("followup_expected"),
+                },
+                {
+                    "id": "verified",
+                    "label": "Verify Removal",
+                    "description": "Pull credit reports to confirm",
+                    "day": 7,
+                    "completed_at": getattr(client, "fko_verified_at", None),
+                    "expected_at": expected_dates.get("verify_expected"),
+                },
+                {
+                    "id": "cfpb_response",
+                    "label": "CFPB Response",
+                    "description": "CFPB response deadline",
+                    "day": 15,
+                    "is_milestone": True,
+                    "expected_at": expected_dates.get("cfpb_response_expected"),
+                },
+                {
+                    "id": "completed",
+                    "label": "Process Complete",
+                    "description": "All accounts verified removed",
+                    "day": 30,
+                    "completed_at": getattr(client, "fko_completed_at", None),
+                    "expected_at": expected_dates.get("complete_expected"),
+                },
+            ]
+
+            # Format completed_at dates
+            for step in steps:
+                if step.get("completed_at"):
+                    step["completed_at"] = step["completed_at"].isoformat()
+
+            # Calculate overall progress
+            actionable_steps = [s for s in steps if not s.get("is_milestone")]
+            completed_count = sum(1 for s in actionable_steps if s.get("completed_at"))
+            progress_percent = (
+                int((completed_count / len(actionable_steps)) * 100)
+                if actionable_steps
+                else 0
+            )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "client_id": client_id,
+                    "client_name": client.name,
+                    "status": getattr(client, "fko_status", "not_started")
+                    or "not_started",
+                    "notes": getattr(client, "fko_notes", None),
+                    "started_at": (
+                        client.fko_started_at.isoformat()
+                        if getattr(client, "fko_started_at", None)
+                        else None
+                    ),
+                    "steps": steps,
+                    "progress_percent": progress_percent,
+                    "completed_steps": completed_count,
+                    "total_steps": len(actionable_steps),
+                }
+            )
+
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/5day-knockout/client/<int:client_id>/timeline", methods=["POST"])
+@require_staff()
+def api_5day_knockout_update_timeline(client_id):
+    """Update 5-Day Knockout timeline step for a client"""
+    try:
+        data = request.get_json()
+        step_id = data.get("step_id")
+        action = data.get("action", "complete")  # complete, uncomplete
+
+        if not step_id:
+            return jsonify({"success": False, "error": "step_id is required"}), 400
+
+        # Map step IDs to database columns
+        step_column_map = {
+            "started": "fko_started_at",
+            "ftc_filed": "fko_ftc_filed_at",
+            "cfpb_filed": "fko_cfpb_filed_at",
+            "police_filed": "fko_police_filed_at",
+            "letters_sent": "fko_letters_sent_at",
+            "followup_called": "fko_followup_called_at",
+            "verified": "fko_verified_at",
+            "completed": "fko_completed_at",
+        }
+
+        if step_id not in step_column_map:
+            return (
+                jsonify({"success": False, "error": f"Invalid step_id: {step_id}"}),
+                400,
+            )
+
+        column_name = step_column_map[step_id]
+
+        with get_db() as db:
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                return jsonify({"success": False, "error": "Client not found"}), 404
+
+            if action == "complete":
+                # Set the timestamp
+                setattr(client, column_name, datetime.utcnow())
+
+                # Auto-start the process if completing any step
+                if not client.fko_started_at:
+                    client.fko_started_at = datetime.utcnow()
+
+                # Update status based on progress
+                if step_id == "completed":
+                    client.fko_status = "completed"
+                elif client.fko_status == "not_started":
+                    client.fko_status = "in_progress"
+
+            elif action == "uncomplete":
+                setattr(client, column_name, None)
+
+                # Recalculate status
+                if step_id == "started":
+                    client.fko_status = "not_started"
+                elif step_id == "completed":
+                    client.fko_status = "in_progress"
+
+            db.commit()
+
+            return jsonify(
+                {
+                    "success": True,
+                    "step_id": step_id,
+                    "action": action,
+                    "timestamp": (
+                        getattr(client, column_name).isoformat()
+                        if getattr(client, column_name)
+                        else None
+                    ),
+                    "status": client.fko_status,
+                }
+            )
+
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/5day-knockout/client/<int:client_id>/timeline/start", methods=["POST"])
+@require_staff()
+def api_5day_knockout_start_timeline(client_id):
+    """Start 5-Day Knockout process for a client"""
+    try:
+        with get_db() as db:
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                return jsonify({"success": False, "error": "Client not found"}), 404
+
+            if client.fko_started_at:
+                return jsonify(
+                    {
+                        "success": True,
+                        "message": "Process already started",
+                        "started_at": client.fko_started_at.isoformat(),
+                    }
+                )
+
+            client.fko_started_at = datetime.utcnow()
+            client.fko_status = "in_progress"
+            db.commit()
+
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "5-Day Knockout process started",
+                    "started_at": client.fko_started_at.isoformat(),
+                }
+            )
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/5day-knockout/client/<int:client_id>/timeline/notes", methods=["POST"])
+@require_staff()
+def api_5day_knockout_update_notes(client_id):
+    """Update notes for 5-Day Knockout process"""
+    try:
+        data = request.get_json()
+        notes = data.get("notes", "")
+
+        with get_db() as db:
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                return jsonify({"success": False, "error": "Client not found"}), 404
+
+            client.fko_notes = notes
+            db.commit()
+
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Notes updated",
+                }
+            )
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 # =============================================================================
 # INQUIRY DISPUTES ENDPOINTS
 # =============================================================================
@@ -43516,12 +43838,18 @@ DISPUTED INQUIRIES:
 
 TODAY'S DATE: {today}
 
-Generate these 3 documents:
-1. FTC_Report_Instructions_{client_info['name'].replace(' ', '_')}.md
-2. CFPB_Complaint_Instructions_{client_info['name'].replace(' ', '_')}.md
-3. Inquiry_Dispute_Summary_{client_info['name'].replace(' ', '_')}.md
+Generate these 3 SEPARATE documents. Start each document with its filename on its own line:
 
-Keep documents clean and minimal. Follow the formatting rules in the system prompt."""
+## FTC_Report_Instructions_{client_info['name'].replace(' ', '_')}.md
+[document content here]
+
+## CFPB_Complaint_Instructions_{client_info['name'].replace(' ', '_')}.md
+[document content here]
+
+## Inquiry_Dispute_Summary_{client_info['name'].replace(' ', '_')}.md
+[document content here]
+
+CRITICAL: Each document MUST start with ## followed by the exact filename ending in .md"""
             else:
                 user_message = f"""Generate Phase 2 Inquiry Dispute documents (609 letters) for this client.
 
@@ -43541,45 +43869,58 @@ REFERENCE NUMBERS:
 
 TODAY'S DATE: {today}
 
-Generate:
-1. TransUnion_609_Letter_{client_info['name'].replace(' ', '_')}.md
-2. Equifax_609_Letter_{client_info['name'].replace(' ', '_')}.md
-3. Phone_Follow_Up_Guide_{client_info['name'].replace(' ', '_')}.md
-4. Mailing_Checklist_{client_info['name'].replace(' ', '_')}.md
+Generate these 4 SEPARATE documents. Start each document with its filename on its own line:
 
-FORMATTING RULES - FOLLOW STRICTLY:
-- Keep each document to 1-2 pages maximum
-- Use minimal headers (3-4 sections max per document)
-- NO emoji, NO checkbox symbols (☐), NO decorative elements
-- NO ASCII boxes or tables (no ┌─────┐ characters)
-- Write direct instructions, not meta-descriptions
-- Copy-paste text should have the client's actual info pre-filled, not brackets
-- No "Important Notes", "Timeline", or "Next Steps" filler sections"""
+## TransUnion_609_Letter_{client_info['name'].replace(' ', '_')}.md
+[document content here]
+
+## Equifax_609_Letter_{client_info['name'].replace(' ', '_')}.md
+[document content here]
+
+## Phone_Follow_Up_Guide_{client_info['name'].replace(' ', '_')}.md
+[document content here]
+
+## Mailing_Checklist_{client_info['name'].replace(' ', '_')}.md
+[document content here]
+
+CRITICAL: Each document MUST start with ## followed by the exact filename ending in .md"""
 
             # System prompt enforcing clean formatting
-            system_prompt = """You are a professional legal document generator. Generate CLEAN, MINIMAL documents.
+            system_prompt = """You are a legal document generator. Generate MINIMAL documents only.
 
-STRICT FORMATTING RULES:
-1. Maximum 3-4 sections per document
-2. No emoji, no checkbox symbols (☐ ✓ ✗), no decorative characters
-3. No ASCII boxes or tables (no ┌─────┐ │ └─────┘ characters)
-4. Write prose and direct instructions, not verbose structure
-5. Each document should be 1-2 pages, not 4-5 pages
-6. Questions listed simply: "Question 1: Select X" — no sub-headers explaining each question
-7. Pre-fill client information directly, no [BRACKETS] for the client to fill in
-8. No sections like "Important Notes", "Success Indicators", "Timeline", "What to Expect"
+FORBIDDEN SECTIONS - NEVER INCLUDE:
+- "Expected Timeline" or any timeline section
+- "Next Steps" section
+- "Important Notes" section
+- "What to Expect" section
+- "Phase X Actions Required" headers
+- Any forward-looking or explanatory content
 
-BAD (too verbose):
-## Question 1: Category Selection
-**Prompt:** "What is this about?"
-**Action Required:** Select the option that says...
-**Why This Matters:** This establishes...
+STRICT RULES:
+1. Maximum 3 sections per document
+2. No emoji, no checkbox symbols
+3. No ASCII art or decorative characters
+4. The Summary document should ONLY contain: client info, list of disputed inquiries, legal basis, and blank reference number fields
+5. Instruction documents should list steps directly without explaining why
+6. Pre-fill all client data, no brackets
 
-GOOD (clean and direct):
-Question 1: Select "Credit reporting"
-Question 2: Select "Improper use of your report"
+THE SUMMARY DOCUMENT FORMAT:
+# Case Summary
+Client: [name]
+Address: [address]
+Date: [date]
 
-Generate professional documents a law firm would produce."""
+## Disputed Inquiries
+[simple list of inquiries]
+
+## Legal Basis
+[one paragraph]
+
+## Reference Numbers
+FTC: ________________
+CFPB: ________________
+
+NOTHING ELSE. No timeline. No next steps. No actions required."""
 
             # Call AI
             response = service.anthropic_client.messages.create(
@@ -43596,7 +43937,17 @@ Generate professional documents a law firm would produce."""
 
             # Parse documents from response
             ai_content = response.content[0].text
+
+            # Debug logging
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.info(f"AI Response length: {len(ai_content)} chars")
+            logger.info(f"AI Response first 500 chars: {ai_content[:500]}")
+            logger.info(f"Number of --- separators: {ai_content.count('---')}")
+
             documents = parse_multiple_documents(ai_content)
+            logger.info(f"Parsed {len(documents)} documents: {list(documents.keys())}")
 
             # Log AI usage
             from services.ai_usage_service import log_ai_usage
@@ -43671,25 +44022,55 @@ def api_inquiry_disputes_save_files():
 
 def parse_multiple_documents(ai_content):
     """Parse multiple markdown documents from AI response"""
+    import re
+
     documents = {}
 
-    # Try to split by document markers
-    # Look for patterns like "### DOCUMENT 1:" or "## [FILENAME].md" or "---" separators
+    # First try: Split by --- separator (most common AI output format)
+    sections = re.split(r"\n---+\n", ai_content)
+
+    if len(sections) >= 2:
+        # Multiple sections found - extract title from each
+        for i, section in enumerate(sections):
+            section = section.strip()
+            if not section:
+                continue
+
+            # Try to extract document name from first heading
+            title_match = re.search(
+                r"^#\s+(.+?)(?:\s*[—\-]+\s*.+)?$", section, re.MULTILINE
+            )
+            if title_match:
+                title = title_match.group(1).strip()
+                # Convert title to filename format
+                if "FTC" in title.upper():
+                    doc_name = "FTC_Report_Instructions.md"
+                elif "CFPB" in title.upper():
+                    doc_name = "CFPB_Complaint_Instructions.md"
+                elif "SUMMARY" in title.upper() or "DISPUTE" in title.upper():
+                    doc_name = "Inquiry_Dispute_Summary.md"
+                elif "609" in title or "TRANSUNION" in title.upper():
+                    doc_name = "TransUnion_609_Letter.md"
+                elif "EQUIFAX" in title.upper():
+                    doc_name = "Equifax_609_Letter.md"
+                elif "PHONE" in title.upper() or "FOLLOW" in title.upper():
+                    doc_name = "Phone_Follow_Up_Guide.md"
+                elif "CHECKLIST" in title.upper() or "MAIL" in title.upper():
+                    doc_name = "Mailing_Checklist.md"
+                else:
+                    doc_name = f"Document_{i + 1}.md"
+            else:
+                doc_name = f"Document_{i + 1}.md"
+
+            documents[doc_name] = section
+        return documents
+
+    # Fallback: Look for ## Filename.md patterns
     lines = ai_content.split("\n")
     current_doc_name = None
     current_doc_content = []
 
     for line in lines:
-        # Check for document name patterns
-        if line.startswith("### DOCUMENT") or line.startswith("## DOCUMENT"):
-            # Save previous document
-            if current_doc_name and current_doc_content:
-                documents[current_doc_name] = "\n".join(current_doc_content).strip()
-            # Extract new document name
-            current_doc_name = None
-            current_doc_content = []
-            continue
-
         # Check for filename in line
         if ".md" in line and (
             "_Letter_" in line
@@ -43698,9 +44079,6 @@ def parse_multiple_documents(ai_content):
             or "_Checklist_" in line
             or "_Guide_" in line
         ):
-            # Extract filename
-            import re
-
             match = re.search(r"([A-Za-z0-9_]+\.md)", line)
             if match:
                 if current_doc_name and current_doc_content:
@@ -43709,11 +44087,9 @@ def parse_multiple_documents(ai_content):
                 current_doc_content = []
                 continue
 
-        # Add line to current document
         if current_doc_name:
             current_doc_content.append(line)
 
-    # Save last document
     if current_doc_name and current_doc_content:
         documents[current_doc_name] = "\n".join(current_doc_content).strip()
 

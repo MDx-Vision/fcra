@@ -1,0 +1,234 @@
+"""
+Tests for 5-Day Knockout Timeline API endpoints
+"""
+import pytest
+from datetime import datetime
+from unittest.mock import MagicMock, patch
+
+
+class TestFkoTimelineGet:
+    """Tests for GET /api/5day-knockout/client/<id>/timeline"""
+
+    def test_get_timeline_returns_correct_structure(self):
+        """Test that timeline API returns expected fields"""
+        with patch('app.get_db') as mock_get_db:
+            mock_db = MagicMock()
+            mock_client = MagicMock()
+            mock_client.id = 1
+            mock_client.name = "Test Client"
+            mock_client.fko_started_at = None
+            mock_client.fko_ftc_filed_at = None
+            mock_client.fko_cfpb_filed_at = None
+            mock_client.fko_police_filed_at = None
+            mock_client.fko_letters_sent_at = None
+            mock_client.fko_followup_called_at = None
+            mock_client.fko_verified_at = None
+            mock_client.fko_completed_at = None
+            mock_client.fko_status = "not_started"
+            mock_client.fko_notes = None
+
+            mock_db.query.return_value.filter.return_value.first.return_value = mock_client
+            mock_get_db.return_value.__enter__.return_value = mock_db
+
+            from app import app
+            with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    sess['staff_id'] = 1
+                    sess['staff_role'] = 'admin'
+
+                response = client.get('/api/5day-knockout/client/1/timeline')
+                data = response.get_json()
+
+                assert data['success'] is True
+                assert 'steps' in data
+                assert 'progress_percent' in data
+                assert 'status' in data
+
+    def test_get_timeline_client_not_found(self):
+        """Test 404 when client doesn't exist"""
+        with patch('app.get_db') as mock_get_db:
+            mock_db = MagicMock()
+            mock_db.query.return_value.filter.return_value.first.return_value = None
+            mock_get_db.return_value.__enter__.return_value = mock_db
+
+            from app import app
+            with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    sess['staff_id'] = 1
+                    sess['staff_role'] = 'admin'
+
+                response = client.get('/api/5day-knockout/client/999/timeline')
+                assert response.status_code == 404
+
+
+class TestFkoTimelineUpdate:
+    """Tests for POST /api/5day-knockout/client/<id>/timeline"""
+
+    def test_update_timeline_step_complete(self):
+        """Test completing a timeline step"""
+        with patch('app.get_db') as mock_get_db:
+            mock_db = MagicMock()
+            mock_client = MagicMock()
+            mock_client.fko_started_at = None
+            mock_client.fko_ftc_filed_at = None
+            mock_client.fko_status = "not_started"
+
+            mock_db.query.return_value.filter.return_value.first.return_value = mock_client
+            mock_get_db.return_value.__enter__.return_value = mock_db
+
+            from app import app
+            with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    sess['staff_id'] = 1
+                    sess['staff_role'] = 'admin'
+
+                response = client.post('/api/5day-knockout/client/1/timeline',
+                    json={'step_id': 'ftc_filed', 'action': 'complete'})
+                data = response.get_json()
+
+                assert data['success'] is True
+                assert data['step_id'] == 'ftc_filed'
+                assert data['action'] == 'complete'
+
+    def test_update_timeline_invalid_step(self):
+        """Test error on invalid step_id"""
+        with patch('app.get_db') as mock_get_db:
+            mock_db = MagicMock()
+            mock_get_db.return_value.__enter__.return_value = mock_db
+
+            from app import app
+            with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    sess['staff_id'] = 1
+                    sess['staff_role'] = 'admin'
+
+                response = client.post('/api/5day-knockout/client/1/timeline',
+                    json={'step_id': 'invalid_step', 'action': 'complete'})
+
+                assert response.status_code == 400
+
+    def test_update_timeline_missing_step_id(self):
+        """Test error when step_id is missing"""
+        with patch('app.get_db') as mock_get_db:
+            mock_db = MagicMock()
+            mock_get_db.return_value.__enter__.return_value = mock_db
+
+            from app import app
+            with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    sess['staff_id'] = 1
+                    sess['staff_role'] = 'admin'
+
+                response = client.post('/api/5day-knockout/client/1/timeline',
+                    json={'action': 'complete'})
+
+                assert response.status_code == 400
+
+
+class TestFkoTimelineStart:
+    """Tests for POST /api/5day-knockout/client/<id>/timeline/start"""
+
+    def test_start_process(self):
+        """Test starting the 5KO process"""
+        with patch('app.get_db') as mock_get_db:
+            mock_db = MagicMock()
+            mock_client = MagicMock()
+            mock_client.fko_started_at = None
+            mock_client.fko_status = "not_started"
+
+            mock_db.query.return_value.filter.return_value.first.return_value = mock_client
+            mock_get_db.return_value.__enter__.return_value = mock_db
+
+            from app import app
+            with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    sess['staff_id'] = 1
+                    sess['staff_role'] = 'admin'
+
+                response = client.post('/api/5day-knockout/client/1/timeline/start')
+                data = response.get_json()
+
+                assert data['success'] is True
+                assert 'started_at' in data
+
+    def test_start_process_already_started(self):
+        """Test starting when process already started"""
+        with patch('app.get_db') as mock_get_db:
+            mock_db = MagicMock()
+            mock_client = MagicMock()
+            mock_client.fko_started_at = datetime.utcnow()
+            mock_client.fko_status = "in_progress"
+
+            mock_db.query.return_value.filter.return_value.first.return_value = mock_client
+            mock_get_db.return_value.__enter__.return_value = mock_db
+
+            from app import app
+            with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    sess['staff_id'] = 1
+                    sess['staff_role'] = 'admin'
+
+                response = client.post('/api/5day-knockout/client/1/timeline/start')
+                data = response.get_json()
+
+                assert data['success'] is True
+                assert data['message'] == 'Process already started'
+
+
+class TestFkoTimelineNotes:
+    """Tests for POST /api/5day-knockout/client/<id>/timeline/notes"""
+
+    def test_update_notes(self):
+        """Test updating notes"""
+        with patch('app.get_db') as mock_get_db:
+            mock_db = MagicMock()
+            mock_client = MagicMock()
+            mock_client.fko_notes = None
+
+            mock_db.query.return_value.filter.return_value.first.return_value = mock_client
+            mock_get_db.return_value.__enter__.return_value = mock_db
+
+            from app import app
+            with app.test_client() as client:
+                with client.session_transaction() as sess:
+                    sess['staff_id'] = 1
+                    sess['staff_role'] = 'admin'
+
+                response = client.post('/api/5day-knockout/client/1/timeline/notes',
+                    json={'notes': 'Test notes'})
+                data = response.get_json()
+
+                assert data['success'] is True
+
+
+class TestFkoTimelineSteps:
+    """Tests for timeline step definitions"""
+
+    def test_all_step_ids_are_valid(self):
+        """Test that all step IDs are in the column map"""
+        step_column_map = {
+            "started": "fko_started_at",
+            "ftc_filed": "fko_ftc_filed_at",
+            "cfpb_filed": "fko_cfpb_filed_at",
+            "police_filed": "fko_police_filed_at",
+            "letters_sent": "fko_letters_sent_at",
+            "followup_called": "fko_followup_called_at",
+            "verified": "fko_verified_at",
+            "completed": "fko_completed_at",
+        }
+
+        # Verify all columns exist in the Client model
+        from database import Client
+
+        for step_id, column_name in step_column_map.items():
+            assert hasattr(Client, column_name), f"Client model missing column: {column_name}"
+
+    def test_fko_status_column_exists(self):
+        """Test that fko_status column exists"""
+        from database import Client
+        assert hasattr(Client, 'fko_status')
+
+    def test_fko_notes_column_exists(self):
+        """Test that fko_notes column exists"""
+        from database import Client
+        assert hasattr(Client, 'fko_notes')
