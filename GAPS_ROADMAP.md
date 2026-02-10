@@ -669,7 +669,6 @@ Credit monitoring services store historical credit reports. Currently we only pu
 - MyFreeScoreNow
 - IdentityIQ
 - MyScoreIQ
-- SmartCredit
 
 Each service has different UI patterns for accessing historical reports - need per-service implementation.
 
@@ -698,7 +697,6 @@ Each service has different UI patterns for accessing historical reports - need p
 - [ ] MyFreeScoreNow: Pull all historical reports
 - [ ] IdentityIQ: Pull all historical reports
 - [ ] MyScoreIQ: Pull all historical reports
-- [ ] SmartCredit: Pull all historical reports
 - [ ] Store each report with report date and service source
 - [ ] Compare accounts across report dates (same client, different dates)
 - [ ] Auto-detect deletion dates (item present in report A, gone in report B)
