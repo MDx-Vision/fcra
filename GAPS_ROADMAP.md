@@ -665,16 +665,10 @@ Credit monitoring services store historical credit reports. Currently we only pu
 2. Detect exact reinsertion dates (when item came back = §611 violation)
 3. Build accurate timeline for litigation documentation
 
-**Supported Credit Monitoring Services:**
+**Supported Credit Monitoring Services (implemented):**
 - MyFreeScoreNow
 - IdentityIQ
 - MyScoreIQ
-- HighScoreNow
-- IdentityClub
-- IDClub
-- MyThreeScores
-- MyScore750
-- CreditHeroScore
 
 Each service has different UI patterns for accessing historical reports - need per-service implementation.
 
@@ -703,12 +697,6 @@ Each service has different UI patterns for accessing historical reports - need p
 - [ ] MyFreeScoreNow: Pull all historical reports
 - [ ] IdentityIQ: Pull all historical reports
 - [ ] MyScoreIQ: Pull all historical reports
-- [ ] HighScoreNow: Pull all historical reports
-- [ ] IdentityClub: Pull all historical reports
-- [ ] IDClub: Pull all historical reports
-- [ ] MyThreeScores: Pull all historical reports
-- [ ] MyScore750: Pull all historical reports
-- [ ] CreditHeroScore: Pull all historical reports
 - [ ] Store each report with report date and service source
 - [ ] Compare accounts across report dates (same client, different dates)
 - [ ] Auto-detect deletion dates (item present in report A, gone in report B)
