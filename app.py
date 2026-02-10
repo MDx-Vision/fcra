@@ -10122,8 +10122,14 @@ def client_portal_guide():
 
 @app.route("/bureau-setup")
 def bureau_account_setup():
-    """Public page for clients to fill out bureau account credentials"""
+    """Public page for clients to fill out bureau account credentials (v1)"""
     return render_template("bureau_account_setup.html")
+
+
+@app.route("/bureau-setup-v2")
+def bureau_account_setup_v2():
+    """Public page for clients to fill out bureau account credentials (v2 - simplified URLs)"""
+    return render_template("bureau_account_setup_v2.html")
 
 
 @app.route("/portal/<token>")

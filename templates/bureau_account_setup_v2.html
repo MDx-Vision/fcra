@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Bureau Account Setup | Brightpath Ascend Group</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #ffffff;
+            color: #1d1d1f;
+            line-height: 1.5;
+            font-size: 17px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 60px 24px 120px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 64px;
+            padding-bottom: 48px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .logo-img {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-top: 40px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 17px;
+            color: #86868b;
+            margin-top: 12px;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 56px;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 24px;
+            letter-spacing: -0.3px;
+        }
+
+        h3 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 16px;
+        }
+
+        p {
+            color: #1d1d1f;
+            margin-bottom: 16px;
+        }
+
+        .text-secondary {
+            color: #86868b;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 24px;
+            margin-bottom: 20px;
+            color: #1d1d1f;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Info box */
+        .info-box {
+            background: #f5f5f7;
+            padding: 24px;
+            border-radius: 12px;
+            margin: 24px 0;
+        }
+
+        .info-box p {
+            margin-bottom: 12px;
+        }
+
+        .info-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-box strong {
+            color: #1d1d1f;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+        }
+
+        th, td {
+            padding: 16px 0;
+            text-align: left;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        th {
+            font-weight: 600;
+            color: #1d1d1f;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            color: #1d1d1f;
+        }
+
+        /* Step cards */
+        .step-card {
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 32px;
+            margin: 32px 0;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: #1d1d1f;
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .step-title {
+            font-size: 21px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .website-link {
+            color: #1d1d1f;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .website-link:hover {
+            color: #86868b;
+        }
+
+        /* Form fields */
+        .credential-section {
+            background: #f5f5f7;
+            border-radius: 12px;
+            padding: 32px;
+            margin-top: 32px;
+        }
+
+        .credential-title {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #86868b;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #86868b;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 17px;
+            font-family: inherit;
+            background: #ffffff;
+            color: #1d1d1f;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #1d1d1f;
+        }
+
+        .form-group input::placeholder {
+            color: #86868b;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Note box */
+        .note-box {
+            background: #1d1d1f;
+            color: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            margin: 32px 0;
+        }
+
+        .note-box h3 {
+            color: #ffffff;
+            margin-bottom: 16px;
+        }
+
+        .note-box ul {
+            color: rgba(255,255,255,0.8);
+            margin-left: 20px;
+        }
+
+        .note-box li {
+            margin-bottom: 8px;
+        }
+
+        /* Contact */
+        .contact-section {
+            text-align: center;
+            padding: 48px 0;
+            border-top: 1px solid #e5e5e5;
+            margin-top: 48px;
+        }
+
+        .contact-section h3 {
+            margin-bottom: 16px;
+        }
+
+        .contact-section p {
+            color: #86868b;
+            margin-bottom: 8px;
+        }
+
+        /* Acknowledgment */
+        .acknowledgment {
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 32px;
+            margin: 48px 0;
+        }
+
+        .signature-field {
+            border-bottom: 1px solid #1d1d1f;
+            min-height: 48px;
+            margin-top: 8px;
+        }
+
+        /* Action buttons */
+        .action-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-top: 1px solid #e5e5e5;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            font-size: 17px;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: #1d1d1f;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #424245;
+        }
+
+        .btn-secondary {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e5e5;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                font-size: 12pt;
+            }
+
+            .container {
+                padding: 0;
+                max-width: 100%;
+            }
+
+            .action-bar {
+                display: none;
+            }
+
+            .step-card,
+            .credential-section,
+            .acknowledgment {
+                break-inside: avoid;
+            }
+
+            .form-group input {
+                border: none;
+                border-bottom: 1px solid #1d1d1f;
+                border-radius: 0;
+                padding: 8px 0;
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 20px 120px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            h2 {
+                font-size: 21px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .action-bar {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <img src="/static/images/logo.png" alt="Brightpath Ascend Group" class="logo-img">
+            <h1>Credit Bureau Account Setup</h1>
+            <p class="subtitle">Instructions for creating your bureau accounts</p>
+        </header>
+
+        <!-- Why Section -->
+        <section class="section">
+            <h2>Why You Need These Accounts</h2>
+            <p>To monitor and manage your credit reports, we need access to your accounts at TransUnion, Experian, and Equifax.</p>
+
+            <div class="info-box">
+                <p><strong>Important:</strong> We cannot create these accounts on your behalf. The bureaus require identity verification through personal security questions that only you can answer, such as:</p>
+                <ul>
+                    <li>Which of these companies is your mortgage lender?</li>
+                    <li>What is the monthly payment on your auto loan?</li>
+                    <li>Which of these addresses have you lived at?</li>
+                </ul>
+                <p>Once created, share your login credentials with us so we can access your credit information.</p>
+            </div>
+        </section>
+
+        <!-- Requirements -->
+        <section class="section">
+            <h2>What You'll Need</h2>
+            <table>
+                <tr>
+                    <th>Item</th>
+                    <th>Details</th>
+                </tr>
+                <tr>
+                    <td>Full Legal Name</td>
+                    <td class="text-secondary">As it appears on your credit report</td>
+                </tr>
+                <tr>
+                    <td>Social Security Number</td>
+                    <td class="text-secondary">Full 9 digits</td>
+                </tr>
+                <tr>
+                    <td>Date of Birth</td>
+                    <td class="text-secondary">Month, day, and year</td>
+                </tr>
+                <tr>
+                    <td>Current Address</td>
+                    <td class="text-secondary">Where you currently live</td>
+                </tr>
+                <tr>
+                    <td>Email & Phone</td>
+                    <td class="text-secondary">For verification codes</td>
+                </tr>
+                <tr>
+                    <td>Time Required</td>
+                    <td class="text-secondary">15-20 minutes per bureau</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Step 1: TransUnion -->
+        <section class="section">
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-title">TransUnion</div>
+                </div>
+
+                <p><strong>Website:</strong> <a href="https://www.transunion.com" target="_blank" class="website-link">transunion.com</a></p>
+
+                <h3>Instructions</h3>
+                <ol>
+                    <li>Go to transunion.com</li>
+                    <li>Click "Create Account" or "Sign Up"</li>
+                    <li>Enter your personal information</li>
+                    <li>Create a username and password</li>
+                    <li>Answer the security verification questions</li>
+                    <li>Verify your email address if prompted</li>
+                </ol>
+
+                <p class="text-secondary">If verification fails, you may need to verify by mail. TransUnion will send a verification code to your address within 5-7 business days.</p>
+
+                <div class="credential-section">
+                    <div class="credential-title">TransUnion Credentials</div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="tu_username" placeholder="Enter username">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="text" name="tu_password" placeholder="Enter password">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Security Question</label>
+                            <input type="text" name="tu_security_q" placeholder="Question">
+                        </div>
+                        <div class="form-group">
+                            <label>Answer</label>
+                            <input type="text" name="tu_security_a" placeholder="Answer">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Account Created Date</label>
+                        <input type="date" name="tu_date">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2: Experian -->
+        <section class="section">
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Experian</div>
+                </div>
+
+                <p><strong>Website:</strong> <a href="https://www.experian.com" target="_blank" class="website-link">experian.com</a></p>
+
+                <h3>Instructions</h3>
+                <ol>
+                    <li>Go to experian.com</li>
+                    <li>Click "Sign Up" or "Create Account"</li>
+                    <li>Enter your personal information</li>
+                    <li>Create username and password</li>
+                    <li>Answer security verification questions</li>
+                    <li>Enter verification code sent via text or email</li>
+                </ol>
+
+                <p class="text-secondary">If verification fails, Experian may require mail verification. They'll send a PIN to your address on file.</p>
+
+                <div class="credential-section">
+                    <div class="credential-title">Experian Credentials</div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="exp_username" placeholder="Enter username">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="text" name="exp_password" placeholder="Enter password">
+                    </div>
+                    <div class="form-group">
+                        <label>PIN (if provided)</label>
+                        <input type="text" name="exp_pin" placeholder="Enter PIN">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Security Question</label>
+                            <input type="text" name="exp_security_q" placeholder="Question">
+                        </div>
+                        <div class="form-group">
+                            <label>Answer</label>
+                            <input type="text" name="exp_security_a" placeholder="Answer">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Account Created Date</label>
+                        <input type="date" name="exp_date">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3: Equifax -->
+        <section class="section">
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Equifax</div>
+                </div>
+
+                <p><strong>Website:</strong> <a href="https://www.equifax.com" target="_blank" class="website-link">equifax.com</a></p>
+
+                <h3>Instructions</h3>
+                <ol>
+                    <li>Go to equifax.com</li>
+                    <li>Click "Sign Up" or "Create Account"</li>
+                    <li>Enter your personal information</li>
+                    <li>Create username and password</li>
+                    <li>Answer security verification questions</li>
+                    <li>Complete ID.me verification if prompted (photo ID + selfie)</li>
+                </ol>
+
+                <p class="text-secondary">If verification fails, Equifax may require ID.me verification or mail verification.</p>
+
+                <div class="credential-section">
+                    <div class="credential-title">Equifax Credentials</div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="eq_username" placeholder="Enter username">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="text" name="eq_password" placeholder="Enter password">
+                    </div>
+                    <div class="form-group">
+                        <label>PIN (if provided)</label>
+                        <input type="text" name="eq_pin" placeholder="Enter PIN">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Security Question</label>
+                            <input type="text" name="eq_security_q" placeholder="Question">
+                        </div>
+                        <div class="form-group">
+                            <label>Answer</label>
+                            <input type="text" name="eq_security_a" placeholder="Answer">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Account Created Date</label>
+                        <input type="date" name="eq_date">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Security Notes -->
+        <section class="section">
+            <div class="note-box">
+                <h3>Security Guidelines</h3>
+                <ul>
+                    <li>Do not email passwords in plain text</li>
+                    <li>Do not share credentials via regular text message</li>
+                    <li>Keep a copy of your credentials in a safe place</li>
+                    <li>Do not log into the portals to submit disputes yourself</li>
+                    <li>Contact us before attempting to reset if locked out</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section class="section">
+            <h2>Troubleshooting</h2>
+            <table>
+                <tr>
+                    <th>Problem</th>
+                    <th>Solution</th>
+                </tr>
+                <tr>
+                    <td>Failed security questions</td>
+                    <td class="text-secondary">Try again with different questions, or use mail verification</td>
+                </tr>
+                <tr>
+                    <td>Account already exists</td>
+                    <td class="text-secondary">Click "Forgot Password" to reset</td>
+                </tr>
+                <tr>
+                    <td>Locked out</td>
+                    <td class="text-secondary">Wait 24 hours or call the bureau</td>
+                </tr>
+                <tr>
+                    <td>Verification code not received</td>
+                    <td class="text-secondary">Check spam folder, wait 10 minutes, request again</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Contact -->
+        <section class="contact-section">
+            <h3>Questions?</h3>
+            <p>Phone: (917) 909-4051</p>
+            <p>Email: support@brightpathascendgroup.com</p>
+            <p>Monday – Friday, 9am – 6pm EST</p>
+        </section>
+
+        <!-- Acknowledgment -->
+        <section class="acknowledgment">
+            <h2>Client Acknowledgment</h2>
+            <p class="text-secondary">By signing below, I acknowledge that I have created accounts at all three credit bureaus and authorize Brightpath Ascend Group to access these accounts to submit disputes on my behalf.</p>
+
+            <div class="form-group">
+                <label>Full Legal Name</label>
+                <input type="text" name="client_name" placeholder="Enter your full name">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="client_email" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" name="client_phone" placeholder="Enter phone">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Signature</label>
+                <div class="signature-field"></div>
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" name="signature_date">
+            </div>
+        </section>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <button class="btn btn-primary" onclick="window.print()">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M5 1a2 2 0 0 0-2 2v1h10V3a2 2 0 0 0-2-2H5zm6 8H5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1z"/>
+                <path d="M0 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v-2a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2H2a2 2 0 0 1-2-2V7z"/>
+            </svg>
+            Save as PDF
+        </button>
+        <a href="mailto:support@brightpathascendgroup.com?subject=Bureau%20Account%20Setup%20Form" class="btn btn-secondary">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
+            </svg>
+            Email Form
+        </a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateField = document.querySelector('input[name="signature_date"]');
+            if (dateField && !dateField.value) {
+                dateField.value = today;
+            }
+
+            document.querySelectorAll('input').forEach(function(input) {
+                const saved = localStorage.getItem('bureau_' + input.name);
+                if (saved && !input.value) input.value = saved;
+                input.addEventListener('change', function() {
+                    localStorage.setItem('bureau_' + input.name, input.value);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
