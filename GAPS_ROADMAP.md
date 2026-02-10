@@ -656,14 +656,23 @@ Violation pattern tracking exists but evidence packet generation could be enhanc
 - **Priority:** High
 - **Status:** Open
 - **Category:** Credit Repair Warfare Gap
-- **Effort:** 6-8 hours
+- **Effort:** 8-12 hours
 - **Added:** 2026-02-09
 
 **Description:**
-Credit monitoring services like MyFreeScoreNow store historical credit reports (accessible via dropdown). Currently we only pull the current report. Need to pull ALL historical reports and compare them month-to-month to:
+Credit monitoring services store historical credit reports. Currently we only pull the current report. Need to pull ALL historical reports and compare them month-to-month to:
 1. Detect exact deletion dates (when item disappeared)
 2. Detect exact reinsertion dates (when item came back = §611 violation)
 3. Build accurate timeline for litigation documentation
+
+**Supported Credit Monitoring Services:**
+- MyFreeScoreNow (dropdown selector)
+- IdentityIQ (report history section)
+- MyScoreIQ (archive/history)
+- SmartCredit (previous reports)
+- PrivacyGuard (report archive)
+
+Each service has different UI patterns for accessing historical reports - need per-service implementation.
 
 **Current Gap:**
 - Deletion dates are estimated from audit comparison, not actual report dates
@@ -671,28 +680,33 @@ Credit monitoring services like MyFreeScoreNow store historical credit reports (
 - Missing documentation for §611(a)(5)(B) violations
 
 **Technical Approach:**
-1. Modify credit import automation to detect historical report dropdown
-2. Loop through all available dates and pull each report
-3. Store each report with its keyDate
-4. Create comparison service to diff accounts between reports
-5. Auto-update DisputeItem.deleted_at and reinserted_at with real dates
-6. Flag §611 violations when reinsertion detected without proper notice
+1. Add `pull_historical_reports()` method to credit import automation
+2. Per-service logic to find and navigate historical report UI
+3. Loop through all available dates and pull each report
+4. Store each report with its keyDate and service source
+5. Create comparison service to diff accounts between reports
+6. Auto-update DisputeItem.deleted_at and reinserted_at with real dates
+7. Flag §611 violations when reinsertion detected without proper notice
 
 **Files to Modify:**
-- `services/credit_import_automation.py` - Pull all historical reports
+- `services/credit_import_automation.py` - Add per-service historical report pulling
 - `services/credit_report_parser.py` - Parse with date context
-- `services/credit_report_comparison_service.py` - NEW: Compare reports
-- `database.py` - Store historical report metadata
-- `app.py` - API endpoints for comparison data
+- `services/credit_report_comparison_service.py` - NEW: Compare reports across dates
+- `database.py` - Store historical report metadata (CreditReportSnapshot model)
+- `app.py` - API endpoints for comparison data and timeline
 
 **Acceptance Criteria:**
-- [ ] Pull all historical reports from MyFreeScoreNow dropdown
-- [ ] Store each report with its report date
-- [ ] Compare accounts across report dates
+- [ ] MyFreeScoreNow: Pull all reports from date dropdown
+- [ ] IdentityIQ: Pull all reports from history section
+- [ ] MyScoreIQ: Pull all reports from archive
+- [ ] SmartCredit: Pull all reports from previous reports
+- [ ] PrivacyGuard: Pull all reports from archive
+- [ ] Store each report with report date and service source
+- [ ] Compare accounts across report dates (same client, different dates)
 - [ ] Auto-detect deletion dates (item present in report A, gone in report B)
 - [ ] Auto-detect reinsertion dates (item gone in report B, back in report C)
 - [ ] Update DisputeItem.deleted_at and reinserted_at with real dates
-- [ ] Generate timeline visualization of account changes
+- [ ] Generate timeline visualization of account changes per client
 - [ ] Flag §611(a)(5)(B) violations for reinsertions without notice
 
 **Related Issues:**
