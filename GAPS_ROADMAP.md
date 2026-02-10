@@ -666,9 +666,10 @@ Credit monitoring services store historical credit reports. Currently we only pu
 3. Build accurate timeline for litigation documentation
 
 **Supported Credit Monitoring Services:**
-- MyFreeScoreNow (dropdown selector)
-- IdentityIQ (report history section)
-- MyScoreIQ (archive/history)
+- MyFreeScoreNow
+- IdentityIQ
+- MyScoreIQ
+- SmartCredit
 
 Each service has different UI patterns for accessing historical reports - need per-service implementation.
 
@@ -694,9 +695,10 @@ Each service has different UI patterns for accessing historical reports - need p
 - `app.py` - API endpoints for comparison data and timeline
 
 **Acceptance Criteria:**
-- [ ] MyFreeScoreNow: Pull all reports from date dropdown
-- [ ] IdentityIQ: Pull all reports from history section
-- [ ] MyScoreIQ: Pull all reports from archive
+- [ ] MyFreeScoreNow: Pull all historical reports
+- [ ] IdentityIQ: Pull all historical reports
+- [ ] MyScoreIQ: Pull all historical reports
+- [ ] SmartCredit: Pull all historical reports
 - [ ] Store each report with report date and service source
 - [ ] Compare accounts across report dates (same client, different dates)
 - [ ] Auto-detect deletion dates (item present in report A, gone in report B)
