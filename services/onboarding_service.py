@@ -60,6 +60,14 @@ ONBOARDING_STEPS = [
         "required_fields": ["credit_monitoring_service", "credit_monitoring_username"],
     },
     {
+        "key": "bureau_accounts",
+        "name": "Bureau Accounts",
+        "description": "Optional: Add your TransUnion, Equifax, or Experian portal logins for automated disputes",
+        "icon": "shield",
+        "optional": True,  # This step is optional - clients can skip it
+        "required_fields": [],  # No required fields - any one bureau is sufficient
+    },
+    {
         "key": "agreement",
         "name": "Service Agreement",
         "description": "Review and sign the service agreement",

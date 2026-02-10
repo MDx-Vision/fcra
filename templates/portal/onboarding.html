@@ -689,6 +689,92 @@
     </div>
 </div>
 
+<!-- Bureau Accounts Modal -->
+<div class="step-modal" id="modal-bureau_accounts" data-testid="modal-bureau_accounts">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Bureau Portal Accounts</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="form-bureau_accounts" onsubmit="submitStep(event, 'bureau_accounts')">
+            <p style="color: #64748b; margin-bottom: 16px;">
+                <strong>Optional:</strong> If you have accounts with TransUnion, Equifax, or Experian dispute portals,
+                adding your login info enables automated dispute filing. You can skip this step and add them later.
+            </p>
+            <div style="background: #f0fdf4; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #166534;">
+                <strong>🔒 Security Note:</strong> Your credentials are encrypted with bank-level security and only used for dispute automation.
+            </div>
+
+            <!-- TransUnion -->
+            <div style="background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                <h4 style="font-size: 15px; font-weight: 600; color: #1a1a2e; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    <span style="background: #3b82f6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">TU</span>
+                    TransUnion Dispute Portal
+                </h4>
+                <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">service.transunion.com</p>
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="tu_username">Username/Email</label>
+                        <input type="text" id="tu_username" name="tu_portal_username" value="{{ current_user.tu_portal_username or '' }}" placeholder="Your TransUnion login" data-testid="input-tu-username">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="tu_password">Password</label>
+                        <input type="password" id="tu_password" name="tu_portal_password" placeholder="••••••••" data-testid="input-tu-password">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equifax -->
+            <div style="background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                <h4 style="font-size: 15px; font-weight: 600; color: #1a1a2e; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    <span style="background: #dc2626; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">EQ</span>
+                    Equifax Dispute Portal
+                </h4>
+                <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">my.equifax.com</p>
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="eq_username">Username/Email</label>
+                        <input type="text" id="eq_username" name="eq_portal_username" value="{{ current_user.eq_portal_username or '' }}" placeholder="Your Equifax login" data-testid="input-eq-username">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="eq_password">Password</label>
+                        <input type="password" id="eq_password" name="eq_portal_password" placeholder="••••••••" data-testid="input-eq-password">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experian -->
+            <div style="background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                <h4 style="font-size: 15px; font-weight: 600; color: #1a1a2e; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">EXP</span>
+                    Experian Dispute Portal
+                </h4>
+                <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">experian.com/disputes</p>
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="exp_username">Username/Email</label>
+                        <input type="text" id="exp_username" name="exp_portal_username" value="{{ current_user.exp_portal_username or '' }}" placeholder="Your Experian login" data-testid="input-exp-username">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="exp_password">Password</label>
+                        <input type="password" id="exp_password" name="exp_portal_password" placeholder="••••••••" data-testid="input-exp-password">
+                    </div>
+                </div>
+            </div>
+
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 16px;">
+                Don't have these accounts yet? No problem! We can help you set them up later, or you can
+                <a href="https://mdx-vision.github.io/credit-bureau-setup/" target="_blank" style="color: #319795;">download our setup guide</a>.
+            </p>
+
+            <div style="display: flex; gap: 12px;">
+                <button type="submit" class="btn-primary" style="flex: 1;" data-testid="save-bureau_accounts">Save & Continue</button>
+                <button type="button" class="btn-secondary" onclick="skipStep('bureau_accounts')" style="flex: 1; background: #f1f5f9; color: #475569; border: none;" data-testid="skip-bureau_accounts">Skip for Now</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Agreement Modal -->
 <div class="step-modal" id="modal-agreement" data-testid="modal-agreement">
     <div class="modal-content">
@@ -1418,6 +1504,30 @@ async function submitStep(event, stepKey) {
             });
         }
 
+        // For bureau_accounts, save the credentials first
+        if (stepKey === 'bureau_accounts') {
+            const bureauData = {
+                tu_portal_username: formData.get('tu_portal_username'),
+                tu_portal_password: formData.get('tu_portal_password'),
+                eq_portal_username: formData.get('eq_portal_username'),
+                eq_portal_password: formData.get('eq_portal_password'),
+                exp_portal_username: formData.get('exp_portal_username'),
+                exp_portal_password: formData.get('exp_portal_password')
+            };
+
+            const saveResponse = await fetch('/portal/api/onboarding/save-bureau-accounts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bureauData)
+            });
+
+            const saveData = await saveResponse.json();
+            if (!saveData.success) {
+                alert(saveData.error || 'Failed to save bureau credentials.');
+                return;
+            }
+        }
+
         // Mark step as complete
         const response = await fetch('/portal/api/onboarding/complete-step', {
             method: 'POST',
@@ -1432,6 +1542,28 @@ async function submitStep(event, stepKey) {
             window.location.reload();
         } else {
             alert(data.error || 'Failed to save. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    }
+}
+
+// Skip optional step (like bureau_accounts)
+async function skipStep(stepKey) {
+    try {
+        const response = await fetch('/portal/api/onboarding/complete-step', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ step: stepKey, skipped: true })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            closeModal();
+            window.location.reload();
+        } else {
+            alert(data.error || 'Failed to skip step. Please try again.');
         }
     } catch (error) {
         console.error('Error:', error);

@@ -1300,6 +1300,52 @@ def api_onboarding_next_step():
         db.close()
 
 
+@portal.route('/api/onboarding/save-bureau-accounts', methods=['POST'])
+@portal_login_required
+def api_onboarding_save_bureau_accounts():
+    """Save bureau portal credentials from onboarding form"""
+    from flask import jsonify
+    from database import get_db, Client
+    from services.encryption_service import encrypt_value
+    from datetime import datetime
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter(Client.id == get_client_id()).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        data = request.json or {}
+
+        # TransUnion credentials
+        if data.get('tu_portal_username'):
+            client.tu_portal_username = data['tu_portal_username']
+        if data.get('tu_portal_password'):
+            client.tu_portal_password_encrypted = encrypt_value(data['tu_portal_password'])
+
+        # Equifax credentials
+        if data.get('eq_portal_username'):
+            client.eq_portal_username = data['eq_portal_username']
+        if data.get('eq_portal_password'):
+            client.eq_portal_password_encrypted = encrypt_value(data['eq_portal_password'])
+
+        # Experian credentials
+        if data.get('exp_portal_username'):
+            client.exp_portal_username = data['exp_portal_username']
+        if data.get('exp_portal_password'):
+            client.exp_portal_password_encrypted = encrypt_value(data['exp_portal_password'])
+
+        client.updated_at = datetime.now()
+        db.commit()
+
+        return jsonify({'success': True, 'message': 'Bureau credentials saved'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 # ============================================================================
 # Timeline Routes
 # ============================================================================

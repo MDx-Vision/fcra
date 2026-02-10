@@ -3,7 +3,7 @@
 > **Created:** 2026-02-08
 > **Last Updated:** 2026-02-10
 > **Total Issues:** 24
-> **Completed:** 10/24
+> **Completed:** 11/24
 
 ---
 
@@ -11,7 +11,7 @@
 
 | Priority | Total | Open | In Progress | Completed |
 |----------|-------|------|-------------|-----------|
-| Critical | 5 | 4 | 0 | 1 |
+| Critical | 5 | 3 | 0 | 2 |
 | High | 9 | 3 | 0 | 6 |
 | Medium | 6 | 3 | 0 | 3 |
 | Low | 4 | 4 | 0 | 0 |
@@ -710,12 +710,13 @@ Each service has different UI patterns for accessing historical reports - need p
 
 ---
 
-### ISSUE-022: Platform Gaps for Browser Automation
-- **Priority:** Critical
-- **Status:** Open
+### ~~ISSUE-022: Platform Gaps for Browser Automation~~ ✅ COMPLETE
+- **Priority:** ~~Critical~~ N/A
+- **Status:** Completed
 - **Category:** Browser Automation Foundation
 - **Effort:** 4-6 hours
 - **Added:** 2026-02-10
+- **Completed:** 2026-02-10
 - **Blocks:** ISSUE-023, ISSUE-024
 
 **Description:**
@@ -761,13 +762,52 @@ Before implementing browser-use automation for 5KO and Inquiry Disputes, the pla
 3. Add FTC/CFPB tracking display to 5-Day Knockout page
 
 **Acceptance Criteria:**
-- [ ] Database migrations for all new fields
-- [ ] Encrypted storage for bureau passwords
-- [ ] Get Started form collects bureau credentials
-- [ ] Portal Onboarding collects bureau credentials
-- [ ] AutomationRun table created
-- [ ] API endpoints for automation run CRUD
-- [ ] Unit tests for new models and encryption
+- [x] Database migrations for all new fields
+- [x] Encrypted storage for bureau passwords
+- [x] Get Started form collects bureau credentials (optional)
+- [x] Portal Onboarding collects bureau credentials
+- [x] AutomationRun table created
+- [x] API endpoints for automation run CRUD
+- [x] Unit tests for new models and encryption
+
+**What was implemented:**
+
+1. **Database fields added to Client model** (`database.py`):
+   - Bureau portal credentials: `tu_portal_username`, `tu_portal_password_encrypted`, etc. (3 bureaus × 4 fields)
+   - FTC tracking: `ftc_report_number`, `ftc_filed_at`, `ftc_affidavit_path`
+   - CFPB tracking: `cfpb_tu_confirmation`, `cfpb_eq_confirmation`, `cfpb_exp_confirmation` + timestamps
+
+2. **AutomationRun model** (`database.py`):
+   - Full tracking: client_id, automation_type, portal, status, timestamps
+   - Item tracking: items_total, items_processed, items_succeeded, items_failed
+   - Result tracking: confirmation_number, result_data, error_message, screenshot_path
+   - Retry support: retry_count, max_retries, can_retry()
+   - Helper methods: mark_started(), mark_completed(), mark_failed(), increment_progress()
+
+3. **Portal Onboarding** (`templates/portal/onboarding.html`):
+   - New "Bureau Accounts" step after Credit Monitoring
+   - Forms for TU/EQ/EXP username/password
+   - Skip button for optional step
+   - Link to standalone bureau setup guide
+
+4. **Onboarding Service** (`services/onboarding_service.py`):
+   - Added `bureau_accounts` step with `optional: True` flag
+
+5. **API Endpoints** (`routes/portal.py`):
+   - `POST /portal/api/onboarding/save-bureau-accounts` - Save encrypted credentials
+
+6. **Automation Run API Endpoints** (`app.py`):
+   - `GET/POST /api/automation/runs` - List/create runs
+   - `GET/PUT /api/automation/runs/<id>` - Get/update run
+   - `POST /api/automation/runs/<id>/start` - Mark started
+   - `POST /api/automation/runs/<id>/complete` - Mark completed
+   - `POST /api/automation/runs/<id>/fail` - Mark failed
+   - `POST /api/automation/runs/<id>/retry` - Retry failed run
+   - `GET /api/automation/client/<id>/runs` - Client's runs
+   - `GET /api/automation/stats` - Statistics
+
+7. **Unit Tests** (`tests/test_automation_run.py`):
+   - 29 tests covering AutomationRun model, Client fields, onboarding, API validation
 
 ---
 
@@ -944,6 +984,7 @@ Implement browser-use automation for Inquiry Disputes. This is a simpler flow th
 
 | Date | Issue | Change |
 |------|-------|--------|
+| 2026-02-10 | ISSUE-022 | Complete - Platform Gaps for Browser Automation + 29 unit tests |
 | 2026-02-10 | ISSUE-024 | Added - Inquiry Dispute Browser Automation (FTC + CFPB Only) |
 | 2026-02-10 | ISSUE-023 | Added - 5KO Browser Automation (FTC + CFPB + Bureau Portals) |
 | 2026-02-10 | ISSUE-022 | Added - Platform Gaps for Browser Automation (Critical - blocks 023/024) |

@@ -44311,6 +44311,429 @@ def api_5day_knockout_update_notes(client_id):
 
 
 # =============================================================================
+# AUTOMATION RUN ENDPOINTS (ISSUE-022)
+# =============================================================================
+
+
+@app.route("/api/automation/runs", methods=["GET"])
+@require_staff()
+def api_automation_runs_list():
+    """List automation runs with optional filters"""
+    from database import AutomationRun
+
+    try:
+        with get_db() as db:
+            query = db.query(AutomationRun)
+
+            # Filters
+            client_id = request.args.get("client_id", type=int)
+            automation_type = request.args.get("automation_type")
+            portal = request.args.get("portal")
+            status = request.args.get("status")
+
+            if client_id:
+                query = query.filter(AutomationRun.client_id == client_id)
+            if automation_type:
+                query = query.filter(AutomationRun.automation_type == automation_type)
+            if portal:
+                query = query.filter(AutomationRun.portal == portal)
+            if status:
+                query = query.filter(AutomationRun.status == status)
+
+            # Pagination
+            limit = request.args.get("limit", 50, type=int)
+            offset = request.args.get("offset", 0, type=int)
+
+            runs = (
+                query.order_by(AutomationRun.created_at.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+            total = query.count()
+
+            return jsonify(
+                {
+                    "success": True,
+                    "runs": [r.to_dict() for r in runs],
+                    "total": total,
+                    "limit": limit,
+                    "offset": offset,
+                }
+            )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/runs", methods=["POST"])
+@require_staff()
+def api_automation_runs_create():
+    """Create a new automation run"""
+    from datetime import datetime
+
+    from database import AutomationRun
+
+    try:
+        data = request.get_json() or {}
+
+        if not data.get("client_id"):
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+        if not data.get("automation_type"):
+            return (
+                jsonify({"success": False, "error": "automation_type is required"}),
+                400,
+            )
+        if not data.get("portal"):
+            return jsonify({"success": False, "error": "portal is required"}), 400
+
+        with get_db() as db:
+            run = AutomationRun(
+                client_id=data["client_id"],
+                automation_type=data["automation_type"],
+                portal=data["portal"],
+                status="pending",
+                items_total=data.get("items_total", 0),
+                item_ids=data.get("item_ids"),
+                initiated_by_staff_id=get_current_staff_id(),
+                notes=data.get("notes"),
+                created_at=datetime.utcnow(),
+            )
+            db.add(run)
+            db.commit()
+            db.refresh(run)
+
+            return jsonify({"success": True, "run": run.to_dict()})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/runs/<int:run_id>", methods=["GET"])
+@require_staff()
+def api_automation_runs_get(run_id):
+    """Get a specific automation run"""
+    from database import AutomationRun
+
+    try:
+        with get_db() as db:
+            run = db.query(AutomationRun).filter(AutomationRun.id == run_id).first()
+            if not run:
+                return jsonify({"success": False, "error": "Run not found"}), 404
+
+            return jsonify({"success": True, "run": run.to_dict()})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/runs/<int:run_id>", methods=["PUT"])
+@require_staff()
+def api_automation_runs_update(run_id):
+    """Update an automation run"""
+    from datetime import datetime
+
+    from database import AutomationRun
+
+    try:
+        data = request.get_json() or {}
+
+        with get_db() as db:
+            run = db.query(AutomationRun).filter(AutomationRun.id == run_id).first()
+            if not run:
+                return jsonify({"success": False, "error": "Run not found"}), 404
+
+            # Update allowed fields
+            if "status" in data:
+                run.status = data["status"]
+            if "started_at" in data:
+                run.started_at = (
+                    datetime.fromisoformat(data["started_at"])
+                    if data["started_at"]
+                    else None
+                )
+            if "completed_at" in data:
+                run.completed_at = (
+                    datetime.fromisoformat(data["completed_at"])
+                    if data["completed_at"]
+                    else None
+                )
+            if "items_processed" in data:
+                run.items_processed = data["items_processed"]
+            if "items_succeeded" in data:
+                run.items_succeeded = data["items_succeeded"]
+            if "items_failed" in data:
+                run.items_failed = data["items_failed"]
+            if "confirmation_number" in data:
+                run.confirmation_number = data["confirmation_number"]
+            if "result_data" in data:
+                run.result_data = data["result_data"]
+            if "error_message" in data:
+                run.error_message = data["error_message"]
+            if "error_code" in data:
+                run.error_code = data["error_code"]
+            if "screenshot_path" in data:
+                run.screenshot_path = data["screenshot_path"]
+            if "last_page_url" in data:
+                run.last_page_url = data["last_page_url"]
+            if "notes" in data:
+                run.notes = data["notes"]
+
+            run.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(run)
+
+            return jsonify({"success": True, "run": run.to_dict()})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/runs/<int:run_id>/start", methods=["POST"])
+@require_staff()
+def api_automation_runs_start(run_id):
+    """Mark an automation run as started"""
+    from database import AutomationRun
+
+    try:
+        with get_db() as db:
+            run = db.query(AutomationRun).filter(AutomationRun.id == run_id).first()
+            if not run:
+                return jsonify({"success": False, "error": "Run not found"}), 404
+
+            run.mark_started()
+            db.commit()
+            db.refresh(run)
+
+            return jsonify({"success": True, "run": run.to_dict()})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/runs/<int:run_id>/complete", methods=["POST"])
+@require_staff()
+def api_automation_runs_complete(run_id):
+    """Mark an automation run as completed"""
+    from database import AutomationRun
+
+    try:
+        data = request.get_json() or {}
+
+        with get_db() as db:
+            run = db.query(AutomationRun).filter(AutomationRun.id == run_id).first()
+            if not run:
+                return jsonify({"success": False, "error": "Run not found"}), 404
+
+            run.mark_completed(
+                confirmation_number=data.get("confirmation_number"),
+                result_data=data.get("result_data"),
+            )
+            db.commit()
+            db.refresh(run)
+
+            return jsonify({"success": True, "run": run.to_dict()})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/runs/<int:run_id>/fail", methods=["POST"])
+@require_staff()
+def api_automation_runs_fail(run_id):
+    """Mark an automation run as failed"""
+    from database import AutomationRun
+
+    try:
+        data = request.get_json() or {}
+
+        if not data.get("error_message"):
+            return (
+                jsonify({"success": False, "error": "error_message is required"}),
+                400,
+            )
+
+        with get_db() as db:
+            run = db.query(AutomationRun).filter(AutomationRun.id == run_id).first()
+            if not run:
+                return jsonify({"success": False, "error": "Run not found"}), 404
+
+            run.mark_failed(
+                error_message=data["error_message"],
+                error_code=data.get("error_code"),
+                screenshot_path=data.get("screenshot_path"),
+                last_page_url=data.get("last_page_url"),
+            )
+            db.commit()
+            db.refresh(run)
+
+            return jsonify({"success": True, "run": run.to_dict()})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/runs/<int:run_id>/retry", methods=["POST"])
+@require_staff()
+def api_automation_runs_retry(run_id):
+    """Retry a failed automation run"""
+    from datetime import datetime
+
+    from database import AutomationRun
+
+    try:
+        with get_db() as db:
+            run = db.query(AutomationRun).filter(AutomationRun.id == run_id).first()
+            if not run:
+                return jsonify({"success": False, "error": "Run not found"}), 404
+
+            if not run.can_retry():
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": f"Cannot retry: status is {run.status} and retry count is {run.retry_count}/{run.max_retries}",
+                        }
+                    ),
+                    400,
+                )
+
+            # Reset for retry
+            run.status = "pending"
+            run.started_at = None
+            run.completed_at = None
+            run.error_message = None
+            run.error_code = None
+            run.retry_count += 1
+            run.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(run)
+
+            return jsonify({"success": True, "run": run.to_dict()})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/client/<int:client_id>/runs", methods=["GET"])
+@require_staff()
+def api_automation_client_runs(client_id):
+    """Get all automation runs for a specific client"""
+    from database import AutomationRun
+
+    try:
+        with get_db() as db:
+            runs = (
+                db.query(AutomationRun)
+                .filter(AutomationRun.client_id == client_id)
+                .order_by(AutomationRun.created_at.desc())
+                .all()
+            )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "runs": [r.to_dict() for r in runs],
+                    "count": len(runs),
+                }
+            )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/stats", methods=["GET"])
+@require_staff()
+def api_automation_stats():
+    """Get automation run statistics"""
+    from sqlalchemy import case, func
+
+    from database import AutomationRun
+
+    try:
+        with get_db() as db:
+            # Overall stats
+            total = db.query(AutomationRun).count()
+            completed = (
+                db.query(AutomationRun)
+                .filter(AutomationRun.status == "completed")
+                .count()
+            )
+            failed = (
+                db.query(AutomationRun).filter(AutomationRun.status == "failed").count()
+            )
+            running = (
+                db.query(AutomationRun)
+                .filter(AutomationRun.status == "running")
+                .count()
+            )
+            pending = (
+                db.query(AutomationRun)
+                .filter(AutomationRun.status == "pending")
+                .count()
+            )
+
+            # Stats by automation type
+            by_type = (
+                db.query(
+                    AutomationRun.automation_type,
+                    func.count(AutomationRun.id).label("count"),
+                    func.sum(
+                        case((AutomationRun.status == "completed", 1), else_=0)
+                    ).label("completed"),
+                    func.sum(
+                        case((AutomationRun.status == "failed", 1), else_=0)
+                    ).label("failed"),
+                )
+                .group_by(AutomationRun.automation_type)
+                .all()
+            )
+
+            # Stats by portal
+            by_portal = (
+                db.query(
+                    AutomationRun.portal,
+                    func.count(AutomationRun.id).label("count"),
+                    func.sum(
+                        case((AutomationRun.status == "completed", 1), else_=0)
+                    ).label("completed"),
+                    func.sum(
+                        case((AutomationRun.status == "failed", 1), else_=0)
+                    ).label("failed"),
+                )
+                .group_by(AutomationRun.portal)
+                .all()
+            )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "stats": {
+                        "total": total,
+                        "completed": completed,
+                        "failed": failed,
+                        "running": running,
+                        "pending": pending,
+                        "success_rate": (
+                            round((completed / total * 100), 1) if total > 0 else 0
+                        ),
+                        "by_type": [
+                            {
+                                "type": t,
+                                "count": c,
+                                "completed": comp or 0,
+                                "failed": f or 0,
+                            }
+                            for t, c, comp, f in by_type
+                        ],
+                        "by_portal": [
+                            {
+                                "portal": p,
+                                "count": c,
+                                "completed": comp or 0,
+                                "failed": f or 0,
+                            }
+                            for p, c, comp, f in by_portal
+                        ],
+                    },
+                }
+            )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# =============================================================================
 # INQUIRY DISPUTES ENDPOINTS
 # =============================================================================
 

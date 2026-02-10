@@ -294,6 +294,38 @@ class Client(Base):
     fko_status = Column(String(30), default='not_started')  # not_started, in_progress, completed, stalled
     fko_notes = Column(Text)  # Staff notes on 5KO progress
 
+    # Bureau Portal Credentials (for dispute automation - different from credit monitoring)
+    # TransUnion Dispute Portal (service.transunion.com)
+    tu_portal_username = Column(String(255))
+    tu_portal_password_encrypted = Column(Text)  # Encrypted
+    tu_portal_verified = Column(Boolean, default=False)  # Login verified working
+    tu_portal_verified_at = Column(DateTime)
+
+    # Equifax Dispute Portal (my.equifax.com)
+    eq_portal_username = Column(String(255))
+    eq_portal_password_encrypted = Column(Text)  # Encrypted
+    eq_portal_verified = Column(Boolean, default=False)
+    eq_portal_verified_at = Column(DateTime)
+
+    # Experian Dispute Portal (experian.com/disputes)
+    exp_portal_username = Column(String(255))
+    exp_portal_password_encrypted = Column(Text)  # Encrypted
+    exp_portal_verified = Column(Boolean, default=False)
+    exp_portal_verified_at = Column(DateTime)
+
+    # FTC Identity Theft Report Tracking
+    ftc_report_number = Column(String(100))  # FTC report number (e.g., "123456789")
+    ftc_filed_at = Column(DateTime)  # When FTC report was filed
+    ftc_affidavit_path = Column(String(500))  # Path to downloaded FTC affidavit PDF
+
+    # CFPB Complaint Tracking (one per bureau)
+    cfpb_tu_confirmation = Column(String(100))  # CFPB confirmation number for TransUnion complaint
+    cfpb_tu_filed_at = Column(DateTime)
+    cfpb_eq_confirmation = Column(String(100))  # CFPB confirmation number for Equifax complaint
+    cfpb_eq_filed_at = Column(DateTime)
+    cfpb_exp_confirmation = Column(String(100))  # CFPB confirmation number for Experian complaint
+    cfpb_exp_filed_at = Column(DateTime)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -7606,6 +7638,124 @@ class StateAGComplaint(Base):
         return days is not None and days > expected_days
 
 
+class AutomationRun(Base):
+    """Track browser automation runs for 5KO and Inquiry Disputes (ISSUE-022)"""
+    __tablename__ = 'automation_runs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Automation type and target portal
+    automation_type = Column(String(50), nullable=False)  # 5ko_ftc, 5ko_cfpb, 5ko_bureau, inquiry_ftc, inquiry_cfpb
+    portal = Column(String(50), nullable=False)  # ftc, cfpb, transunion, equifax, experian
+
+    # Status tracking
+    status = Column(String(30), default='pending')  # pending, running, completed, failed, cancelled
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+
+    # Item tracking (for batch operations)
+    items_total = Column(Integer, default=0)  # Total items to process
+    items_processed = Column(Integer, default=0)  # Items attempted
+    items_succeeded = Column(Integer, default=0)  # Items successfully submitted
+    items_failed = Column(Integer, default=0)  # Items that failed
+    item_ids = Column(JSON)  # List of DisputeItem IDs being processed
+
+    # Result tracking
+    confirmation_number = Column(String(100))  # FTC report number or CFPB confirmation
+    result_data = Column(JSON)  # Additional result data (e.g., downloaded file paths)
+
+    # Error tracking
+    error_message = Column(Text)  # Error description if failed
+    error_code = Column(String(50))  # Error type code
+    screenshot_path = Column(String(500))  # Screenshot on failure for debugging
+    last_page_url = Column(String(1000))  # Last URL visited before error
+
+    # Execution details
+    browser_session_id = Column(String(100))  # browser-use session identifier
+    retry_count = Column(Integer, default=0)  # Number of retries attempted
+    max_retries = Column(Integer, default=3)  # Maximum retries allowed
+
+    # Staff tracking
+    initiated_by_staff_id = Column(Integer, ForeignKey('staff.id'))  # Who started the run
+    notes = Column(Text)  # Staff notes
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="automation_runs")
+    initiated_by = relationship("Staff", backref="initiated_automation_runs")
+
+    def to_dict(self):
+        duration_seconds = None
+        if self.started_at and self.completed_at:
+            duration_seconds = (self.completed_at - self.started_at).total_seconds()
+        elif self.started_at:
+            duration_seconds = (datetime.utcnow() - self.started_at).total_seconds()
+
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'automation_type': self.automation_type,
+            'portal': self.portal,
+            'status': self.status,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'duration_seconds': duration_seconds,
+            'items_total': self.items_total,
+            'items_processed': self.items_processed,
+            'items_succeeded': self.items_succeeded,
+            'items_failed': self.items_failed,
+            'item_ids': self.item_ids,
+            'confirmation_number': self.confirmation_number,
+            'result_data': self.result_data,
+            'error_message': self.error_message,
+            'error_code': self.error_code,
+            'screenshot_path': self.screenshot_path,
+            'retry_count': self.retry_count,
+            'initiated_by_staff_id': self.initiated_by_staff_id,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def mark_started(self):
+        """Mark automation run as started"""
+        self.status = 'running'
+        self.started_at = datetime.utcnow()
+
+    def mark_completed(self, confirmation_number=None, result_data=None):
+        """Mark automation run as completed successfully"""
+        self.status = 'completed'
+        self.completed_at = datetime.utcnow()
+        if confirmation_number:
+            self.confirmation_number = confirmation_number
+        if result_data:
+            self.result_data = result_data
+
+    def mark_failed(self, error_message, error_code=None, screenshot_path=None, last_page_url=None):
+        """Mark automation run as failed"""
+        self.status = 'failed'
+        self.completed_at = datetime.utcnow()
+        self.error_message = error_message
+        self.error_code = error_code
+        self.screenshot_path = screenshot_path
+        self.last_page_url = last_page_url
+
+    def can_retry(self):
+        """Check if this run can be retried"""
+        return self.status == 'failed' and self.retry_count < self.max_retries
+
+    def increment_progress(self, success=True):
+        """Increment progress counters"""
+        self.items_processed = (self.items_processed or 0) + 1
+        if success:
+            self.items_succeeded = (self.items_succeeded or 0) + 1
+        else:
+            self.items_failed = (self.items_failed or 0) + 1
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -9176,6 +9326,56 @@ def init_db():
         ("clients", "fko_completed_at", "TIMESTAMP"),
         ("clients", "fko_status", "VARCHAR(30) DEFAULT 'not_started'"),
         ("clients", "fko_notes", "TEXT"),
+        # Bureau Portal Credentials (ISSUE-022)
+        ("clients", "tu_portal_username", "VARCHAR(255)"),
+        ("clients", "tu_portal_password_encrypted", "TEXT"),
+        ("clients", "tu_portal_verified", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "tu_portal_verified_at", "TIMESTAMP"),
+        ("clients", "eq_portal_username", "VARCHAR(255)"),
+        ("clients", "eq_portal_password_encrypted", "TEXT"),
+        ("clients", "eq_portal_verified", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "eq_portal_verified_at", "TIMESTAMP"),
+        ("clients", "exp_portal_username", "VARCHAR(255)"),
+        ("clients", "exp_portal_password_encrypted", "TEXT"),
+        ("clients", "exp_portal_verified", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "exp_portal_verified_at", "TIMESTAMP"),
+        # FTC Identity Theft Report Tracking (ISSUE-022)
+        ("clients", "ftc_report_number", "VARCHAR(100)"),
+        ("clients", "ftc_filed_at", "TIMESTAMP"),
+        ("clients", "ftc_affidavit_path", "VARCHAR(500)"),
+        # CFPB Complaint Tracking (ISSUE-022)
+        ("clients", "cfpb_tu_confirmation", "VARCHAR(100)"),
+        ("clients", "cfpb_tu_filed_at", "TIMESTAMP"),
+        ("clients", "cfpb_eq_confirmation", "VARCHAR(100)"),
+        ("clients", "cfpb_eq_filed_at", "TIMESTAMP"),
+        ("clients", "cfpb_exp_confirmation", "VARCHAR(100)"),
+        ("clients", "cfpb_exp_filed_at", "TIMESTAMP"),
+        # Automation Runs Table (ISSUE-022)
+        ("automation_runs", "id", "SERIAL PRIMARY KEY"),
+        ("automation_runs", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("automation_runs", "automation_type", "VARCHAR(50) NOT NULL"),
+        ("automation_runs", "portal", "VARCHAR(50) NOT NULL"),
+        ("automation_runs", "status", "VARCHAR(30) DEFAULT 'pending'"),
+        ("automation_runs", "started_at", "TIMESTAMP"),
+        ("automation_runs", "completed_at", "TIMESTAMP"),
+        ("automation_runs", "items_total", "INTEGER DEFAULT 0"),
+        ("automation_runs", "items_processed", "INTEGER DEFAULT 0"),
+        ("automation_runs", "items_succeeded", "INTEGER DEFAULT 0"),
+        ("automation_runs", "items_failed", "INTEGER DEFAULT 0"),
+        ("automation_runs", "item_ids", "JSON"),
+        ("automation_runs", "confirmation_number", "VARCHAR(100)"),
+        ("automation_runs", "result_data", "JSON"),
+        ("automation_runs", "error_message", "TEXT"),
+        ("automation_runs", "error_code", "VARCHAR(50)"),
+        ("automation_runs", "screenshot_path", "VARCHAR(500)"),
+        ("automation_runs", "last_page_url", "VARCHAR(1000)"),
+        ("automation_runs", "browser_session_id", "VARCHAR(100)"),
+        ("automation_runs", "retry_count", "INTEGER DEFAULT 0"),
+        ("automation_runs", "max_retries", "INTEGER DEFAULT 3"),
+        ("automation_runs", "initiated_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("automation_runs", "notes", "TEXT"),
+        ("automation_runs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("automation_runs", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         # Debt Validation Requests (ISSUE-008)
         ("debt_validation_requests", "id", "SERIAL PRIMARY KEY"),
         ("debt_validation_requests", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
