@@ -95,6 +95,28 @@ class TestNegativeItemExtractor:
         assert items[0]["item_type"] == "charge_off"
         assert items[0]["creditor_name"] == "Credit Card Co"
 
+    def test_detect_repossession(self):
+        """Test detection of repossession accounts."""
+        report = {
+            "accounts": [{
+                "creditor": "Auto Finance Corp",
+                "status": "Repossession",
+                "bureaus": {
+                    "transunion": {"present": True},
+                    "experian": {"present": True},
+                    "equifax": {"present": True},
+                },
+            }],
+            "inquiries": [],
+            "collections": [],
+            "public_records": [],
+        }
+        extractor = NegativeItemExtractor(report)
+        items = extractor.extract_all_negative_items()
+        assert len(items) == 1
+        assert items[0]["item_type"] == "repossession"
+        assert items[0]["creditor_name"] == "Auto Finance Corp"
+
     def test_detect_collection(self):
         """Test detection of collection accounts from status."""
         report = {

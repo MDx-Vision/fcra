@@ -247,7 +247,7 @@ class NegativeItemExtractor:
         """
         Classify the item type based on account data and negative reasons.
 
-        Returns one of: late_payment, charge_off, collection, public_record,
+        Returns one of: late_payment, charge_off, collection, repossession,
                        high_utilization, settled, tradeline
         """
         reasons_text = " ".join(negative_reasons).lower()
@@ -268,6 +268,14 @@ class NegativeItemExtractor:
         # Check for collection
         if "collection" in reasons_text or "collection" in status_text:
             return "collection"
+
+        # Check for repossession
+        if "repossession" in reasons_text or "repossession" in status_text:
+            return "repossession"
+        if "repo" in status_text and (
+            "vehicle" in status_text or "auto" in status_text
+        ):
+            return "repossession"
 
         # Check for settled
         if "settled" in reasons_text or "settled" in status_text:
