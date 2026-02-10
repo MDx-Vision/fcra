@@ -117,6 +117,93 @@ class TestNegativeItemExtractor:
         assert items[0]["item_type"] == "repossession"
         assert items[0]["creditor_name"] == "Auto Finance Corp"
 
+    def test_detect_voluntary_surrender(self):
+        """Test detection of voluntary surrender accounts."""
+        report = {
+            "accounts": [{
+                "creditor": "Auto Loan Co",
+                "status": "Voluntary Surrender",
+                "bureaus": {"transunion": {"present": True}},
+            }],
+            "inquiries": [],
+            "collections": [],
+            "public_records": [],
+        }
+        extractor = NegativeItemExtractor(report)
+        items = extractor.extract_all_negative_items()
+        assert len(items) == 1
+        assert items[0]["item_type"] == "voluntary_surrender"
+
+    def test_detect_paid_collection(self):
+        """Test detection of paid collection accounts."""
+        report = {
+            "accounts": [{
+                "creditor": "Collection Agency",
+                "status": "Paid Collection",
+                "bureaus": {"experian": {"present": True}},
+            }],
+            "inquiries": [],
+            "collections": [],
+            "public_records": [],
+        }
+        extractor = NegativeItemExtractor(report)
+        items = extractor.extract_all_negative_items()
+        assert len(items) == 1
+        assert items[0]["item_type"] == "paid_collection"
+
+    def test_detect_closed_by_creditor(self):
+        """Test detection of closed by creditor accounts."""
+        report = {
+            "accounts": [{
+                "creditor": "Credit Card Co",
+                "status": "Closed by credit grantor",
+                "bureaus": {"equifax": {"present": True}},
+            }],
+            "inquiries": [],
+            "collections": [],
+            "public_records": [],
+        }
+        extractor = NegativeItemExtractor(report)
+        items = extractor.extract_all_negative_items()
+        assert len(items) == 1
+        assert items[0]["item_type"] == "closed_by_creditor"
+
+    def test_detect_deed_in_lieu(self):
+        """Test detection of deed in lieu accounts."""
+        report = {
+            "accounts": [{
+                "creditor": "Mortgage Lender",
+                "status": "Deed in lieu of foreclosure",
+                "account_type": "Mortgage",
+                "bureaus": {"transunion": {"present": True}},
+            }],
+            "inquiries": [],
+            "collections": [],
+            "public_records": [],
+        }
+        extractor = NegativeItemExtractor(report)
+        items = extractor.extract_all_negative_items()
+        assert len(items) == 1
+        assert items[0]["item_type"] == "deed_in_lieu"
+
+    def test_detect_dispute_notation(self):
+        """Test detection of dispute notation in remarks."""
+        report = {
+            "accounts": [{
+                "creditor": "Bank Account",
+                "status": "Open",
+                "comments": "Consumer disputes this account information",
+                "bureaus": {"experian": {"present": True}},
+            }],
+            "inquiries": [],
+            "collections": [],
+            "public_records": [],
+        }
+        extractor = NegativeItemExtractor(report)
+        items = extractor.extract_all_negative_items()
+        assert len(items) == 1
+        assert items[0]["item_type"] == "dispute_notation"
+
     def test_detect_collection(self):
         """Test detection of collection accounts from status."""
         report = {

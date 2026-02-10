@@ -43,6 +43,20 @@ class NegativeItemExtractor:
         "sold to",
         "transferred",
         "closed for cause",
+        # Additional negative indicators
+        "voluntary surrender",
+        "voluntarily surrendered",
+        "paid collection",
+        "paid in full was a collection",
+        "closed by credit grantor",
+        "closed by creditor",
+        "closed at credit grantor's request",
+        "deed in lieu",
+        "deed-in-lieu",
+        "consumer disputes",
+        "consumer disputed",
+        "account disputed",
+        "disputes after resolution",
     ]
 
     # Payment status patterns indicating late payments
@@ -247,8 +261,10 @@ class NegativeItemExtractor:
         """
         Classify the item type based on account data and negative reasons.
 
-        Returns one of: late_payment, charge_off, collection, repossession,
-                       high_utilization, settled, tradeline
+        Returns one of: late_payment, charge_off, collection, paid_collection,
+                       repossession, voluntary_surrender, deed_in_lieu,
+                       high_utilization, settled, closed_by_creditor,
+                       dispute_notation, tradeline
         """
         reasons_text = " ".join(negative_reasons).lower()
         status_text = " ".join(
@@ -256,6 +272,8 @@ class NegativeItemExtractor:
                 str(account.get("status", "")),
                 str(account.get("payment_status", "")),
                 str(account.get("comments", "")),
+                str(account.get("creditor_remarks", "")),
+                str(account.get("account_status", "")),
             ]
         ).lower()
 
@@ -265,9 +283,24 @@ class NegativeItemExtractor:
         if "charge off" in status_text or "chargeoff" in status_text:
             return "charge_off"
 
+        # Check for paid collection (before general collection check)
+        if (
+            "paid" in status_text and "collection" in status_text
+        ) or "paid collection" in reasons_text:
+            return "paid_collection"
+
         # Check for collection
         if "collection" in reasons_text or "collection" in status_text:
             return "collection"
+
+        # Check for voluntary surrender (before repossession)
+        if (
+            "voluntary surrender" in status_text
+            or "voluntarily surrendered" in status_text
+        ):
+            return "voluntary_surrender"
+        if "voluntary surrender" in reasons_text:
+            return "voluntary_surrender"
 
         # Check for repossession
         if "repossession" in reasons_text or "repossession" in status_text:
@@ -276,6 +309,36 @@ class NegativeItemExtractor:
             "vehicle" in status_text or "auto" in status_text
         ):
             return "repossession"
+
+        # Check for deed in lieu (mortgage specific)
+        if "deed in lieu" in status_text or "deed-in-lieu" in status_text:
+            return "deed_in_lieu"
+        if "deed in lieu" in reasons_text:
+            return "deed_in_lieu"
+
+        # Check for closed by creditor
+        if (
+            "closed by credit grantor" in status_text
+            or "closed by creditor" in status_text
+            or "closed at credit grantor" in status_text
+        ):
+            return "closed_by_creditor"
+        if (
+            "closed by creditor" in reasons_text
+            or "closed by credit grantor" in reasons_text
+        ):
+            return "closed_by_creditor"
+
+        # Check for dispute notation
+        if (
+            "consumer disputes" in status_text
+            or "consumer disputed" in status_text
+            or "account disputed" in status_text
+            or "disputes after resolution" in status_text
+        ):
+            return "dispute_notation"
+        if "dispute" in reasons_text and "consumer" in reasons_text:
+            return "dispute_notation"
 
         # Check for settled
         if "settled" in reasons_text or "settled" in status_text:
