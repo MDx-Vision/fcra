@@ -1,6 +1,6 @@
 import os
 from typing import Any
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Date, Time, Boolean, Float, ForeignKey, event, JSON, text, UniqueConstraint
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Date, Time, Boolean, Float, ForeignKey, event, JSON, text, UniqueConstraint, Numeric
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -740,6 +740,10 @@ class DisputeItem(Base):
     item_type = Column(String(50))  # inquiry, collection, late_payment, personal_info, public_record
     creditor_name = Column(String(255))
     account_id = Column(String(100))  # Masked account number
+    date_opened = Column(Date)  # When account was opened
+    balance = Column(Numeric(12, 2), default=0)  # Current balance/amount
+    original_balance = Column(Numeric(12, 2))  # Original balance if different
+    bag_status = Column(String(50))  # Status from BAG CRM: NEW, DELETED, UPDATED, etc.
 
     # Status tracking
     status = Column(String(50), default='to_do')  # sent, deleted, updated, in_progress, to_do, no_change, no_answer, on_hold, positive, duplicate, other
@@ -762,6 +766,12 @@ class DisputeItem(Base):
     follow_up_date = Column(Date)  # When to follow up
     sent_date = Column(Date)  # When dispute was sent
     response_date = Column(Date)  # When response received
+
+    # Deletion & Reinsertion Tracking (Critical for §611 violations)
+    deleted_at = Column(Date)  # When item was deleted from credit report
+    reinserted_at = Column(Date)  # When item reappeared (if applicable) - §611(a)(5)(B) violation
+    reinsertion_count = Column(Integer, default=0)  # Number of times reinserted (each = separate violation)
+    status_history = Column(JSON)  # Full history: [{"status": "deleted", "date": "2025-01-15", "notes": "Round 1"}, {"status": "reinserted", "date": "2025-02-20", "notes": "Violation documented"}]
 
     # Client/admin interaction
     reason = Column(Text)  # Reason for dispute or status
@@ -1566,40 +1576,279 @@ class SettlementEstimate(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class AttorneyNetworkMember(Base):
+    """Attorney network database for FCRA litigation referrals"""
+    __tablename__ = 'attorney_network_members'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Attorney Info
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    bar_number = Column(String(50))
+    bar_state = Column(String(2))  # Primary bar state
+
+    # Firm Info
+    firm_name = Column(String(255))
+    firm_website = Column(String(500))
+
+    # Contact
+    email = Column(String(255), nullable=False)
+    phone = Column(String(50))
+    fax = Column(String(50))
+
+    # Address
+    address_line1 = Column(String(255))
+    address_line2 = Column(String(255))
+    city = Column(String(100))
+    state = Column(String(50))
+    zip_code = Column(String(20))
+
+    # Practice Areas
+    practice_areas = Column(JSON)  # ["FCRA", "FDCPA", "TCPA", "FCBA"]
+    states_licensed = Column(JSON)  # ["NJ", "NY", "PA"]
+
+    # Fee Structure
+    fee_structure = Column(String(100))  # contingency, hourly, hybrid
+    contingency_percent = Column(Float)  # Typically 33-40%
+    referral_fee_percent = Column(Float)  # What they pay us for referrals
+
+    # Performance Metrics
+    cases_referred = Column(Integer, default=0)
+    cases_accepted = Column(Integer, default=0)
+    cases_won = Column(Integer, default=0)
+    cases_settled = Column(Integer, default=0)
+    total_recoveries = Column(Float, default=0)
+    avg_settlement = Column(Float, default=0)
+    avg_resolution_days = Column(Integer)
+
+    # Status
+    status = Column(String(50), default='active')  # active, inactive, preferred, suspended
+    is_preferred = Column(Boolean, default=False)
+
+    # Notes
+    specialties_notes = Column(Text)  # What they're especially good at
+    intake_requirements = Column(Text)  # What they need for intake
+    notes = Column(Text)
+
+    # Relationship
+    onboarded_at = Column(DateTime)
+    last_referral_at = Column(DateTime)
+    last_contact_at = Column(DateTime)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    referrals = relationship("AttorneyReferral", back_populates="attorney")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'full_name': f"{self.first_name} {self.last_name}",
+            'bar_number': self.bar_number,
+            'bar_state': self.bar_state,
+            'firm_name': self.firm_name,
+            'firm_website': self.firm_website,
+            'email': self.email,
+            'phone': self.phone,
+            'fax': self.fax,
+            'address_line1': self.address_line1,
+            'address_line2': self.address_line2,
+            'city': self.city,
+            'state': self.state,
+            'zip_code': self.zip_code,
+            'practice_areas': self.practice_areas or [],
+            'states_licensed': self.states_licensed or [],
+            'fee_structure': self.fee_structure,
+            'contingency_percent': self.contingency_percent,
+            'referral_fee_percent': self.referral_fee_percent,
+            'cases_referred': self.cases_referred,
+            'cases_accepted': self.cases_accepted,
+            'cases_won': self.cases_won,
+            'cases_settled': self.cases_settled,
+            'total_recoveries': self.total_recoveries,
+            'avg_settlement': self.avg_settlement,
+            'avg_resolution_days': self.avg_resolution_days,
+            'status': self.status,
+            'is_preferred': self.is_preferred,
+            'specialties_notes': self.specialties_notes,
+            'intake_requirements': self.intake_requirements,
+            'notes': self.notes,
+            'onboarded_at': self.onboarded_at.isoformat() if self.onboarded_at else None,
+            'last_referral_at': self.last_referral_at.isoformat() if self.last_referral_at else None,
+            'last_contact_at': self.last_contact_at.isoformat() if self.last_contact_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'acceptance_rate': round(self.cases_accepted / self.cases_referred * 100, 1) if self.cases_referred > 0 else 0,
+        }
+
+
 class AttorneyReferral(Base):
-    """Track attorney referrals for high-value cases"""
+    """Track attorney referrals for high-value FCRA cases"""
     __tablename__ = 'attorney_referrals'
 
     id = Column(Integer, primary_key=True, index=True)
-    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
     case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
+    attorney_id = Column(Integer, ForeignKey('attorney_network_members.id'), nullable=True, index=True)
 
+    # Legacy fields (for backward compatibility)
     attorney_name = Column(String(255))
     attorney_firm = Column(String(255))
     attorney_email = Column(String(255))
     attorney_phone = Column(String(50))
 
+    # Referral Details
     referral_reason = Column(Text)
     case_summary = Column(Text)
     estimated_value = Column(Float)
 
+    # Violation Details for Case Package
+    violation_types = Column(JSON)  # ["failure_to_investigate", "inaccurate_reporting"]
+    violation_count = Column(Integer, default=0)
+    bureaus_involved = Column(JSON)  # ["Equifax", "Experian", "TransUnion"]
+    furnishers_involved = Column(JSON)  # ["Capital One", "Chase"]
+    dispute_rounds = Column(Integer, default=0)
+
+    # Status Workflow: pending → contacted → accepted/declined → intake → filed → discovery → settlement/trial → closed
     status = Column(String(50), default='pending')
 
+    # Timeline Tracking
     referred_at = Column(DateTime)
+    attorney_contacted_at = Column(DateTime)
     attorney_response_at = Column(DateTime)
     attorney_accepted = Column(Boolean)
+    decline_reason = Column(Text)
 
-    fee_arrangement = Column(String(100))
+    intake_completed_at = Column(DateTime)
+    retainer_signed_at = Column(DateTime)
+    complaint_filed_at = Column(DateTime)
+    court_case_number = Column(String(100))
+    discovery_started_at = Column(DateTime)
+    mediation_date = Column(Date)
+    trial_date = Column(Date)
+    resolved_at = Column(DateTime)
+
+    # Fee Agreement
+    fee_arrangement = Column(String(100))  # contingency, hourly, hybrid
+    contingency_percent = Column(Float)
     referral_fee_percent = Column(Float)
+    referral_fee_flat = Column(Float)  # Flat fee option
+    fee_agreement_signed = Column(Boolean, default=False)
+    fee_agreement_path = Column(String(500))
 
-    outcome = Column(Text)
+    # Outcome
+    outcome = Column(String(100))  # won, lost, settled, dismissed, withdrawn
     settlement_amount = Column(Float)
+    judgment_amount = Column(Float)
+    actual_damages = Column(Float)
+    statutory_damages = Column(Float)
+    punitive_damages = Column(Float)
+    attorney_fees_awarded = Column(Float)
+
+    # Our Commission
+    referral_fee_earned = Column(Float)
     referral_fee_received = Column(Float)
+    referral_fee_received_at = Column(DateTime)
+
+    # Case Package
+    case_package_path = Column(String(500))
+    case_package_generated_at = Column(DateTime)
+    evidence_documents = Column(JSON)  # List of document paths
+
+    # Staff Assignment
+    assigned_staff_id = Column(Integer, ForeignKey('staff.id'))
 
     notes = Column(Text)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="attorney_referrals")
+    attorney = relationship("AttorneyNetworkMember", back_populates="referrals")
+    assigned_staff = relationship("Staff", backref="assigned_referrals")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'case_id': self.case_id,
+            'attorney_id': self.attorney_id,
+            'attorney_name': self.attorney_name,
+            'attorney_firm': self.attorney_firm,
+            'attorney_email': self.attorney_email,
+            'attorney_phone': self.attorney_phone,
+            'referral_reason': self.referral_reason,
+            'case_summary': self.case_summary,
+            'estimated_value': self.estimated_value,
+            'violation_types': self.violation_types or [],
+            'violation_count': self.violation_count,
+            'bureaus_involved': self.bureaus_involved or [],
+            'furnishers_involved': self.furnishers_involved or [],
+            'dispute_rounds': self.dispute_rounds,
+            'status': self.status,
+            'referred_at': self.referred_at.isoformat() if self.referred_at else None,
+            'attorney_contacted_at': self.attorney_contacted_at.isoformat() if self.attorney_contacted_at else None,
+            'attorney_response_at': self.attorney_response_at.isoformat() if self.attorney_response_at else None,
+            'attorney_accepted': self.attorney_accepted,
+            'decline_reason': self.decline_reason,
+            'intake_completed_at': self.intake_completed_at.isoformat() if self.intake_completed_at else None,
+            'retainer_signed_at': self.retainer_signed_at.isoformat() if self.retainer_signed_at else None,
+            'complaint_filed_at': self.complaint_filed_at.isoformat() if self.complaint_filed_at else None,
+            'court_case_number': self.court_case_number,
+            'discovery_started_at': self.discovery_started_at.isoformat() if self.discovery_started_at else None,
+            'mediation_date': self.mediation_date.isoformat() if self.mediation_date else None,
+            'trial_date': self.trial_date.isoformat() if self.trial_date else None,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+            'fee_arrangement': self.fee_arrangement,
+            'contingency_percent': self.contingency_percent,
+            'referral_fee_percent': self.referral_fee_percent,
+            'referral_fee_flat': self.referral_fee_flat,
+            'fee_agreement_signed': self.fee_agreement_signed,
+            'fee_agreement_path': self.fee_agreement_path,
+            'outcome': self.outcome,
+            'settlement_amount': self.settlement_amount,
+            'judgment_amount': self.judgment_amount,
+            'actual_damages': self.actual_damages,
+            'statutory_damages': self.statutory_damages,
+            'punitive_damages': self.punitive_damages,
+            'attorney_fees_awarded': self.attorney_fees_awarded,
+            'referral_fee_earned': self.referral_fee_earned,
+            'referral_fee_received': self.referral_fee_received,
+            'referral_fee_received_at': self.referral_fee_received_at.isoformat() if self.referral_fee_received_at else None,
+            'case_package_path': self.case_package_path,
+            'case_package_generated_at': self.case_package_generated_at.isoformat() if self.case_package_generated_at else None,
+            'evidence_documents': self.evidence_documents or [],
+            'assigned_staff_id': self.assigned_staff_id,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'attorney': self.attorney.to_dict() if self.attorney else None,
+        }
+
+    def get_total_recovery(self):
+        """Calculate total recovery from all damage types"""
+        return sum(filter(None, [
+            self.settlement_amount,
+            self.judgment_amount,
+            self.actual_damages,
+            self.statutory_damages,
+            self.punitive_damages,
+            self.attorney_fees_awarded
+        ]))
+
+    def calculate_referral_fee(self):
+        """Calculate expected referral fee based on agreement"""
+        total = self.get_total_recovery()
+        if self.referral_fee_flat:
+            return self.referral_fee_flat
+        if self.referral_fee_percent and total:
+            return total * (self.referral_fee_percent / 100)
+        return 0
 
 
 class LimitedPOA(Base):
@@ -4705,6 +4954,324 @@ class ChatMessage(Base):
     staff = relationship("Staff", backref="chat_responses")
 
 
+class DebtValidationRequest(Base):
+    """Track debt validation requests sent to collectors under FDCPA §1692g"""
+    __tablename__ = 'debt_validation_requests'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    dispute_item_id = Column(Integer, ForeignKey('dispute_items.id'), nullable=True, index=True)
+
+    # Collector/Account info
+    collector_name = Column(String(255), nullable=False)
+    collector_address = Column(Text)
+    account_number = Column(String(100))
+    original_creditor = Column(String(255))
+    alleged_balance = Column(Float)  # Amount collector claims is owed
+
+    # Letter tracking
+    letter_sent_at = Column(DateTime)
+    letter_sent_method = Column(String(50))  # certified_mail, regular_mail, fax
+    tracking_number = Column(String(100))
+    delivery_confirmed = Column(Boolean, default=False)
+    delivery_date = Column(Date)
+
+    # Response deadline (30 days from validation request per FDCPA §1692g(b))
+    response_deadline = Column(Date)
+    is_within_30_days = Column(Boolean, default=True)  # True if sent within 30 days of initial contact
+
+    # Response tracking
+    response_received = Column(Boolean, default=False)
+    response_received_at = Column(DateTime)
+    response_type = Column(String(50))  # validated, partial, failed, no_response
+
+    # Documents received in response
+    documents_received = Column(JSON)  # List of document types received
+    original_agreement_received = Column(Boolean, default=False)
+    account_statements_received = Column(Boolean, default=False)
+    chain_of_title_received = Column(Boolean, default=False)
+    signed_application_received = Column(Boolean, default=False)
+
+    # FDCPA violation tracking
+    fdcpa_violation_flagged = Column(Boolean, default=False)
+    violation_type = Column(String(100))  # no_response, continued_collection, invalid_validation
+    violation_notes = Column(Text)
+    violation_date = Column(Date)
+
+    # Collection activity during validation period
+    collection_activity_during_validation = Column(Boolean, default=False)
+    collection_activity_notes = Column(Text)
+
+    # Status tracking
+    status = Column(String(30), default='pending')  # pending, sent, awaiting_response, validated, violation, closed
+    closed_at = Column(DateTime)
+    closed_reason = Column(String(100))  # resolved, account_deleted, settled, statute_expired
+
+    # Staff assignment
+    assigned_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+
+    # Notes
+    notes = Column(Text)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="debt_validation_requests")
+    assigned_staff = relationship("Staff", backref="assigned_debt_validations")
+
+
+class PayForDeleteNegotiation(Base):
+    """Track pay-for-delete negotiations with collection agencies"""
+    __tablename__ = 'pay_for_delete_negotiations'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    dispute_item_id = Column(Integer, ForeignKey('dispute_items.id'), nullable=True, index=True)
+
+    # Collection account info
+    collector_name = Column(String(255), nullable=False)
+    collector_address = Column(Text)
+    collector_phone = Column(String(50))
+    collector_email = Column(String(255))
+    account_number = Column(String(100))
+    original_creditor = Column(String(255))
+    original_balance = Column(Float)  # Original debt amount
+    current_balance = Column(Float)  # Current balance with fees/interest
+
+    # Negotiation details
+    initial_offer_amount = Column(Float)  # Our first offer
+    initial_offer_percent = Column(Float)  # Percentage of balance offered
+    initial_offer_date = Column(DateTime)
+
+    # Counter offers
+    counter_offer_amount = Column(Float)  # Their counter
+    counter_offer_date = Column(DateTime)
+    our_counter_amount = Column(Float)  # Our response to their counter
+    our_counter_date = Column(DateTime)
+
+    # Agreed terms
+    agreed_amount = Column(Float)  # Final agreed amount
+    agreed_percent = Column(Float)  # Percentage of original balance
+    agreement_date = Column(DateTime)
+    payment_deadline = Column(Date)  # When payment must be made
+    deletion_deadline = Column(Date)  # When they must delete after payment
+
+    # Payment tracking
+    payment_amount = Column(Float)  # Actual amount paid
+    payment_date = Column(DateTime)
+    payment_method = Column(String(50))  # check, money_order, cashier_check, wire
+    payment_confirmation = Column(String(255))  # Confirmation/reference number
+
+    # Deletion verification
+    deletion_verified = Column(Boolean, default=False)
+    deletion_verified_date = Column(DateTime)
+    deletion_verified_bureau = Column(String(100))  # Which bureau(s) confirmed deletion
+
+    # Agreement documentation
+    agreement_in_writing = Column(Boolean, default=False)
+    agreement_document_path = Column(String(500))  # Path to saved agreement
+    agreement_signed_by = Column(String(255))  # Name of collector rep who signed
+
+    # Status tracking
+    # pending, offered, countered, negotiating, agreed, payment_pending,
+    # paid, awaiting_deletion, deleted, failed, cancelled
+    status = Column(String(30), default='pending')
+    failure_reason = Column(Text)  # Why negotiation failed
+
+    # Communication log
+    last_contact_date = Column(DateTime)
+    last_contact_method = Column(String(50))  # phone, email, mail
+    next_follow_up_date = Column(Date)
+    communication_notes = Column(Text)
+
+    # Staff assignment
+    assigned_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+
+    # Notes
+    notes = Column(Text)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="pay_for_delete_negotiations")
+    assigned_staff = relationship("Staff", backref="assigned_p4d_negotiations")
+
+
+class RESPAQWRRequest(Base):
+    """
+    Track RESPA Qualified Written Request (QWR) submissions and responses.
+
+    RESPA §6 requires mortgage servicers to respond to QWRs within:
+    - 5 business days: Acknowledge receipt
+    - 30 business days: Provide substantive response (can extend to 45)
+
+    QWRs are used to:
+    - Request payment history and account information
+    - Dispute servicing errors
+    - Challenge fees, escrow calculations, or payment applications
+    """
+    __tablename__ = 'respa_qwr_requests'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    dispute_item_id = Column(Integer, ForeignKey('dispute_items.id'), nullable=True, index=True)
+
+    # Servicer/Lender information
+    servicer_name = Column(String(255), nullable=False)
+    servicer_address = Column(Text)
+    servicer_phone = Column(String(50))
+    servicer_email = Column(String(255))
+    loan_number = Column(String(100))
+    property_address = Column(Text)
+
+    # Original loan information
+    original_lender = Column(String(255))
+    original_loan_amount = Column(Float)
+    current_principal_balance = Column(Float)
+    loan_type = Column(String(50))  # conventional, fha, va, usda
+
+    # QWR request details
+    qwr_type = Column(String(50))  # payment_history, escrow_analysis, fee_dispute, payment_application, general_inquiry
+    request_reason = Column(Text)  # Detailed reason for the request
+    specific_issues = Column(JSON)  # List of specific issues being raised
+    documents_requested = Column(JSON)  # List of documents being requested
+
+    # Letter tracking
+    letter_sent_at = Column(DateTime)
+    letter_sent_method = Column(String(50))  # certified_mail, regular_mail, fax, email
+    tracking_number = Column(String(100))
+    delivery_confirmed = Column(Boolean, default=False)
+    delivery_date = Column(Date)
+
+    # RESPA deadlines
+    acknowledgment_deadline = Column(Date)  # 5 business days from delivery
+    response_deadline = Column(Date)  # 30 business days from delivery
+    extended_deadline = Column(Date)  # Can be extended to 45 days with notice
+    extension_notice_received = Column(Boolean, default=False)
+
+    # Acknowledgment tracking
+    acknowledgment_received = Column(Boolean, default=False)
+    acknowledgment_date = Column(DateTime)
+    acknowledgment_document_path = Column(String(500))
+
+    # Response tracking
+    response_received = Column(Boolean, default=False)
+    response_received_at = Column(DateTime)
+    response_type = Column(String(50))  # complete, partial, inadequate, denied, no_response
+    response_document_path = Column(String(500))
+
+    # Documents received in response
+    payment_history_received = Column(Boolean, default=False)
+    escrow_analysis_received = Column(Boolean, default=False)
+    fee_breakdown_received = Column(Boolean, default=False)
+    payment_application_records_received = Column(Boolean, default=False)
+    loan_modification_docs_received = Column(Boolean, default=False)
+    documents_received = Column(JSON)  # Full list of documents received
+
+    # RESPA violation tracking
+    respa_violation_flagged = Column(Boolean, default=False)
+    violation_type = Column(String(100))  # no_acknowledgment, no_response, inadequate_response, continued_fees
+    violation_notes = Column(Text)
+    violation_date = Column(Date)
+
+    # Damages tracking (for violations)
+    actual_damages = Column(Float)  # Actual financial harm
+    statutory_damages = Column(Float)  # Up to $2,000 for pattern/practice
+    attorney_fees = Column(Float)  # If litigation filed
+    class_action_potential = Column(Boolean, default=False)
+
+    # Fee/payment dispute details
+    disputed_fees = Column(JSON)  # List of {fee_type, amount, date}
+    disputed_payments = Column(JSON)  # List of {payment_date, amount, issue}
+    escrow_shortage_dispute = Column(Boolean, default=False)
+    payment_misapplication_dispute = Column(Boolean, default=False)
+
+    # Resolution tracking
+    resolution_received = Column(Boolean, default=False)
+    resolution_date = Column(DateTime)
+    resolution_type = Column(String(50))  # corrected, denied, partial_correction, escalated
+    resolution_notes = Column(Text)
+    amount_refunded = Column(Float)
+    fees_waived = Column(Float)
+    account_corrected = Column(Boolean, default=False)
+
+    # Status tracking
+    # pending, sent, awaiting_acknowledgment, awaiting_response,
+    # response_received, violation, escalated, resolved, closed
+    status = Column(String(30), default='pending')
+    closed_at = Column(DateTime)
+    closed_reason = Column(String(100))
+
+    # Escalation tracking
+    escalated_to_cfpb = Column(Boolean, default=False)
+    cfpb_complaint_id = Column(String(100))
+    escalated_to_state_ag = Column(Boolean, default=False)
+    state_ag_complaint_id = Column(Integer)
+    escalated_to_attorney = Column(Boolean, default=False)
+    attorney_referral_id = Column(Integer)
+
+    # Staff assignment
+    assigned_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+
+    # Notes
+    notes = Column(Text)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="respa_qwr_requests")
+    assigned_staff = relationship("Staff", backref="assigned_qwr_requests")
+
+    def to_dict(self):
+        """Convert to dictionary for API responses"""
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'dispute_item_id': self.dispute_item_id,
+            'servicer_name': self.servicer_name,
+            'servicer_address': self.servicer_address,
+            'loan_number': self.loan_number,
+            'property_address': self.property_address,
+            'qwr_type': self.qwr_type,
+            'request_reason': self.request_reason,
+            'specific_issues': self.specific_issues,
+            'documents_requested': self.documents_requested,
+            'letter_sent_at': self.letter_sent_at.isoformat() if self.letter_sent_at else None,
+            'letter_sent_method': self.letter_sent_method,
+            'tracking_number': self.tracking_number,
+            'delivery_confirmed': self.delivery_confirmed,
+            'delivery_date': str(self.delivery_date) if self.delivery_date else None,
+            'acknowledgment_deadline': str(self.acknowledgment_deadline) if self.acknowledgment_deadline else None,
+            'response_deadline': str(self.response_deadline) if self.response_deadline else None,
+            'acknowledgment_received': self.acknowledgment_received,
+            'acknowledgment_date': self.acknowledgment_date.isoformat() if self.acknowledgment_date else None,
+            'response_received': self.response_received,
+            'response_received_at': self.response_received_at.isoformat() if self.response_received_at else None,
+            'response_type': self.response_type,
+            'payment_history_received': self.payment_history_received,
+            'escrow_analysis_received': self.escrow_analysis_received,
+            'respa_violation_flagged': self.respa_violation_flagged,
+            'violation_type': self.violation_type,
+            'status': self.status,
+            'resolution_received': self.resolution_received,
+            'resolution_type': self.resolution_type,
+            'amount_refunded': self.amount_refunded,
+            'fees_waived': self.fees_waived,
+            'escalated_to_cfpb': self.escalated_to_cfpb,
+            'escalated_to_attorney': self.escalated_to_attorney,
+            'assigned_staff_id': self.assigned_staff_id,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 class OnboardingProgress(Base):
     """Track client onboarding wizard progress"""
     __tablename__ = 'onboarding_progress'
@@ -6859,6 +7426,186 @@ class ScheduledReport(Base):
         return next_run
 
 
+class StateAGContact(Base):
+    """Contact information for State Attorney General Consumer Protection offices"""
+    __tablename__ = 'state_ag_contacts'
+
+    id = Column(Integer, primary_key=True, index=True)
+    state_code = Column(String(2), unique=True, nullable=False, index=True)  # e.g., "NJ", "CA"
+    state_name = Column(String(100), nullable=False)
+
+    # Office Details
+    office_name = Column(String(255), nullable=False)  # e.g., "Office of the Attorney General"
+    division_name = Column(String(255))  # e.g., "Division of Consumer Affairs"
+
+    # Mailing Address
+    address_line1 = Column(String(255), nullable=False)
+    address_line2 = Column(String(255))
+    city = Column(String(100), nullable=False)
+    state = Column(String(50), nullable=False)
+    zip_code = Column(String(20), nullable=False)
+
+    # Contact Methods
+    phone = Column(String(50))
+    fax = Column(String(50))
+    email = Column(String(255))
+    website = Column(String(500))
+    complaint_url = Column(String(500))  # Direct link to online complaint form
+
+    # Specific Requirements
+    accepts_online = Column(Boolean, default=True)  # Can file complaints online
+    accepts_mail = Column(Boolean, default=True)
+    accepts_email = Column(Boolean, default=False)
+    requires_notarization = Column(Boolean, default=False)
+    special_instructions = Column(Text)  # State-specific requirements
+
+    # FCRA Enforcement Notes
+    fcra_enforcement_notes = Column(Text)  # How active the state is on FCRA
+    average_response_days = Column(Integer)  # Historical average
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    complaints = relationship("StateAGComplaint", back_populates="ag_contact")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'state_code': self.state_code,
+            'state_name': self.state_name,
+            'office_name': self.office_name,
+            'division_name': self.division_name,
+            'address_line1': self.address_line1,
+            'address_line2': self.address_line2,
+            'city': self.city,
+            'state': self.state,
+            'zip_code': self.zip_code,
+            'phone': self.phone,
+            'fax': self.fax,
+            'email': self.email,
+            'website': self.website,
+            'complaint_url': self.complaint_url,
+            'accepts_online': self.accepts_online,
+            'accepts_mail': self.accepts_mail,
+            'accepts_email': self.accepts_email,
+            'requires_notarization': self.requires_notarization,
+            'special_instructions': self.special_instructions,
+            'fcra_enforcement_notes': self.fcra_enforcement_notes,
+            'average_response_days': self.average_response_days,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class StateAGComplaint(Base):
+    """State Attorney General complaints filed under FCRA §621"""
+    __tablename__ = 'state_ag_complaints'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    state_ag_id = Column(Integer, ForeignKey('state_ag_contacts.id'), nullable=False)
+
+    # Complaint Details
+    complaint_type = Column(String(100), nullable=False)  # fcra_violation, identity_theft, mixed
+    bureaus_complained = Column(JSON)  # ["Equifax", "Experian", "TransUnion"]
+    furnishers_complained = Column(JSON)  # List of creditor/furnisher names
+
+    # Violation Details
+    violation_types = Column(JSON)  # ["failure_to_investigate", "inaccurate_reporting", etc.]
+    violation_summary = Column(Text)  # Brief summary of violations
+    dispute_rounds_exhausted = Column(Integer, default=0)  # How many rounds before escalating
+
+    # Complaint Status
+    status = Column(String(50), default='draft')  # draft, ready, filed, acknowledged, investigating, resolved, closed
+
+    # Filing Details
+    filed_at = Column(DateTime)
+    filed_method = Column(String(50))  # online, mail, email
+    confirmation_number = Column(String(100))  # From AG office
+    tracking_number = Column(String(100))  # Certified mail tracking
+
+    # Response Tracking
+    acknowledged_at = Column(DateTime)  # When AG acknowledged receipt
+    investigation_started_at = Column(DateTime)
+    last_contact_at = Column(DateTime)  # Last communication from AG
+
+    # Resolution
+    resolved_at = Column(DateTime)
+    resolution_type = Column(String(100))  # favorable, unfavorable, referred, no_action, settlement
+    resolution_summary = Column(Text)
+    damages_recovered = Column(Float)  # If any monetary recovery
+
+    # Documents
+    complaint_letter_path = Column(String(500))  # Path to generated complaint letter
+    supporting_docs = Column(JSON)  # List of attached document paths
+    response_docs = Column(JSON)  # AG office response documents
+
+    # Staff Notes
+    notes = Column(Text)
+    assigned_staff_id = Column(Integer, ForeignKey('staff.id'))
+
+    # Escalation Tracking
+    escalation_id = Column(Integer, ForeignKey('escalation_recommendations.id'))
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="ag_complaints")
+    ag_contact = relationship("StateAGContact", back_populates="complaints")
+    assigned_staff = relationship("Staff", backref="assigned_ag_complaints")
+    escalation = relationship("EscalationRecommendation", backref="ag_complaints")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'state_ag_id': self.state_ag_id,
+            'complaint_type': self.complaint_type,
+            'bureaus_complained': self.bureaus_complained or [],
+            'furnishers_complained': self.furnishers_complained or [],
+            'violation_types': self.violation_types or [],
+            'violation_summary': self.violation_summary,
+            'dispute_rounds_exhausted': self.dispute_rounds_exhausted,
+            'status': self.status,
+            'filed_at': self.filed_at.isoformat() if self.filed_at else None,
+            'filed_method': self.filed_method,
+            'confirmation_number': self.confirmation_number,
+            'tracking_number': self.tracking_number,
+            'acknowledged_at': self.acknowledged_at.isoformat() if self.acknowledged_at else None,
+            'investigation_started_at': self.investigation_started_at.isoformat() if self.investigation_started_at else None,
+            'last_contact_at': self.last_contact_at.isoformat() if self.last_contact_at else None,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+            'resolution_type': self.resolution_type,
+            'resolution_summary': self.resolution_summary,
+            'damages_recovered': self.damages_recovered,
+            'complaint_letter_path': self.complaint_letter_path,
+            'supporting_docs': self.supporting_docs or [],
+            'response_docs': self.response_docs or [],
+            'notes': self.notes,
+            'assigned_staff_id': self.assigned_staff_id,
+            'escalation_id': self.escalation_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'ag_contact': self.ag_contact.to_dict() if self.ag_contact else None,
+        }
+
+    def get_days_since_filed(self):
+        """Calculate business days since complaint was filed"""
+        if not self.filed_at:
+            return None
+        delta = datetime.utcnow() - self.filed_at
+        return delta.days
+
+    def is_overdue_for_response(self, expected_days=30):
+        """Check if AG office response is overdue"""
+        if self.status in ['resolved', 'closed']:
+            return False
+        days = self.get_days_since_filed()
+        return days is not None and days > expected_days
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -8429,6 +9176,212 @@ def init_db():
         ("clients", "fko_completed_at", "TIMESTAMP"),
         ("clients", "fko_status", "VARCHAR(30) DEFAULT 'not_started'"),
         ("clients", "fko_notes", "TEXT"),
+        # Debt Validation Requests (ISSUE-008)
+        ("debt_validation_requests", "id", "SERIAL PRIMARY KEY"),
+        ("debt_validation_requests", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("debt_validation_requests", "dispute_item_id", "INTEGER REFERENCES dispute_items(id)"),
+        ("debt_validation_requests", "collector_name", "VARCHAR(255) NOT NULL"),
+        ("debt_validation_requests", "collector_address", "TEXT"),
+        ("debt_validation_requests", "account_number", "VARCHAR(100)"),
+        ("debt_validation_requests", "original_creditor", "VARCHAR(255)"),
+        ("debt_validation_requests", "alleged_balance", "FLOAT"),
+        ("debt_validation_requests", "letter_sent_at", "TIMESTAMP"),
+        ("debt_validation_requests", "letter_sent_method", "VARCHAR(50)"),
+        ("debt_validation_requests", "tracking_number", "VARCHAR(100)"),
+        ("debt_validation_requests", "delivery_confirmed", "BOOLEAN DEFAULT FALSE"),
+        ("debt_validation_requests", "delivery_date", "DATE"),
+        ("debt_validation_requests", "response_deadline", "DATE"),
+        ("debt_validation_requests", "is_within_30_days", "BOOLEAN DEFAULT TRUE"),
+        ("debt_validation_requests", "response_received", "BOOLEAN DEFAULT FALSE"),
+        ("debt_validation_requests", "response_received_at", "TIMESTAMP"),
+        ("debt_validation_requests", "response_type", "VARCHAR(50)"),
+        ("debt_validation_requests", "documents_received", "JSON"),
+        ("debt_validation_requests", "original_agreement_received", "BOOLEAN DEFAULT FALSE"),
+        ("debt_validation_requests", "account_statements_received", "BOOLEAN DEFAULT FALSE"),
+        ("debt_validation_requests", "chain_of_title_received", "BOOLEAN DEFAULT FALSE"),
+        ("debt_validation_requests", "signed_application_received", "BOOLEAN DEFAULT FALSE"),
+        ("debt_validation_requests", "fdcpa_violation_flagged", "BOOLEAN DEFAULT FALSE"),
+        ("debt_validation_requests", "violation_type", "VARCHAR(100)"),
+        ("debt_validation_requests", "violation_notes", "TEXT"),
+        ("debt_validation_requests", "violation_date", "DATE"),
+        ("debt_validation_requests", "collection_activity_during_validation", "BOOLEAN DEFAULT FALSE"),
+        ("debt_validation_requests", "collection_activity_notes", "TEXT"),
+        ("debt_validation_requests", "status", "VARCHAR(30) DEFAULT 'pending'"),
+        ("debt_validation_requests", "closed_at", "TIMESTAMP"),
+        ("debt_validation_requests", "closed_reason", "VARCHAR(100)"),
+        ("debt_validation_requests", "assigned_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("debt_validation_requests", "notes", "TEXT"),
+        ("debt_validation_requests", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("debt_validation_requests", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Pay-for-Delete Negotiations (ISSUE-007)
+        ("pay_for_delete_negotiations", "id", "SERIAL PRIMARY KEY"),
+        ("pay_for_delete_negotiations", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("pay_for_delete_negotiations", "dispute_item_id", "INTEGER REFERENCES dispute_items(id)"),
+        ("pay_for_delete_negotiations", "collector_name", "VARCHAR(255) NOT NULL"),
+        ("pay_for_delete_negotiations", "collector_address", "TEXT"),
+        ("pay_for_delete_negotiations", "collector_phone", "VARCHAR(50)"),
+        ("pay_for_delete_negotiations", "collector_email", "VARCHAR(255)"),
+        ("pay_for_delete_negotiations", "account_number", "VARCHAR(100)"),
+        ("pay_for_delete_negotiations", "original_creditor", "VARCHAR(255)"),
+        ("pay_for_delete_negotiations", "original_balance", "FLOAT"),
+        ("pay_for_delete_negotiations", "current_balance", "FLOAT"),
+        ("pay_for_delete_negotiations", "initial_offer_amount", "FLOAT"),
+        ("pay_for_delete_negotiations", "initial_offer_percent", "FLOAT"),
+        ("pay_for_delete_negotiations", "initial_offer_date", "TIMESTAMP"),
+        ("pay_for_delete_negotiations", "counter_offer_amount", "FLOAT"),
+        ("pay_for_delete_negotiations", "counter_offer_date", "TIMESTAMP"),
+        ("pay_for_delete_negotiations", "our_counter_amount", "FLOAT"),
+        ("pay_for_delete_negotiations", "our_counter_date", "TIMESTAMP"),
+        ("pay_for_delete_negotiations", "agreed_amount", "FLOAT"),
+        ("pay_for_delete_negotiations", "agreed_percent", "FLOAT"),
+        ("pay_for_delete_negotiations", "agreement_date", "TIMESTAMP"),
+        ("pay_for_delete_negotiations", "payment_deadline", "DATE"),
+        ("pay_for_delete_negotiations", "deletion_deadline", "DATE"),
+        ("pay_for_delete_negotiations", "payment_amount", "FLOAT"),
+        ("pay_for_delete_negotiations", "payment_date", "TIMESTAMP"),
+        ("pay_for_delete_negotiations", "payment_method", "VARCHAR(50)"),
+        ("pay_for_delete_negotiations", "payment_confirmation", "VARCHAR(255)"),
+        ("pay_for_delete_negotiations", "deletion_verified", "BOOLEAN DEFAULT FALSE"),
+        ("pay_for_delete_negotiations", "deletion_verified_date", "TIMESTAMP"),
+        ("pay_for_delete_negotiations", "deletion_verified_bureau", "VARCHAR(100)"),
+        ("pay_for_delete_negotiations", "agreement_in_writing", "BOOLEAN DEFAULT FALSE"),
+        ("pay_for_delete_negotiations", "agreement_document_path", "VARCHAR(500)"),
+        ("pay_for_delete_negotiations", "agreement_signed_by", "VARCHAR(255)"),
+        ("pay_for_delete_negotiations", "status", "VARCHAR(30) DEFAULT 'pending'"),
+        ("pay_for_delete_negotiations", "failure_reason", "TEXT"),
+        ("pay_for_delete_negotiations", "last_contact_date", "TIMESTAMP"),
+        ("pay_for_delete_negotiations", "last_contact_method", "VARCHAR(50)"),
+        ("pay_for_delete_negotiations", "next_follow_up_date", "DATE"),
+        ("pay_for_delete_negotiations", "communication_notes", "TEXT"),
+        ("pay_for_delete_negotiations", "assigned_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("pay_for_delete_negotiations", "notes", "TEXT"),
+        ("pay_for_delete_negotiations", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("pay_for_delete_negotiations", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # State Attorney General Contacts (ISSUE-011)
+        ("state_ag_contacts", "id", "SERIAL PRIMARY KEY"),
+        ("state_ag_contacts", "state_code", "VARCHAR(2) UNIQUE NOT NULL"),
+        ("state_ag_contacts", "state_name", "VARCHAR(100) NOT NULL"),
+        ("state_ag_contacts", "office_name", "VARCHAR(255) NOT NULL"),
+        ("state_ag_contacts", "division_name", "VARCHAR(255)"),
+        ("state_ag_contacts", "address_line1", "VARCHAR(255) NOT NULL"),
+        ("state_ag_contacts", "address_line2", "VARCHAR(255)"),
+        ("state_ag_contacts", "city", "VARCHAR(100) NOT NULL"),
+        ("state_ag_contacts", "state", "VARCHAR(50) NOT NULL"),
+        ("state_ag_contacts", "zip_code", "VARCHAR(20) NOT NULL"),
+        ("state_ag_contacts", "phone", "VARCHAR(50)"),
+        ("state_ag_contacts", "fax", "VARCHAR(50)"),
+        ("state_ag_contacts", "email", "VARCHAR(255)"),
+        ("state_ag_contacts", "website", "VARCHAR(500)"),
+        ("state_ag_contacts", "complaint_url", "VARCHAR(500)"),
+        ("state_ag_contacts", "accepts_online", "BOOLEAN DEFAULT TRUE"),
+        ("state_ag_contacts", "accepts_mail", "BOOLEAN DEFAULT TRUE"),
+        ("state_ag_contacts", "accepts_email", "BOOLEAN DEFAULT FALSE"),
+        ("state_ag_contacts", "requires_notarization", "BOOLEAN DEFAULT FALSE"),
+        ("state_ag_contacts", "special_instructions", "TEXT"),
+        ("state_ag_contacts", "fcra_enforcement_notes", "TEXT"),
+        ("state_ag_contacts", "average_response_days", "INTEGER"),
+        ("state_ag_contacts", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("state_ag_contacts", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # State Attorney General Complaints (ISSUE-011)
+        ("state_ag_complaints", "id", "SERIAL PRIMARY KEY"),
+        ("state_ag_complaints", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("state_ag_complaints", "state_ag_id", "INTEGER NOT NULL REFERENCES state_ag_contacts(id)"),
+        ("state_ag_complaints", "complaint_type", "VARCHAR(100) NOT NULL"),
+        ("state_ag_complaints", "bureaus_complained", "JSON"),
+        ("state_ag_complaints", "furnishers_complained", "JSON"),
+        ("state_ag_complaints", "violation_types", "JSON"),
+        ("state_ag_complaints", "violation_summary", "TEXT"),
+        ("state_ag_complaints", "dispute_rounds_exhausted", "INTEGER DEFAULT 0"),
+        ("state_ag_complaints", "status", "VARCHAR(50) DEFAULT 'draft'"),
+        ("state_ag_complaints", "filed_at", "TIMESTAMP"),
+        ("state_ag_complaints", "filed_method", "VARCHAR(50)"),
+        ("state_ag_complaints", "confirmation_number", "VARCHAR(100)"),
+        ("state_ag_complaints", "tracking_number", "VARCHAR(100)"),
+        ("state_ag_complaints", "acknowledged_at", "TIMESTAMP"),
+        ("state_ag_complaints", "investigation_started_at", "TIMESTAMP"),
+        ("state_ag_complaints", "last_contact_at", "TIMESTAMP"),
+        ("state_ag_complaints", "resolved_at", "TIMESTAMP"),
+        ("state_ag_complaints", "resolution_type", "VARCHAR(100)"),
+        ("state_ag_complaints", "resolution_summary", "TEXT"),
+        ("state_ag_complaints", "damages_recovered", "FLOAT"),
+        ("state_ag_complaints", "complaint_letter_path", "VARCHAR(500)"),
+        ("state_ag_complaints", "supporting_docs", "JSON"),
+        ("state_ag_complaints", "response_docs", "JSON"),
+        ("state_ag_complaints", "notes", "TEXT"),
+        ("state_ag_complaints", "assigned_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("state_ag_complaints", "escalation_id", "INTEGER REFERENCES escalation_recommendations(id)"),
+        ("state_ag_complaints", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("state_ag_complaints", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Attorney Network Members (ISSUE-012)
+        ("attorney_network_members", "id", "SERIAL PRIMARY KEY"),
+        ("attorney_network_members", "first_name", "VARCHAR(100) NOT NULL"),
+        ("attorney_network_members", "last_name", "VARCHAR(100) NOT NULL"),
+        ("attorney_network_members", "bar_number", "VARCHAR(50)"),
+        ("attorney_network_members", "bar_state", "VARCHAR(2)"),
+        ("attorney_network_members", "firm_name", "VARCHAR(255)"),
+        ("attorney_network_members", "firm_website", "VARCHAR(500)"),
+        ("attorney_network_members", "email", "VARCHAR(255) NOT NULL"),
+        ("attorney_network_members", "phone", "VARCHAR(50)"),
+        ("attorney_network_members", "fax", "VARCHAR(50)"),
+        ("attorney_network_members", "address_line1", "VARCHAR(255)"),
+        ("attorney_network_members", "address_line2", "VARCHAR(255)"),
+        ("attorney_network_members", "city", "VARCHAR(100)"),
+        ("attorney_network_members", "state", "VARCHAR(50)"),
+        ("attorney_network_members", "zip_code", "VARCHAR(20)"),
+        ("attorney_network_members", "practice_areas", "JSON"),
+        ("attorney_network_members", "states_licensed", "JSON"),
+        ("attorney_network_members", "fee_structure", "VARCHAR(100)"),
+        ("attorney_network_members", "contingency_percent", "FLOAT"),
+        ("attorney_network_members", "referral_fee_percent", "FLOAT"),
+        ("attorney_network_members", "cases_referred", "INTEGER DEFAULT 0"),
+        ("attorney_network_members", "cases_accepted", "INTEGER DEFAULT 0"),
+        ("attorney_network_members", "cases_won", "INTEGER DEFAULT 0"),
+        ("attorney_network_members", "cases_settled", "INTEGER DEFAULT 0"),
+        ("attorney_network_members", "total_recoveries", "FLOAT DEFAULT 0"),
+        ("attorney_network_members", "avg_settlement", "FLOAT DEFAULT 0"),
+        ("attorney_network_members", "avg_resolution_days", "INTEGER"),
+        ("attorney_network_members", "status", "VARCHAR(50) DEFAULT 'active'"),
+        ("attorney_network_members", "is_preferred", "BOOLEAN DEFAULT FALSE"),
+        ("attorney_network_members", "specialties_notes", "TEXT"),
+        ("attorney_network_members", "intake_requirements", "TEXT"),
+        ("attorney_network_members", "notes", "TEXT"),
+        ("attorney_network_members", "onboarded_at", "TIMESTAMP"),
+        ("attorney_network_members", "last_referral_at", "TIMESTAMP"),
+        ("attorney_network_members", "last_contact_at", "TIMESTAMP"),
+        ("attorney_network_members", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("attorney_network_members", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Attorney Referral Enhancements (ISSUE-012)
+        ("attorney_referrals", "attorney_id", "INTEGER REFERENCES attorney_network_members(id)"),
+        ("attorney_referrals", "violation_types", "JSON"),
+        ("attorney_referrals", "violation_count", "INTEGER DEFAULT 0"),
+        ("attorney_referrals", "bureaus_involved", "JSON"),
+        ("attorney_referrals", "furnishers_involved", "JSON"),
+        ("attorney_referrals", "dispute_rounds", "INTEGER DEFAULT 0"),
+        ("attorney_referrals", "attorney_contacted_at", "TIMESTAMP"),
+        ("attorney_referrals", "decline_reason", "TEXT"),
+        ("attorney_referrals", "intake_completed_at", "TIMESTAMP"),
+        ("attorney_referrals", "retainer_signed_at", "TIMESTAMP"),
+        ("attorney_referrals", "complaint_filed_at", "TIMESTAMP"),
+        ("attorney_referrals", "court_case_number", "VARCHAR(100)"),
+        ("attorney_referrals", "discovery_started_at", "TIMESTAMP"),
+        ("attorney_referrals", "mediation_date", "DATE"),
+        ("attorney_referrals", "trial_date", "DATE"),
+        ("attorney_referrals", "resolved_at", "TIMESTAMP"),
+        ("attorney_referrals", "contingency_percent", "FLOAT"),
+        ("attorney_referrals", "referral_fee_flat", "FLOAT"),
+        ("attorney_referrals", "fee_agreement_signed", "BOOLEAN DEFAULT FALSE"),
+        ("attorney_referrals", "fee_agreement_path", "VARCHAR(500)"),
+        ("attorney_referrals", "judgment_amount", "FLOAT"),
+        ("attorney_referrals", "actual_damages", "FLOAT"),
+        ("attorney_referrals", "statutory_damages", "FLOAT"),
+        ("attorney_referrals", "punitive_damages", "FLOAT"),
+        ("attorney_referrals", "attorney_fees_awarded", "FLOAT"),
+        ("attorney_referrals", "referral_fee_earned", "FLOAT"),
+        ("attorney_referrals", "referral_fee_received_at", "TIMESTAMP"),
+        ("attorney_referrals", "case_package_path", "VARCHAR(500)"),
+        ("attorney_referrals", "case_package_generated_at", "TIMESTAMP"),
+        ("attorney_referrals", "evidence_documents", "JSON"),
+        ("attorney_referrals", "assigned_staff_id", "INTEGER REFERENCES staff(id)"),
     ]
 
     conn = engine.connect()

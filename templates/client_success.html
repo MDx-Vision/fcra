@@ -1,9 +1,13 @@
-{% extends "includes/dashboard_base.html" %}
-
-{% block title %}Client Success Metrics{% endblock %}
-
-{% block head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Success Metrics - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% include 'includes/dashboard_sidebar_styles.html' %}
 <style>
     .stats-grid {
         display: grid;
@@ -276,9 +280,9 @@
         }
     }
 </style>
-{% endblock %}
-
-{% block content %}
+</head>
+<body>
+    {% include 'includes/dashboard_sidebar.html' %}
 <div class="main-content" style="padding: 2rem;">
     <!-- Page Header -->
     <div class="section-header" style="margin-bottom: 1.5rem;">
@@ -660,4 +664,5 @@
         window.location.href = '/api/client-success/export';
     }
 </script>
-{% endblock %}
+</body>
+</html>

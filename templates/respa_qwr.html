@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RESPA QWR Tracking - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/theme_head.html' %}
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary, #f0f2f5);
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary, #1a1a2e);
+        }
+        .header-subtitle {
+            color: var(--text-secondary, #64748b);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary {
+            background: var(--bg-secondary, #e2e8f0);
+            color: var(--text-secondary, #475569);
+        }
+        .btn-secondary:hover { background: var(--bg-tertiary, #cbd5e1); }
+        .btn-info {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: var(--bg-card, white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary, #64748b);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary, #1a1a2e);
+        }
+        .stat-change {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .stat-change.positive { color: #22c55e; }
+        .stat-change.negative { color: #ef4444; }
+        .stat-change.warning { color: #f59e0b; }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            background: var(--bg-card, white);
+            padding: 5px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .tab {
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary, #64748b);
+            transition: all 0.2s;
+        }
+        .tab:hover { background: var(--bg-secondary, #f1f5f9); }
+        .tab.active {
+            background: #22c55e;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--bg-card, white);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color, #e2e8f0);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary, #1a1a2e);
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .filter-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary, #64748b);
+            text-transform: uppercase;
+        }
+        .filter-group select, .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 6px;
+            font-size: 13px;
+            background: var(--bg-primary, #f8fafc);
+            color: var(--text-primary, #1a1a2e);
+            min-width: 150px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color, #e2e8f0);
+        }
+        th {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary, #64748b);
+            text-transform: uppercase;
+            background: var(--bg-secondary, #f8fafc);
+        }
+        td {
+            font-size: 14px;
+            color: var(--text-primary, #1a1a2e);
+        }
+        tr:hover {
+            background: var(--bg-secondary, #f8fafc);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-sent { background: #dbeafe; color: #1e40af; }
+        .status-awaiting_acknowledgment { background: #e0e7ff; color: #3730a3; }
+        .status-awaiting_response { background: #fae8ff; color: #86198f; }
+        .status-response_received { background: #dcfce7; color: #166534; }
+        .status-violation { background: #fee2e2; color: #991b1b; }
+        .status-escalated { background: #ffedd5; color: #9a3412; }
+        .status-resolved { background: #d1fae5; color: #065f46; }
+        .status-closed { background: #f3f4f6; color: #374151; }
+
+        .violation-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--text-secondary, #64748b);
+        }
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary, #1a1a2e);
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-card, white);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color, #e2e8f0);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary, #64748b);
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border-color, #e2e8f0);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary, #1a1a2e);
+            margin-bottom: 6px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--bg-primary, #f8fafc);
+            color: var(--text-primary, #1a1a2e);
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .form-section {
+            margin-bottom: 24px;
+        }
+        .form-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary, #64748b);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color, #e2e8f0);
+        }
+
+        .deadline-list {
+            display: grid;
+            gap: 12px;
+        }
+        .deadline-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-secondary, #f8fafc);
+            border-radius: 8px;
+            gap: 12px;
+        }
+        .deadline-item.overdue {
+            background: #fee2e2;
+            border-left: 4px solid #dc2626;
+        }
+        .deadline-item.due-soon {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+        }
+        .deadline-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+        .deadline-info {
+            flex: 1;
+        }
+        .deadline-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary, #1a1a2e);
+        }
+        .deadline-info p {
+            font-size: 12px;
+            color: var(--text-secondary, #64748b);
+        }
+        .deadline-date {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary, #1a1a2e);
+        }
+
+        .actions-dropdown {
+            position: relative;
+        }
+        .actions-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-card, white);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            min-width: 180px;
+            z-index: 100;
+            display: none;
+        }
+        .actions-menu.active { display: block; }
+        .actions-menu a, .actions-menu button {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            text-align: left;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-primary, #1a1a2e);
+            text-decoration: none;
+        }
+        .actions-menu a:hover, .actions-menu button:hover {
+            background: var(--bg-secondary, #f8fafc);
+        }
+        .actions-menu .danger { color: #dc2626; }
+    </style>
+</head>
+<body>
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h1>RESPA QWR Tracking</h1>
+                <p class="header-subtitle">Manage Qualified Written Requests to mortgage servicers under RESPA Section 6</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="checkDeadlines()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Check Deadlines
+                </button>
+                <button class="btn btn-primary" onclick="openNewQWRModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New QWR Request
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h3>Total Requests</h3>
+                <div class="stat-value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Awaiting Response</h3>
+                <div class="stat-value" id="statAwaiting">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Violations</h3>
+                <div class="stat-value" id="statViolations">0</div>
+                <div class="stat-change negative" id="statViolationNote"></div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Recovery</h3>
+                <div class="stat-value" id="statRecovery">$0</div>
+                <div class="stat-change positive" id="statRecoveryNote"></div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('requests')">All Requests</button>
+            <button class="tab" onclick="switchTab('deadlines')">Deadlines</button>
+            <button class="tab" onclick="switchTab('violations')">Violations</button>
+            <button class="tab" onclick="switchTab('servicers')">By Servicer</button>
+        </div>
+
+        <!-- All Requests Tab -->
+        <div id="tab-requests" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h2>QWR Requests</h2>
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="filterStatus" onchange="loadQWRRequests()">
+                                <option value="">All Statuses</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Type</label>
+                            <select id="filterType" onchange="loadQWRRequests()">
+                                <option value="">All Types</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Servicer</label>
+                            <input type="text" id="filterServicer" placeholder="Search servicer..." onkeyup="debounceSearch()">
+                        </div>
+                    </div>
+                </div>
+                <div id="requestsTable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Servicer</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Deadlines</th>
+                                <th>Violation</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requestsBody">
+                            <tr>
+                                <td colspan="7">
+                                    <div class="empty-state">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                        <h3>No QWR Requests</h3>
+                                        <p>Click "New QWR Request" to create one</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deadlines Tab -->
+        <div id="tab-deadlines" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Upcoming & Overdue Deadlines</h2>
+                    <button class="btn btn-warning btn-sm" onclick="autoFlagViolations()">Auto-Flag Violations</button>
+                </div>
+                <div style="padding: 20px;">
+                    <div class="deadline-list" id="deadlinesList">
+                        <div class="empty-state">
+                            <p>No deadlines to display</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Violations Tab -->
+        <div id="tab-violations" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>RESPA Violations</h2>
+                </div>
+                <div id="violationsTable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Servicer</th>
+                                <th>Violation Type</th>
+                                <th>Date</th>
+                                <th>Damages</th>
+                                <th>Escalation</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="violationsBody">
+                            <tr>
+                                <td colspan="7">
+                                    <div class="empty-state">
+                                        <p>No violations flagged</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- By Servicer Tab -->
+        <div id="tab-servicers" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Requests by Servicer</h2>
+                </div>
+                <div id="servicersTable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Servicer</th>
+                                <th>Total Requests</th>
+                                <th>Violations</th>
+                                <th>Response Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servicersBody">
+                            <tr>
+                                <td colspan="4">
+                                    <div class="empty-state">
+                                        <p>No servicer data</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New QWR Modal -->
+    <div class="modal-overlay" id="newQWRModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>New QWR Request</h2>
+                <button class="modal-close" onclick="closeModal('newQWRModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="newQWRForm">
+                    <div class="form-section">
+                        <h3>Client & Servicer Information</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Client *</label>
+                                <select id="qwrClientId" required>
+                                    <option value="">Select Client...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Servicer Name *</label>
+                                <select id="qwrServicerName" required>
+                                    <option value="">Select Servicer...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Loan Number</label>
+                                <input type="text" id="qwrLoanNumber" placeholder="e.g., 1234567890">
+                            </div>
+                            <div class="form-group">
+                                <label>Loan Type</label>
+                                <select id="qwrLoanType">
+                                    <option value="">Select Type...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Property Address</label>
+                            <input type="text" id="qwrPropertyAddress" placeholder="Property address associated with the loan">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Request Details</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>QWR Type *</label>
+                                <select id="qwrType" required>
+                                    <option value="">Select Type...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Reason for Request *</label>
+                            <textarea id="qwrReason" placeholder="Describe the reason for this QWR request..." required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Specific Issues (one per line)</label>
+                            <textarea id="qwrIssues" placeholder="List specific issues to address..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Documents Requested (one per line)</label>
+                            <textarea id="qwrDocuments" placeholder="List documents you are requesting..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Dispute Details (if applicable)</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="qwrEscrowDispute"> Escrow Shortage Dispute
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="qwrPaymentDispute"> Payment Misapplication Dispute
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="qwrNotes" placeholder="Additional notes..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('newQWRModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createQWRRequest()">Create QWR Request</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View QWR Modal -->
+    <div class="modal-overlay" id="viewQWRModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>QWR Request Details</h2>
+                <button class="modal-close" onclick="closeModal('viewQWRModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="viewQWRContent">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="modal-footer" id="viewQWRActions">
+                <button class="btn btn-secondary" onclick="closeModal('viewQWRModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let options = {};
+        let clients = [];
+        let searchTimeout;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOptions();
+            loadClients();
+            loadStats();
+            loadQWRRequests();
+        });
+
+        async function loadOptions() {
+            try {
+                const response = await fetch('/api/respa-qwr/options');
+                const data = await response.json();
+                if (data.success) {
+                    options = data.options;
+                    populateFilters();
+                }
+            } catch (error) {
+                console.error('Error loading options:', error);
+            }
+        }
+
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/clients?limit=500');
+                const data = await response.json();
+                if (data.clients) {
+                    clients = data.clients;
+                    populateClientDropdown();
+                }
+            } catch (error) {
+                console.error('Error loading clients:', error);
+            }
+        }
+
+        function populateFilters() {
+            // Status filter
+            const statusSelect = document.getElementById('filterStatus');
+            for (const [key, value] of Object.entries(options.statuses || {})) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = value.split(' - ')[0];
+                statusSelect.appendChild(opt);
+            }
+
+            // Type filter
+            const typeSelect = document.getElementById('filterType');
+            for (const [key, value] of Object.entries(options.qwr_types || {})) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = value.split(' - ')[0];
+                typeSelect.appendChild(opt);
+            }
+
+            // QWR Type in form
+            const qwrTypeSelect = document.getElementById('qwrType');
+            for (const [key, value] of Object.entries(options.qwr_types || {})) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = value;
+                qwrTypeSelect.appendChild(opt);
+            }
+
+            // Loan Types
+            const loanTypeSelect = document.getElementById('qwrLoanType');
+            for (const type of options.loan_types || []) {
+                const opt = document.createElement('option');
+                opt.value = type;
+                opt.textContent = type.toUpperCase();
+                loanTypeSelect.appendChild(opt);
+            }
+
+            // Servicers
+            const servicerSelect = document.getElementById('qwrServicerName');
+            for (const servicer of options.major_servicers || []) {
+                const opt = document.createElement('option');
+                opt.value = servicer;
+                opt.textContent = servicer;
+                servicerSelect.appendChild(opt);
+            }
+            const otherOpt = document.createElement('option');
+            otherOpt.value = "other";
+            otherOpt.textContent = "-- Other (enter manually) --";
+            servicerSelect.appendChild(otherOpt);
+        }
+
+        function populateClientDropdown() {
+            const select = document.getElementById('qwrClientId');
+            for (const client of clients) {
+                const opt = document.createElement('option');
+                opt.value = client.id;
+                opt.textContent = `${client.first_name} ${client.last_name}`;
+                select.appendChild(opt);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/respa-qwr/stats');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('statTotal').textContent = data.total || 0;
+                    const awaiting = (data.by_status?.awaiting_acknowledgment || 0) + (data.by_status?.awaiting_response || 0);
+                    document.getElementById('statAwaiting').textContent = awaiting;
+                    document.getElementById('statViolations').textContent = data.violations || 0;
+                    document.getElementById('statRecovery').textContent = '$' + (data.total_recovery || 0).toLocaleString();
+
+                    if (data.violations > 0) {
+                        document.getElementById('statViolationNote').textContent = 'Action required';
+                    }
+                    if (data.total_recovery > 0) {
+                        document.getElementById('statRecoveryNote').textContent = 'Refunds + fees waived';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadQWRRequests() {
+            const status = document.getElementById('filterStatus').value;
+            const type = document.getElementById('filterType').value;
+            const servicer = document.getElementById('filterServicer').value;
+
+            let url = '/api/respa-qwr?limit=100';
+            if (status) url += `&status=${status}`;
+            if (type) url += `&qwr_type=${type}`;
+            if (servicer) url += `&servicer_name=${encodeURIComponent(servicer)}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.success) {
+                    renderRequestsTable(data.qwr_requests);
+                }
+            } catch (error) {
+                console.error('Error loading QWR requests:', error);
+            }
+        }
+
+        function renderRequestsTable(requests) {
+            const tbody = document.getElementById('requestsBody');
+            if (!requests || requests.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                <h3>No QWR Requests</h3>
+                                <p>Click "New QWR Request" to create one</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = requests.map(qwr => {
+                const client = clients.find(c => c.id === qwr.client_id);
+                const clientName = client ? `${client.first_name} ${client.last_name}` : `Client #${qwr.client_id}`;
+
+                let deadlines = '-';
+                if (qwr.acknowledgment_deadline && !qwr.acknowledgment_received) {
+                    deadlines = `Ack: ${qwr.acknowledgment_deadline}`;
+                } else if (qwr.response_deadline && !qwr.response_received) {
+                    const deadline = qwr.extended_deadline || qwr.response_deadline;
+                    deadlines = `Resp: ${deadline}`;
+                }
+
+                const violationBadge = qwr.respa_violation_flagged
+                    ? `<span class="violation-badge">VIOLATION</span>`
+                    : '-';
+
+                return `
+                    <tr>
+                        <td><strong>${clientName}</strong></td>
+                        <td>${qwr.servicer_name}</td>
+                        <td>${qwr.qwr_type_description?.split(' - ')[0] || qwr.qwr_type}</td>
+                        <td><span class="status-badge status-${qwr.status}">${qwr.status_description?.split(' - ')[0] || qwr.status}</span></td>
+                        <td>${deadlines}</td>
+                        <td>${violationBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="viewQWR(${qwr.id})">View</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(loadQWRRequests, 300);
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // Load tab-specific data
+            if (tabName === 'deadlines') {
+                loadDeadlines();
+            } else if (tabName === 'violations') {
+                loadViolations();
+            } else if (tabName === 'servicers') {
+                loadServicerStats();
+            }
+        }
+
+        async function loadDeadlines() {
+            try {
+                const response = await fetch('/api/respa-qwr/deadlines');
+                const data = await response.json();
+                if (data.success) {
+                    renderDeadlines(data.deadlines);
+                }
+            } catch (error) {
+                console.error('Error loading deadlines:', error);
+            }
+        }
+
+        function renderDeadlines(deadlines) {
+            const container = document.getElementById('deadlinesList');
+            const items = [];
+
+            // Overdue acknowledgments
+            for (const qwr of deadlines.acknowledgment_overdue || []) {
+                items.push({
+                    type: 'overdue',
+                    qwr,
+                    label: 'Acknowledgment OVERDUE',
+                    deadline: qwr.acknowledgment_deadline
+                });
+            }
+
+            // Overdue responses
+            for (const qwr of deadlines.response_overdue || []) {
+                items.push({
+                    type: 'overdue',
+                    qwr,
+                    label: 'Response OVERDUE',
+                    deadline: qwr.extended_deadline || qwr.response_deadline
+                });
+            }
+
+            // Due soon acknowledgments
+            for (const qwr of deadlines.acknowledgment_due_soon || []) {
+                items.push({
+                    type: 'due-soon',
+                    qwr,
+                    label: 'Acknowledgment due soon',
+                    deadline: qwr.acknowledgment_deadline
+                });
+            }
+
+            // Due soon responses
+            for (const qwr of deadlines.response_due_soon || []) {
+                items.push({
+                    type: 'due-soon',
+                    qwr,
+                    label: 'Response due soon',
+                    deadline: qwr.extended_deadline || qwr.response_deadline
+                });
+            }
+
+            if (items.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No upcoming or overdue deadlines</p></div>';
+                return;
+            }
+
+            container.innerHTML = items.map(item => {
+                const client = clients.find(c => c.id === item.qwr.client_id);
+                const clientName = client ? `${client.first_name} ${client.last_name}` : `Client #${item.qwr.client_id}`;
+
+                return `
+                    <div class="deadline-item ${item.type}">
+                        <div class="deadline-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${item.type === 'overdue' ? '#dc2626' : '#f59e0b'}" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                        </div>
+                        <div class="deadline-info">
+                            <h4>${clientName} - ${item.qwr.servicer_name}</h4>
+                            <p>${item.label}</p>
+                        </div>
+                        <div class="deadline-date">${item.deadline}</div>
+                        <button class="btn btn-sm btn-secondary" onclick="viewQWR(${item.qwr.id})">View</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadViolations() {
+            try {
+                const response = await fetch('/api/respa-qwr?has_violation=true');
+                const data = await response.json();
+                if (data.success) {
+                    renderViolationsTable(data.qwr_requests);
+                }
+            } catch (error) {
+                console.error('Error loading violations:', error);
+            }
+        }
+
+        function renderViolationsTable(violations) {
+            const tbody = document.getElementById('violationsBody');
+            if (!violations || violations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>No violations flagged</p></div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = violations.map(qwr => {
+                const client = clients.find(c => c.id === qwr.client_id);
+                const clientName = client ? `${client.first_name} ${client.last_name}` : `Client #${qwr.client_id}`;
+
+                const damages = (qwr.actual_damages || 0) + (qwr.statutory_damages || 0);
+                const damagesStr = damages > 0 ? '$' + damages.toLocaleString() : '-';
+
+                let escalation = [];
+                if (qwr.escalated_to_cfpb) escalation.push('CFPB');
+                if (qwr.escalated_to_state_ag) escalation.push('State AG');
+                if (qwr.escalated_to_attorney) escalation.push('Attorney');
+
+                return `
+                    <tr>
+                        <td><strong>${clientName}</strong></td>
+                        <td>${qwr.servicer_name}</td>
+                        <td><span class="violation-badge">${qwr.violation_type_description?.split(' - ')[0] || qwr.violation_type}</span></td>
+                        <td>${qwr.violation_date || '-'}</td>
+                        <td>${damagesStr}</td>
+                        <td>${escalation.length ? escalation.join(', ') : '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="viewQWR(${qwr.id})">View</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function loadServicerStats() {
+            try {
+                const response = await fetch('/api/respa-qwr/stats');
+                const data = await response.json();
+                if (data.success && data.top_servicers) {
+                    renderServicersTable(data.top_servicers);
+                }
+            } catch (error) {
+                console.error('Error loading servicer stats:', error);
+            }
+        }
+
+        function renderServicersTable(servicers) {
+            const tbody = document.getElementById('servicersBody');
+            if (!servicers || servicers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><p>No servicer data</p></div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = servicers.map(s => `
+                <tr>
+                    <td><strong>${s.name}</strong></td>
+                    <td>${s.count}</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+            `).join('');
+        }
+
+        function openNewQWRModal() {
+            document.getElementById('newQWRForm').reset();
+            document.getElementById('newQWRModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        async function createQWRRequest() {
+            const clientId = document.getElementById('qwrClientId').value;
+            const servicerName = document.getElementById('qwrServicerName').value;
+            const qwrType = document.getElementById('qwrType').value;
+            const reason = document.getElementById('qwrReason').value;
+
+            if (!clientId || !servicerName || !qwrType || !reason) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const issues = document.getElementById('qwrIssues').value.split('\n').filter(s => s.trim());
+            const documents = document.getElementById('qwrDocuments').value.split('\n').filter(s => s.trim());
+
+            const payload = {
+                client_id: parseInt(clientId),
+                servicer_name: servicerName,
+                qwr_type: qwrType,
+                request_reason: reason,
+                loan_number: document.getElementById('qwrLoanNumber').value || null,
+                loan_type: document.getElementById('qwrLoanType').value || null,
+                property_address: document.getElementById('qwrPropertyAddress').value || null,
+                specific_issues: issues.length ? issues : null,
+                documents_requested: documents.length ? documents : null,
+                escrow_shortage_dispute: document.getElementById('qwrEscrowDispute').checked,
+                payment_misapplication_dispute: document.getElementById('qwrPaymentDispute').checked,
+                notes: document.getElementById('qwrNotes').value || null,
+            };
+
+            try {
+                const response = await fetch('/api/respa-qwr', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (data.success) {
+                    closeModal('newQWRModal');
+                    loadStats();
+                    loadQWRRequests();
+                    alert('QWR request created successfully!');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error creating QWR request: ' + error.message);
+            }
+        }
+
+        async function viewQWR(qwrId) {
+            try {
+                const response = await fetch(`/api/respa-qwr/${qwrId}`);
+                const data = await response.json();
+                if (data.success) {
+                    renderQWRDetails(data.qwr);
+                    document.getElementById('viewQWRModal').classList.add('active');
+                }
+            } catch (error) {
+                alert('Error loading QWR details: ' + error.message);
+            }
+        }
+
+        function renderQWRDetails(qwr) {
+            const client = clients.find(c => c.id === qwr.client_id);
+            const clientName = client ? `${client.first_name} ${client.last_name}` : `Client #${qwr.client_id}`;
+
+            document.getElementById('viewQWRContent').innerHTML = `
+                <div class="form-section">
+                    <h3>Overview</h3>
+                    <p><strong>Client:</strong> ${clientName}</p>
+                    <p><strong>Servicer:</strong> ${qwr.servicer_name}</p>
+                    <p><strong>Loan Number:</strong> ${qwr.loan_number || '-'}</p>
+                    <p><strong>Status:</strong> <span class="status-badge status-${qwr.status}">${qwr.status_description || qwr.status}</span></p>
+                    ${qwr.respa_violation_flagged ? '<p><span class="violation-badge">RESPA VIOLATION</span></p>' : ''}
+                </div>
+
+                <div class="form-section">
+                    <h3>Request Details</h3>
+                    <p><strong>Type:</strong> ${qwr.qwr_type_description || qwr.qwr_type}</p>
+                    <p><strong>Reason:</strong> ${qwr.request_reason || '-'}</p>
+                    <p><strong>Created:</strong> ${qwr.created_at || '-'}</p>
+                </div>
+
+                <div class="form-section">
+                    <h3>Deadlines</h3>
+                    <p><strong>Sent:</strong> ${qwr.letter_sent_at || 'Not sent'}</p>
+                    <p><strong>Delivery Confirmed:</strong> ${qwr.delivery_confirmed ? qwr.delivery_date : 'No'}</p>
+                    <p><strong>Acknowledgment Deadline:</strong> ${qwr.acknowledgment_deadline || '-'} ${qwr.acknowledgment_received ? '(Received)' : ''}</p>
+                    <p><strong>Response Deadline:</strong> ${qwr.extended_deadline || qwr.response_deadline || '-'} ${qwr.response_received ? '(Received)' : ''}</p>
+                </div>
+
+                ${qwr.respa_violation_flagged ? `
+                <div class="form-section">
+                    <h3>Violation Details</h3>
+                    <p><strong>Type:</strong> ${qwr.violation_type_description || qwr.violation_type}</p>
+                    <p><strong>Date:</strong> ${qwr.violation_date || '-'}</p>
+                    <p><strong>Notes:</strong> ${qwr.violation_notes || '-'}</p>
+                    <p><strong>Actual Damages:</strong> $${(qwr.actual_damages || 0).toLocaleString()}</p>
+                    <p><strong>Statutory Damages:</strong> $${(qwr.statutory_damages || 0).toLocaleString()}</p>
+                </div>
+                ` : ''}
+
+                ${qwr.resolution_received ? `
+                <div class="form-section">
+                    <h3>Resolution</h3>
+                    <p><strong>Type:</strong> ${qwr.resolution_type}</p>
+                    <p><strong>Date:</strong> ${qwr.resolution_date || '-'}</p>
+                    <p><strong>Amount Refunded:</strong> $${(qwr.amount_refunded || 0).toLocaleString()}</p>
+                    <p><strong>Fees Waived:</strong> $${(qwr.fees_waived || 0).toLocaleString()}</p>
+                    <p><strong>Notes:</strong> ${qwr.resolution_notes || '-'}</p>
+                </div>
+                ` : ''}
+            `;
+
+            // Update actions based on status
+            const actionsDiv = document.getElementById('viewQWRActions');
+            let actions = '<button class="btn btn-secondary" onclick="closeModal(\'viewQWRModal\')">Close</button>';
+
+            if (qwr.status === 'pending') {
+                actions += ` <button class="btn btn-info" onclick="markSent(${qwr.id})">Mark as Sent</button>`;
+            } else if (qwr.status === 'sent') {
+                actions += ` <button class="btn btn-info" onclick="confirmDelivery(${qwr.id})">Confirm Delivery</button>`;
+            } else if (qwr.status === 'awaiting_acknowledgment') {
+                actions += ` <button class="btn btn-info" onclick="recordAcknowledgment(${qwr.id})">Record Acknowledgment</button>`;
+            } else if (qwr.status === 'awaiting_response') {
+                actions += ` <button class="btn btn-info" onclick="recordResponse(${qwr.id})">Record Response</button>`;
+            }
+
+            if (qwr.respa_violation_flagged && !qwr.escalated_to_cfpb) {
+                actions += ` <button class="btn btn-warning" onclick="escalateCFPB(${qwr.id})">Escalate to CFPB</button>`;
+            }
+
+            actionsDiv.innerHTML = actions;
+        }
+
+        async function markSent(qwrId) {
+            const method = prompt('Enter send method (certified_mail, regular_mail, fax, email):');
+            if (!method) return;
+
+            try {
+                const response = await fetch(`/api/respa-qwr/${qwrId}/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ send_method: method })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    closeModal('viewQWRModal');
+                    loadQWRRequests();
+                    alert('Marked as sent!');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function confirmDelivery(qwrId) {
+            try {
+                const response = await fetch(`/api/respa-qwr/${qwrId}/delivery`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                if (data.success) {
+                    closeModal('viewQWRModal');
+                    loadQWRRequests();
+                    alert(`Delivery confirmed! Deadlines: Acknowledgment by ${data.acknowledgment_deadline}, Response by ${data.response_deadline}`);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function recordAcknowledgment(qwrId) {
+            try {
+                const response = await fetch(`/api/respa-qwr/${qwrId}/acknowledgment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                if (data.success) {
+                    closeModal('viewQWRModal');
+                    loadQWRRequests();
+                    alert(data.message);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function recordResponse(qwrId) {
+            const responseType = prompt('Enter response type (complete, partial, inadequate, denied):');
+            if (!responseType) return;
+
+            try {
+                const response = await fetch(`/api/respa-qwr/${qwrId}/response`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ response_type: responseType })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    closeModal('viewQWRModal');
+                    loadQWRRequests();
+                    alert(data.message);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function escalateCFPB(qwrId) {
+            const complaintId = prompt('Enter CFPB complaint ID (optional):');
+
+            try {
+                const response = await fetch(`/api/respa-qwr/${qwrId}/escalate/cfpb`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cfpb_complaint_id: complaintId || null })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    closeModal('viewQWRModal');
+                    loadQWRRequests();
+                    alert('Escalated to CFPB!');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function checkDeadlines() {
+            try {
+                const response = await fetch('/api/respa-qwr/deadlines');
+                const data = await response.json();
+                if (data.success) {
+                    const counts = data.counts;
+                    const total = counts.acknowledgment_overdue + counts.response_overdue + counts.acknowledgment_due_soon + counts.response_due_soon;
+                    if (total > 0) {
+                        alert(`Deadline Summary:\n- Overdue: ${counts.acknowledgment_overdue + counts.response_overdue}\n- Due Soon: ${counts.acknowledgment_due_soon + counts.response_due_soon}`);
+                        switchTab('deadlines');
+                    } else {
+                        alert('No deadlines approaching or overdue!');
+                    }
+                }
+            } catch (error) {
+                alert('Error checking deadlines: ' + error.message);
+            }
+        }
+
+        async function autoFlagViolations() {
+            if (!confirm('This will automatically flag RESPA violations for all missed deadlines. Continue?')) return;
+
+            try {
+                const response = await fetch('/api/respa-qwr/auto-flag-violations', { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    alert(`Flagged ${data.count} violation(s)`);
+                    loadStats();
+                    loadDeadlines();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+
+    {% include 'includes/theme_toggle.html' %}
+</body>
+</html>

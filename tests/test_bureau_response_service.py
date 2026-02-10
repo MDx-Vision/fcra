@@ -634,3 +634,300 @@ class TestIntegration:
                 sent_date=date.today()
             )
             assert result['success'] == True
+
+
+# ============================================================================
+# Response Parsing Tests (ISSUE-010)
+# ============================================================================
+
+class TestResponseTextParsing:
+    """Tests for response text parsing functionality"""
+
+    @pytest.fixture
+    def service(self):
+        mock_db = MagicMock()
+        return BureauResponseService(session=mock_db)
+
+    def test_parse_deletion_response(self, service):
+        """Test parsing a deletion response letter"""
+        text = """
+        Dear Consumer,
+
+        We have completed our investigation. The account you disputed
+        has been deleted from your credit file.
+
+        Sincerely,
+        Equifax Consumer Services
+        """
+        result = service._parse_response_text(text)
+
+        assert result["response_type"] == RESPONSE_DELETED
+        assert result["bureau"] == "Equifax"
+        assert result["items_deleted"] >= 1
+
+    def test_parse_verified_response(self, service):
+        """Test parsing a verified as accurate response"""
+        text = """
+        TransUnion Investigation Results
+
+        The information has been verified as accurate and will remain
+        on your credit file.
+
+        TransUnion Consumer Relations
+        P.O. Box 2000, Chester, PA
+        """
+        result = service._parse_response_text(text)
+
+        assert result["response_type"] == RESPONSE_VERIFIED
+        assert result["bureau"] == "TransUnion"
+        assert result["requires_follow_up"] is True
+
+    def test_parse_updated_response(self, service):
+        """Test parsing an updated response"""
+        text = """
+        Experian Investigation Complete
+
+        The account information has been updated to reflect
+        the corrected balance.
+
+        P.O. Box 4500, Allen, TX
+        """
+        result = service._parse_response_text(text)
+
+        assert result["response_type"] == RESPONSE_UPDATED
+        assert result["bureau"] == "Experian"
+
+    def test_parse_mixed_response(self, service):
+        """Test parsing mixed results (some deleted, some verified)"""
+        text = """
+        Investigation Results:
+        Account #1234: has been deleted from your credit report
+        Account #5678: has been verified as accurate
+
+        Equifax
+        """
+        result = service._parse_response_text(text)
+
+        assert result["response_type"] == RESPONSE_MIXED
+
+    def test_parse_frivolous_response(self, service):
+        """Test parsing a frivolous determination"""
+        text = """
+        Your dispute is determined to be frivolous because it is
+        substantially similar to your previous dispute.
+        Please provide additional documentation.
+        """
+        result = service._parse_response_text(text)
+
+        assert result["response_type"] == RESPONSE_FRIVOLOUS
+        assert result["is_frivolous"] is True
+        assert result["requires_follow_up"] is True
+
+    def test_identify_equifax_bureau(self, service):
+        """Test identifying Equifax from text"""
+        text = "equifax information services atlanta ga"
+        result = service._identify_bureau(text)
+        assert result == "Equifax"
+
+    def test_identify_experian_bureau(self, service):
+        """Test identifying Experian from text"""
+        text = "experian consumer services p.o. box 4500 allen tx"
+        result = service._identify_bureau(text)
+        assert result == "Experian"
+
+    def test_identify_transunion_bureau(self, service):
+        """Test identifying TransUnion from text"""
+        text = "transunion p.o. box 2000 chester pa"
+        result = service._identify_bureau(text)
+        assert result == "TransUnion"
+
+    def test_extract_account_numbers(self, service):
+        """Test account number extraction"""
+        text = """
+        Account Number: 1234567890
+        Acct# 9876543210
+        Reference# REF-ABC-123
+        """
+        result = service._extract_account_numbers(text)
+
+        assert len(result) >= 2
+
+    def test_extract_dates_from_text(self, service):
+        """Test date extraction"""
+        text = """
+        Investigation completed on 02/08/2026.
+        Original dispute filed: January 15, 2026
+        """
+        result = service._extract_dates(text)
+
+        assert len(result) >= 1
+
+    def test_extract_item_counts(self, service):
+        """Test extracting item counts from response"""
+        text = """
+        Results: 3 items have been deleted from your credit file.
+        2 accounts were verified as accurate.
+        """
+        result = service._extract_item_counts(text)
+
+        assert result["items_deleted"] >= 1
+        assert result["items_verified"] >= 1
+
+
+class TestExtractStatusFromText:
+    """Tests for the extract_status_from_text API method"""
+
+    @pytest.fixture
+    def service(self):
+        mock_db = MagicMock()
+        return BureauResponseService(session=mock_db)
+
+    def test_extract_status_success(self, service):
+        """Test successful status extraction"""
+        text = "Your disputed account has been deleted."
+        result = service.extract_status_from_text(text)
+
+        assert result["success"] is True
+        assert result["data"]["response_type"] == RESPONSE_DELETED
+
+    def test_extract_status_empty_text(self, service):
+        """Test with empty text"""
+        result = service.extract_status_from_text("")
+        assert result["success"] is False
+
+    def test_extract_status_whitespace(self, service):
+        """Test with whitespace only"""
+        result = service.extract_status_from_text("   \n\t  ")
+        assert result["success"] is False
+
+
+class TestParseResponseLetter:
+    """Tests for file-based response parsing"""
+
+    @pytest.fixture
+    def service(self):
+        mock_db = MagicMock()
+        return BureauResponseService(session=mock_db)
+
+    def test_parse_file_not_found(self, service):
+        """Test with non-existent file"""
+        result = service.parse_response_letter("/nonexistent/file.pdf")
+
+        assert result["success"] is False
+        assert "FILE_NOT_FOUND" in result["error_code"]
+
+
+class TestBatchParseResponses:
+    """Tests for batch response parsing"""
+
+    @pytest.fixture
+    def service(self):
+        mock_db = MagicMock()
+        return BureauResponseService(session=mock_db)
+
+    def test_batch_parse_empty_list(self, service):
+        """Test with empty file list"""
+        result = service.batch_parse_responses([])
+
+        assert result["success"] is True
+        assert result["data"]["total"] == 0
+
+    @patch.object(BureauResponseService, 'parse_response_letter')
+    def test_batch_parse_counts_results(self, mock_parse, service):
+        """Test batch parsing counts success/failure"""
+        mock_parse.side_effect = [
+            {"success": True, "data": {"response_type": "deleted"}},
+            {"success": False, "error": "File not found"},
+        ]
+
+        result = service.batch_parse_responses(["/file1.pdf", "/file2.pdf"])
+
+        assert result["success"] is True
+        assert result["data"]["total"] == 2
+        assert result["data"]["success_count"] == 1
+        assert result["data"]["error_count"] == 1
+
+
+class TestGetParseSummary:
+    """Tests for parse summary statistics"""
+
+    @pytest.fixture
+    def mock_session(self):
+        return MagicMock()
+
+    @pytest.fixture
+    def service(self, mock_session):
+        return BureauResponseService(session=mock_session)
+
+    def test_get_parse_summary_empty(self, service, mock_session):
+        """Test summary with no responses"""
+        mock_session.query.return_value.filter.return_value.all.return_value = []
+
+        result = service.get_parse_summary()
+
+        assert result["success"] is True
+        assert result["data"]["total_responses"] == 0
+
+    def test_get_parse_summary_with_data(self, service, mock_session):
+        """Test summary with response data"""
+        mock_response = MagicMock()
+        mock_response.response_type = "deleted"
+        mock_response.bureau = "Equifax"
+        mock_response.items_deleted = 2
+        mock_response.items_updated = 0
+        mock_response.items_verified = 0
+        mock_response.follow_up_required = False
+        mock_response.follow_up_completed = False
+
+        mock_session.query.return_value.filter.return_value.all.return_value = [mock_response]
+
+        result = service.get_parse_summary()
+
+        assert result["success"] is True
+        assert result["data"]["total_responses"] == 1
+        assert result["data"]["by_type"]["deleted"] == 1
+        assert result["data"]["total_items_deleted"] == 2
+
+
+class TestErrorHandlingImprovements:
+    """Tests for improved error handling (ISSUE-010)"""
+
+    @pytest.fixture
+    def service(self):
+        mock_db = MagicMock()
+        return BureauResponseService(session=mock_db)
+
+    def test_error_response_structure(self, service):
+        """Test error response has proper structure"""
+        result = service._error_response(
+            "Test error",
+            "TEST_CODE",
+            {"key": "value"}
+        )
+
+        assert result["success"] is False
+        assert result["error"] == "Test error"
+        assert result["error_code"] == "TEST_CODE"
+        assert result["details"]["key"] == "value"
+
+    def test_success_response_structure(self, service):
+        """Test success response has proper structure"""
+        result = service._success_response(
+            data={"key": "value"},
+            message="Test success"
+        )
+
+        assert result["success"] is True
+        assert result["data"]["key"] == "value"
+        assert result["message"] == "Test success"
+
+    def test_success_response_with_kwargs(self, service):
+        """Test success response with extra kwargs"""
+        result = service._success_response(
+            count=5,
+            total=10
+        )
+
+        assert result["success"] is True
+        assert result["count"] == 5
+        assert result["total"] == 10

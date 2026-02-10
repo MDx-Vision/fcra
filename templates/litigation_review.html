@@ -72,6 +72,27 @@ tr:hover{background:var(--bg-cream)}
 .doc-link{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg-cream);border-radius:6px;text-decoration:none;color:var(--text-primary);font-size:12px;font-weight:500;transition:.2s}
 .doc-link:hover{background:var(--brand-teal);color:#fff}
 .empty-state{text-align:center;padding:30px;color:var(--text-muted)}
+.status-select{padding:6px 10px;border-radius:4px;border:1px solid var(--border-subtle);font-size:12px;cursor:pointer;background:#fff}
+.status-select.deleted{background:#d1fae5;border-color:#059669;color:#065f46}
+.status-select.sent{background:#fef3c7;border-color:#d97706;color:#92400e}
+.status-select.no_change{background:#fef2f2;border-color:#dc2626;color:#dc2626}
+.status-select.to_do{background:#f3f4f6;border-color:#9ca3af;color:#4b5563}
+.item-stats{display:flex;gap:20px;margin-bottom:15px;padding:15px;background:var(--bg-cream);border-radius:6px}
+.item-stat{text-align:center}
+.item-stat-value{font-size:24px;font-weight:700}
+.item-stat-label{font-size:10px;text-transform:uppercase;color:var(--text-muted)}
+.item-stat-value.green{color:#059669}
+.item-stat-value.red{color:#dc2626}
+.item-stat-value.yellow{color:#d97706}
+.escalation-badge{font-size:9px;padding:2px 6px;border-radius:3px;background:#e0e7ff;color:#4338ca}
+.reinserted-row{background:#fef2f2!important}
+.reinserted-badge{background:#dc2626;color:#fff;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.date-cell{font-size:11px;color:var(--text-muted)}
+.date-cell .deleted-date{color:#059669}
+.date-cell .reinserted-date{color:#dc2626;font-weight:600}
+.history-btn{background:none;border:1px solid var(--border-subtle);padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px}
+.history-btn:hover{background:var(--bg-cream)}
 </style>
 </head>
 <body>
@@ -82,11 +103,204 @@ tr:hover{background:var(--bg-cream)}
 <div class="card grid-full"><div class="card-header"><div class="card-icon">📊</div><div class="card-title">Executive Summary</div></div><div class="card-body"><div class="exec-grid"><div class="exec-item"><div class="exec-value" id="totalScore">--</div><div class="exec-label">Case Score</div></div><div class="exec-item"><div class="exec-value" id="violationCount">--</div><div class="exec-label">Violations</div></div><div class="exec-item"><div class="exec-value" id="settlementProb">--%</div><div class="exec-label">Settlement</div></div><div class="exec-item"><div class="exec-value" id="totalExposure">$--</div><div class="exec-label">Exposure</div></div></div><div id="decisionBox" class="decision-box proceed"><div><div class="decision-text" id="decisionText">Loading...</div><div class="decision-sub" id="decisionSub">Analyzing</div></div><div class="decision-value"><div class="decision-value-label">Est. Value</div><div class="decision-value-num" id="estValue">$--</div></div></div></div></div>
 <div class="card"><div class="card-header"><div class="card-icon">⚖️</div><div class="card-title">Standing</div></div><div class="card-body"><div class="standing-grid"><div class="standing-item"><div class="standing-icon" id="dissIcon">❓</div><div class="standing-label">Dissemination</div><div class="standing-status" id="dissStatus">Unknown</div></div><div class="standing-item"><div class="standing-icon" id="harmIcon">❓</div><div class="standing-label">Concrete Harm</div><div class="standing-status" id="harmStatus">Unknown</div></div><div class="standing-item"><div class="standing-icon" id="causeIcon">❓</div><div class="standing-label">Causation</div><div class="standing-status" id="causeStatus">Unknown</div></div></div></div></div>
 <div class="card"><div class="card-header"><div class="card-icon">💰</div><div class="card-title">Damages</div></div><div class="card-body"><div class="damages-total"><div class="damages-total-label">Settlement Target</div><div class="damages-total-value" id="settlementTarget">$0</div></div><table><tr><td>§607b</td><td id="dmg607b" style="text-align:right;font-weight:600">$0</td></tr><tr><td>§611</td><td id="dmg611" style="text-align:right;font-weight:600">$0</td></tr><tr><td>§623</td><td id="dmg623" style="text-align:right;font-weight:600">$0</td></tr><tr><td>Actual</td><td id="dmgActual" style="text-align:right;font-weight:600">$0</td></tr><tr><td>Punitive</td><td id="dmgPunitive" style="text-align:right;font-weight:600">$0</td></tr></table></div></div>
-<div class="card grid-full"><div class="card-header"><div class="card-icon">🚨</div><div class="card-title">Violations (<span id="violationTotal">0</span>)</div></div><div class="card-body"><table><thead><tr><th>Type</th><th>Account</th><th>Bureau</th><th>Section</th><th>Willful</th><th>Damages</th></tr></thead><tbody id="violationsTable"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div></div>
+<div class="card grid-full"><div class="card-header"><div class="card-icon">📋</div><div class="card-title">Negative Items / Dispute Tracker (<span id="disputeItemTotal">0</span>)</div></div><div class="card-body">
+<div class="item-stats">
+<div class="item-stat"><div class="item-stat-value green" id="itemsDeleted">0</div><div class="item-stat-label">✓ Wins (Monitor)</div></div>
+<div class="item-stat"><div class="item-stat-value" id="itemsToDo">0</div><div class="item-stat-label">Need Work</div></div>
+<div class="item-stat"><div class="item-stat-value yellow" id="itemsSent">0</div><div class="item-stat-label">Sent/Pending</div></div>
+<div class="item-stat"><div class="item-stat-value red" id="itemsNoChange">0</div><div class="item-stat-label">No Change ⚠</div></div>
+<div class="item-stat"><div class="item-stat-value red" id="itemsReinserted">0</div><div class="item-stat-label">⚠ Reinserted (§611)</div></div>
+</div>
+<div style="background:#fef3c7;padding:10px 15px;border-radius:6px;margin-bottom:15px;font-size:12px;color:#92400e">
+<strong>Case Building:</strong> DELETED items = wins to monitor for reinsertions (§611 violation). NEW items = need dispute work. Every false response or reinsertion is documented as a violation.
+</div>
+<table><thead><tr><th>Creditor / Account</th><th>Negative Reason</th><th>Bureau</th><th>Date Opened</th><th>BAG Status</th><th>Tracking</th><th>Dispute Status</th><th>Escalation</th></tr></thead><tbody id="disputeItemsTable"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody></table></div></div>
+<div class="card grid-full"><div class="card-header"><div class="card-icon">🚨</div><div class="card-title">FCRA Violations (<span id="violationTotal">0</span>)</div></div><div class="card-body"><table><thead><tr><th>Type</th><th>Account</th><th>Bureau</th><th>Section</th><th>Willful</th><th>Damages</th></tr></thead><tbody id="violationsTable"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div></div>
 <div class="card grid-full"><div class="card-header"><div class="card-icon">📜</div><div class="card-title">Log</div></div><div class="card-body"><div class="log-box" id="logBox"></div></div></div>
 </div></div>
 <script>
-(function(){var logBox=document.getElementById('logBox'),approveBtn=document.getElementById('approveBtn'),refreshBtn=document.getElementById('refreshBtn');function log(m,t){t=t||'info';var l=document.createElement('div');l.className=t;l.textContent='['+new Date().toLocaleTimeString()+'] '+m;logBox.appendChild(l);logBox.scrollTop=logBox.scrollHeight}function getId(){var m=window.location.pathname.match(/\/analysis\/(\d+)/);return m?m[1]:null}function fmt(n){return n?'$'+Number(n).toLocaleString():'$0'}async function load(){var id=getId();if(!id){log('No ID','error');return}log('Loading #'+id);document.getElementById('linkInternal').href='/api/analysis/'+id+'/internal-analysis';document.getElementById('linkEmail').href='/api/analysis/'+id+'/client-email';try{var r=await fetch('/api/analysis/'+id+'/data'),d=await r.json();if(!d.success){log('Error: '+(d.error||'Unknown'),'error');return}log('Loaded','success');document.getElementById('clientName').textContent=d.analysis.client_name||'Unknown';document.getElementById('caseId').textContent='BAG-'+id;document.getElementById('createdAt').textContent=d.analysis.created_at;var st=document.getElementById('stageStatus');if(d.analysis.stage===2){st.className='status-badge status-stage2';st.innerHTML='<span>●</span> Stage 2';approveBtn.textContent='✓ Done';approveBtn.disabled=true}var v=d.violations||[],cs=d.case_score||{},dm=d.damages||{};document.getElementById('totalScore').textContent=(cs.total_score||0)+'/10';document.getElementById('violationCount').textContent=v.length;document.getElementById('settlementProb').textContent=Math.round((cs.settlement_probability||0)*100)+'%';document.getElementById('totalExposure').textContent=fmt(dm.total_exposure);var db=document.getElementById('decisionBox'),sc=cs.total_score||0,dc,dt,ds;if(sc>=7){dc='proceed';dt='✓ PROCEED';ds=cs.recommendation||'Strong case'}else if(sc>=5){dc='caution';dt='⚠ CONDITIONS';ds=cs.recommendation||'Need evidence'}else{dc='reject';dt='✕ DECLINE';ds=cs.recommendation||'Insufficient'}db.className='decision-box '+dc;document.getElementById('decisionText').textContent=dt;document.getElementById('decisionSub').textContent=ds;document.getElementById('estValue').textContent=fmt(dm.settlement_target);var stn=d.standing||{};function upd(p,h){var i=document.getElementById(p+'Icon'),s=document.getElementById(p+'Status');if(h){i.textContent='✅';s.textContent='Yes';s.className='standing-status yes'}else{i.textContent='❌';s.textContent='No';s.className='standing-status no'}}upd('diss',stn.has_dissemination);upd('harm',stn.has_concrete_harm);upd('cause',stn.has_causation);document.getElementById('settlementTarget').textContent=fmt(dm.settlement_target);document.getElementById('dmg607b').textContent=fmt(dm.section_607b_amount);document.getElementById('dmg611').textContent=fmt(dm.section_611_amount);document.getElementById('dmg623').textContent=fmt(dm.section_623_amount);document.getElementById('dmgActual').textContent=fmt(dm.actual_damages_total);document.getElementById('dmgPunitive').textContent=fmt(dm.punitive_damages_amount);var tb=document.getElementById('violationsTable');document.getElementById('violationTotal').textContent=v.length;if(v.length===0){tb.innerHTML='<tr><td colspan="6" class="empty-state">None</td></tr>'}else{tb.innerHTML=v.map(function(x){return'<tr><td><span class="badge badge-'+(x.is_willful?'critical':'medium')+'">'+(x.violation_type||'?')+'</span></td><td>'+(x.account_name||'-')+'</td><td>'+(x.bureau||'-')+'</td><td>'+(x.fcra_section||'-')+'</td><td>'+(x.is_willful?'✅':'❌')+'</td><td>'+fmt(x.statutory_damages_max)+'</td></tr>'}).join('')}}catch(e){log('Error: '+e.message,'error')}}async function approve(){var id=getId();if(!id){log('No ID','error');return}approveBtn.disabled=true;approveBtn.textContent='⏳...';log('Generating...');try{var r=await fetch('/api/approve/'+id,{method:'POST',headers:{'Content-Type':'application/json'}}),d=await r.json();if(d.success){log('Done!','success');alert('Generated!');await load()}else{log('Error: '+(d.error||'?'),'error');alert('Error: '+(d.error||'Failed'));approveBtn.disabled=false;approveBtn.textContent='✓ Approve & Generate'}}catch(e){log('Error: '+e.message,'error');approveBtn.disabled=false;approveBtn.textContent='✓ Approve & Generate'}}window.addEventListener('load',function(){log('Ready');refreshBtn.addEventListener('click',load);approveBtn.addEventListener('click',approve);load()})})();
+(function(){
+var logBox=document.getElementById('logBox'),approveBtn=document.getElementById('approveBtn'),refreshBtn=document.getElementById('refreshBtn');
+var statusOptions=['to_do','sent','deleted','updated','in_progress','no_change','no_answer','on_hold'];
+var escalationOptions=['section_611','section_623','section_621','section_616_617'];
+var currentDisputeItems=[];  // Store items for reinsertion counting
+
+function log(m,t){t=t||'info';var l=document.createElement('div');l.className=t;l.textContent='['+new Date().toLocaleTimeString()+'] '+m;logBox.appendChild(l);logBox.scrollTop=logBox.scrollHeight}
+function getId(){var m=window.location.pathname.match(/\/analysis\/(\d+)/);return m?m[1]:null}
+function fmt(n){return n?'$'+Number(n).toLocaleString():'$0'}
+
+async function updateItemStatus(itemId,status){
+    try{
+        var r=await fetch('/api/dispute-items/'+itemId+'/status',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})});
+        var d=await r.json();
+        if(d.success){log('Item #'+itemId+' → '+status,'success');updateStats()}
+        else{log('Failed to update: '+(d.error||'Unknown'),'error')}
+    }catch(e){log('Error: '+e.message,'error')}
+}
+
+function updateStats(){
+    var selects=document.querySelectorAll('#disputeItemsTable select.status-select');
+    var counts={deleted:0,sent:0,no_change:0,to_do:0,reinserted:0};
+    selects.forEach(function(s){
+        var v=s.value;
+        if(v==='deleted'||v==='updated')counts.deleted++;
+        else if(v==='sent'||v==='in_progress')counts.sent++;
+        else if(v==='no_change'||v==='no_answer')counts.no_change++;
+        else counts.to_do++;
+    });
+    // Count reinserted items from stored data
+    currentDisputeItems.forEach(function(item){
+        if(item.reinserted_at||item.bag_status==='REINSERTED'||(item.reinsertion_count&&item.reinsertion_count>0)){
+            counts.reinserted++;
+        }
+    });
+    document.getElementById('itemsDeleted').textContent=counts.deleted;
+    document.getElementById('itemsSent').textContent=counts.sent;
+    document.getElementById('itemsNoChange').textContent=counts.no_change;
+    document.getElementById('itemsToDo').textContent=counts.to_do;
+    document.getElementById('itemsReinserted').textContent=counts.reinserted;
+}
+
+function renderDisputeItems(items){
+    currentDisputeItems=items;  // Store for reinsertion counting
+    var tb=document.getElementById('disputeItemsTable');
+    document.getElementById('disputeItemTotal').textContent=items.length;
+    if(items.length===0){tb.innerHTML='<tr><td colspan="8" class="empty-state">No negative items found. Run analysis or extract items from credit report.</td></tr>';return}
+    tb.innerHTML=items.map(function(x){
+        var statusOpts=statusOptions.map(function(s){return'<option value="'+s+'"'+(x.status===s?' selected':'')+'>'+s.replace('_',' ')+'</option>'}).join('');
+        var escOpts=escalationOptions.map(function(e){return'<option value="'+e+'"'+(x.escalation_stage===e?' selected':'')+'>'+e.replace('section_','§')+'</option>'}).join('');
+        var reasonText=x.reason||x.item_type||'Unknown';
+        var reasonShort=reasonText.length>40?reasonText.substring(0,40)+'...':reasonText;
+        var badgeClass=x.item_type==='inquiry'?'badge-medium':(reasonText.toLowerCase().includes('late')?'badge-critical':'badge-medium');
+        var dateOpened=x.date_opened?new Date(x.date_opened).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'-';
+        var bagStatusClass=x.bag_status==='NEW'?'badge-critical':(x.bag_status==='DELETED'?'badge badge-medium':'');
+        var bagBadge=x.bag_status?'<span class="badge '+(x.bag_status==='NEW'?'badge-critical':(x.bag_status==='REINSERTED'?'badge-critical':'badge-medium'))+'">'+x.bag_status+'</span>':'-';
+        // Build tracking cell with deletion/reinsertion dates
+        var trackingHtml='<div class="date-cell">';
+        if(x.deleted_at){
+            trackingHtml+='<div class="deleted-date">✓ Deleted: '+new Date(x.deleted_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</div>';
+        }
+        if(x.reinserted_at){
+            trackingHtml+='<div class="reinserted-date">⚠ Reinserted: '+new Date(x.reinserted_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</div>';
+            if(x.reinsertion_count>0){
+                trackingHtml+='<span class="reinserted-badge">§611 VIOLATION #'+x.reinsertion_count+'</span>';
+            }
+        }
+        if(x.status_history&&x.status_history.length>0){
+            trackingHtml+='<button class="history-btn" onclick="window.showHistory('+x.id+','+JSON.stringify(x.status_history).replace(/"/g,"&quot;")+')">📋 '+x.status_history.length+' events</button>';
+        }
+        if(!x.deleted_at&&!x.reinserted_at&&(!x.status_history||x.status_history.length===0)){
+            trackingHtml+='-';
+        }
+        trackingHtml+='</div>';
+        var rowClass=x.bag_status==='REINSERTED'||x.reinserted_at?' class="reinserted-row"':'';
+        return'<tr'+rowClass+'>'+
+            '<td><strong>'+(x.creditor_name||'Unknown')+'</strong><br><small style="color:#718096">Acct: '+(x.account_id||'N/A')+'</small>'+(x.balance>0?'<br><small style="color:#dc2626">$'+x.balance.toLocaleString()+'</small>':'')+'</td>'+
+            '<td><span class="badge '+badgeClass+'" title="'+reasonText.replace(/"/g,"&quot;")+'">'+reasonShort+'</span></td>'+
+            '<td>'+(x.bureau||'-')+'</td>'+
+            '<td><small>'+dateOpened+'</small></td>'+
+            '<td>'+bagBadge+'</td>'+
+            '<td>'+trackingHtml+'</td>'+
+            '<td><select class="status-select '+x.status+'" onchange="window.updateItemStatus('+x.id+',this.value);this.className=\'status-select \'+this.value">'+statusOpts+'</select></td>'+
+            '<td><select class="escalation-badge" style="padding:4px 8px;border:1px solid #e0e7ff" onchange="window.updateEscalation('+x.id+',this.value)">'+escOpts+'</select>'+
+            (x.furnisher_dispute_sent?'<br><small>§623 ✓</small>':'')+
+            (x.cfpb_complaint_filed?'<br><small>CFPB ✓</small>':'')+
+            '</td></tr>'
+    }).join('');
+    updateStats();
+}
+
+window.updateItemStatus=updateItemStatus;
+window.showHistory=function(itemId,history){
+    var html='<div style="font-family:monospace;font-size:12px;max-height:400px;overflow-y:auto">';
+    html+='<h4 style="margin:0 0 10px">Status History for Item #'+itemId+'</h4>';
+    if(history&&history.length>0){
+        history.forEach(function(h,i){
+            var color=h.status==='reinserted'?'#dc2626':(h.status==='deleted'?'#059669':'#4b5563');
+            html+='<div style="padding:8px;margin:5px 0;background:#f9fafb;border-left:3px solid '+color+';border-radius:4px">';
+            html+='<div style="font-weight:600;color:'+color+'">'+h.status.toUpperCase()+'</div>';
+            html+='<div style="color:#6b7280">'+h.date+'</div>';
+            if(h.notes)html+='<div style="margin-top:4px">'+h.notes+'</div>';
+            if(h.previous_status)html+='<div style="font-size:10px;color:#9ca3af">Previous: '+h.previous_status+'</div>';
+            html+='</div>';
+        });
+    }else{
+        html+='<p>No history recorded yet.</p>';
+    }
+    html+='</div>';
+    // Create modal
+    var modal=document.createElement('div');
+    modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000';
+    modal.innerHTML='<div style="background:#fff;padding:20px;border-radius:8px;max-width:500px;width:90%">'+html+'<button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 16px;background:#1e3a5f;color:#fff;border:none;border-radius:4px;cursor:pointer">Close</button></div>';
+    document.body.appendChild(modal);
+};
+window.updateEscalation=async function(itemId,stage){
+    try{
+        var r=await fetch('/api/dispute-items/'+itemId+'/status',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({escalation_stage:stage})});
+        var d=await r.json();
+        if(d.success)log('Item #'+itemId+' escalation → '+stage,'success');
+        else log('Failed: '+(d.error||'Unknown'),'error');
+    }catch(e){log('Error: '+e.message,'error')}
+};
+
+async function load(){
+    var id=getId();if(!id){log('No ID','error');return}
+    log('Loading #'+id);
+    document.getElementById('linkInternal').href='/api/analysis/'+id+'/internal-analysis';
+    document.getElementById('linkEmail').href='/api/analysis/'+id+'/client-email';
+    try{
+        var r=await fetch('/api/analysis/'+id+'/data'),d=await r.json();
+        if(!d.success){log('Error: '+(d.error||'Unknown'),'error');return}
+        log('Loaded','success');
+        document.getElementById('clientName').textContent=d.analysis.client_name||'Unknown';
+        document.getElementById('caseId').textContent='BAG-'+id;
+        document.getElementById('createdAt').textContent=d.analysis.created_at;
+        var st=document.getElementById('stageStatus');
+        if(d.analysis.stage===2){st.className='status-badge status-stage2';st.innerHTML='<span>●</span> Stage 2';approveBtn.textContent='✓ Done';approveBtn.disabled=true}
+        var v=d.violations||[],cs=d.case_score||{},dm=d.damages||{},di=d.dispute_items||[];
+        document.getElementById('totalScore').textContent=(cs.total_score||0)+'/10';
+        document.getElementById('violationCount').textContent=v.length;
+        document.getElementById('settlementProb').textContent=Math.round((cs.settlement_probability||0)*100)+'%';
+        document.getElementById('totalExposure').textContent=fmt(dm.total_exposure);
+        var db=document.getElementById('decisionBox'),sc=cs.total_score||0,dc,dt,ds;
+        if(sc>=7){dc='proceed';dt='✓ PROCEED';ds=cs.recommendation||'Strong case'}
+        else if(sc>=5){dc='caution';dt='⚠ CONDITIONS';ds=cs.recommendation||'Need evidence'}
+        else{dc='reject';dt='✕ DECLINE';ds=cs.recommendation||'Insufficient'}
+        db.className='decision-box '+dc;
+        document.getElementById('decisionText').textContent=dt;
+        document.getElementById('decisionSub').textContent=ds;
+        document.getElementById('estValue').textContent=fmt(dm.settlement_target);
+        var stn=d.standing||{};
+        function upd(p,h){var i=document.getElementById(p+'Icon'),s=document.getElementById(p+'Status');if(h){i.textContent='✅';s.textContent='Yes';s.className='standing-status yes'}else{i.textContent='❌';s.textContent='No';s.className='standing-status no'}}
+        upd('diss',stn.has_dissemination);upd('harm',stn.has_concrete_harm);upd('cause',stn.has_causation);
+        document.getElementById('settlementTarget').textContent=fmt(dm.settlement_target);
+        document.getElementById('dmg607b').textContent=fmt(dm.section_607b_amount);
+        document.getElementById('dmg611').textContent=fmt(dm.section_611_amount);
+        document.getElementById('dmg623').textContent=fmt(dm.section_623_amount);
+        document.getElementById('dmgActual').textContent=fmt(dm.actual_damages_total);
+        document.getElementById('dmgPunitive').textContent=fmt(dm.punitive_damages_amount);
+        // Render dispute items
+        renderDisputeItems(di);
+        // Render violations
+        var tb=document.getElementById('violationsTable');
+        document.getElementById('violationTotal').textContent=v.length;
+        if(v.length===0){tb.innerHTML='<tr><td colspan="6" class="empty-state">None</td></tr>'}
+        else{tb.innerHTML=v.map(function(x){return'<tr><td><span class="badge badge-'+(x.is_willful?'critical':'medium')+'">'+(x.violation_type||'?')+'</span></td><td>'+(x.account_name||'-')+'</td><td>'+(x.bureau||'-')+'</td><td>'+(x.fcra_section||'-')+'</td><td>'+(x.is_willful?'✅':'❌')+'</td><td>'+fmt(x.statutory_damages_max)+'</td></tr>'}).join('')}
+    }catch(e){log('Error: '+e.message,'error')}
+}
+
+async function approve(){
+    var id=getId();if(!id){log('No ID','error');return}
+    approveBtn.disabled=true;approveBtn.textContent='⏳...';log('Generating...');
+    try{
+        var r=await fetch('/api/approve/'+id,{method:'POST',headers:{'Content-Type':'application/json'}}),d=await r.json();
+        if(d.success){log('Done!','success');alert('Generated!');await load()}
+        else{log('Error: '+(d.error||'?'),'error');alert('Error: '+(d.error||'Failed'));approveBtn.disabled=false;approveBtn.textContent='✓ Approve & Generate'}
+    }catch(e){log('Error: '+e.message,'error');approveBtn.disabled=false;approveBtn.textContent='✓ Approve & Generate'}
+}
+
+window.addEventListener('load',function(){log('Ready');refreshBtn.addEventListener('click',load);approveBtn.addEventListener('click',approve);load()});
+})();
 </script>
 </body>
 </html>

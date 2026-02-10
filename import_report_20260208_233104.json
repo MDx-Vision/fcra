@@ -1,0 +1,981 @@
+{
+  "success": [
+    {
+      "client_id": 435,
+      "name": "Frank Pollux",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 625,
+        "experian": 630,
+        "equifax": 653,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Fair",
+          "equifax": "Fair"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/435_Frank_Pollux_20260209_031052.html"
+    },
+    {
+      "client_id": 407,
+      "name": "Carlos Del Carmen",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 793,
+        "experian": 795,
+        "equifax": 800,
+        "lender_rank": {
+          "transunion": "Very Good",
+          "experian": "Very Good",
+          "equifax": "Exceptional"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/407_Carlos_Del_Carmen_20260209_031140.html"
+    },
+    {
+      "client_id": 408,
+      "name": "Wendy Perdomo",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "transunion": 706,
+        "experian": 704,
+        "equifax": 705,
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/408_Wendy_Perdomo_20260209_031332.html"
+    },
+    {
+      "client_id": 498,
+      "name": "Dennis Valle",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "transunion": 645,
+        "experian": 661,
+        "equifax": 653,
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/498_Dennis_Valle_20260209_032904.html"
+    },
+    {
+      "client_id": 510,
+      "name": "Kobina Arkorful",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/510_Kobina_Arkorful_20260209_033109.html"
+    },
+    {
+      "client_id": 430,
+      "name": "Shaun Smith",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/430_Shaun_Smith_20260209_033314.html"
+    },
+    {
+      "client_id": 432,
+      "name": "Charamira Nazario",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 695,
+        "experian": 647,
+        "equifax": 647,
+        "lender_rank": {
+          "transunion": "Good",
+          "experian": "Fair",
+          "equifax": "Fair"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/432_Charamira_Nazario_20260209_033351.html"
+    },
+    {
+      "client_id": 433,
+      "name": "Damario Bonner",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 564,
+        "experian": 554,
+        "equifax": 582,
+        "lender_rank": {
+          "transunion": "Poor",
+          "experian": "Poor",
+          "equifax": "Fair"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/433_Damario_Bonner_20260209_033431.html"
+    },
+    {
+      "client_id": 443,
+      "name": "Revel George",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 584,
+        "experian": 594,
+        "equifax": 607,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Fair",
+          "equifax": "Fair"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/443_Revel_George_20260209_033520.html"
+    },
+    {
+      "client_id": 454,
+      "name": "Giovanni Ramos",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 624,
+        "experian": 624,
+        "equifax": 630,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Fair",
+          "equifax": "Fair"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/454_Giovanni_Ramos_20260209_034725.html"
+    },
+    {
+      "client_id": 420,
+      "name": "Xavier Gadpaille",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 612,
+        "experian": 598,
+        "equifax": 608,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Fair",
+          "equifax": "Fair"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/420_Xavier_Gadpaille_20260209_034803.html"
+    },
+    {
+      "client_id": 484,
+      "name": "Jose Gonzalez",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 713,
+        "experian": 774,
+        "equifax": 775,
+        "lender_rank": {
+          "transunion": "Good",
+          "experian": "Very Good",
+          "equifax": "Very Good"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/484_Jose_Gonzalez_20260209_035044.html"
+    },
+    {
+      "client_id": 405,
+      "name": "Jesse Harris",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 663,
+        "experian": 665,
+        "equifax": 656,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Fair",
+          "equifax": "Fair"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/405_Jesse_Harris_20260209_035150.html"
+    },
+    {
+      "client_id": 410,
+      "name": "Jahnell Parkinson",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 724,
+        "experian": 718,
+        "equifax": 794,
+        "lender_rank": {
+          "transunion": "Good",
+          "experian": "Good",
+          "equifax": "Very Good"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/410_Jahnell_Parkinson_20260209_035229.html"
+    },
+    {
+      "client_id": 449,
+      "name": "Johnny Santana",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 625,
+        "experian": 675,
+        "equifax": 694,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Good",
+          "equifax": "Good"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/449_Johnny_Santana_20260209_035433.html"
+    },
+    {
+      "client_id": 455,
+      "name": "Rasheed Abdus sabuur",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 570,
+        "experian": 538,
+        "equifax": 532,
+        "lender_rank": {
+          "transunion": "Poor",
+          "experian": "Poor",
+          "equifax": "Poor"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/455_Rasheed_Abdus_sabuur_20260209_035511.html"
+    },
+    {
+      "client_id": 500,
+      "name": "Joseph Valdivieso",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/500_Joseph_Valdivieso_20260209_035729.html"
+    },
+    {
+      "client_id": 480,
+      "name": "Daniel Fermin",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 615,
+        "experian": 602,
+        "equifax": 571,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Fair",
+          "equifax": "Poor"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/480_Daniel_Fermin_20260209_035809.html"
+    },
+    {
+      "client_id": 496,
+      "name": "Nick Stewart",
+      "service": "IdentityIQ.com",
+      "scores": {
+        "transunion": 723,
+        "experian": 724,
+        "equifax": 730,
+        "lender_rank": {
+          "transunion": "Great",
+          "experian": "Great",
+          "equifax": "Great"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/496_Nick_Stewart_20260209_035915.html"
+    },
+    {
+      "client_id": 428,
+      "name": "Kevin Daniels",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 660,
+        "experian": 652,
+        "equifax": 560,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Fair",
+          "equifax": "Poor"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/428_Kevin_Daniels_20260209_040412.html"
+    },
+    {
+      "client_id": 431,
+      "name": "Shakuur Abdus-Sabuur",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 599,
+        "experian": 565,
+        "equifax": 570,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Poor",
+          "equifax": "Poor"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/431_Shakuur_Abdus-Sabuur_20260209_040452.html"
+    },
+    {
+      "client_id": 502,
+      "name": "Lloyd OCallaghan",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "transunion": 611,
+        "experian": 592,
+        "equifax": 604,
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/502_Lloyd_OCallaghan_20260209_040643.html"
+    },
+    {
+      "client_id": 519,
+      "name": "Jennifer Nieves",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "transunion": 520,
+        "experian": 502,
+        "equifax": 528,
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/519_Jennifer_Nieves_20260209_040835.html"
+    },
+    {
+      "client_id": 434,
+      "name": "Fernando Encarnacion",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 652,
+        "experian": 638,
+        "equifax": 651,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Fair",
+          "equifax": "Fair"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/434_Fernando_Encarnacion_20260209_041130.html"
+    },
+    {
+      "client_id": 437,
+      "name": "Keith Jeanlewis",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 532,
+        "experian": 541,
+        "equifax": 571,
+        "lender_rank": {
+          "transunion": "Poor",
+          "experian": "Poor",
+          "equifax": "Poor"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/437_Keith_Jeanlewis_20260209_041207.html"
+    },
+    {
+      "client_id": 457,
+      "name": "LUIS DE MELO",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 658,
+        "experian": 658,
+        "equifax": 687,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Fair",
+          "equifax": "Good"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/457_LUIS_DE_MELO_20260209_041257.html"
+    },
+    {
+      "client_id": 459,
+      "name": "Nelson Morales",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 646,
+        "experian": 750,
+        "equifax": 734,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Very Good",
+          "equifax": "Good"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/459_Nelson_Morales_20260209_041344.html"
+    },
+    {
+      "client_id": 460,
+      "name": "Alex Gamboa",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 577,
+        "experian": 570,
+        "equifax": 550,
+        "lender_rank": {
+          "transunion": "Poor",
+          "experian": "Poor",
+          "equifax": "Poor"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/460_Alex_Gamboa_20260209_041422.html"
+    },
+    {
+      "client_id": 476,
+      "name": "Dareen Ameen",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/476_Dareen_Ameen_20260209_042122.html"
+    },
+    {
+      "client_id": 492,
+      "name": "Ramon Martinez",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 794,
+        "experian": 796,
+        "equifax": 804,
+        "lender_rank": {
+          "transunion": "Very Good",
+          "experian": "Very Good",
+          "equifax": "Exceptional"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/492_Ramon_Martinez_20260209_042202.html"
+    },
+    {
+      "client_id": 493,
+      "name": "Khiyah Benyamin",
+      "service": "MyScoreIQ.com",
+      "scores": {
+        "transunion": 609,
+        "experian": 595,
+        "equifax": 625,
+        "lender_rank": {
+          "transunion": "Fair",
+          "experian": "Fair",
+          "equifax": "Fair"
+        },
+        "score_scale": {
+          "transunion": "300-850",
+          "experian": "300-850",
+          "equifax": "300-850"
+        }
+      },
+      "path": "uploads/credit_reports/493_Khiyah_Benyamin_20260209_042238.html"
+    },
+    {
+      "client_id": 503,
+      "name": "Yovankha Paige",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/503_Yovankha_Paige_20260209_042444.html"
+    },
+    {
+      "client_id": 518,
+      "name": "Tanika George",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/518_Tanika_George_20260209_042649.html"
+    },
+    {
+      "client_id": 507,
+      "name": "Mickey Webb",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/507_Mickey_Webb_20260209_042856.html"
+    },
+    {
+      "client_id": 515,
+      "name": "Sharif Profit",
+      "service": "MyFreeScoreNow.com",
+      "scores": {
+        "lender_rank": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        },
+        "score_scale": {
+          "transunion": null,
+          "experian": null,
+          "equifax": null
+        }
+      },
+      "path": "uploads/credit_reports/515_Sharif_Profit_20260209_043102.html"
+    }
+  ],
+  "failed": [
+    {
+      "client_id": 404,
+      "name": "Damien Rhodes",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 403,
+      "name": "Stephanie Harris",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 406,
+      "name": "Armando Arteaga",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 411,
+      "name": "Chrystie Riddick",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 418,
+      "name": "Roosevelt Jackson",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 421,
+      "name": "Charles Morton",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 429,
+      "name": "Xavier Wladarczyk",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 447,
+      "name": "Danae Allie",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 465,
+      "name": "Valencia Abdus-Sabuur",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 470,
+      "name": "Karl Cabral",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 481,
+      "name": "Enrique Berrios",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 489,
+      "name": "Nelson De la cruz",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 439,
+      "name": "Merced Emerick",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 445,
+      "name": "Alexis Guzman",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 400,
+      "name": "Darell Kimbrough",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 402,
+      "name": "Samuel Jean",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 427,
+      "name": "Tamara Moultrie",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 509,
+      "name": "Elba Maria Mendez Dominguez",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 398,
+      "name": "Rafael Rodriguez",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 419,
+      "name": "Esther Gadpaille",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 423,
+      "name": "Devin George",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 451,
+      "name": "Xaviera Gadpaille",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 466,
+      "name": "Marvin Green",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 508,
+      "name": "W Perdomo",
+      "service": "MyFreeScoreNow.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 401,
+      "name": "Gyasi Parkins",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 399,
+      "name": "Marcos Fermin",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 409,
+      "name": "Larry Molina",
+      "service": "IdentityIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 412,
+      "name": "Edgar Zorrilla",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 501,
+      "name": "Sean Martin",
+      "service": "MyFreeScoreNow.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 425,
+      "name": "Maria Gregory",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 446,
+      "name": "Sean Martin",
+      "service": "MyFreeScoreNow.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 479,
+      "name": "Manuel Acevedo Jr",
+      "service": "MyFreeScoreNow.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 483,
+      "name": "Lenny Segura",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 413,
+      "name": "Angel Perez",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 415,
+      "name": "Ernie Mejia",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 417,
+      "name": "ERNST RACINE",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 517,
+      "name": "Benjamin Urbaez",
+      "service": "MyScoreIQ.com",
+      "error": "Page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 514,
+      "name": "Desmond Graves",
+      "service": "MyFreeScoreNow.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 453,
+      "name": "Rafael Davila",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 458,
+      "name": "Kerry Althouse",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 469,
+      "name": "Stafford Grant",
+      "service": "MyScoreIQ.com",
+      "error": "Login failed - check credentials"
+    },
+    {
+      "client_id": 473,
+      "name": "Don Comer",
+      "service": "IdentityIQ.com",
+      "error": "IdentityIQ page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 475,
+      "name": "Dalia Ameen",
+      "service": "IdentityIQ.com",
+      "error": "IdentityIQ page failed to load credit report data. Please try again."
+    },
+    {
+      "client_id": 396,
+      "name": "John Smith",
+      "service": "SmartCredit.com",
+      "error": "Login failed - check credentials"
+    }
+  ]
+}

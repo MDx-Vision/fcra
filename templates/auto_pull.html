@@ -619,8 +619,8 @@
                                             </td>
                                             <td><span class="badge badge-{{ cred.service_name|lower }}">{{ cred.service_display or cred.service_name }}</span></td>
                                             <td>{{ cred.pull_frequency|replace('_', ' ')|title }}</td>
-                                            <td>{{ cred.last_pull_at.strftime('%m/%d/%Y %H:%M') if cred.last_pull_at else 'Never' }}</td>
-                                            <td>{{ cred.next_pull_due.strftime('%m/%d/%Y') if cred.next_pull_due else '-' }}</td>
+                                            <td>{{ cred.last_pull_at or 'Never' }}</td>
+                                            <td>{{ cred.next_pull_due or '-' }}</td>
                                             <td>
                                                 <span class="badge badge-{{ 'active' if cred.is_active else 'inactive' }}">
                                                     {{ 'Active' if cred.is_active else 'Inactive' }}
@@ -696,7 +696,7 @@
                                     {% if logs %}
                                         {% for log in logs %}
                                         <tr data-status="{{ log.status }}" data-type="{{ log.pull_type }}">
-                                            <td>{{ log.created_at.strftime('%m/%d %H:%M') if log.created_at else '-' }}</td>
+                                            <td>{{ log.created_at or '-' }}</td>
                                             <td>{{ log.client_name or 'Client #' ~ log.client_id }}</td>
                                             <td><span class="badge badge-{{ log.service_name|lower }}">{{ log.service_name }}</span></td>
                                             <td>{{ log.pull_type|title }}</td>
@@ -755,7 +755,7 @@
                             <div class="scheduled-item">
                                 <div class="scheduled-item-client">{{ item.client_name or 'Client #' ~ item.client_id }}</div>
                                 <div class="scheduled-item-details">{{ item.service_display or item.service_name }} - {{ item.pull_frequency|replace('_', ' ')|title }}</div>
-                                <div class="scheduled-item-time">Due: {{ item.next_pull_due.strftime('%m/%d/%Y') if item.next_pull_due else 'Now' }}</div>
+                                <div class="scheduled-item-time">Due: {{ item.next_pull_due or 'Now' }}</div>
                             </div>
                             {% endfor %}
                         {% else %}

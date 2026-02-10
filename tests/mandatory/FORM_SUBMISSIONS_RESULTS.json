@@ -1,92 +1,92 @@
 {
-  "timestamp": "2026-01-29T17:24:05.928764",
+  "timestamp": "2026-02-07T22:12:14.639903",
   "forms_tested": 12,
-  "forms_passed": 0,
-  "forms_failed": 12,
+  "forms_passed": 2,
+  "forms_failed": 10,
   "submissions": [
     {
       "name": "Client Signup",
       "url": "/signup",
       "priority": "critical",
-      "page_loaded": false,
+      "page_loaded": true,
       "modal_opened": false,
-      "fields_filled": 0,
+      "fields_filled": 12,
       "submitted": false,
       "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/signup\nCall log:\n  - navigating to \""
+      "status": "FAIL",
+      "notes": ""
     },
     {
       "name": "Staff Login",
       "url": "/staff/login",
       "priority": "critical",
-      "page_loaded": false,
+      "page_loaded": true,
       "modal_opened": false,
-      "fields_filled": 0,
-      "submitted": false,
+      "fields_filled": 2,
+      "submitted": true,
       "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/staff/login\nCall log:\n  - navigating"
+      "status": "ERROR_SHOWN",
+      "notes": "Error: Invalid credentials"
     },
     {
       "name": "Portal Login",
       "url": "/portal/login",
       "priority": "critical",
-      "page_loaded": false,
+      "page_loaded": true,
       "modal_opened": false,
-      "fields_filled": 0,
-      "submitted": false,
-      "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/portal/login\nCall log:\n  - navigatin"
+      "fields_filled": 2,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
     },
     {
       "name": "Add Staff Member",
       "url": "/dashboard/staff",
       "priority": "critical",
-      "page_loaded": false,
-      "modal_opened": false,
-      "fields_filled": 0,
-      "submitted": false,
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 2,
+      "submitted": true,
       "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/staff\nCall log:\n  - naviga"
+      "status": "ERROR_SHOWN",
+      "notes": "Error: Invalid credentials"
     },
     {
       "name": "Save Settings",
       "url": "/dashboard/settings",
       "priority": "critical",
-      "page_loaded": false,
+      "page_loaded": true,
       "modal_opened": false,
       "fields_filled": 0,
       "submitted": false,
       "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/settings\nCall log:\n  - nav"
+      "status": "FILL_FAILED",
+      "notes": "Could not fill any fields"
     },
     {
       "name": "Add Affiliate",
       "url": "/dashboard/affiliates",
       "priority": "important",
-      "page_loaded": false,
-      "modal_opened": false,
-      "fields_filled": 0,
-      "submitted": false,
-      "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/affiliates\nCall log:\n  - n"
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 1,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
     },
     {
       "name": "Add Case Law",
       "url": "/dashboard/case-law",
       "priority": "important",
-      "page_loaded": false,
-      "modal_opened": false,
+      "page_loaded": true,
+      "modal_opened": true,
       "fields_filled": 0,
       "submitted": false,
       "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/case-law\nCall log:\n  - nav"
+      "status": "FILL_FAILED",
+      "notes": "Could not fill any fields"
     },
     {
       "name": "Create Pattern",
@@ -97,8 +97,8 @@
       "fields_filled": 0,
       "submitted": false,
       "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/patterns\nCall log:\n  - nav"
+      "status": "PAGE_LOAD_FAILED",
+      "notes": "HTTP 429"
     },
     {
       "name": "Create Organization (Franchise)",
@@ -109,8 +109,8 @@
       "fields_filled": 0,
       "submitted": false,
       "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/franchise\nCall log:\n  - na"
+      "status": "PAGE_LOAD_FAILED",
+      "notes": "HTTP 429"
     },
     {
       "name": "Create Billing Plan",
@@ -121,8 +121,8 @@
       "fields_filled": 0,
       "submitted": false,
       "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/billing\nCall log:\n  - navi"
+      "status": "PAGE_LOAD_FAILED",
+      "notes": "HTTP 429"
     },
     {
       "name": "Import Client",
@@ -133,8 +133,8 @@
       "fields_filled": 0,
       "submitted": false,
       "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/import\nCall log:\n  - navig"
+      "status": "PAGE_LOAD_FAILED",
+      "notes": "HTTP 429"
     },
     {
       "name": "Create White-Label Tenant",
@@ -145,8 +145,8 @@
       "fields_filled": 0,
       "submitted": false,
       "success_detected": false,
-      "status": "ERROR",
-      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/white-label\nCall log:\n  - "
+      "status": "PAGE_LOAD_FAILED",
+      "notes": "HTTP 429"
     }
   ]
 }

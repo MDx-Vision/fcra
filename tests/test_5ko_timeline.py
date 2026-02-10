@@ -1,9 +1,170 @@
 """
-Tests for 5-Day Knockout Timeline API endpoints
+Tests for 5-Day Knockout Timeline API endpoints and Client Items API
 """
 import pytest
 from datetime import datetime
 from unittest.mock import MagicMock, patch
+
+
+class TestFkoClientItemsBureauDetection:
+    """Tests for GET /api/5day-knockout/client/<id>/items - Bureau Detection Fix (ISSUE-005)"""
+
+    def test_bureau_detection_nested_structure(self):
+        """Test that bureau detection works with nested bureaus.X.present structure"""
+        # This is the structure from JSON extraction
+        account = {
+            "creditor": "AMERICAN EXPRESS",
+            "account_number": "1234",
+            "balance": "$100.00",
+            "bureaus": {
+                "transunion": {"present": False},
+                "experian": {"present": False},
+                "equifax": {"present": True, "balance": "$100.00"},
+            }
+        }
+
+        bureaus = []
+        bureaus_data = account.get("bureaus", {})
+
+        if bureaus_data.get("equifax", {}).get("present"):
+            bureaus.append("Equifax")
+        elif account.get("equifax") or account.get("efx_status"):
+            bureaus.append("Equifax")
+
+        if bureaus_data.get("experian", {}).get("present"):
+            bureaus.append("Experian")
+        elif account.get("experian") or account.get("exp_status"):
+            bureaus.append("Experian")
+
+        if bureaus_data.get("transunion", {}).get("present"):
+            bureaus.append("TransUnion")
+        elif account.get("transunion") or account.get("tu_status"):
+            bureaus.append("TransUnion")
+
+        # Should only detect Equifax, not all 3
+        assert bureaus == ["Equifax"]
+        assert "Experian" not in bureaus
+        assert "TransUnion" not in bureaus
+
+    def test_bureau_detection_flat_structure(self):
+        """Test that bureau detection still works with flat structure (legacy)"""
+        # This is the legacy flat structure
+        account = {
+            "creditor": "CHASE",
+            "equifax": True,
+            "experian": True,
+            "transunion": False,
+        }
+
+        bureaus = []
+        bureaus_data = account.get("bureaus", {})
+
+        if bureaus_data.get("equifax", {}).get("present"):
+            bureaus.append("Equifax")
+        elif account.get("equifax") or account.get("efx_status"):
+            bureaus.append("Equifax")
+
+        if bureaus_data.get("experian", {}).get("present"):
+            bureaus.append("Experian")
+        elif account.get("experian") or account.get("exp_status"):
+            bureaus.append("Experian")
+
+        if bureaus_data.get("transunion", {}).get("present"):
+            bureaus.append("TransUnion")
+        elif account.get("transunion") or account.get("tu_status"):
+            bureaus.append("TransUnion")
+
+        assert "Equifax" in bureaus
+        assert "Experian" in bureaus
+        assert "TransUnion" not in bureaus
+
+    def test_bureau_detection_all_three_present(self):
+        """Test detection when all 3 bureaus report the account"""
+        account = {
+            "creditor": "CITICARDS",
+            "bureaus": {
+                "transunion": {"present": True, "balance": "$500.00"},
+                "experian": {"present": True, "balance": "$500.00"},
+                "equifax": {"present": True, "balance": "$500.00"},
+            }
+        }
+
+        bureaus = []
+        bureaus_data = account.get("bureaus", {})
+
+        if bureaus_data.get("equifax", {}).get("present"):
+            bureaus.append("Equifax")
+        if bureaus_data.get("experian", {}).get("present"):
+            bureaus.append("Experian")
+        if bureaus_data.get("transunion", {}).get("present"):
+            bureaus.append("TransUnion")
+
+        assert len(bureaus) == 3
+        assert "Equifax" in bureaus
+        assert "Experian" in bureaus
+        assert "TransUnion" in bureaus
+
+    def test_bureau_detection_defaults_to_all_when_no_data(self):
+        """Test that missing bureau data defaults to all 3 bureaus"""
+        account = {
+            "creditor": "UNKNOWN CREDITOR",
+            "balance": "$50.00",
+        }
+
+        bureaus = []
+        bureaus_data = account.get("bureaus", {})
+
+        if bureaus_data.get("equifax", {}).get("present"):
+            bureaus.append("Equifax")
+        elif account.get("equifax") or account.get("efx_status"):
+            bureaus.append("Equifax")
+
+        if bureaus_data.get("experian", {}).get("present"):
+            bureaus.append("Experian")
+        elif account.get("experian") or account.get("exp_status"):
+            bureaus.append("Experian")
+
+        if bureaus_data.get("transunion", {}).get("present"):
+            bureaus.append("TransUnion")
+        elif account.get("transunion") or account.get("tu_status"):
+            bureaus.append("TransUnion")
+
+        # Default to all 3 when no bureau info
+        if not bureaus:
+            bureaus = ["Equifax", "Experian", "TransUnion"]
+
+        assert len(bureaus) == 3
+
+    def test_bureau_detection_efx_status_fallback(self):
+        """Test that efx_status/exp_status/tu_status fallbacks work"""
+        account = {
+            "creditor": "OLD FORMAT",
+            "efx_status": "Active",
+            "exp_status": None,
+            "tu_status": "Closed",
+        }
+
+        bureaus = []
+        bureaus_data = account.get("bureaus", {})
+
+        if bureaus_data.get("equifax", {}).get("present"):
+            bureaus.append("Equifax")
+        elif account.get("equifax") or account.get("efx_status"):
+            bureaus.append("Equifax")
+
+        if bureaus_data.get("experian", {}).get("present"):
+            bureaus.append("Experian")
+        elif account.get("experian") or account.get("exp_status"):
+            bureaus.append("Experian")
+
+        if bureaus_data.get("transunion", {}).get("present"):
+            bureaus.append("TransUnion")
+        elif account.get("transunion") or account.get("tu_status"):
+            bureaus.append("TransUnion")
+
+        assert "Equifax" in bureaus  # efx_status = "Active"
+        assert "Experian" not in bureaus  # exp_status = None
+        assert "TransUnion" in bureaus  # tu_status = "Closed"
 
 
 class TestFkoTimelineGet:

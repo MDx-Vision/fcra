@@ -35,6 +35,8 @@ class PromptLoader:
         "portalfix": "FCRA_PROMPT_16_PORTAL_QUICK_FIX.md",
         "5dayknockout": "FCRA_PROMPT_17_v7_5DAY_KNOCKOUT_PROFESSIONAL.md",
         "inquirydispute": "FCRA_PROMPT_18_INQUIRY_DISPUTE_PROFESSIONAL.md",
+        "goodwill": "FCRA_PROMPT_19_GOODWILL_LETTER.md",
+        "ceasedesist": "FCRA_PROMPT_20_CEASE_DESIST.md",
         # Reference docs
         "framework": "FCRA_Litigation_Framework_Complete_v2_0__3_.md",
         "workflow": "FCRA_WORKFLOW_CHEAT_SHEET.md",
@@ -216,6 +218,14 @@ class PromptLoader:
         """Get the professional inquiry dispute prompt (Prompt 18)"""
         return self.load_prompt("inquirydispute")
 
+    def get_goodwill_letter_prompt(self):
+        """Get the goodwill letter prompt for requesting courtesy removals (Prompt 19)"""
+        return self.load_prompt("goodwill")
+
+    def get_cease_desist_prompt(self):
+        """Get the cease & desist letter prompt for stopping collector contact (Prompt 20)"""
+        return self.load_prompt("ceasedesist")
+
     def get_violation_checklist(self):
         """Get the violation spotter checklist"""
         return self.load_prompt("checklist")
@@ -253,6 +263,8 @@ if __name__ == "__main__":
             "portalfix",
             "5dayknockout",
             "inquirydispute",
+            "goodwill",
+            "ceasedesist",
         ],
         "Reference": ["framework", "workflow", "checklist", "quickref", "intake"],
     }

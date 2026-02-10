@@ -4476,11 +4476,20 @@ def extract_litigation_data(analysis_text):
         return None
 
 
-def auto_populate_litigation_database(analysis_id, client_id, litigation_data, db):
+def auto_populate_litigation_database(
+    analysis_id, client_id, litigation_data, db, parsed_report=None
+):
     """
-    Automatically populate Violations, Standing, and Damages tables from extracted data
+    Automatically populate Violations, Standing, Damages, and DisputeItem tables from extracted data.
+
+    Args:
+        analysis_id: ID of the Analysis record
+        client_id: ID of the Client record
+        litigation_data: Dict with violations, standing, damages from AI analysis
+        db: Database session
+        parsed_report: Optional parsed credit report dict for DisputeItem extraction
     """
-    from litigation_tools import calculate_case_score, calculate_damages
+    from services.litigation_tools import calculate_case_score, calculate_damages
 
     try:
         print(f"\n🤖 AUTO-POPULATING LITIGATION DATABASE...")
@@ -4663,6 +4672,39 @@ def auto_populate_litigation_database(analysis_id, client_id, litigation_data, d
             f"   ✅ Calculated case score ({score_data['total']}/10 - {score_data['case_strength']})"
         )
 
+        # 5. POPULATE DISPUTE ITEMS FROM PARSED CREDIT REPORT
+        dispute_items_added = 0
+        if parsed_report:
+            try:
+                from services.negative_item_extractor import NegativeItemExtractor
+
+                extractor = NegativeItemExtractor(parsed_report)
+                negative_items = extractor.extract_all_negative_items()
+
+                for item in negative_items:
+                    # Create a DisputeItem for each bureau that reports this item
+                    for bureau in item.get("bureaus", ["Unknown"]):
+                        dispute_item = DisputeItem(
+                            client_id=client_id,
+                            analysis_id=analysis_id,
+                            bureau=bureau,
+                            dispute_round=1,
+                            item_type=item.get("item_type", "tradeline"),
+                            creditor_name=item.get("creditor_name", "Unknown"),
+                            account_id=item.get("account_id", "N/A"),
+                            status="to_do",
+                            reason="; ".join(item.get("negative_reasons", [])[:3]),
+                            comments=item.get("comments", ""),
+                        )
+                        db.add(dispute_item)
+                        dispute_items_added += 1
+
+                print(
+                    f"   ✅ Added {dispute_items_added} dispute items from credit report"
+                )
+            except Exception as e:
+                print(f"   ⚠️ Warning: Could not extract dispute items: {str(e)}")
+
         # Final commit
         db.commit()
 
@@ -4671,6 +4713,8 @@ def auto_populate_litigation_database(analysis_id, client_id, litigation_data, d
         print(f"   Standing: Added")
         print(f"   Damages: ${damages_calc['settlement']['total_exposure']:,.2f}")
         print(f"   Case Score: {score_data['total']}/10")
+        if dispute_items_added > 0:
+            print(f"   Dispute Items: {dispute_items_added}")
 
         return True
 
@@ -5317,13 +5361,20 @@ def parse_and_analyze_credit_report():
         db.commit()
         db.refresh(analysis_record)
 
-        if merged_litigation_data and merged_litigation_data.get("violations"):
+        # Always auto-populate: violations from AI analysis + dispute items from parsed report
+        if merged_litigation_data or parse_result:
             auto_populate_litigation_database(
                 analysis_id=analysis_record.id,
                 client_id=client.id,
-                litigation_data=merged_litigation_data,
+                litigation_data=merged_litigation_data or {},
                 db=db,
+                parsed_report=parse_result,  # Pass parsed data for DisputeItem extraction
             )
+
+        # Count dispute items created
+        dispute_items_count = (
+            db.query(DisputeItem).filter_by(analysis_id=analysis_record.id).count()
+        )
 
         return (
             jsonify(
@@ -5347,6 +5398,7 @@ def parse_and_analyze_credit_report():
                     "violations_found": len(
                         merged_litigation_data.get("violations", [])
                     ),
+                    "dispute_items_created": dispute_items_count,
                     "review_url": f"/analysis/{analysis_record.id}/review",
                 }
             ),
@@ -5601,6 +5653,217 @@ def analyze_and_generate_letters():
     except Exception as e:
         print(f"Error in analyze_and_generate_letters: {e}")
         db.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/client/<int:client_id>/analyze", methods=["POST"])
+@require_staff()
+def analyze_client_credit_report(client_id):
+    """
+    Analyze a client's credit report from their imported data.
+
+    This endpoint:
+    1. Gets the client's latest credit report from CreditMonitoringCredential
+    2. Runs Stage 1 FCRA analysis
+    3. Extracts negative items and populates DisputeItem table
+    4. Returns the analysis_id for review
+    """
+    import json as json_lib
+
+    db = get_db()
+    try:
+        # Get client
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        # Get latest credit report from credential
+        credential = (
+            db.query(CreditMonitoringCredential)
+            .filter(
+                CreditMonitoringCredential.client_id == client_id,
+                CreditMonitoringCredential.last_report_path.isnot(None),
+            )
+            .order_by(CreditMonitoringCredential.last_import_at.desc())
+            .first()
+        )
+
+        if not credential or not credential.last_report_path:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "No credit report found. Please import a credit report first.",
+                    }
+                ),
+                404,
+            )
+
+        # Load the credit report
+        report_path = credential.last_report_path
+        if not os.path.isabs(report_path):
+            report_path = os.path.join(os.path.dirname(__file__), report_path)
+
+        # Try JSON first (has pre-extracted data)
+        json_path = report_path.replace(".html", ".json")
+        parsed_report = None
+        credit_report_text = None
+
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                parsed_report = json_lib.load(f)
+            print(f"Loaded parsed data from JSON: {json_path}")
+
+        # Load HTML for analysis
+        if os.path.exists(report_path):
+            with open(report_path, "r", encoding="utf-8") as f:
+                credit_report_html = f.read()
+            credit_report_text = clean_credit_report_html(credit_report_html)
+        elif not parsed_report:
+            return (
+                jsonify({"success": False, "error": "Credit report file not found"}),
+                404,
+            )
+
+        # Run Stage 1 analysis
+        print(f"\n🚀 Starting analysis for {client.name} (ID: {client_id})")
+
+        section_analysis = run_stage1_for_all_sections(
+            client_name=client.name,
+            cmm_id="",
+            provider=credential.service_name or "Unknown",
+            credit_report_text=credit_report_text or "",
+            analysis_mode="manual",
+            dispute_round=client.current_dispute_round or 1,
+            previous_letters="",
+            bureau_responses="",
+            dispute_timeline="",
+        )
+
+        if not section_analysis.get("success"):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": section_analysis.get("error", "Analysis failed"),
+                    }
+                ),
+                500,
+            )
+
+        merged_litigation_data = section_analysis.get("litigation_data", {})
+
+        # After long AI analysis, database connections may be stale.
+        # Close the old session and get a completely fresh one with retry logic.
+        try:
+            db.rollback()  # Clear any pending state
+        except:
+            pass
+        try:
+            db.close()
+        except:
+            pass
+
+        # Force the engine to dispose stale connections
+        from sqlalchemy import text
+
+        from database import engine
+
+        engine.dispose()
+
+        # Get a fresh session
+        db = get_db()
+
+        # Verify the connection is alive with a simple query
+        try:
+            db.execute(text("SELECT 1"))
+        except Exception as e:
+            print(f"Connection test failed, retrying: {e}")
+            db.close()
+            db = get_db()
+            db.execute(text("SELECT 1"))
+
+        # Re-fetch client with fresh connection
+        client = db.query(Client).filter(Client.id == client_id).first()
+        credential = (
+            db.query(CreditMonitoringCredential)
+            .filter(CreditMonitoringCredential.client_id == client_id)
+            .order_by(CreditMonitoringCredential.last_import_at.desc())
+            .first()
+        )
+
+        # Save credit report record (store file path reference, not full HTML)
+        # The full report is already saved to disk at credential.last_report_path
+        credit_report_record = CreditReport(
+            client_id=client.id,
+            client_name=client.name,
+            credit_provider=(
+                credential.service_name or "Unknown" if credential else "Unknown"
+            ),
+            report_html=f"[See file: {credential.last_report_path if credential else 'N/A'}]",
+            report_date=datetime.now(),
+        )
+        db.add(credit_report_record)
+        db.commit()
+        db.refresh(credit_report_record)
+
+        # Save analysis record
+        analysis_record = Analysis(
+            credit_report_id=credit_report_record.id,
+            client_id=client.id,
+            client_name=client.name,
+            dispute_round=client.current_dispute_round or 1,
+            analysis_mode="manual",
+            stage=1,
+            stage_1_analysis=str(merged_litigation_data),
+            cost=section_analysis.get("cost", 0),
+            tokens_used=section_analysis.get("tokens_used", 0),
+            cache_read=section_analysis.get("cache_read", False),
+        )
+        db.add(analysis_record)
+        db.commit()
+        db.refresh(analysis_record)
+
+        # Auto-populate violations, standing, damages, AND dispute items
+        if merged_litigation_data or parsed_report:
+            auto_populate_litigation_database(
+                analysis_id=analysis_record.id,
+                client_id=client.id,
+                litigation_data=merged_litigation_data or {},
+                db=db,
+                parsed_report=parsed_report,
+            )
+
+        # Count what was created
+        violations_count = (
+            db.query(Violation).filter_by(analysis_id=analysis_record.id).count()
+        )
+        dispute_items_count = (
+            db.query(DisputeItem).filter_by(analysis_id=analysis_record.id).count()
+        )
+
+        print(f"✅ Analysis complete for {client.name}")
+        print(f"   Violations: {violations_count}")
+        print(f"   Dispute Items: {dispute_items_count}")
+
+        return jsonify(
+            {
+                "success": True,
+                "analysis_id": analysis_record.id,
+                "client_id": client.id,
+                "violations_count": violations_count,
+                "dispute_items_count": dispute_items_count,
+                "review_url": f"/analysis/{analysis_record.id}/review",
+            }
+        )
+
+    except Exception as e:
+        db.rollback()
+        import traceback
+
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
@@ -6218,6 +6481,9 @@ def get_analysis_data(analysis_id):
         damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
         case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
 
+        # Get dispute items (negative items being tracked)
+        dispute_items = db.query(DisputeItem).filter_by(analysis_id=analysis_id).all()
+
         return (
             jsonify(
                 {
@@ -6368,11 +6634,154 @@ def get_analysis_data(analysis_id):
                         if case_score
                         else None
                     ),
+                    "dispute_items": [
+                        {
+                            "id": di.id,
+                            "creditor_name": di.creditor_name,
+                            "account_id": di.account_id,
+                            "bureau": di.bureau,
+                            "item_type": di.item_type,
+                            "status": di.status,
+                            "dispute_round": di.dispute_round,
+                            "escalation_stage": di.escalation_stage,
+                            "furnisher_dispute_sent": di.furnisher_dispute_sent,
+                            "cfpb_complaint_filed": di.cfpb_complaint_filed,
+                            "reason": di.reason,  # Why this item is negative (late payment, collection, etc.)
+                            "date_opened": (
+                                di.date_opened.isoformat() if di.date_opened else None
+                            ),
+                            "balance": float(di.balance) if di.balance else 0.0,
+                            "bag_status": di.bag_status,  # Status from Credit Audit: NEW, DELETED, etc.
+                            # Deletion & Reinsertion tracking (for §611 violations)
+                            "deleted_at": (
+                                di.deleted_at.isoformat() if di.deleted_at else None
+                            ),
+                            "reinserted_at": (
+                                di.reinserted_at.isoformat()
+                                if di.reinserted_at
+                                else None
+                            ),
+                            "reinsertion_count": di.reinsertion_count or 0,
+                            "status_history": di.status_history or [],
+                        }
+                        for di in dispute_items
+                    ],
                 }
             ),
             200,
         )
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/dispute-items/<int:item_id>/status", methods=["PUT"])
+def update_dispute_item_status(item_id):
+    """Update a dispute item's status with full history tracking for litigation documentation"""
+    from datetime import date as date_type
+
+    db = get_db()
+    try:
+        item = db.query(DisputeItem).filter_by(id=item_id).first()
+        if not item:
+            return jsonify({"error": "Dispute item not found"}), 404
+
+        data = request.get_json()
+        old_status = item.status
+        today = date_type.today()
+        reinsertion_detected = False
+
+        # Initialize status_history if None
+        if item.status_history is None:
+            item.status_history = []
+
+        if "status" in data:
+            new_status = data["status"]
+
+            # REINSERTION DETECTION: Item was deleted but is now back
+            # This is a §611(a)(5)(B) violation!
+            if old_status == "deleted" and new_status in [
+                "to_do",
+                "sent",
+                "in_progress",
+                "no_change",
+            ]:
+                reinsertion_detected = True
+                item.reinserted_at = today
+                item.reinsertion_count = (item.reinsertion_count or 0) + 1
+                item.bag_status = "REINSERTED"  # Update BAG status
+
+                # Add reinsertion to history
+                item.status_history = item.status_history + [
+                    {
+                        "status": "reinserted",
+                        "date": today.isoformat(),
+                        "notes": f"§611(a)(5)(B) VIOLATION - Item reinserted after deletion. Reinsertion #{item.reinsertion_count}",
+                        "previous_status": old_status,
+                        "new_status": new_status,
+                    }
+                ]
+
+            # DELETION: Track when item is deleted
+            elif new_status == "deleted" and old_status != "deleted":
+                item.deleted_at = today
+                item.status_history = item.status_history + [
+                    {
+                        "status": "deleted",
+                        "date": today.isoformat(),
+                        "notes": "Item deleted from credit report",
+                        "previous_status": old_status,
+                    }
+                ]
+
+            # Regular status change - still track it
+            else:
+                item.status_history = item.status_history + [
+                    {
+                        "status": new_status,
+                        "date": today.isoformat(),
+                        "notes": data.get("notes", f"Status changed from {old_status}"),
+                        "previous_status": old_status,
+                    }
+                ]
+
+            item.status = new_status
+
+        if "escalation_stage" in data:
+            old_escalation = item.escalation_stage
+            item.escalation_stage = data["escalation_stage"]
+            item.status_history = item.status_history + [
+                {
+                    "status": "escalation_change",
+                    "date": today.isoformat(),
+                    "notes": f"Escalated from {old_escalation} to {data['escalation_stage']}",
+                    "escalation_stage": data["escalation_stage"],
+                }
+            ]
+
+        db.commit()
+
+        response = {
+            "success": True,
+            "status": item.status,
+            "deleted_at": item.deleted_at.isoformat() if item.deleted_at else None,
+            "reinserted_at": (
+                item.reinserted_at.isoformat() if item.reinserted_at else None
+            ),
+            "reinsertion_count": item.reinsertion_count or 0,
+        }
+
+        if reinsertion_detected:
+            response["reinsertion_detected"] = True
+            response["violation"] = "§611(a)(5)(B) - Reinsertion after deletion"
+            response["message"] = (
+                f"VIOLATION DOCUMENTED: Item #{item_id} reinserted. Total reinsertions: {item.reinsertion_count}"
+            )
+
+        return jsonify(response)
+    except Exception as e:
+        db.rollback()
         return jsonify({"error": str(e)}), 500
     finally:
         db.close()
@@ -42477,8 +42886,12 @@ def api_ai_dispute_writer_dashboard():
 
     client_id = request.args.get("client_id", type=int)
 
-    service = AIDisputeWriterService(g.db_session)
-    data = service.get_dashboard_data(client_id=client_id)
+    db = get_db()
+    try:
+        service = AIDisputeWriterService(db)
+        data = service.get_dashboard_data(client_id=client_id)
+    finally:
+        db.close()
 
     if "error" in data:
         return jsonify({"success": False, "error": data["error"]}), 400
@@ -42497,15 +42910,143 @@ def api_ai_dispute_writer_rounds():
     """Get information about all dispute rounds"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
 
-    service = AIDisputeWriterService(g.db_session)
-    rounds = service.get_all_rounds_info()
+    db = get_db()
+    try:
+        service = AIDisputeWriterService(db)
+        rounds = service.get_all_rounds_info()
+        return jsonify({"success": True, "rounds": rounds})
+    finally:
+        db.close()
 
-    return jsonify(
-        {
-            "success": True,
-            "rounds": rounds,
-        }
-    )
+
+@app.route(
+    "/api/ai-dispute-writer/client/<int:client_id>/extract-items", methods=["POST"]
+)
+@require_staff()
+def api_ai_dispute_writer_extract_items(client_id):
+    """
+    Extract negative items from credit report and populate DisputeItem table.
+
+    Use this to backfill items for clients who have credit reports but
+    haven't had their negative items extracted yet.
+    """
+    import json
+    import os
+
+    from services.negative_item_extractor import NegativeItemExtractor
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        # Check if already has dispute items
+        existing_items = (
+            db.query(DisputeItem).filter(DisputeItem.client_id == client_id).count()
+        )
+
+        # Find credit report JSON file
+        credential = (
+            db.query(CreditMonitoringCredential)
+            .filter(
+                CreditMonitoringCredential.client_id == client_id,
+                CreditMonitoringCredential.last_report_path.isnot(None),
+            )
+            .order_by(CreditMonitoringCredential.last_import_at.desc())
+            .first()
+        )
+
+        if not credential or not credential.last_report_path:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "No credit report found for this client",
+                    }
+                ),
+                404,
+            )
+
+        # Load JSON file
+        report_path = credential.last_report_path
+        if not os.path.isabs(report_path):
+            report_path = os.path.join(os.path.dirname(__file__), report_path)
+
+        json_path = report_path.replace(".html", ".json")
+        if not os.path.exists(json_path):
+            return (
+                jsonify(
+                    {"success": False, "error": "Credit report JSON file not found"}
+                ),
+                404,
+            )
+
+        with open(json_path, "r", encoding="utf-8") as f:
+            parsed_report = json.load(f)
+
+        # Extract negative items
+        extractor = NegativeItemExtractor(parsed_report)
+        negative_items = extractor.extract_all_negative_items()
+
+        if not negative_items:
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "No negative items found in credit report",
+                    "items_created": 0,
+                    "existing_items": existing_items,
+                }
+            )
+
+        # Get latest analysis if available
+        analysis = (
+            db.query(Analysis)
+            .filter(Analysis.client_id == client_id)
+            .order_by(Analysis.created_at.desc())
+            .first()
+        )
+        analysis_id = analysis.id if analysis else None
+
+        # Create DisputeItem records
+        items_created = 0
+        for item in negative_items:
+            for bureau in item.get("bureaus", ["Unknown"]):
+                dispute_item = DisputeItem(
+                    client_id=client_id,
+                    analysis_id=analysis_id,
+                    bureau=bureau,
+                    dispute_round=1,
+                    item_type=item.get("item_type", "tradeline"),
+                    creditor_name=item.get("creditor_name", "Unknown"),
+                    account_id=item.get("account_id", "N/A"),
+                    status="to_do",
+                    reason="; ".join(item.get("negative_reasons", [])[:3]),
+                    comments=item.get("comments", ""),
+                )
+                db.add(dispute_item)
+                items_created += 1
+
+        db.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Extracted {items_created} dispute items from credit report",
+                "items_created": items_created,
+                "existing_items": existing_items,
+                "negative_items_found": len(negative_items),
+            }
+        )
+
+    except Exception as e:
+        db.rollback()
+        import traceback
+
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
 
 
 @app.route("/api/ai-dispute-writer/client/<int:client_id>/context", methods=["GET"])
@@ -42514,28 +43055,32 @@ def api_ai_dispute_writer_context(client_id):
     """Get client context for letter generation"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
 
-    service = AIDisputeWriterService(g.db_session)
-    context = service.get_client_context(client_id)
+    db = get_db()
+    try:
+        service = AIDisputeWriterService(db)
+        context = service.get_client_context(client_id)
 
-    if "error" in context:
-        return jsonify({"success": False, "error": context["error"]}), 404
+        if "error" in context:
+            return jsonify({"success": False, "error": context["error"]}), 404
 
-    # Serialize context
-    return jsonify(
-        {
-            "success": True,
-            "client": {
-                "id": context["client"].id,
-                "name": context["client"].name,
-                "email": context["client"].email,
-                "current_round": context["client"].current_dispute_round or 1,
-            },
-            "violations_count": len(context["violations"]),
-            "dispute_items_count": len(context["dispute_items"]),
-            "cra_responses_count": len(context["cra_responses"]),
-            "current_round": context["current_round"],
-        }
-    )
+        # Serialize context
+        return jsonify(
+            {
+                "success": True,
+                "client": {
+                    "id": context["client"].id,
+                    "name": context["client"].name,
+                    "email": context["client"].email,
+                    "current_round": context["client"].current_dispute_round or 1,
+                },
+                "violations_count": len(context["violations"]),
+                "dispute_items_count": len(context["dispute_items"]),
+                "cra_responses_count": len(context["cra_responses"]),
+                "current_round": context["current_round"],
+            }
+        )
+    finally:
+        db.close()
 
 
 @app.route("/api/ai-dispute-writer/client/<int:client_id>/suggest", methods=["GET"])
@@ -42544,18 +43089,17 @@ def api_ai_dispute_writer_suggest(client_id):
     """Get AI suggestion for next action"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
 
-    service = AIDisputeWriterService(g.db_session)
-    suggestion = service.suggest_next_action(client_id)
+    db = get_db()
+    try:
+        service = AIDisputeWriterService(db)
+        suggestion = service.suggest_next_action(client_id)
 
-    if "error" in suggestion:
-        return jsonify({"success": False, "error": suggestion["error"]}), 400
+        if "error" in suggestion:
+            return jsonify({"success": False, "error": suggestion["error"]}), 400
 
-    return jsonify(
-        {
-            "success": True,
-            **suggestion,
-        }
-    )
+        return jsonify({"success": True, **suggestion})
+    finally:
+        db.close()
 
 
 @app.route("/api/ai-dispute-writer/generate", methods=["POST"])
@@ -42570,26 +43114,70 @@ def api_ai_dispute_writer_generate():
     if not client_id:
         return jsonify({"success": False, "error": "client_id required"}), 400
 
-    round_number = data.get("round", 1)
+    strategy = data.get("strategy")
     selected_item_ids = data.get("selected_items")
     bureaus = data.get("bureaus")
     custom_instructions = data.get("custom_instructions")
     tone = data.get("tone", "professional")
 
-    service = AIDisputeWriterService(g.db_session)
-    result = service.generate_letters(
-        client_id=client_id,
-        round_number=round_number,
-        selected_item_ids=selected_item_ids,
-        bureaus=bureaus,
-        custom_instructions=custom_instructions,
-        tone=tone,
-    )
+    db = get_db()
+    try:
+        service = AIDisputeWriterService(db)
 
-    if "error" in result:
-        return jsonify({"success": False, "error": result["error"]}), 400
+        # Handle special strategies
+        if strategy and strategy != "round":
+            if strategy == "goodwill":
+                result = service.generate_goodwill_letter(
+                    client_id=client_id,
+                    item_ids=selected_item_ids,
+                    custom_instructions=custom_instructions,
+                )
+            elif strategy == "5dayknockout":
+                # 5-Day Knockout requires police report and FTC info
+                result = service.generate_5day_knockout(
+                    client_id=client_id,
+                    item_ids=selected_item_ids,
+                    phase=data.get("phase", 1),
+                    police_case_number=data.get("police_case_number"),
+                    ftc_reference_number=data.get("ftc_reference_number"),
+                )
+            elif strategy == "idtheft":
+                result = service.generate_identity_theft_dispute(
+                    client_id=client_id,
+                    item_ids=selected_item_ids,
+                    bureaus=bureaus,
+                )
+            elif strategy == "inquiry":
+                result = service.generate_inquiry_dispute(
+                    client_id=client_id,
+                    item_ids=selected_item_ids,
+                    bureaus=bureaus,
+                )
+            else:
+                return (
+                    jsonify(
+                        {"success": False, "error": f"Unknown strategy: {strategy}"}
+                    ),
+                    400,
+                )
+        else:
+            # Standard round-based dispute
+            round_number = data.get("round", 1)
+            result = service.generate_letters(
+                client_id=client_id,
+                round_number=round_number,
+                selected_item_ids=selected_item_ids,
+                bureaus=bureaus,
+                custom_instructions=custom_instructions,
+                tone=tone,
+            )
 
-    return jsonify(result)
+        if "error" in result:
+            return jsonify({"success": False, "error": result["error"]}), 400
+
+        return jsonify(result)
+    finally:
+        db.close()
 
 
 @app.route("/api/ai-dispute-writer/generate-quick", methods=["POST"])
@@ -42618,19 +43206,23 @@ def api_ai_dispute_writer_generate_quick():
 
     custom_text = data.get("custom_text")
 
-    service = AIDisputeWriterService(g.db_session)
-    result = service.generate_quick_letter(
-        client_id=client_id,
-        bureau=bureau,
-        item_description=item_description,
-        violation_type=violation_type,
-        custom_text=custom_text,
-    )
+    db = get_db()
+    try:
+        service = AIDisputeWriterService(db)
+        result = service.generate_quick_letter(
+            client_id=client_id,
+            bureau=bureau,
+            item_description=item_description,
+            violation_type=violation_type,
+            custom_text=custom_text,
+        )
 
-    if "error" in result:
-        return jsonify({"success": False, "error": result["error"]}), 400
+        if "error" in result:
+            return jsonify({"success": False, "error": result["error"]}), 400
 
-    return jsonify(result)
+        return jsonify(result)
+    finally:
+        db.close()
 
 
 @app.route("/api/ai-dispute-writer/regenerate", methods=["POST"])
@@ -42658,19 +43250,23 @@ def api_ai_dispute_writer_regenerate():
             400,
         )
 
-    service = AIDisputeWriterService(g.db_session)
-    result = service.regenerate_with_feedback(
-        client_id=client_id,
-        bureau=bureau,
-        original_letter=original_letter,
-        feedback=feedback,
-        round_number=round_number,
-    )
+    db = get_db()
+    try:
+        service = AIDisputeWriterService(db)
+        result = service.regenerate_with_feedback(
+            client_id=client_id,
+            bureau=bureau,
+            original_letter=original_letter,
+            feedback=feedback,
+            round_number=round_number,
+        )
 
-    if "error" in result:
-        return jsonify({"success": False, "error": result["error"]}), 400
+        if "error" in result:
+            return jsonify({"success": False, "error": result["error"]}), 400
 
-    return jsonify(result)
+        return jsonify(result)
+    finally:
+        db.close()
 
 
 @app.route("/api/ai-dispute-writer/save", methods=["POST"])
@@ -42695,8 +43291,9 @@ def api_ai_dispute_writer_save():
             400,
         )
 
-    service = AIDisputeWriterService(g.db_session)
+    db = get_db()
     try:
+        service = AIDisputeWriterService(db)
         letter = service.save_letter(
             client_id=client_id,
             bureau=bureau,
@@ -42713,6 +43310,8 @@ def api_ai_dispute_writer_save():
         )
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
+    finally:
+        db.close()
 
 
 @app.route("/api/ai-dispute-writer/client/<int:client_id>/letters", methods=["GET"])
@@ -42723,25 +43322,31 @@ def api_ai_dispute_writer_letters(client_id):
 
     round_number = request.args.get("round", type=int)
 
-    service = AIDisputeWriterService(g.db_session)
-    letters = service.get_saved_letters(client_id, round_number=round_number)
+    db = get_db()
+    try:
+        service = AIDisputeWriterService(db)
+        letters = service.get_saved_letters(client_id, round_number=round_number)
 
-    return jsonify(
-        {
-            "success": True,
-            "letters": [
-                {
-                    "id": l.id,
-                    "bureau": l.bureau,
-                    "round": l.round_number,
-                    "content": l.letter_content,
-                    "created_at": l.created_at.isoformat() if l.created_at else None,
-                    "sent_at": l.sent_at.isoformat() if l.sent_at else None,
-                }
-                for l in letters
-            ],
-        }
-    )
+        return jsonify(
+            {
+                "success": True,
+                "letters": [
+                    {
+                        "id": l.id,
+                        "bureau": l.bureau,
+                        "round": l.round_number,
+                        "content": l.letter_content,
+                        "created_at": (
+                            l.created_at.isoformat() if l.created_at else None
+                        ),
+                        "sent_at": l.sent_at.isoformat() if l.sent_at else None,
+                    }
+                    for l in letters
+                ],
+            }
+        )
+    finally:
+        db.close()
 
 
 @app.route("/dashboard/ai-dispute-writer", methods=["GET"])
@@ -42870,13 +43475,24 @@ def api_5day_knockout_client_items(client_id):
                     # Extract accounts from the analysis
                     accounts = parsed.get("accounts", [])
                     for idx, acct in enumerate(accounts):
-                        # Determine bureau from account data
+                        # Detect bureaus - check both nested and flat structures
                         bureaus = []
-                        if acct.get("equifax") or acct.get("efx_status"):
+                        bureaus_data = acct.get("bureaus", {})
+
+                        # Check nested bureaus.X.present structure (from JSON extraction)
+                        if bureaus_data.get("equifax", {}).get("present"):
                             bureaus.append("Equifax")
-                        if acct.get("experian") or acct.get("exp_status"):
+                        elif acct.get("equifax") or acct.get("efx_status"):
+                            bureaus.append("Equifax")
+
+                        if bureaus_data.get("experian", {}).get("present"):
                             bureaus.append("Experian")
-                        if acct.get("transunion") or acct.get("tu_status"):
+                        elif acct.get("experian") or acct.get("exp_status"):
+                            bureaus.append("Experian")
+
+                        if bureaus_data.get("transunion", {}).get("present"):
+                            bureaus.append("TransUnion")
+                        elif acct.get("transunion") or acct.get("tu_status"):
                             bureaus.append("TransUnion")
 
                         # If no bureau info, assume all 3
@@ -42925,13 +43541,26 @@ def api_5day_knockout_client_items(client_id):
                         accounts = parsed_data.get("accounts", [])
 
                         for idx, acct in enumerate(accounts):
+                            # Detect bureaus - check both nested and flat structures
                             bureaus = []
-                            if acct.get("equifax") or acct.get("efx_status"):
+                            bureaus_data = acct.get("bureaus", {})
+
+                            # Check nested bureaus.X.present structure (from JSON extraction)
+                            if bureaus_data.get("equifax", {}).get("present"):
                                 bureaus.append("Equifax")
-                            if acct.get("experian") or acct.get("exp_status"):
+                            elif acct.get("equifax") or acct.get("efx_status"):
+                                bureaus.append("Equifax")
+
+                            if bureaus_data.get("experian", {}).get("present"):
                                 bureaus.append("Experian")
-                            if acct.get("transunion") or acct.get("tu_status"):
+                            elif acct.get("experian") or acct.get("exp_status"):
+                                bureaus.append("Experian")
+
+                            if bureaus_data.get("transunion", {}).get("present"):
                                 bureaus.append("TransUnion")
+                            elif acct.get("transunion") or acct.get("tu_status"):
+                                bureaus.append("TransUnion")
+
                             if not bureaus:
                                 bureaus = ["Equifax", "Experian", "TransUnion"]
 
@@ -43007,13 +43636,26 @@ def api_5day_knockout_client_items(client_id):
                         )
 
                         for idx, acct in enumerate(accounts):
+                            # Detect bureaus - check both nested and flat structures
                             bureaus = []
-                            if acct.get("equifax") or acct.get("efx_status"):
+                            bureaus_data = acct.get("bureaus", {})
+
+                            # Check nested bureaus.X.present structure (from JSON extraction)
+                            if bureaus_data.get("equifax", {}).get("present"):
                                 bureaus.append("Equifax")
-                            if acct.get("experian") or acct.get("exp_status"):
+                            elif acct.get("equifax") or acct.get("efx_status"):
+                                bureaus.append("Equifax")
+
+                            if bureaus_data.get("experian", {}).get("present"):
                                 bureaus.append("Experian")
-                            if acct.get("transunion") or acct.get("tu_status"):
+                            elif acct.get("experian") or acct.get("exp_status"):
+                                bureaus.append("Experian")
+
+                            if bureaus_data.get("transunion", {}).get("present"):
                                 bureaus.append("TransUnion")
+                            elif acct.get("transunion") or acct.get("tu_status"):
+                                bureaus.append("TransUnion")
+
                             if not bureaus:
                                 bureaus = ["Equifax", "Experian", "TransUnion"]
 
@@ -44910,20 +45552,23 @@ def dashboard_bureau_tracking():
 
     db = get_db()
     try:
+        # Create service instance
+        service = BureauResponseService(db)
+
         # Get dashboard summary stats
-        stats = BureauResponseService.get_dashboard_summary(db)
+        stats = service.get_dashboard_summary()
 
         # Get bureau breakdown
-        bureau_stats = BureauResponseService.get_bureau_breakdown(db)
+        bureau_stats = service.get_bureau_breakdown()
 
         # Get all pending disputes for the table
-        disputes = BureauResponseService.get_pending(db)
+        disputes = service.get_all_pending()
 
         # Get due soon (within 7 days)
-        due_soon = BureauResponseService.get_due_soon(db, days=7)
+        due_soon = service.get_due_soon(days=7)
 
         # Get overdue disputes
-        overdue = BureauResponseService.get_overdue(db)
+        overdue = service.get_overdue()
 
         # Get response type breakdown
         response_types = BureauResponseService.get_response_type_breakdown(db)
@@ -46874,7 +47519,7 @@ def api_get_staff_task_options():
     )
 
 
-@app.route("/dashboard/tasks")
+@app.route("/dashboard/staff-tasks")
 @require_staff()
 def dashboard_staff_tasks():
     """Staff task management dashboard page"""
@@ -46882,6 +47527,2227 @@ def dashboard_staff_tasks():
 
 
 # END STAFF TASK ASSIGNMENT API
+# ===========================================================================
+
+
+# ===========================================================================
+# DEBT VALIDATION WORKFLOW API (ISSUE-008)
+# ===========================================================================
+
+
+@app.route("/dashboard/debt-validation")
+@require_staff()
+def dashboard_debt_validation():
+    """Debt validation tracking dashboard page"""
+    return render_template("debt_validation.html")
+
+
+@app.route("/api/debt-validation/requests", methods=["GET"])
+@require_staff()
+def api_get_debt_validation_requests():
+    """Get all debt validation requests with optional filtering"""
+    session = get_db()
+    try:
+        from database import DebtValidationRequest
+
+        # Get query parameters
+        client_id = request.args.get("client_id", type=int)
+        status = request.args.get("status")
+        violation_only = request.args.get("violation_only", "false").lower() == "true"
+
+        query = session.query(DebtValidationRequest)
+
+        if client_id:
+            query = query.filter(DebtValidationRequest.client_id == client_id)
+        if status:
+            query = query.filter(DebtValidationRequest.status == status)
+        if violation_only:
+            query = query.filter(DebtValidationRequest.fdcpa_violation_flagged == True)
+
+        requests_list = query.order_by(DebtValidationRequest.created_at.desc()).all()
+
+        return jsonify(
+            {
+                "success": True,
+                "requests": [
+                    {
+                        "id": r.id,
+                        "client_id": r.client_id,
+                        "collector_name": r.collector_name,
+                        "collector_address": r.collector_address,
+                        "account_number": r.account_number,
+                        "original_creditor": r.original_creditor,
+                        "alleged_balance": r.alleged_balance,
+                        "letter_sent_at": (
+                            r.letter_sent_at.isoformat() if r.letter_sent_at else None
+                        ),
+                        "letter_sent_method": r.letter_sent_method,
+                        "tracking_number": r.tracking_number,
+                        "delivery_confirmed": r.delivery_confirmed,
+                        "response_deadline": (
+                            r.response_deadline.isoformat()
+                            if r.response_deadline
+                            else None
+                        ),
+                        "response_received": r.response_received,
+                        "response_received_at": (
+                            r.response_received_at.isoformat()
+                            if r.response_received_at
+                            else None
+                        ),
+                        "response_type": r.response_type,
+                        "fdcpa_violation_flagged": r.fdcpa_violation_flagged,
+                        "violation_type": r.violation_type,
+                        "status": r.status,
+                        "notes": r.notes,
+                        "created_at": (
+                            r.created_at.isoformat() if r.created_at else None
+                        ),
+                    }
+                    for r in requests_list
+                ],
+            }
+        )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/debt-validation/requests", methods=["POST"])
+@require_staff()
+def api_create_debt_validation_request():
+    """Create a new debt validation request"""
+    session = get_db()
+    try:
+        from datetime import datetime, timedelta
+
+        from database import DebtValidationRequest
+
+        data = request.get_json()
+
+        if not data.get("client_id"):
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+        if not data.get("collector_name"):
+            return (
+                jsonify({"success": False, "error": "collector_name is required"}),
+                400,
+            )
+
+        # Calculate response deadline if letter sent date provided
+        response_deadline = None
+        letter_sent_at = None
+        if data.get("letter_sent_at"):
+            letter_sent_at = datetime.fromisoformat(data["letter_sent_at"])
+            response_deadline = (letter_sent_at + timedelta(days=30)).date()
+
+        new_request = DebtValidationRequest(
+            client_id=data["client_id"],
+            collector_name=data["collector_name"],
+            collector_address=data.get("collector_address"),
+            account_number=data.get("account_number"),
+            original_creditor=data.get("original_creditor"),
+            alleged_balance=data.get("alleged_balance"),
+            letter_sent_at=letter_sent_at,
+            letter_sent_method=data.get("letter_sent_method"),
+            tracking_number=data.get("tracking_number"),
+            response_deadline=response_deadline,
+            status=data.get("status", "pending"),
+            notes=data.get("notes"),
+        )
+
+        session.add(new_request)
+        session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Debt validation request created",
+                "request_id": new_request.id,
+            }
+        )
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/debt-validation/requests/<int:request_id>", methods=["GET"])
+@require_staff()
+def api_get_debt_validation_request(request_id):
+    """Get a single debt validation request by ID"""
+    session = get_db()
+    try:
+        from database import DebtValidationRequest
+
+        req = session.query(DebtValidationRequest).filter_by(id=request_id).first()
+        if not req:
+            return jsonify({"success": False, "error": "Request not found"}), 404
+
+        return jsonify(
+            {
+                "success": True,
+                "request": {
+                    "id": req.id,
+                    "client_id": req.client_id,
+                    "collector_name": req.collector_name,
+                    "collector_address": req.collector_address,
+                    "account_number": req.account_number,
+                    "original_creditor": req.original_creditor,
+                    "alleged_balance": req.alleged_balance,
+                    "letter_sent_at": (
+                        req.letter_sent_at.isoformat() if req.letter_sent_at else None
+                    ),
+                    "letter_sent_method": req.letter_sent_method,
+                    "tracking_number": req.tracking_number,
+                    "delivery_confirmed": req.delivery_confirmed,
+                    "response_deadline": (
+                        req.response_deadline.isoformat()
+                        if req.response_deadline
+                        else None
+                    ),
+                    "response_received": req.response_received,
+                    "response_received_at": (
+                        req.response_received_at.isoformat()
+                        if req.response_received_at
+                        else None
+                    ),
+                    "response_type": req.response_type,
+                    "documents_received": req.documents_received,
+                    "original_agreement_received": req.original_agreement_received,
+                    "account_statements_received": req.account_statements_received,
+                    "chain_of_title_received": req.chain_of_title_received,
+                    "fdcpa_violation_flagged": req.fdcpa_violation_flagged,
+                    "violation_type": req.violation_type,
+                    "violation_notes": req.violation_notes,
+                    "collection_activity_during_validation": req.collection_activity_during_validation,
+                    "status": req.status,
+                    "notes": req.notes,
+                    "created_at": (
+                        req.created_at.isoformat() if req.created_at else None
+                    ),
+                    "updated_at": (
+                        req.updated_at.isoformat() if req.updated_at else None
+                    ),
+                },
+            }
+        )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/debt-validation/requests/<int:request_id>", methods=["PUT"])
+@require_staff()
+def api_update_debt_validation_request(request_id):
+    """Update a debt validation request"""
+    session = get_db()
+    try:
+        from datetime import datetime, timedelta
+
+        from database import DebtValidationRequest
+
+        req = session.query(DebtValidationRequest).filter_by(id=request_id).first()
+        if not req:
+            return jsonify({"success": False, "error": "Request not found"}), 404
+
+        data = request.get_json()
+
+        # Update fields if provided
+        if "collector_name" in data:
+            req.collector_name = data["collector_name"]
+        if "collector_address" in data:
+            req.collector_address = data["collector_address"]
+        if "account_number" in data:
+            req.account_number = data["account_number"]
+        if "original_creditor" in data:
+            req.original_creditor = data["original_creditor"]
+        if "alleged_balance" in data:
+            req.alleged_balance = data["alleged_balance"]
+        if "letter_sent_at" in data:
+            if data["letter_sent_at"]:
+                req.letter_sent_at = datetime.fromisoformat(data["letter_sent_at"])
+                req.response_deadline = (req.letter_sent_at + timedelta(days=30)).date()
+            else:
+                req.letter_sent_at = None
+                req.response_deadline = None
+        if "letter_sent_method" in data:
+            req.letter_sent_method = data["letter_sent_method"]
+        if "tracking_number" in data:
+            req.tracking_number = data["tracking_number"]
+        if "status" in data:
+            req.status = data["status"]
+        if "notes" in data:
+            req.notes = data["notes"]
+
+        session.commit()
+
+        return jsonify({"success": True, "message": "Debt validation request updated"})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/debt-validation/requests/<int:request_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_debt_validation_request(request_id):
+    """Delete a debt validation request"""
+    session = get_db()
+    try:
+        from database import DebtValidationRequest
+
+        req = session.query(DebtValidationRequest).filter_by(id=request_id).first()
+        if not req:
+            return jsonify({"success": False, "error": "Request not found"}), 404
+
+        session.delete(req)
+        session.commit()
+
+        return jsonify({"success": True, "message": "Debt validation request deleted"})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/debt-validation/requests/<int:request_id>/violation", methods=["POST"])
+@require_staff()
+def api_flag_debt_validation_violation(request_id):
+    """Flag or unflag an FDCPA violation on a debt validation request"""
+    session = get_db()
+    try:
+        from datetime import datetime
+
+        from database import DebtValidationRequest
+
+        req = session.query(DebtValidationRequest).filter_by(id=request_id).first()
+        if not req:
+            return jsonify({"success": False, "error": "Request not found"}), 404
+
+        data = request.get_json()
+        flagged = data.get("flagged", True)
+
+        req.fdcpa_violation_flagged = flagged
+        if flagged:
+            req.violation_type = data.get("violation_type", "no_response")
+            req.violation_notes = data.get("violation_notes")
+            req.violation_date = datetime.utcnow().date()
+            req.status = "violation"
+        else:
+            req.violation_type = None
+            req.violation_notes = None
+            req.violation_date = None
+            if req.status == "violation":
+                req.status = "awaiting_response"
+
+        session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Violation flagged" if flagged else "Violation flag removed",
+            }
+        )
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/debt-validation/requests/<int:request_id>/response", methods=["POST"])
+@require_staff()
+def api_mark_debt_validation_response(request_id):
+    """Mark a response as received for a debt validation request"""
+    session = get_db()
+    try:
+        from datetime import datetime
+
+        from database import DebtValidationRequest
+
+        req = session.query(DebtValidationRequest).filter_by(id=request_id).first()
+        if not req:
+            return jsonify({"success": False, "error": "Request not found"}), 404
+
+        data = request.get_json()
+
+        req.response_received = True
+        req.response_received_at = datetime.utcnow()
+        req.response_type = data.get("response_type", "validated")
+
+        # Update document receipt flags if provided
+        if "original_agreement_received" in data:
+            req.original_agreement_received = data["original_agreement_received"]
+        if "account_statements_received" in data:
+            req.account_statements_received = data["account_statements_received"]
+        if "chain_of_title_received" in data:
+            req.chain_of_title_received = data["chain_of_title_received"]
+        if "signed_application_received" in data:
+            req.signed_application_received = data["signed_application_received"]
+        if "documents_received" in data:
+            req.documents_received = data["documents_received"]
+
+        # Update status based on response type
+        if data.get("response_type") == "validated":
+            req.status = "validated"
+        elif data.get("response_type") == "failed":
+            req.status = "violation"
+            req.fdcpa_violation_flagged = True
+            req.violation_type = "invalid_validation"
+
+        session.commit()
+
+        return jsonify({"success": True, "message": "Response marked as received"})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/debt-validation/requests/<int:request_id>/close", methods=["POST"])
+@require_staff()
+def api_close_debt_validation_request(request_id):
+    """Close a debt validation request"""
+    session = get_db()
+    try:
+        from datetime import datetime
+
+        from database import DebtValidationRequest
+
+        req = session.query(DebtValidationRequest).filter_by(id=request_id).first()
+        if not req:
+            return jsonify({"success": False, "error": "Request not found"}), 404
+
+        data = request.get_json()
+
+        req.status = "closed"
+        req.closed_at = datetime.utcnow()
+        req.closed_reason = data.get("reason", "resolved")
+
+        session.commit()
+
+        return jsonify({"success": True, "message": "Debt validation request closed"})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/debt-validation/stats", methods=["GET"])
+@require_staff()
+def api_get_debt_validation_stats():
+    """Get statistics for debt validation requests"""
+    session = get_db()
+    try:
+        from datetime import datetime, timedelta
+
+        from database import DebtValidationRequest
+
+        now = datetime.utcnow()
+        thirty_days_ago = now - timedelta(days=30)
+
+        total = session.query(DebtValidationRequest).count()
+        pending = (
+            session.query(DebtValidationRequest).filter_by(status="pending").count()
+        )
+        awaiting = (
+            session.query(DebtValidationRequest)
+            .filter(DebtValidationRequest.status.in_(["sent", "awaiting_response"]))
+            .count()
+        )
+        violations = (
+            session.query(DebtValidationRequest)
+            .filter_by(fdcpa_violation_flagged=True)
+            .count()
+        )
+        validated = (
+            session.query(DebtValidationRequest).filter_by(status="validated").count()
+        )
+
+        # Count overdue (sent > 30 days ago, no response)
+        overdue = (
+            session.query(DebtValidationRequest)
+            .filter(
+                DebtValidationRequest.letter_sent_at < thirty_days_ago,
+                DebtValidationRequest.response_received == False,
+                DebtValidationRequest.status.notin_(
+                    ["closed", "validated", "violation"]
+                ),
+            )
+            .count()
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "stats": {
+                    "total": total,
+                    "pending": pending,
+                    "awaiting_response": awaiting,
+                    "overdue": overdue,
+                    "violations": violations,
+                    "validated": validated,
+                },
+            }
+        )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+# END DEBT VALIDATION WORKFLOW API
+# ===========================================================================
+
+
+# ===========================================================================
+# PAY-FOR-DELETE NEGOTIATIONS API (ISSUE-007)
+# ===========================================================================
+
+
+@app.route("/dashboard/pay-for-delete")
+@require_staff()
+def dashboard_pay_for_delete():
+    """Pay-for-delete negotiations dashboard page"""
+    return render_template("pay_for_delete.html")
+
+
+@app.route("/api/pay-for-delete/negotiations", methods=["GET"])
+@require_staff()
+def api_get_p4d_negotiations():
+    """Get all pay-for-delete negotiations with optional filtering"""
+    session = get_db()
+    try:
+        from database import PayForDeleteNegotiation
+
+        client_id = request.args.get("client_id", type=int)
+        status = request.args.get("status")
+
+        query = session.query(PayForDeleteNegotiation)
+
+        if client_id:
+            query = query.filter(PayForDeleteNegotiation.client_id == client_id)
+        if status:
+            query = query.filter(PayForDeleteNegotiation.status == status)
+
+        negotiations = query.order_by(PayForDeleteNegotiation.updated_at.desc()).all()
+
+        return jsonify(
+            {
+                "success": True,
+                "negotiations": [
+                    {
+                        "id": n.id,
+                        "client_id": n.client_id,
+                        "collector_name": n.collector_name,
+                        "collector_address": n.collector_address,
+                        "collector_phone": n.collector_phone,
+                        "collector_email": n.collector_email,
+                        "account_number": n.account_number,
+                        "original_creditor": n.original_creditor,
+                        "original_balance": n.original_balance,
+                        "current_balance": n.current_balance,
+                        "initial_offer_amount": n.initial_offer_amount,
+                        "initial_offer_percent": n.initial_offer_percent,
+                        "initial_offer_date": (
+                            n.initial_offer_date.isoformat()
+                            if n.initial_offer_date
+                            else None
+                        ),
+                        "counter_offer_amount": n.counter_offer_amount,
+                        "counter_offer_date": (
+                            n.counter_offer_date.isoformat()
+                            if n.counter_offer_date
+                            else None
+                        ),
+                        "agreed_amount": n.agreed_amount,
+                        "agreed_percent": n.agreed_percent,
+                        "agreement_date": (
+                            n.agreement_date.isoformat() if n.agreement_date else None
+                        ),
+                        "payment_amount": n.payment_amount,
+                        "payment_date": (
+                            n.payment_date.isoformat() if n.payment_date else None
+                        ),
+                        "payment_method": n.payment_method,
+                        "deletion_verified": n.deletion_verified,
+                        "deletion_verified_date": (
+                            n.deletion_verified_date.isoformat()
+                            if n.deletion_verified_date
+                            else None
+                        ),
+                        "deletion_verified_bureau": n.deletion_verified_bureau,
+                        "status": n.status,
+                        "notes": n.notes,
+                        "created_at": (
+                            n.created_at.isoformat() if n.created_at else None
+                        ),
+                    }
+                    for n in negotiations
+                ],
+            }
+        )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/pay-for-delete/negotiations", methods=["POST"])
+@require_staff()
+def api_create_p4d_negotiation():
+    """Create a new pay-for-delete negotiation"""
+    session = get_db()
+    try:
+        from database import PayForDeleteNegotiation
+
+        data = request.get_json()
+
+        if not data.get("client_id"):
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+        if not data.get("collector_name"):
+            return (
+                jsonify({"success": False, "error": "collector_name is required"}),
+                400,
+            )
+        if not data.get("original_balance"):
+            return (
+                jsonify({"success": False, "error": "original_balance is required"}),
+                400,
+            )
+
+        negotiation = PayForDeleteNegotiation(
+            client_id=data["client_id"],
+            collector_name=data["collector_name"],
+            collector_address=data.get("collector_address"),
+            collector_phone=data.get("collector_phone"),
+            collector_email=data.get("collector_email"),
+            account_number=data.get("account_number"),
+            original_creditor=data.get("original_creditor"),
+            original_balance=data["original_balance"],
+            current_balance=data.get("current_balance") or data["original_balance"],
+            status=data.get("status", "pending"),
+            notes=data.get("notes"),
+        )
+
+        session.add(negotiation)
+        session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Negotiation created",
+                "negotiation_id": negotiation.id,
+            }
+        )
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/pay-for-delete/negotiations/<int:negotiation_id>", methods=["GET"])
+@require_staff()
+def api_get_p4d_negotiation(negotiation_id):
+    """Get a single pay-for-delete negotiation by ID"""
+    session = get_db()
+    try:
+        from database import PayForDeleteNegotiation
+
+        n = session.query(PayForDeleteNegotiation).filter_by(id=negotiation_id).first()
+        if not n:
+            return jsonify({"success": False, "error": "Negotiation not found"}), 404
+
+        return jsonify(
+            {
+                "success": True,
+                "negotiation": {
+                    "id": n.id,
+                    "client_id": n.client_id,
+                    "collector_name": n.collector_name,
+                    "collector_address": n.collector_address,
+                    "collector_phone": n.collector_phone,
+                    "collector_email": n.collector_email,
+                    "account_number": n.account_number,
+                    "original_creditor": n.original_creditor,
+                    "original_balance": n.original_balance,
+                    "current_balance": n.current_balance,
+                    "initial_offer_amount": n.initial_offer_amount,
+                    "initial_offer_percent": n.initial_offer_percent,
+                    "initial_offer_date": (
+                        n.initial_offer_date.isoformat()
+                        if n.initial_offer_date
+                        else None
+                    ),
+                    "counter_offer_amount": n.counter_offer_amount,
+                    "counter_offer_date": (
+                        n.counter_offer_date.isoformat()
+                        if n.counter_offer_date
+                        else None
+                    ),
+                    "our_counter_amount": n.our_counter_amount,
+                    "our_counter_date": (
+                        n.our_counter_date.isoformat() if n.our_counter_date else None
+                    ),
+                    "agreed_amount": n.agreed_amount,
+                    "agreed_percent": n.agreed_percent,
+                    "agreement_date": (
+                        n.agreement_date.isoformat() if n.agreement_date else None
+                    ),
+                    "payment_deadline": (
+                        n.payment_deadline.isoformat() if n.payment_deadline else None
+                    ),
+                    "deletion_deadline": (
+                        n.deletion_deadline.isoformat() if n.deletion_deadline else None
+                    ),
+                    "payment_amount": n.payment_amount,
+                    "payment_date": (
+                        n.payment_date.isoformat() if n.payment_date else None
+                    ),
+                    "payment_method": n.payment_method,
+                    "payment_confirmation": n.payment_confirmation,
+                    "deletion_verified": n.deletion_verified,
+                    "deletion_verified_date": (
+                        n.deletion_verified_date.isoformat()
+                        if n.deletion_verified_date
+                        else None
+                    ),
+                    "deletion_verified_bureau": n.deletion_verified_bureau,
+                    "agreement_in_writing": n.agreement_in_writing,
+                    "agreement_document_path": n.agreement_document_path,
+                    "status": n.status,
+                    "failure_reason": n.failure_reason,
+                    "notes": n.notes,
+                    "created_at": n.created_at.isoformat() if n.created_at else None,
+                    "updated_at": n.updated_at.isoformat() if n.updated_at else None,
+                },
+            }
+        )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/pay-for-delete/negotiations/<int:negotiation_id>", methods=["PUT"])
+@require_staff()
+def api_update_p4d_negotiation(negotiation_id):
+    """Update a pay-for-delete negotiation"""
+    session = get_db()
+    try:
+        from database import PayForDeleteNegotiation
+
+        n = session.query(PayForDeleteNegotiation).filter_by(id=negotiation_id).first()
+        if not n:
+            return jsonify({"success": False, "error": "Negotiation not found"}), 404
+
+        data = request.get_json()
+
+        # Update fields if provided
+        updateable_fields = [
+            "collector_name",
+            "collector_address",
+            "collector_phone",
+            "collector_email",
+            "account_number",
+            "original_creditor",
+            "original_balance",
+            "current_balance",
+            "status",
+            "notes",
+            "failure_reason",
+        ]
+
+        for field in updateable_fields:
+            if field in data:
+                setattr(n, field, data[field])
+
+        session.commit()
+
+        return jsonify({"success": True, "message": "Negotiation updated"})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/pay-for-delete/negotiations/<int:negotiation_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_p4d_negotiation(negotiation_id):
+    """Delete a pay-for-delete negotiation"""
+    session = get_db()
+    try:
+        from database import PayForDeleteNegotiation
+
+        n = session.query(PayForDeleteNegotiation).filter_by(id=negotiation_id).first()
+        if not n:
+            return jsonify({"success": False, "error": "Negotiation not found"}), 404
+
+        session.delete(n)
+        session.commit()
+
+        return jsonify({"success": True, "message": "Negotiation deleted"})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route(
+    "/api/pay-for-delete/negotiations/<int:negotiation_id>/offer", methods=["POST"]
+)
+@require_staff()
+def api_p4d_make_offer(negotiation_id):
+    """Record an offer being made"""
+    session = get_db()
+    try:
+        from datetime import datetime
+
+        from database import PayForDeleteNegotiation
+
+        n = session.query(PayForDeleteNegotiation).filter_by(id=negotiation_id).first()
+        if not n:
+            return jsonify({"success": False, "error": "Negotiation not found"}), 404
+
+        data = request.get_json()
+        offer_amount = data.get("offer_amount")
+
+        if not offer_amount:
+            return jsonify({"success": False, "error": "offer_amount is required"}), 400
+
+        offer_percent = None
+        if n.original_balance:
+            offer_percent = (offer_amount / n.original_balance) * 100
+
+        n.initial_offer_amount = offer_amount
+        n.initial_offer_percent = offer_percent
+        n.initial_offer_date = datetime.utcnow()
+        n.status = "offered"
+        n.last_contact_date = datetime.utcnow()
+
+        session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Offer recorded",
+                "offer_percent": offer_percent,
+            }
+        )
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route(
+    "/api/pay-for-delete/negotiations/<int:negotiation_id>/counter", methods=["POST"]
+)
+@require_staff()
+def api_p4d_record_counter(negotiation_id):
+    """Record a counter offer from the collector"""
+    session = get_db()
+    try:
+        from datetime import datetime
+
+        from database import PayForDeleteNegotiation
+
+        n = session.query(PayForDeleteNegotiation).filter_by(id=negotiation_id).first()
+        if not n:
+            return jsonify({"success": False, "error": "Negotiation not found"}), 404
+
+        data = request.get_json()
+        counter_amount = data.get("counter_amount")
+
+        if not counter_amount:
+            return (
+                jsonify({"success": False, "error": "counter_amount is required"}),
+                400,
+            )
+
+        n.counter_offer_amount = counter_amount
+        n.counter_offer_date = datetime.utcnow()
+        n.status = "countered"
+        n.last_contact_date = datetime.utcnow()
+
+        session.commit()
+
+        return jsonify({"success": True, "message": "Counter offer recorded"})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route(
+    "/api/pay-for-delete/negotiations/<int:negotiation_id>/agree", methods=["POST"]
+)
+@require_staff()
+def api_p4d_accept_agreement(negotiation_id):
+    """Record an accepted agreement"""
+    session = get_db()
+    try:
+        from datetime import datetime
+
+        from database import PayForDeleteNegotiation
+
+        n = session.query(PayForDeleteNegotiation).filter_by(id=negotiation_id).first()
+        if not n:
+            return jsonify({"success": False, "error": "Negotiation not found"}), 404
+
+        data = request.get_json()
+        agreed_amount = data.get("agreed_amount")
+
+        if not agreed_amount:
+            return (
+                jsonify({"success": False, "error": "agreed_amount is required"}),
+                400,
+            )
+
+        agreed_percent = None
+        if n.original_balance:
+            agreed_percent = (agreed_amount / n.original_balance) * 100
+
+        n.agreed_amount = agreed_amount
+        n.agreed_percent = agreed_percent
+        n.agreement_date = datetime.utcnow()
+        n.status = "agreed"
+        n.agreement_in_writing = data.get("agreement_in_writing", False)
+        n.agreement_signed_by = data.get("agreement_signed_by")
+        n.last_contact_date = datetime.utcnow()
+
+        if data.get("payment_deadline"):
+            n.payment_deadline = datetime.fromisoformat(data["payment_deadline"]).date()
+        if data.get("deletion_deadline"):
+            n.deletion_deadline = datetime.fromisoformat(
+                data["deletion_deadline"]
+            ).date()
+
+        session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Agreement recorded",
+                "savings": (
+                    n.original_balance - agreed_amount if n.original_balance else 0
+                ),
+                "agreed_percent": agreed_percent,
+            }
+        )
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route(
+    "/api/pay-for-delete/negotiations/<int:negotiation_id>/payment", methods=["POST"]
+)
+@require_staff()
+def api_p4d_record_payment(negotiation_id):
+    """Record that payment has been made"""
+    session = get_db()
+    try:
+        from datetime import datetime
+
+        from database import PayForDeleteNegotiation
+
+        n = session.query(PayForDeleteNegotiation).filter_by(id=negotiation_id).first()
+        if not n:
+            return jsonify({"success": False, "error": "Negotiation not found"}), 404
+
+        data = request.get_json()
+
+        n.payment_amount = data.get("payment_amount") or n.agreed_amount
+        n.payment_date = datetime.utcnow()
+        n.payment_method = data.get("payment_method", "check")
+        n.payment_confirmation = data.get("payment_confirmation")
+        n.status = "paid"
+        n.last_contact_date = datetime.utcnow()
+
+        session.commit()
+
+        return jsonify({"success": True, "message": "Payment recorded"})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route(
+    "/api/pay-for-delete/negotiations/<int:negotiation_id>/verify-deletion",
+    methods=["POST"],
+)
+@require_staff()
+def api_p4d_verify_deletion(negotiation_id):
+    """Record that deletion has been verified"""
+    session = get_db()
+    try:
+        from datetime import datetime
+
+        from database import PayForDeleteNegotiation
+
+        n = session.query(PayForDeleteNegotiation).filter_by(id=negotiation_id).first()
+        if not n:
+            return jsonify({"success": False, "error": "Negotiation not found"}), 404
+
+        data = request.get_json()
+
+        n.deletion_verified = True
+        n.deletion_verified_date = datetime.utcnow()
+        n.deletion_verified_bureau = data.get("verified_bureau", "All bureaus")
+        n.status = "deleted"
+
+        session.commit()
+
+        return jsonify(
+            {"success": True, "message": "Deletion verified - negotiation complete!"}
+        )
+    except Exception as e:
+        session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route(
+    "/api/pay-for-delete/negotiations/<int:negotiation_id>/letter", methods=["GET"]
+)
+@require_staff()
+def api_p4d_generate_letter(negotiation_id):
+    """Generate a pay-for-delete offer letter"""
+    session = get_db()
+    try:
+        from services.pay_for_delete_service import PayForDeleteService
+
+        offer_amount = request.args.get("offer_amount", type=float)
+
+        service = PayForDeleteService(session)
+        result = service.generate_offer_letter(negotiation_id, offer_amount)
+
+        if "error" in result:
+            return jsonify({"success": False, "error": result["error"]}), 400
+
+        return jsonify({"success": True, **result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/pay-for-delete/stats", methods=["GET"])
+@require_staff()
+def api_p4d_stats():
+    """Get pay-for-delete statistics"""
+    session = get_db()
+    try:
+        from services.pay_for_delete_service import PayForDeleteService
+
+        service = PayForDeleteService(session)
+        stats = service.get_statistics()
+
+        return jsonify({"success": True, "stats": stats})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route("/api/pay-for-delete/common-collectors", methods=["GET"])
+@require_staff()
+def api_p4d_common_collectors():
+    """Get list of common collectors with P4D info"""
+    from services.pay_for_delete_service import get_common_collectors
+
+    return jsonify({"success": True, "collectors": get_common_collectors()})
+
+
+# END PAY-FOR-DELETE NEGOTIATIONS API
+# ===========================================================================
+
+
+# ===========================================================================
+# STATE ATTORNEY GENERAL COMPLAINTS API (ISSUE-011)
+# ===========================================================================
+
+
+@app.route("/dashboard/state-ag-complaints")
+@require_staff()
+def dashboard_state_ag_complaints():
+    """State AG Complaints Dashboard"""
+    return render_template("state_ag_complaints.html", active_page="state-ag")
+
+
+@app.route("/api/state-ag/contacts", methods=["GET"])
+@require_staff()
+def api_state_ag_contacts():
+    """Get all state AG contacts"""
+    from services.state_ag_service import get_state_ag_service
+
+    with get_state_ag_service() as service:
+        contacts = service.get_all_ag_contacts()
+        return jsonify({"success": True, "contacts": contacts})
+
+
+@app.route("/api/state-ag/contacts/<state_code>", methods=["GET"])
+@require_staff()
+def api_state_ag_contact_by_state(state_code):
+    """Get AG contact for a specific state"""
+    from services.state_ag_service import get_state_ag_service
+
+    with get_state_ag_service() as service:
+        contact = service.get_ag_contact_by_state(state_code)
+        if contact:
+            return jsonify({"success": True, "contact": contact})
+        return (
+            jsonify(
+                {"success": False, "error": f"No AG contact for state: {state_code}"}
+            ),
+            404,
+        )
+
+
+@app.route("/api/state-ag/seed", methods=["POST"])
+@require_staff()
+def api_state_ag_seed():
+    """Seed AG contacts database"""
+    from services.state_ag_service import get_state_ag_service
+
+    with get_state_ag_service() as service:
+        result = service.seed_ag_contacts()
+        return jsonify(result)
+
+
+@app.route("/api/state-ag/complaints", methods=["GET"])
+@require_staff()
+def api_state_ag_complaints_list():
+    """Get all AG complaints with optional filtering"""
+    from database import Client, StateAGComplaint, StateAGContact
+
+    status = request.args.get("status")
+    state_code = request.args.get("state")
+    client_id = request.args.get("client_id")
+
+    query = (
+        db_session.query(StateAGComplaint)
+        .join(StateAGContact, StateAGComplaint.state_ag_id == StateAGContact.id)
+        .join(Client, StateAGComplaint.client_id == Client.id)
+    )
+
+    if status:
+        query = query.filter(StateAGComplaint.status == status)
+    if state_code:
+        query = query.filter(StateAGContact.state_code == state_code.upper())
+    if client_id:
+        query = query.filter(StateAGComplaint.client_id == int(client_id))
+
+    complaints = query.order_by(StateAGComplaint.created_at.desc()).all()
+
+    return jsonify({"success": True, "complaints": [c.to_dict() for c in complaints]})
+
+
+@app.route("/api/state-ag/complaints", methods=["POST"])
+@require_staff()
+def api_state_ag_complaints_create():
+    """Create a new AG complaint"""
+    from services.state_ag_service import get_state_ag_service
+
+    data = request.get_json()
+    required = ["client_id", "state_code", "complaint_type"]
+
+    for field in required:
+        if field not in data:
+            return (
+                jsonify(
+                    {"success": False, "error": f"Missing required field: {field}"}
+                ),
+                400,
+            )
+
+    with get_state_ag_service() as service:
+        result = service.create_complaint(
+            client_id=data["client_id"],
+            state_code=data["state_code"],
+            complaint_type=data["complaint_type"],
+            bureaus=data.get("bureaus"),
+            furnishers=data.get("furnishers"),
+            violation_types=data.get("violation_types"),
+            violation_summary=data.get("violation_summary"),
+            dispute_rounds=data.get("dispute_rounds", 0),
+            escalation_id=data.get("escalation_id"),
+            staff_id=session.get("user_id"),
+        )
+
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+
+@app.route("/api/state-ag/complaints/<int:complaint_id>", methods=["GET"])
+@require_staff()
+def api_state_ag_complaint_get(complaint_id):
+    """Get a single AG complaint"""
+    from services.state_ag_service import get_state_ag_service
+
+    with get_state_ag_service() as service:
+        complaint = service.get_complaint(complaint_id)
+        if complaint:
+            return jsonify({"success": True, "complaint": complaint})
+        return jsonify({"success": False, "error": "Complaint not found"}), 404
+
+
+@app.route("/api/state-ag/complaints/<int:complaint_id>", methods=["PUT"])
+@require_staff()
+def api_state_ag_complaint_update(complaint_id):
+    """Update an AG complaint"""
+    from services.state_ag_service import get_state_ag_service
+
+    data = request.get_json()
+
+    with get_state_ag_service() as service:
+        result = service.update_complaint(complaint_id, data)
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/state-ag/complaints/<int:complaint_id>/status", methods=["POST"])
+@require_staff()
+def api_state_ag_complaint_status(complaint_id):
+    """Update complaint status"""
+    from services.state_ag_service import get_state_ag_service
+
+    data = request.get_json()
+    new_status = data.get("status")
+    notes = data.get("notes")
+
+    if not new_status:
+        return jsonify({"success": False, "error": "Status required"}), 400
+
+    with get_state_ag_service() as service:
+        result = service.update_complaint_status(complaint_id, new_status, notes)
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/state-ag/complaints/<int:complaint_id>/file", methods=["POST"])
+@require_staff()
+def api_state_ag_complaint_file(complaint_id):
+    """Mark complaint as filed"""
+    from services.state_ag_service import get_state_ag_service
+
+    data = request.get_json()
+    filed_method = data.get("filed_method")
+
+    if not filed_method:
+        return jsonify({"success": False, "error": "Filing method required"}), 400
+
+    with get_state_ag_service() as service:
+        result = service.file_complaint(
+            complaint_id,
+            filed_method=filed_method,
+            tracking_number=data.get("tracking_number"),
+            confirmation_number=data.get("confirmation_number"),
+        )
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/state-ag/complaints/<int:complaint_id>/resolve", methods=["POST"])
+@require_staff()
+def api_state_ag_complaint_resolve(complaint_id):
+    """Resolve a complaint"""
+    from services.state_ag_service import get_state_ag_service
+
+    data = request.get_json()
+    resolution_type = data.get("resolution_type")
+
+    if not resolution_type:
+        return jsonify({"success": False, "error": "Resolution type required"}), 400
+
+    with get_state_ag_service() as service:
+        result = service.resolve_complaint(
+            complaint_id,
+            resolution_type=resolution_type,
+            resolution_summary=data.get("resolution_summary"),
+            damages_recovered=data.get("damages_recovered"),
+        )
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/state-ag/complaints/<int:complaint_id>/letter", methods=["GET"])
+@require_staff()
+def api_state_ag_complaint_letter(complaint_id):
+    """Generate complaint letter"""
+    from services.state_ag_service import get_state_ag_service
+
+    use_ai = request.args.get("use_ai", "true").lower() == "true"
+
+    with get_state_ag_service() as service:
+        result = service.generate_complaint_letter(complaint_id, use_ai=use_ai)
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/state-ag/stats", methods=["GET"])
+@require_staff()
+def api_state_ag_stats():
+    """Get AG complaint statistics"""
+    from services.state_ag_service import get_state_ag_service
+
+    with get_state_ag_service() as service:
+        result = service.get_complaint_statistics()
+        return jsonify(result)
+
+
+@app.route("/api/state-ag/overdue", methods=["GET"])
+@require_staff()
+def api_state_ag_overdue():
+    """Get overdue complaints"""
+    from services.state_ag_service import get_state_ag_service
+
+    days = int(request.args.get("days", 60))
+
+    with get_state_ag_service() as service:
+        complaints = service.get_overdue_complaints(days)
+        return jsonify({"success": True, "complaints": complaints})
+
+
+@app.route("/api/state-ag/escalation-candidates", methods=["GET"])
+@require_staff()
+def api_state_ag_escalation_candidates():
+    """Get clients who are candidates for AG escalation"""
+    from services.state_ag_service import get_state_ag_service
+
+    min_rounds = int(request.args.get("min_rounds", 2))
+
+    with get_state_ag_service() as service:
+        candidates = service.get_escalation_candidates(min_rounds)
+        return jsonify({"success": True, "candidates": candidates})
+
+
+@app.route("/api/clients/<int:client_id>/ag-complaints", methods=["GET"])
+@require_staff()
+def api_client_ag_complaints(client_id):
+    """Get all AG complaints for a client"""
+    from services.state_ag_service import get_state_ag_service
+
+    with get_state_ag_service() as service:
+        complaints = service.get_client_complaints(client_id)
+        return jsonify({"success": True, "complaints": complaints})
+
+
+# END STATE ATTORNEY GENERAL API
+# ===========================================================================
+
+
+# ===========================================================================
+# ATTORNEY REFERRAL HANDOFF API
+# ISSUE-012: Attorney referral network and litigation handoff
+# ===========================================================================
+
+
+@app.route("/dashboard/attorney-referrals")
+@require_staff()
+def dashboard_attorney_referrals():
+    """Attorney referral management dashboard"""
+    return render_template("attorney_referrals.html", active_page="attorney-referrals")
+
+
+@app.route("/api/attorney-network", methods=["GET"])
+@require_staff()
+def api_attorney_network_list():
+    """List all attorneys in the network"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    status = request.args.get("status")
+    state = request.args.get("state")
+    practice_area = request.args.get("practice_area")
+    is_preferred = request.args.get("is_preferred")
+
+    filters = {}
+    if status:
+        filters["status"] = status
+    if state:
+        filters["state"] = state
+    if practice_area:
+        filters["practice_area"] = practice_area
+    if is_preferred:
+        filters["is_preferred"] = is_preferred.lower() == "true"
+
+    with get_attorney_referral_service() as service:
+        attorneys = service.get_all_attorneys(filters)
+        return jsonify(
+            {"success": True, "attorneys": attorneys, "count": len(attorneys)}
+        )
+
+
+@app.route("/api/attorney-network", methods=["POST"])
+@require_staff()
+def api_attorney_network_create():
+    """Create a new attorney in the network"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    required = ["first_name", "last_name", "email"]
+    missing = [f for f in required if not data.get(f)]
+    if missing:
+        return jsonify({"success": False, "error": f"Missing fields: {missing}"}), 400
+
+    with get_attorney_referral_service() as service:
+        result = service.create_attorney(
+            first_name=data["first_name"],
+            last_name=data["last_name"],
+            email=data["email"],
+            bar_number=data.get("bar_number"),
+            bar_state=data.get("bar_state"),
+            firm_name=data.get("firm_name"),
+            phone=data.get("phone"),
+            practice_areas=data.get("practice_areas"),
+            states_licensed=data.get("states_licensed"),
+            fee_structure=data.get("fee_structure"),
+            contingency_percent=data.get("contingency_percent"),
+            referral_fee_percent=data.get("referral_fee_percent"),
+            notes=data.get("notes"),
+        )
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+
+@app.route("/api/attorney-network/<int:attorney_id>", methods=["GET"])
+@require_staff()
+def api_attorney_network_get(attorney_id):
+    """Get a single attorney by ID"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    with get_attorney_referral_service() as service:
+        attorney = service.get_attorney(attorney_id)
+        if attorney:
+            return jsonify({"success": True, "attorney": attorney})
+        return jsonify({"success": False, "error": "Attorney not found"}), 404
+
+
+@app.route("/api/attorney-network/<int:attorney_id>", methods=["PUT"])
+@require_staff()
+def api_attorney_network_update(attorney_id):
+    """Update an attorney's information"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    with get_attorney_referral_service() as service:
+        result = service.update_attorney(attorney_id, data)
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/attorney-network/search", methods=["GET"])
+@require_staff()
+def api_attorney_network_search():
+    """Search for attorneys matching client criteria"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    client_state = request.args.get("state")
+    violation_types = request.args.getlist("violations")
+    min_acceptance_rate = request.args.get("min_acceptance_rate", type=float)
+
+    with get_attorney_referral_service() as service:
+        matches = service.find_matching_attorneys(
+            client_state=client_state,
+            violation_types=violation_types,
+            min_acceptance_rate=min_acceptance_rate,
+        )
+        return jsonify({"success": True, "attorneys": matches, "count": len(matches)})
+
+
+@app.route("/api/attorney-network/<int:attorney_id>/referrals", methods=["GET"])
+@require_staff()
+def api_attorney_referrals_by_attorney(attorney_id):
+    """Get all referrals for a specific attorney"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    with get_attorney_referral_service() as service:
+        referrals = service.get_attorney_referrals(attorney_id)
+        return jsonify(
+            {"success": True, "referrals": referrals, "count": len(referrals)}
+        )
+
+
+@app.route("/api/referrals", methods=["GET"])
+@require_staff()
+def api_referrals_list():
+    """List all attorney referrals"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    status = request.args.get("status")
+
+    with get_attorney_referral_service() as service:
+        if status == "pending":
+            referrals = service.get_pending_referrals()
+        elif status == "active":
+            referrals = service.get_active_cases()
+        else:
+            # Get all referrals using statistics
+            stats = service.get_referral_statistics()
+            referrals = []
+            pending = service.get_pending_referrals()
+            active = service.get_active_cases()
+            referrals.extend(pending)
+            referrals.extend(active)
+        return jsonify(
+            {"success": True, "referrals": referrals, "count": len(referrals)}
+        )
+
+
+@app.route("/api/referrals", methods=["POST"])
+@require_staff()
+def api_referrals_create():
+    """Create a new attorney referral"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    required = ["client_id", "attorney_id"]
+    missing = [f for f in required if not data.get(f)]
+    if missing:
+        return jsonify({"success": False, "error": f"Missing fields: {missing}"}), 400
+
+    with get_attorney_referral_service() as service:
+        result = service.create_referral(
+            client_id=data["client_id"],
+            attorney_id=data["attorney_id"],
+            violation_types=data.get("violation_types"),
+            bureaus_involved=data.get("bureaus_involved"),
+            furnishers_involved=data.get("furnishers_involved"),
+            notes=data.get("notes"),
+        )
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+
+@app.route("/api/referrals/<int:referral_id>", methods=["GET"])
+@require_staff()
+def api_referrals_get(referral_id):
+    """Get a single referral by ID"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    with get_attorney_referral_service() as service:
+        referral = service.get_referral(referral_id)
+        if referral:
+            return jsonify({"success": True, "referral": referral})
+        return jsonify({"success": False, "error": "Referral not found"}), 404
+
+
+@app.route("/api/referrals/<int:referral_id>", methods=["PUT"])
+@require_staff()
+def api_referrals_update(referral_id):
+    """Update a referral"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    with get_attorney_referral_service() as service:
+        result = service.update_referral(referral_id, data)
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/referrals/<int:referral_id>/status", methods=["POST"])
+@require_staff()
+def api_referrals_update_status(referral_id):
+    """Update referral status"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    data = request.get_json()
+    if not data or not data.get("status"):
+        return jsonify({"success": False, "error": "Status is required"}), 400
+
+    with get_attorney_referral_service() as service:
+        result = service.update_referral_status(
+            referral_id=referral_id,
+            new_status=data["status"],
+            notes=data.get("notes"),
+        )
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/referrals/<int:referral_id>/response", methods=["POST"])
+@require_staff()
+def api_referrals_record_response(referral_id):
+    """Record attorney's response to referral"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    data = request.get_json()
+    if not data or "accepted" not in data:
+        return (
+            jsonify({"success": False, "error": "Response (accepted) is required"}),
+            400,
+        )
+
+    with get_attorney_referral_service() as service:
+        result = service.mark_attorney_response(
+            referral_id=referral_id,
+            accepted=data["accepted"],
+            decline_reason=data.get("decline_reason"),
+        )
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/referrals/<int:referral_id>/file", methods=["POST"])
+@require_staff()
+def api_referrals_record_filed(referral_id):
+    """Record that case was filed in court"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    data = request.get_json()
+    court_case_number = data.get("court_case_number") if data else None
+
+    with get_attorney_referral_service() as service:
+        result = service.record_case_filed(
+            referral_id=referral_id,
+            court_case_number=court_case_number,
+        )
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/referrals/<int:referral_id>/settle", methods=["POST"])
+@require_staff()
+def api_referrals_record_settlement(referral_id):
+    """Record settlement details"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    data = request.get_json()
+    if not data or not data.get("settlement_amount"):
+        return (
+            jsonify({"success": False, "error": "Settlement amount is required"}),
+            400,
+        )
+
+    with get_attorney_referral_service() as service:
+        result = service.record_settlement(
+            referral_id=referral_id,
+            settlement_amount=data["settlement_amount"],
+            statutory_damages=data.get("statutory_damages"),
+            actual_damages=data.get("actual_damages"),
+            punitive_damages=data.get("punitive_damages"),
+            attorney_fees=data.get("attorney_fees"),
+        )
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/referrals/<int:referral_id>/fee", methods=["POST"])
+@require_staff()
+def api_referrals_record_fee(referral_id):
+    """Record referral fee received"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    data = request.get_json()
+    if not data or not data.get("amount"):
+        return jsonify({"success": False, "error": "Fee amount is required"}), 400
+
+    with get_attorney_referral_service() as service:
+        result = service.record_fee_received(
+            referral_id=referral_id,
+            amount=data["amount"],
+        )
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/referrals/<int:referral_id>/case-package", methods=["POST"])
+@require_staff()
+def api_referrals_generate_package(referral_id):
+    """Generate case package with evidence and timeline"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    with get_attorney_referral_service() as service:
+        result = service.generate_case_package(referral_id)
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+
+@app.route("/api/referrals/stats", methods=["GET"])
+@require_staff()
+def api_referrals_statistics():
+    """Get referral statistics"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    with get_attorney_referral_service() as service:
+        stats = service.get_referral_statistics()
+        return jsonify({"success": True, "statistics": stats})
+
+
+@app.route("/api/referrals/pending", methods=["GET"])
+@require_staff()
+def api_referrals_pending():
+    """Get pending referrals"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    with get_attorney_referral_service() as service:
+        pending = service.get_pending_referrals()
+        return jsonify({"success": True, "referrals": pending, "count": len(pending)})
+
+
+@app.route("/api/referrals/active", methods=["GET"])
+@require_staff()
+def api_referrals_active():
+    """Get active cases"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    with get_attorney_referral_service() as service:
+        active = service.get_active_cases()
+        return jsonify({"success": True, "referrals": active, "count": len(active)})
+
+
+@app.route("/api/clients/<int:client_id>/referrals", methods=["GET"])
+@require_staff()
+def api_client_referrals(client_id):
+    """Get all attorney referrals for a client"""
+    from services.attorney_referral_service import get_attorney_referral_service
+
+    with get_attorney_referral_service() as service:
+        referrals = service.get_client_referrals(client_id)
+        return jsonify(
+            {"success": True, "referrals": referrals, "count": len(referrals)}
+        )
+
+
+@app.route("/api/referrals/options", methods=["GET"])
+@require_staff()
+def api_referrals_options():
+    """Get dropdown options for referral forms"""
+    from services.attorney_referral_service import (
+        FEE_ARRANGEMENTS,
+        PRACTICE_AREAS,
+        REFERRAL_STATUSES,
+        VIOLATION_TYPES,
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "options": {
+                "statuses": REFERRAL_STATUSES,
+                "violation_types": VIOLATION_TYPES,
+                "fee_arrangements": FEE_ARRANGEMENTS,
+                "practice_areas": PRACTICE_AREAS,
+            },
+        }
+    )
+
+
+# END ATTORNEY REFERRAL API
+# ===========================================================================
+
+
+# ===========================================================================
+# RESPA QWR (Qualified Written Request) API ENDPOINTS
+# ===========================================================================
+
+
+@app.route("/dashboard/respa-qwr", methods=["GET"])
+@require_staff()
+def dashboard_respa_qwr():
+    """RESPA QWR Dashboard"""
+    return render_template("respa_qwr.html", active_page="respa-qwr")
+
+
+@app.route("/api/respa-qwr", methods=["GET"])
+@require_staff()
+def api_respa_qwr_list():
+    """List QWR requests with optional filters"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    client_id = request.args.get("client_id", type=int)
+    status = request.args.get("status")
+    qwr_type = request.args.get("qwr_type")
+    has_violation = request.args.get("has_violation")
+    servicer_name = request.args.get("servicer_name")
+    limit = request.args.get("limit", 100, type=int)
+    offset = request.args.get("offset", 0, type=int)
+
+    has_violation_bool = None
+    if has_violation == "true":
+        has_violation_bool = True
+    elif has_violation == "false":
+        has_violation_bool = False
+
+    with get_respa_qwr_service() as service:
+        result = service.list_qwr_requests(
+            client_id=client_id,
+            status=status,
+            qwr_type=qwr_type,
+            has_violation=has_violation_bool,
+            servicer_name=servicer_name,
+            limit=limit,
+            offset=offset,
+        )
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr", methods=["POST"])
+@require_staff()
+def api_respa_qwr_create():
+    """Create a new QWR request"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json()
+
+    required = ["client_id", "servicer_name", "qwr_type", "request_reason"]
+    for field in required:
+        if not data.get(field):
+            return (
+                jsonify(
+                    {"success": False, "error": f"Missing required field: {field}"}
+                ),
+                400,
+            )
+
+    with get_respa_qwr_service() as service:
+        result = service.create_qwr_request(
+            client_id=data["client_id"],
+            servicer_name=data["servicer_name"],
+            qwr_type=data["qwr_type"],
+            request_reason=data["request_reason"],
+            loan_number=data.get("loan_number"),
+            property_address=data.get("property_address"),
+            servicer_address=data.get("servicer_address"),
+            servicer_phone=data.get("servicer_phone"),
+            servicer_email=data.get("servicer_email"),
+            original_lender=data.get("original_lender"),
+            original_loan_amount=data.get("original_loan_amount"),
+            current_principal_balance=data.get("current_principal_balance"),
+            loan_type=data.get("loan_type"),
+            specific_issues=data.get("specific_issues"),
+            documents_requested=data.get("documents_requested"),
+            disputed_fees=data.get("disputed_fees"),
+            disputed_payments=data.get("disputed_payments"),
+            escrow_shortage_dispute=data.get("escrow_shortage_dispute", False),
+            payment_misapplication_dispute=data.get(
+                "payment_misapplication_dispute", False
+            ),
+            dispute_item_id=data.get("dispute_item_id"),
+            assigned_staff_id=data.get("assigned_staff_id"),
+            notes=data.get("notes"),
+        )
+        return jsonify(result), 201 if result.get("success") else 400
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>", methods=["GET"])
+@require_staff()
+def api_respa_qwr_get(qwr_id):
+    """Get a single QWR request"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    with get_respa_qwr_service() as service:
+        result = service.get_qwr_request(qwr_id)
+        return jsonify(result), 200 if result.get("success") else 404
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>", methods=["PUT"])
+@require_staff()
+def api_respa_qwr_update(qwr_id):
+    """Update a QWR request"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json()
+
+    with get_respa_qwr_service() as service:
+        result = service.update_qwr_request(qwr_id, **data)
+        return jsonify(result), 200 if result.get("success") else 400
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>", methods=["DELETE"])
+@require_staff()
+def api_respa_qwr_delete(qwr_id):
+    """Delete a QWR request (only if pending)"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    with get_respa_qwr_service() as service:
+        result = service.delete_qwr_request(qwr_id)
+        return jsonify(result), 200 if result.get("success") else 400
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>/send", methods=["POST"])
+@require_staff()
+def api_respa_qwr_mark_sent(qwr_id):
+    """Mark a QWR as sent"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json()
+
+    if not data.get("send_method"):
+        return jsonify({"success": False, "error": "send_method is required"}), 400
+
+    sent_at = None
+    if data.get("sent_at"):
+        try:
+            sent_at = datetime.fromisoformat(data["sent_at"].replace("Z", "+00:00"))
+        except ValueError:
+            return jsonify({"success": False, "error": "Invalid sent_at format"}), 400
+
+    with get_respa_qwr_service() as service:
+        result = service.mark_sent(
+            qwr_id,
+            send_method=data["send_method"],
+            sent_at=sent_at,
+            tracking_number=data.get("tracking_number"),
+        )
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>/delivery", methods=["POST"])
+@require_staff()
+def api_respa_qwr_confirm_delivery(qwr_id):
+    """Confirm delivery and calculate RESPA deadlines"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json() or {}
+
+    delivery_date = None
+    if data.get("delivery_date"):
+        try:
+            delivery_date = date.fromisoformat(data["delivery_date"])
+        except ValueError:
+            return (
+                jsonify({"success": False, "error": "Invalid delivery_date format"}),
+                400,
+            )
+
+    with get_respa_qwr_service() as service:
+        result = service.confirm_delivery(qwr_id, delivery_date=delivery_date)
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>/acknowledgment", methods=["POST"])
+@require_staff()
+def api_respa_qwr_record_acknowledgment(qwr_id):
+    """Record acknowledgment received from servicer"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json() or {}
+
+    acknowledgment_date = None
+    if data.get("acknowledgment_date"):
+        try:
+            acknowledgment_date = datetime.fromisoformat(
+                data["acknowledgment_date"].replace("Z", "+00:00")
+            )
+        except ValueError:
+            return (
+                jsonify(
+                    {"success": False, "error": "Invalid acknowledgment_date format"}
+                ),
+                400,
+            )
+
+    with get_respa_qwr_service() as service:
+        result = service.record_acknowledgment(
+            qwr_id,
+            acknowledgment_date=acknowledgment_date,
+            document_path=data.get("document_path"),
+        )
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>/extension", methods=["POST"])
+@require_staff()
+def api_respa_qwr_record_extension(qwr_id):
+    """Record that servicer sent extension notice"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json() or {}
+
+    extended_deadline = None
+    if data.get("extended_deadline"):
+        try:
+            extended_deadline = date.fromisoformat(data["extended_deadline"])
+        except ValueError:
+            return (
+                jsonify(
+                    {"success": False, "error": "Invalid extended_deadline format"}
+                ),
+                400,
+            )
+
+    with get_respa_qwr_service() as service:
+        result = service.record_extension_notice(
+            qwr_id, extended_deadline=extended_deadline
+        )
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>/response", methods=["POST"])
+@require_staff()
+def api_respa_qwr_record_response(qwr_id):
+    """Record response received from servicer"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json()
+
+    if not data.get("response_type"):
+        return jsonify({"success": False, "error": "response_type is required"}), 400
+
+    response_received_at = None
+    if data.get("response_received_at"):
+        try:
+            response_received_at = datetime.fromisoformat(
+                data["response_received_at"].replace("Z", "+00:00")
+            )
+        except ValueError:
+            return (
+                jsonify(
+                    {"success": False, "error": "Invalid response_received_at format"}
+                ),
+                400,
+            )
+
+    with get_respa_qwr_service() as service:
+        result = service.record_response(
+            qwr_id,
+            response_type=data["response_type"],
+            response_received_at=response_received_at,
+            response_document_path=data.get("response_document_path"),
+            payment_history_received=data.get("payment_history_received", False),
+            escrow_analysis_received=data.get("escrow_analysis_received", False),
+            fee_breakdown_received=data.get("fee_breakdown_received", False),
+            payment_application_records_received=data.get(
+                "payment_application_records_received", False
+            ),
+            loan_modification_docs_received=data.get(
+                "loan_modification_docs_received", False
+            ),
+            documents_received=data.get("documents_received"),
+            notes=data.get("notes"),
+        )
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>/violation", methods=["POST"])
+@require_staff()
+def api_respa_qwr_flag_violation(qwr_id):
+    """Flag a RESPA violation"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json()
+
+    if not data.get("violation_type"):
+        return jsonify({"success": False, "error": "violation_type is required"}), 400
+
+    with get_respa_qwr_service() as service:
+        result = service.flag_violation(
+            qwr_id,
+            violation_type=data["violation_type"],
+            violation_notes=data.get("violation_notes"),
+            actual_damages=data.get("actual_damages"),
+            statutory_damages=data.get("statutory_damages"),
+        )
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>/resolution", methods=["POST"])
+@require_staff()
+def api_respa_qwr_record_resolution(qwr_id):
+    """Record resolution of the QWR"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json()
+
+    if not data.get("resolution_type"):
+        return jsonify({"success": False, "error": "resolution_type is required"}), 400
+
+    with get_respa_qwr_service() as service:
+        result = service.record_resolution(
+            qwr_id,
+            resolution_type=data["resolution_type"],
+            resolution_notes=data.get("resolution_notes"),
+            amount_refunded=data.get("amount_refunded"),
+            fees_waived=data.get("fees_waived"),
+            account_corrected=data.get("account_corrected", False),
+        )
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>/close", methods=["POST"])
+@require_staff()
+def api_respa_qwr_close(qwr_id):
+    """Close a QWR request"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json() or {}
+
+    with get_respa_qwr_service() as service:
+        result = service.close_qwr(qwr_id, reason=data.get("reason"))
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>/escalate/cfpb", methods=["POST"])
+@require_staff()
+def api_respa_qwr_escalate_cfpb(qwr_id):
+    """Escalate QWR to CFPB"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json() or {}
+
+    with get_respa_qwr_service() as service:
+        result = service.escalate_to_cfpb(
+            qwr_id, cfpb_complaint_id=data.get("cfpb_complaint_id")
+        )
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>/escalate/state-ag", methods=["POST"])
+@require_staff()
+def api_respa_qwr_escalate_state_ag(qwr_id):
+    """Escalate QWR to State Attorney General"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json() or {}
+
+    with get_respa_qwr_service() as service:
+        result = service.escalate_to_state_ag(
+            qwr_id, state_ag_complaint_id=data.get("state_ag_complaint_id")
+        )
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/<int:qwr_id>/escalate/attorney", methods=["POST"])
+@require_staff()
+def api_respa_qwr_escalate_attorney(qwr_id):
+    """Escalate QWR to attorney for litigation"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    data = request.get_json() or {}
+
+    with get_respa_qwr_service() as service:
+        result = service.escalate_to_attorney(
+            qwr_id, attorney_referral_id=data.get("attorney_referral_id")
+        )
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/deadlines", methods=["GET"])
+@require_staff()
+def api_respa_qwr_check_deadlines():
+    """Check for QWRs with approaching or missed deadlines"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    with get_respa_qwr_service() as service:
+        result = service.check_deadlines()
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/auto-flag-violations", methods=["POST"])
+@require_staff()
+def api_respa_qwr_auto_flag_violations():
+    """Automatically flag RESPA violations for missed deadlines"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    with get_respa_qwr_service() as service:
+        result = service.auto_flag_violations()
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/stats", methods=["GET"])
+@require_staff()
+def api_respa_qwr_statistics():
+    """Get QWR statistics"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    client_id = request.args.get("client_id", type=int)
+
+    with get_respa_qwr_service() as service:
+        result = service.get_statistics(client_id=client_id)
+        return jsonify(result)
+
+
+@app.route("/api/respa-qwr/options", methods=["GET"])
+@require_staff()
+def api_respa_qwr_options():
+    """Get dropdown options for QWR forms"""
+    from services.respa_qwr_service import (
+        LOAN_TYPES,
+        MAJOR_SERVICERS,
+        QWR_STATUSES,
+        QWR_TYPES,
+        RESOLUTION_TYPES,
+        RESPONSE_TYPES,
+        SEND_METHODS,
+        VIOLATION_TYPES,
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "options": {
+                "statuses": QWR_STATUSES,
+                "qwr_types": QWR_TYPES,
+                "violation_types": VIOLATION_TYPES,
+                "response_types": RESPONSE_TYPES,
+                "resolution_types": RESOLUTION_TYPES,
+                "loan_types": LOAN_TYPES,
+                "send_methods": SEND_METHODS,
+                "major_servicers": MAJOR_SERVICERS,
+            },
+        }
+    )
+
+
+@app.route("/api/clients/<int:client_id>/respa-qwr", methods=["GET"])
+@require_staff()
+def api_client_respa_qwr(client_id):
+    """Get all QWR requests for a client"""
+    from services.respa_qwr_service import get_respa_qwr_service
+
+    with get_respa_qwr_service() as service:
+        result = service.list_qwr_requests(client_id=client_id)
+        return jsonify(result)
+
+
+# END RESPA QWR API
 # ===========================================================================
 
 

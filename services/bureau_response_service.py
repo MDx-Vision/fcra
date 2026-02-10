@@ -3,19 +3,29 @@ Bureau Response Tracking Service
 
 Tracks disputes sent to credit bureaus and monitors response status.
 FCRA requires CRAs to respond within 30 days (45 for complex disputes).
+
+ISSUE-010: Enhanced with proper error handling, OCR integration,
+and automated response parsing.
 """
 
+import logging
+import os
+import re
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from database import (
     BureauDisputeTracking,
     Case,
     Client,
+    ClientUpload,
     CRAResponse,
+    CRAResponseOCR,
     DisputeItem,
     get_db,
 )
+
+logger = logging.getLogger(__name__)
 
 # Bureau constants
 BUREAUS = ["Equifax", "Experian", "TransUnion"]
@@ -41,12 +51,109 @@ RESPONSE_FRIVOLOUS = "frivolous"
 RESPONSE_NO_RESPONSE = "no_response"
 RESPONSE_INVESTIGATING = "investigating"
 
+# Error codes for structured error responses
+ERROR_TRACKING_NOT_FOUND = "TRACKING_NOT_FOUND"
+ERROR_CRA_RESPONSE_NOT_FOUND = "CRA_RESPONSE_NOT_FOUND"
+ERROR_CLIENT_NOT_FOUND = "CLIENT_NOT_FOUND"
+ERROR_FILE_NOT_FOUND = "FILE_NOT_FOUND"
+ERROR_OCR_FAILED = "OCR_FAILED"
+ERROR_PARSE_FAILED = "PARSE_FAILED"
+ERROR_DATABASE = "DATABASE_ERROR"
+ERROR_INVALID_INPUT = "INVALID_INPUT"
+
+# Response letter keywords for parsing
+DELETION_KEYWORDS = [
+    "has been deleted",
+    "have been deleted",
+    "removed from your credit file",
+    "removed from your credit report",
+    "information has been removed",
+    "account deleted",
+    "tradeline deleted",
+    "inquiry removed",
+    "successfully removed",
+    "no longer appears",
+    "been removed from your file",
+]
+
+VERIFIED_KEYWORDS = [
+    "has been verified",
+    "have been verified",
+    "verified as accurate",
+    "investigation complete",
+    "information is accurate",
+    "previously reported correctly",
+    "remains unchanged",
+    "verified and will remain",
+    "verified as reported",
+    "confirmed as accurate",
+]
+
+UPDATE_KEYWORDS = [
+    "has been updated",
+    "have been updated",
+    "information has been modified",
+    "corrected as follows",
+    "updated to reflect",
+    "has been corrected",
+    "modified on your credit file",
+    "changed to show",
+    "account updated",
+]
+
+FRIVOLOUS_KEYWORDS = [
+    "frivolous",
+    "substantially similar",
+    "previously investigated",
+    "no new information",
+    "lacking sufficient",
+    "does not contain sufficient",
+    "unable to process",
+    "provide additional documentation",
+]
+
+INVESTIGATING_KEYWORDS = [
+    "currently investigating",
+    "investigation in progress",
+    "additional time",
+    "extended investigation",
+    "complex investigation",
+    "45-day",
+    "require more time",
+]
+
+# Bureau-specific identifiers
+BUREAU_IDENTIFIERS = {
+    "Equifax": ["equifax", "efx", "p.o. box 740241", "atlanta, ga"],
+    "Experian": ["experian", "p.o. box 4500", "allen, tx", "p.o. box 9554"],
+    "TransUnion": ["transunion", "p.o. box 2000", "chester, pa", "p.o. box 1000"],
+}
+
+
+class BureauResponseServiceError(Exception):
+    """Custom exception for bureau response service errors."""
+
+    def __init__(self, message: str, error_code: str, details: Dict[str, Any] = None):
+        self.message = message
+        self.error_code = error_code
+        self.details = details or {}
+        super().__init__(self.message)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "success": False,
+            "error": self.message,
+            "error_code": self.error_code,
+            "details": self.details,
+        }
+
 
 class BureauResponseService:
     """Service for tracking bureau dispute responses"""
 
-    def __init__(self):
-        self.db = None
+    def __init__(self, session=None):
+        self.db = session
+        self._owns_session = session is None
 
     def _get_db(self):
         if not self.db:
@@ -54,9 +161,39 @@ class BureauResponseService:
         return self.db
 
     def _close_db(self):
-        if self.db:
+        if self.db and self._owns_session:
             self.db.close()
             self.db = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._close_db()
+
+    def _error_response(
+        self, message: str, error_code: str, details: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """Create a standardized error response."""
+        logger.error(f"BureauResponseService: {error_code} - {message}")
+        return {
+            "success": False,
+            "error": message,
+            "error_code": error_code,
+            "details": details or {},
+        }
+
+    def _success_response(
+        self, data: Any = None, message: str = None, **kwargs
+    ) -> Dict[str, Any]:
+        """Create a standardized success response."""
+        response = {"success": True}
+        if data is not None:
+            response["data"] = data
+        if message:
+            response["message"] = message
+        response.update(kwargs)
+        return response
 
     # =========================================================================
     # CREATE / TRACK DISPUTES
@@ -975,7 +1112,8 @@ class BureauResponseService:
 
             return breakdown
 
-        except:
+        except Exception as e:
+            logger.error(f"get_response_type_breakdown error: {e}")
             return {
                 "deleted": 0,
                 "updated": 0,
@@ -983,3 +1121,511 @@ class BureauResponseService:
                 "mixed": 0,
                 "frivolous": 0,
             }
+
+    # =========================================================================
+    # OCR INTEGRATION & RESPONSE PARSING (ISSUE-010)
+    # =========================================================================
+
+    def parse_response_letter(
+        self,
+        file_path: str,
+        tracking_id: int = None,
+    ) -> Dict[str, Any]:
+        """
+        Parse a bureau response letter using OCR and extract key information.
+
+        Args:
+            file_path: Path to the response letter (PDF or image)
+            tracking_id: Optional tracking ID to link the response
+
+        Returns:
+            Dict with parsed data: bureau, response_type, items, dates, raw_text
+        """
+        try:
+            # Import OCR service
+            from services.ocr_service import (
+                _extract_text_from_pdf,
+                extract_cra_response_data,
+            )
+
+            # Check file exists
+            if not os.path.exists(file_path):
+                return self._error_response(
+                    f"File not found: {file_path}",
+                    ERROR_FILE_NOT_FOUND,
+                    {"file_path": file_path},
+                )
+
+            # Extract text based on file type
+            file_ext = file_path.lower().split(".")[-1]
+            raw_text = None
+
+            if file_ext == "pdf":
+                raw_text = _extract_text_from_pdf(file_path)
+            elif file_ext in ["jpg", "jpeg", "png", "gif", "webp"]:
+                # Use Claude OCR for images
+                result = extract_cra_response_data(file_path, file_ext)
+                if result.get("raw_text"):
+                    raw_text = result.get("raw_text")
+                elif result.get("success"):
+                    # Return the parsed result directly
+                    return self._success_response(
+                        data=result, message="Response letter parsed successfully"
+                    )
+
+            if not raw_text:
+                # Try Claude OCR as fallback
+                result = extract_cra_response_data(file_path, file_ext)
+                if result.get("success"):
+                    return self._success_response(
+                        data=result, message="Response letter parsed with OCR"
+                    )
+                return self._error_response(
+                    "Failed to extract text from document",
+                    ERROR_OCR_FAILED,
+                    {"file_path": file_path},
+                )
+
+            # Parse the extracted text
+            parsed = self._parse_response_text(raw_text)
+            parsed["raw_text"] = raw_text
+            parsed["file_path"] = file_path
+
+            # If tracking_id provided, link the response
+            if tracking_id:
+                self._link_parsed_response(tracking_id, parsed)
+
+            return self._success_response(
+                data=parsed, message="Response letter parsed successfully"
+            )
+
+        except Exception as e:
+            logger.error(f"parse_response_letter error: {e}")
+            return self._error_response(
+                f"Failed to parse response letter: {str(e)}",
+                ERROR_PARSE_FAILED,
+                {"file_path": file_path, "exception": str(e)},
+            )
+
+    def _parse_response_text(self, text: str) -> Dict[str, Any]:
+        """
+        Parse raw text from a bureau response letter.
+
+        Extracts:
+        - Bureau name
+        - Response type (deleted, verified, updated, etc.)
+        - Account numbers mentioned
+        - Dates
+        - Item counts
+        """
+        text_lower = text.lower()
+        result = {
+            "bureau": None,
+            "response_type": None,
+            "items_deleted": 0,
+            "items_updated": 0,
+            "items_verified": 0,
+            "items_investigating": 0,
+            "account_numbers": [],
+            "dates_found": [],
+            "is_frivolous": False,
+            "requires_follow_up": False,
+            "confidence_score": 0.0,
+        }
+
+        # Identify bureau
+        result["bureau"] = self._identify_bureau(text_lower)
+
+        # Count keyword matches for each response type
+        deleted_score = sum(1 for kw in DELETION_KEYWORDS if kw in text_lower)
+        verified_score = sum(1 for kw in VERIFIED_KEYWORDS if kw in text_lower)
+        updated_score = sum(1 for kw in UPDATE_KEYWORDS if kw in text_lower)
+        frivolous_score = sum(1 for kw in FRIVOLOUS_KEYWORDS if kw in text_lower)
+        investigating_score = sum(
+            1 for kw in INVESTIGATING_KEYWORDS if kw in text_lower
+        )
+
+        # Determine primary response type
+        scores = {
+            RESPONSE_DELETED: deleted_score,
+            RESPONSE_VERIFIED: verified_score,
+            RESPONSE_UPDATED: updated_score,
+            RESPONSE_FRIVOLOUS: frivolous_score,
+            RESPONSE_INVESTIGATING: investigating_score,
+        }
+
+        max_score = max(scores.values())
+        if max_score > 0:
+            # Get the response type with highest score
+            result["response_type"] = max(scores, key=scores.get)
+
+            # Check for mixed responses
+            significant_scores = [s for s in scores.values() if s > 0]
+            if len(significant_scores) > 1:
+                # Multiple response types found
+                if deleted_score > 0 and verified_score > 0:
+                    result["response_type"] = RESPONSE_MIXED
+
+            # Calculate confidence
+            total_keywords = sum(scores.values())
+            if total_keywords > 0:
+                result["confidence_score"] = round(
+                    max_score / max(total_keywords, 1), 2
+                )
+
+        # Extract item counts from text
+        result.update(self._extract_item_counts(text))
+
+        # Check for frivolous flag
+        result["is_frivolous"] = frivolous_score > 0
+
+        # Check if follow-up required
+        if frivolous_score > 0 or investigating_score > 0 or verified_score > 0:
+            result["requires_follow_up"] = True
+
+        # Extract account numbers
+        result["account_numbers"] = self._extract_account_numbers(text)
+
+        # Extract dates
+        result["dates_found"] = self._extract_dates(text)
+
+        return result
+
+    def _identify_bureau(self, text_lower: str) -> Optional[str]:
+        """Identify which bureau sent the response."""
+        for bureau, identifiers in BUREAU_IDENTIFIERS.items():
+            if any(identifier in text_lower for identifier in identifiers):
+                return bureau
+        return None
+
+    def _extract_item_counts(self, text: str) -> Dict[str, int]:
+        """Extract item counts from response text."""
+        counts = {
+            "items_deleted": 0,
+            "items_updated": 0,
+            "items_verified": 0,
+            "items_investigating": 0,
+        }
+
+        # Common patterns for counts
+        text_lower = text.lower()
+
+        # Look for patterns like "3 items deleted" or "deleted 2 accounts"
+        patterns = [
+            (
+                r"(\d+)\s*(?:items?|accounts?|tradelines?)\s*(?:have been|were|has been)?\s*deleted",
+                "items_deleted",
+            ),
+            (r"deleted\s*(\d+)\s*(?:items?|accounts?|tradelines?)", "items_deleted"),
+            (
+                r"(\d+)\s*(?:items?|accounts?|tradelines?)\s*(?:have been|were|has been)?\s*(?:removed|erased)",
+                "items_deleted",
+            ),
+            (
+                r"(\d+)\s*(?:items?|accounts?|tradelines?)\s*(?:have been|were|has been)?\s*updated",
+                "items_updated",
+            ),
+            (r"updated\s*(\d+)\s*(?:items?|accounts?|tradelines?)", "items_updated"),
+            (
+                r"(\d+)\s*(?:items?|accounts?|tradelines?)\s*(?:have been|were|has been)?\s*verified",
+                "items_verified",
+            ),
+            (r"verified\s*(\d+)\s*(?:items?|accounts?|tradelines?)", "items_verified"),
+            (
+                r"(\d+)\s*(?:items?|accounts?|tradelines?)\s*(?:under|require|being)\s*investigation",
+                "items_investigating",
+            ),
+        ]
+
+        for pattern, field in patterns:
+            matches = re.findall(pattern, text_lower)
+            if matches:
+                counts[field] = max(counts[field], max(int(m) for m in matches))
+
+        # If no explicit counts, estimate from keyword frequency
+        if sum(counts.values()) == 0:
+            if any(kw in text_lower for kw in DELETION_KEYWORDS):
+                counts["items_deleted"] = 1
+            if any(kw in text_lower for kw in VERIFIED_KEYWORDS):
+                counts["items_verified"] = 1
+            if any(kw in text_lower for kw in UPDATE_KEYWORDS):
+                counts["items_updated"] = 1
+
+        return counts
+
+    def _extract_account_numbers(self, text: str) -> List[str]:
+        """Extract account numbers from response text."""
+        account_numbers = []
+
+        # Common account number patterns
+        patterns = [
+            r"account\s*#?\s*:?\s*([A-Z0-9]{4,20})",
+            r"account\s+number\s*:?\s*([A-Z0-9]{4,20})",
+            r"acct\s*#?\s*:?\s*([A-Z0-9]{4,20})",
+            r"reference\s*#?\s*:?\s*([A-Z0-9]{4,20})",
+            r"\b([0-9]{4}[X*]{4,}[0-9]{4})\b",  # Masked numbers like 1234XXXX5678
+            r"\b([X*]{4,}[0-9]{4})\b",  # Masked like XXXX1234
+        ]
+
+        for pattern in patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            account_numbers.extend(matches)
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique = []
+        for acct in account_numbers:
+            if acct.upper() not in seen:
+                seen.add(acct.upper())
+                unique.append(acct.upper())
+
+        return unique[:20]  # Limit to 20 accounts
+
+    def _extract_dates(self, text: str) -> List[str]:
+        """Extract dates from response text."""
+        dates = []
+
+        # Common date patterns
+        patterns = [
+            r"\b(\d{1,2}/\d{1,2}/\d{2,4})\b",  # MM/DD/YYYY
+            r"\b(\d{1,2}-\d{1,2}-\d{2,4})\b",  # MM-DD-YYYY
+            r"\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})\b",  # Month DD, YYYY
+            r"\b(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})\b",  # DD Month YYYY
+        ]
+
+        for pattern in patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            dates.extend(matches)
+
+        # Remove duplicates
+        return list(dict.fromkeys(dates))[:10]  # Limit to 10 dates
+
+    def _link_parsed_response(
+        self, tracking_id: int, parsed_data: Dict[str, Any]
+    ) -> bool:
+        """Link parsed response data to a tracking record."""
+        try:
+            db = self._get_db()
+            tracking = (
+                db.query(BureauDisputeTracking)
+                .filter(BureauDisputeTracking.id == tracking_id)
+                .first()
+            )
+
+            if not tracking:
+                return False
+
+            # Update tracking with parsed data
+            if parsed_data.get("response_type"):
+                tracking.response_type = parsed_data["response_type"]
+
+            tracking.items_deleted = parsed_data.get("items_deleted", 0)
+            tracking.items_updated = parsed_data.get("items_updated", 0)
+            tracking.items_verified = parsed_data.get("items_verified", 0)
+            tracking.items_investigating = parsed_data.get("items_investigating", 0)
+            tracking.response_received = True
+            tracking.response_date = date.today()
+            tracking.status = STATUS_RECEIVED
+
+            if parsed_data.get("requires_follow_up"):
+                tracking.follow_up_required = True
+
+            db.commit()
+            return True
+
+        except Exception as e:
+            logger.error(f"_link_parsed_response error: {e}")
+            if self.db:
+                self.db.rollback()
+            return False
+
+    def auto_parse_upload(
+        self,
+        upload_id: int,
+        tracking_id: int = None,
+    ) -> Dict[str, Any]:
+        """
+        Automatically parse a client upload as a bureau response.
+
+        Args:
+            upload_id: ClientUpload ID
+            tracking_id: Optional tracking ID to link
+
+        Returns:
+            Parsed response data or error
+        """
+        db = self._get_db()
+
+        try:
+            upload = db.query(ClientUpload).filter(ClientUpload.id == upload_id).first()
+
+            if not upload:
+                return self._error_response(
+                    "Upload not found", ERROR_FILE_NOT_FOUND, {"upload_id": upload_id}
+                )
+
+            if not upload.file_path:
+                return self._error_response(
+                    "Upload has no file path",
+                    ERROR_FILE_NOT_FOUND,
+                    {"upload_id": upload_id},
+                )
+
+            # Parse the file
+            result = self.parse_response_letter(upload.file_path, tracking_id)
+
+            if result.get("success"):
+                # Update upload with parsed info
+                parsed = result.get("data", {})
+                upload.ocr_processed = True
+                upload.ocr_confidence = parsed.get("confidence_score", 0)
+                if parsed.get("raw_text"):
+                    upload.ocr_text = parsed["raw_text"][:5000]  # Limit text size
+
+                db.commit()
+
+            return result
+
+        except Exception as e:
+            logger.error(f"auto_parse_upload error: {e}")
+            db.rollback()
+            return self._error_response(
+                f"Failed to parse upload: {str(e)}",
+                ERROR_PARSE_FAILED,
+                {"upload_id": upload_id, "exception": str(e)},
+            )
+
+    def extract_status_from_text(self, text: str) -> Dict[str, Any]:
+        """
+        Extract response status from plain text.
+        Useful for manual entry or email parsing.
+
+        Args:
+            text: Plain text from bureau response
+
+        Returns:
+            Dict with response_type, items, and confidence
+        """
+        if not text or not text.strip():
+            return self._error_response("Empty text provided", ERROR_INVALID_INPUT)
+
+        try:
+            parsed = self._parse_response_text(text)
+            return self._success_response(
+                data=parsed,
+                message=f"Detected response type: {parsed.get('response_type', 'unknown')}",
+            )
+
+        except Exception as e:
+            logger.error(f"extract_status_from_text error: {e}")
+            return self._error_response(
+                f"Failed to extract status: {str(e)}", ERROR_PARSE_FAILED
+            )
+
+    def batch_parse_responses(
+        self,
+        file_paths: List[str],
+    ) -> Dict[str, Any]:
+        """
+        Parse multiple response letters in batch.
+
+        Args:
+            file_paths: List of file paths to parse
+
+        Returns:
+            Summary with results for each file
+        """
+        results = []
+        success_count = 0
+        error_count = 0
+
+        for path in file_paths:
+            result = self.parse_response_letter(path)
+            results.append(
+                {
+                    "file_path": path,
+                    "success": result.get("success", False),
+                    "data": result.get("data") if result.get("success") else None,
+                    "error": result.get("error") if not result.get("success") else None,
+                }
+            )
+
+            if result.get("success"):
+                success_count += 1
+            else:
+                error_count += 1
+
+        return self._success_response(
+            data={
+                "results": results,
+                "total": len(file_paths),
+                "success_count": success_count,
+                "error_count": error_count,
+            },
+            message=f"Parsed {success_count}/{len(file_paths)} files successfully",
+        )
+
+    def get_parse_summary(
+        self,
+        client_id: int = None,
+        days: int = 30,
+    ) -> Dict[str, Any]:
+        """
+        Get summary of parsed responses.
+
+        Args:
+            client_id: Optional client filter
+            days: Number of days to look back
+
+        Returns:
+            Summary statistics
+        """
+        db = self._get_db()
+        cutoff = date.today() - timedelta(days=days)
+
+        try:
+            query = db.query(BureauDisputeTracking).filter(
+                BureauDisputeTracking.response_received == True,
+                BureauDisputeTracking.response_date >= cutoff,
+            )
+
+            if client_id:
+                query = query.filter(BureauDisputeTracking.client_id == client_id)
+
+            responses = query.all()
+
+            summary = {
+                "total_responses": len(responses),
+                "by_type": {},
+                "by_bureau": {},
+                "total_items_deleted": 0,
+                "total_items_updated": 0,
+                "total_items_verified": 0,
+                "follow_up_needed": 0,
+            }
+
+            for r in responses:
+                # Count by type
+                rtype = r.response_type or "unknown"
+                summary["by_type"][rtype] = summary["by_type"].get(rtype, 0) + 1
+
+                # Count by bureau
+                bureau = r.bureau or "unknown"
+                summary["by_bureau"][bureau] = summary["by_bureau"].get(bureau, 0) + 1
+
+                # Sum items
+                summary["total_items_deleted"] += r.items_deleted or 0
+                summary["total_items_updated"] += r.items_updated or 0
+                summary["total_items_verified"] += r.items_verified or 0
+
+                # Count follow-ups
+                if r.follow_up_required and not r.follow_up_completed:
+                    summary["follow_up_needed"] += 1
+
+            return self._success_response(data=summary)
+
+        except Exception as e:
+            logger.error(f"get_parse_summary error: {e}")
+            return self._error_response(
+                f"Failed to get summary: {str(e)}", ERROR_DATABASE
+            )

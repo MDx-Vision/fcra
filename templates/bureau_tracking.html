@@ -640,8 +640,8 @@
                                         </td>
                                         <td><span class="badge badge-{{ dispute.bureau|lower }}">{{ dispute.bureau }}</span></td>
                                         <td>Round {{ dispute.dispute_round }}</td>
-                                        <td>{{ dispute.sent_date.strftime('%m/%d/%Y') if dispute.sent_date else '-' }}</td>
-                                        <td>{{ dispute.expected_response_date.strftime('%m/%d/%Y') if dispute.expected_response_date else '-' }}</td>
+                                        <td>{{ dispute.sent_date or '-' }}</td>
+                                        <td>{{ dispute.expected_response_date or '-' }}</td>
                                         <td>
                                             <span class="badge badge-{{ dispute.status|replace('_', '-') }}">
                                                 {{ dispute.status|replace('_', ' ')|title }}
@@ -713,7 +713,7 @@
                             <div class="due-item">
                                 <div class="due-item-client">{{ item.client_name or 'Client #' ~ item.client_id }}</div>
                                 <div class="due-item-details">{{ item.bureau }} - Round {{ item.dispute_round }}</div>
-                                <div class="due-item-date soon">Due: {{ item.expected_response_date.strftime('%m/%d/%Y') if item.expected_response_date else '-' }}</div>
+                                <div class="due-item-date soon">Due: {{ item.expected_response_date or '-' }}</div>
                             </div>
                             {% endfor %}
                         {% else %}

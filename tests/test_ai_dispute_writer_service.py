@@ -75,6 +75,261 @@ class TestRoundStrategies:
         assert 'TransUnion' in service.BUREAUS
 
 
+class TestGoodwillStrategy:
+    """Tests for Goodwill Letter strategy (ISSUE-006)."""
+
+    def test_goodwill_in_special_strategies(self):
+        """Test that goodwill is registered in SPECIAL_STRATEGIES."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        assert "goodwill" in service.SPECIAL_STRATEGIES
+        goodwill = service.SPECIAL_STRATEGIES["goodwill"]
+        assert goodwill["name"] == "Goodwill Letter"
+        assert goodwill["prompt_key"] == "goodwill"
+
+    def test_goodwill_strategy_has_correct_description(self):
+        """Test that goodwill strategy has accurate description."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        goodwill = service.SPECIAL_STRATEGIES["goodwill"]
+        assert "courtesy" in goodwill["description"].lower()
+        assert "loyalty" in goodwill["description"].lower()
+
+    def test_goodwill_strategy_has_no_requirements(self):
+        """Test that goodwill letters don't require police report or FTC complaint."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        goodwill = service.SPECIAL_STRATEGIES["goodwill"]
+        assert goodwill["requires"] == []
+
+    def test_goodwill_focus_is_not_dispute(self):
+        """Test that goodwill focus emphasizes it's not a dispute."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        goodwill = service.SPECIAL_STRATEGIES["goodwill"]
+        assert "not" in goodwill["focus"].lower()
+        assert "dispute" in goodwill["focus"].lower()
+
+    def test_get_special_strategies_info_includes_goodwill(self):
+        """Test that get_special_strategies_info returns goodwill."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        strategies = service.get_special_strategies_info()
+        strategy_keys = [s["key"] for s in strategies]
+        assert "goodwill" in strategy_keys
+
+    def test_get_strategy_info_for_goodwill(self):
+        """Test get_strategy_info returns correct info for goodwill."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        info = service.get_strategy_info("goodwill")
+        assert info is not None
+        assert info["key"] == "goodwill"
+        assert info["name"] == "Goodwill Letter"
+
+
+class TestGoodwillPromptLoader:
+    """Tests for Goodwill prompt in PromptLoader (ISSUE-006)."""
+
+    def test_goodwill_in_prompt_files(self):
+        """Test that goodwill is registered in PROMPT_FILES."""
+        from services.prompt_loader import PromptLoader
+
+        assert "goodwill" in PromptLoader.PROMPT_FILES
+        assert PromptLoader.PROMPT_FILES["goodwill"] == "FCRA_PROMPT_19_GOODWILL_LETTER.md"
+
+    def test_goodwill_prompt_file_exists(self):
+        """Test that the goodwill prompt file exists."""
+        from services.prompt_loader import PromptLoader
+        import os
+
+        loader = PromptLoader()
+        prompt_path = loader.knowledge_path / "FCRA_PROMPT_19_GOODWILL_LETTER.md"
+        assert prompt_path.exists(), f"Goodwill prompt file not found at {prompt_path}"
+
+    def test_load_goodwill_prompt(self):
+        """Test loading the goodwill prompt via shortcut."""
+        from services.prompt_loader import PromptLoader
+
+        loader = PromptLoader()
+        prompt = loader.load_prompt("goodwill")
+
+        assert prompt is not None
+        assert len(prompt) > 100  # Should have substantial content
+        assert "Goodwill" in prompt
+        assert "courtesy" in prompt.lower()
+
+    def test_get_goodwill_letter_prompt_method(self):
+        """Test the convenience method for goodwill prompt."""
+        from services.prompt_loader import PromptLoader
+
+        loader = PromptLoader()
+        prompt = loader.get_goodwill_letter_prompt()
+
+        assert prompt is not None
+        assert "PROMPT 19" in prompt or "Goodwill" in prompt
+
+    def test_goodwill_prompt_has_letter_template(self):
+        """Test that goodwill prompt includes letter template."""
+        from services.prompt_loader import PromptLoader
+
+        loader = PromptLoader()
+        prompt = loader.load_prompt("goodwill")
+
+        # Should have key letter components
+        assert "Dear" in prompt
+        assert "Sincerely" in prompt
+        assert "Account Number" in prompt or "Account" in prompt
+
+    def test_goodwill_prompt_distinguishes_from_dispute(self):
+        """Test that goodwill prompt emphasizes it's different from dispute."""
+        from services.prompt_loader import PromptLoader
+
+        loader = PromptLoader()
+        prompt = loader.load_prompt("goodwill")
+
+        # Should emphasize the difference
+        assert "Dispute Letter" in prompt or "dispute" in prompt.lower()
+        assert "not a dispute" in prompt.lower() or "acknowledges accuracy" in prompt.lower()
+
+
+class TestCeaseDesistStrategy:
+    """Tests for Cease & Desist Letter strategy (ISSUE-009)."""
+
+    def test_ceasedesist_in_special_strategies(self):
+        """Test that ceasedesist is registered in SPECIAL_STRATEGIES."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        assert "ceasedesist" in service.SPECIAL_STRATEGIES
+        cd = service.SPECIAL_STRATEGIES["ceasedesist"]
+        assert cd["name"] == "Cease & Desist Letter"
+        assert cd["prompt_key"] == "ceasedesist"
+
+    def test_ceasedesist_cites_fdcpa(self):
+        """Test that C&D strategy references FDCPA."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        cd = service.SPECIAL_STRATEGIES["ceasedesist"]
+        assert "FDCPA" in cd["description"] or "1692c" in cd["description"]
+
+    def test_ceasedesist_has_warning_note(self):
+        """Test that C&D strategy includes warning about limitations."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        cd = service.SPECIAL_STRATEGIES["ceasedesist"]
+        assert "note" in cd
+        # Should warn that debt doesn't go away
+        assert "sue" in cd["note"].lower() or "not" in cd["note"].lower()
+
+    def test_ceasedesist_has_no_requirements(self):
+        """Test that C&D letters don't require police report or FTC complaint."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        cd = service.SPECIAL_STRATEGIES["ceasedesist"]
+        assert cd["requires"] == []
+
+    def test_get_strategy_info_for_ceasedesist(self):
+        """Test get_strategy_info returns correct info for ceasedesist."""
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+
+        mock_db = MagicMock(spec=Session)
+        service = AIDisputeWriterService(mock_db)
+
+        info = service.get_strategy_info("ceasedesist")
+        assert info is not None
+        assert info["key"] == "ceasedesist"
+        assert info["name"] == "Cease & Desist Letter"
+
+
+class TestCeaseDesistPromptLoader:
+    """Tests for Cease & Desist prompt in PromptLoader (ISSUE-009)."""
+
+    def test_ceasedesist_in_prompt_files(self):
+        """Test that ceasedesist is registered in PROMPT_FILES."""
+        from services.prompt_loader import PromptLoader
+
+        assert "ceasedesist" in PromptLoader.PROMPT_FILES
+        assert PromptLoader.PROMPT_FILES["ceasedesist"] == "FCRA_PROMPT_20_CEASE_DESIST.md"
+
+    def test_ceasedesist_prompt_file_exists(self):
+        """Test that the C&D prompt file exists."""
+        from services.prompt_loader import PromptLoader
+
+        loader = PromptLoader()
+        prompt_path = loader.knowledge_path / "FCRA_PROMPT_20_CEASE_DESIST.md"
+        assert prompt_path.exists(), f"C&D prompt file not found at {prompt_path}"
+
+    def test_load_ceasedesist_prompt(self):
+        """Test loading the C&D prompt via shortcut."""
+        from services.prompt_loader import PromptLoader
+
+        loader = PromptLoader()
+        prompt = loader.load_prompt("ceasedesist")
+
+        assert prompt is not None
+        assert len(prompt) > 100
+        assert "Cease" in prompt or "CEASE" in prompt
+
+    def test_get_cease_desist_prompt_method(self):
+        """Test the convenience method for C&D prompt."""
+        from services.prompt_loader import PromptLoader
+
+        loader = PromptLoader()
+        prompt = loader.get_cease_desist_prompt()
+
+        assert prompt is not None
+        assert "1692c" in prompt or "FDCPA" in prompt
+
+    def test_ceasedesist_prompt_has_legal_citation(self):
+        """Test that C&D prompt includes FDCPA §1692c citation."""
+        from services.prompt_loader import PromptLoader
+
+        loader = PromptLoader()
+        prompt = loader.load_prompt("ceasedesist")
+
+        assert "1692c" in prompt
+        assert "FDCPA" in prompt
+
+    def test_ceasedesist_prompt_has_certified_mail(self):
+        """Test that C&D prompt mentions certified mail."""
+        from services.prompt_loader import PromptLoader
+
+        loader = PromptLoader()
+        prompt = loader.load_prompt("ceasedesist")
+
+        assert "CERTIFIED MAIL" in prompt.upper()
+
+
 class TestServiceInit:
     """Tests for service initialization."""
 

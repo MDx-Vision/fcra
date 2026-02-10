@@ -107,6 +107,24 @@ class AIDisputeWriterService:
             "requires": [],
             "output_files": 7,  # FTC instructions, CFPB templates, 609 letters (TU/EQ), phone guide, checklist
         },
+        "goodwill": {
+            "name": "Goodwill Letter",
+            "description": "Request courtesy removal of accurate negative items based on customer loyalty",
+            "prompt_key": "goodwill",
+            "focus": "Polite request for removal - not a dispute of accuracy",
+            "requires": [],
+            "output_files": 1,  # One letter per creditor
+            "note": "Best for first-time late payments, long-standing customers, hardship circumstances",
+        },
+        "ceasedesist": {
+            "name": "Cease & Desist Letter",
+            "description": "FDCPA §1692c(c) demand to stop all collector contact",
+            "prompt_key": "ceasedesist",
+            "focus": "Stop harassment - legally demand no further communication",
+            "requires": [],
+            "output_files": 1,  # One letter per collector
+            "note": "Does NOT make debt go away - collector may still sue or report to bureaus",
+        },
     }
 
     # Bureaus
@@ -161,7 +179,7 @@ class AIDisputeWriterService:
             self.db.query(Violation).filter(Violation.client_id == client_id).all()
         )
 
-        # Get dispute items
+        # Get dispute items from database
         dispute_items = (
             self.db.query(DisputeItem).filter(DisputeItem.client_id == client_id).all()
         )
@@ -191,15 +209,180 @@ class AIDisputeWriterService:
             .all()
         )
 
+        # Also get accounts from analysis/credit report
+        accounts_from_report = []
+
+        # First try analysis data
+        if analysis and analysis.stage_1_analysis:
+            accounts_from_report = self._extract_accounts_from_analysis(analysis)
+
+        # If no accounts from analysis, try credit report file
+        if not accounts_from_report:
+            accounts_from_report = self._extract_accounts_from_credit_report(client_id)
+
         return {
             "client": client,
             "violations": violations,
             "dispute_items": dispute_items,
+            "accounts_from_report": accounts_from_report,
             "cra_responses": cra_responses,
             "analysis": analysis,
             "score_snapshots": score_snapshots,
             "current_round": client.current_dispute_round or 1,
         }
+
+    def _extract_accounts_from_analysis(self, analysis) -> List[Dict]:
+        """Extract accounts from analysis data"""
+        import ast
+        import json
+
+        try:
+            analysis_data = analysis.stage_1_analysis
+            if isinstance(analysis_data, str):
+                try:
+                    parsed = json.loads(analysis_data)
+                except json.JSONDecodeError:
+                    parsed = ast.literal_eval(analysis_data)
+            else:
+                parsed = analysis_data
+
+            accounts = []
+            raw_accounts = parsed.get("accounts", [])
+
+            for idx, acct in enumerate(raw_accounts):
+                # Detect bureaus
+                bureaus = []
+                bureaus_data = acct.get("bureaus", {})
+
+                if bureaus_data.get("equifax", {}).get("present"):
+                    bureaus.append("Equifax")
+                elif acct.get("equifax") or acct.get("efx_status"):
+                    bureaus.append("Equifax")
+
+                if bureaus_data.get("experian", {}).get("present"):
+                    bureaus.append("Experian")
+                elif acct.get("experian") or acct.get("exp_status"):
+                    bureaus.append("Experian")
+
+                if bureaus_data.get("transunion", {}).get("present"):
+                    bureaus.append("TransUnion")
+                elif acct.get("transunion") or acct.get("tu_status"):
+                    bureaus.append("TransUnion")
+
+                if not bureaus:
+                    bureaus = ["Equifax", "Experian", "TransUnion"]
+
+                accounts.append(
+                    {
+                        "id": f"report_{idx}",
+                        "creditor": acct.get("creditor")
+                        or acct.get("creditor_name")
+                        or "Unknown",
+                        "account_number": acct.get("account_number")
+                        or acct.get("account_num")
+                        or "N/A",
+                        "bureau": ", ".join(bureaus),
+                        "type": acct.get("account_type")
+                        or acct.get("type")
+                        or "Unknown",
+                        "status": acct.get("status")
+                        or acct.get("account_status")
+                        or "Unknown",
+                        "balance": acct.get("balance") or acct.get("balance_owed"),
+                        "source": "credit_report",
+                    }
+                )
+
+            return accounts
+        except Exception as e:
+            return []
+
+    def _extract_accounts_from_credit_report(self, client_id: int) -> List[Dict]:
+        """Extract accounts from credit report JSON file"""
+        import json
+        import os
+
+        try:
+            # Check for credit monitoring credential with report path
+            from database import CreditMonitoringCredential
+
+            cred = (
+                self.db.query(CreditMonitoringCredential)
+                .filter(CreditMonitoringCredential.client_id == client_id)
+                .first()
+            )
+
+            if not cred or not cred.last_report_path:
+                return []
+
+            # Check for JSON file (pre-extracted)
+            report_path = cred.last_report_path
+            json_path = report_path.replace(".html", ".json")
+
+            if os.path.exists(json_path):
+                with open(json_path, "r") as f:
+                    data = json.load(f)
+
+                accounts = []
+                raw_accounts = data.get("tradelines", []) or data.get("accounts", [])
+
+                for idx, acct in enumerate(raw_accounts):
+                    # Detect bureaus from the account data
+                    bureaus = []
+                    if acct.get("transunion") or acct.get("tu_status"):
+                        bureaus.append("TransUnion")
+                    if acct.get("experian") or acct.get("exp_status"):
+                        bureaus.append("Experian")
+                    if acct.get("equifax") or acct.get("efx_status"):
+                        bureaus.append("Equifax")
+
+                    if not bureaus:
+                        bureaus = ["Equifax", "Experian", "TransUnion"]
+
+                    accounts.append(
+                        {
+                            "id": f"report_{idx}",
+                            "creditor": acct.get("creditor")
+                            or acct.get("creditor_name")
+                            or "Unknown",
+                            "account_number": acct.get("account_number")
+                            or acct.get("account_num")
+                            or "N/A",
+                            "bureau": ", ".join(bureaus),
+                            "type": acct.get("account_type")
+                            or acct.get("type")
+                            or "Unknown",
+                            "status": acct.get("status")
+                            or acct.get("payment_status")
+                            or "Unknown",
+                            "balance": acct.get("balance") or acct.get("balance_owed"),
+                            "source": "credit_report",
+                        }
+                    )
+
+                # Also add inquiries
+                inquiries = data.get("inquiries", [])
+                for idx, inq in enumerate(inquiries):
+                    accounts.append(
+                        {
+                            "id": f"inquiry_{idx}",
+                            "creditor": inq.get("creditor")
+                            or inq.get("company")
+                            or "Unknown",
+                            "account_number": "N/A",
+                            "bureau": inq.get("bureau", "Unknown"),
+                            "type": "Inquiry",
+                            "status": inq.get("date", "Unknown"),
+                            "balance": None,
+                            "source": "inquiry",
+                        }
+                    )
+
+                return accounts
+
+            return []
+        except Exception as e:
+            return []
 
     def format_client_info(self, client: Client) -> str:
         """Format client information for the prompt"""
@@ -947,6 +1130,7 @@ Generate the revised letter:
             client = context["client"]
             violations = context["violations"]
             dispute_items = context["dispute_items"]
+            accounts_from_report = context.get("accounts_from_report", [])
             cra_responses = context["cra_responses"]
 
             # Get saved letters
@@ -954,6 +1138,34 @@ Generate the revised letter:
 
             # Get suggestion
             suggestion = self.suggest_next_action(client_id)
+
+            # Combine dispute_items with accounts_from_report
+            # Use accounts from database if available (analysis already ran)
+            # Fall back to credit report data if no analysis yet
+            all_items = []
+
+            # First add dispute items from database (these are pre-analyzed negative items)
+            for item in dispute_items:
+                all_items.append(
+                    {
+                        "id": item.id,
+                        "bureau": item.bureau,
+                        "creditor": item.creditor_name,
+                        "account_number": item.account_id,
+                        "type": item.item_type,
+                        "status": item.status,
+                        "dispute_status": item.status,  # to_do, sent, deleted, etc.
+                        "reason": item.reason,
+                        "escalation_stage": item.escalation_stage,
+                        "dispute_round": item.dispute_round,
+                        "source": "database",
+                    }
+                )
+
+            # Add accounts from credit report if no dispute items
+            # This is the fallback for clients without analysis
+            if not dispute_items and accounts_from_report:
+                all_items = accounts_from_report
 
             return {
                 "client": {
@@ -965,7 +1177,7 @@ Generate the revised letter:
                 },
                 "stats": {
                     "violations_count": len(violations),
-                    "dispute_items_count": len(dispute_items),
+                    "dispute_items_count": len(all_items),
                     "cra_responses_count": len(cra_responses),
                     "saved_letters_count": len(saved_letters),
                 },
@@ -979,31 +1191,20 @@ Generate the revised letter:
                     }
                     for v in violations
                 ],
-                "dispute_items": [
-                    {
-                        "id": item.id,
-                        "bureau": item.bureau,
-                        "creditor": item.creditor_name,
-                        "type": item.item_type,
-                        "status": item.status,
-                        "account_id": item.account_id,
-                    }
-                    for item in dispute_items
-                ],
+                "dispute_items": all_items,
                 "suggestion": suggestion,
                 "rounds_info": self.get_all_rounds_info(),
             }
 
         else:
             # Overview dashboard
-            # Get clients ready for letter generation
+            # Get all clients (except leads and cancelled) for letter generation
             active_clients = (
                 self.db.query(Client)
                 .filter(
-                    Client.status == "active",
-                    Client.dispute_status.in_(["active", "new", "waiting_response"]),
+                    Client.dispute_status.notin_(["lead", "cancelled"]),
                 )
-                .limit(20)
+                .order_by(Client.name)
                 .all()
             )
 
@@ -1340,6 +1541,312 @@ Format each document with clear headers:
         if strategy_key in self.SPECIAL_STRATEGIES:
             return {"key": strategy_key, **self.SPECIAL_STRATEGIES[strategy_key]}
         return None
+
+    # =========================================================================
+    # GOODWILL LETTER GENERATION
+    # =========================================================================
+
+    def generate_goodwill_letter(
+        self,
+        client_id: int,
+        item_ids: Optional[List[int]] = None,
+        custom_instructions: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Generate goodwill letters requesting courtesy removal of accurate negative items.
+
+        Goodwill letters are NOT disputes - they acknowledge accuracy but request
+        removal based on customer loyalty, hardship, or goodwill.
+        """
+        from services.prompt_loader import get_prompt_loader
+
+        context = self.get_client_context(client_id)
+        if "error" in context:
+            return context
+
+        client = context["client"]
+
+        # Get items from either dispute_items (DB) or accounts_from_report
+        dispute_items = context.get("dispute_items", [])
+        accounts_from_report = context.get("accounts_from_report", [])
+
+        # Combine into a unified list (accounts from report are dicts)
+        all_items = []
+        for item in dispute_items:
+            if hasattr(item, "id"):
+                all_items.append(
+                    {
+                        "id": item.id,
+                        "creditor": item.creditor_name or "Unknown",
+                        "account_number": item.account_id or "N/A",
+                        "type": item.item_type,
+                        "status": item.status,
+                        "bureau": item.bureau,
+                    }
+                )
+            else:
+                all_items.append(item)
+
+        for item in accounts_from_report:
+            all_items.append(item)
+
+        # Filter to selected items if provided
+        if item_ids:
+            all_items = [
+                item
+                for item in all_items
+                if str(item.get("id")) in [str(i) for i in item_ids]
+            ]
+
+        if not all_items:
+            return {"error": "No items selected for goodwill letter"}
+
+        # Load goodwill prompt
+        try:
+            loader = get_prompt_loader()
+            goodwill_prompt = loader.load_prompt("goodwill")
+        except Exception:
+            goodwill_prompt = """
+You are writing a GOODWILL LETTER. This is NOT a dispute.
+
+Key points:
+- Acknowledge the account/item is accurate
+- Politely request removal as a courtesy
+- Mention customer loyalty if applicable
+- Explain any hardship circumstances
+- Be grateful and professional
+- Never threaten legal action
+- Request removal "as a gesture of goodwill"
+
+Format the letter professionally with proper business letter structure.
+"""
+
+        letters = {}
+
+        # Group items by creditor/furnisher for goodwill letters
+        items_by_creditor = {}
+        for item in all_items:
+            creditor = item.get("creditor") or "Unknown Creditor"
+            if creditor not in items_by_creditor:
+                items_by_creditor[creditor] = []
+            items_by_creditor[creditor].append(item)
+
+        # Generate a letter for each creditor
+        for creditor, items in items_by_creditor.items():
+            item_details = "\n".join(
+                [
+                    f"- Account: {item.get('account_number', 'N/A')}, Type: {item.get('type', 'N/A')}, "
+                    f"Status: {item.get('status', 'N/A')}"
+                    for item in items
+                ]
+            )
+
+            # Format client address
+            client_address = f"{client.address_street or ''}, {client.address_city or ''}, {client.address_state or ''} {client.address_zip or ''}".strip(
+                ", "
+            )
+
+            prompt = f"""{goodwill_prompt}
+
+CLIENT INFORMATION:
+Name: {client.name}
+Address: {client_address or 'N/A'}
+
+CREDITOR: {creditor}
+
+ACCOUNTS/ITEMS:
+{item_details}
+
+{f"ADDITIONAL CONTEXT: {custom_instructions}" if custom_instructions else ""}
+
+Generate a professional, polite goodwill letter requesting removal of these items as a courtesy.
+The letter should be addressed to the creditor ({creditor}), NOT to a credit bureau.
+"""
+
+            try:
+                response = self.anthropic_client.messages.create(
+                    model="claude-sonnet-4-20250514",
+                    max_tokens=3000,
+                    temperature=0.3,
+                    system=goodwill_prompt,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                letter_content = response.content[0].text
+                letters[creditor] = letter_content
+            except Exception as e:
+                letters[creditor] = f"Error generating letter: {str(e)}"
+
+        return {
+            "success": True,
+            "client_id": client_id,
+            "client_name": client.name,
+            "strategy": "goodwill",
+            "letters": letters,
+        }
+
+    # =========================================================================
+    # INQUIRY DISPUTE GENERATION
+    # =========================================================================
+
+    def generate_inquiry_dispute(
+        self,
+        client_id: int,
+        item_ids: Optional[List[int]] = None,
+        bureaus: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Generate inquiry dispute letters challenging unauthorized hard inquiries
+        under FCRA §604 (permissible purpose).
+        """
+        from services.prompt_loader import get_prompt
+
+        context = self.get_client_context(client_id)
+        if "error" in context:
+            return context
+
+        client = context["client"]
+
+        # Load inquiry prompt
+        try:
+            inquiry_prompt = get_prompt("inquiry")
+        except Exception:
+            inquiry_prompt = """
+You are writing an INQUIRY DISPUTE LETTER under FCRA §604.
+
+Key points:
+- Challenge unauthorized hard inquiries
+- Cite FCRA §604 permissible purpose requirements
+- Demand proof of written consent
+- Request immediate deletion if no consent exists
+- Can be identity theft or simply unauthorized
+- Be firm but professional
+
+Format the letter professionally with proper business letter structure.
+"""
+
+        if not bureaus:
+            bureaus = self.BUREAUS
+
+        letters = {}
+
+        for bureau in bureaus:
+            prompt = f"""{inquiry_prompt}
+
+CLIENT INFORMATION:
+Name: {client.first_name} {client.last_name}
+Address: {client.address or 'N/A'}, {client.city or ''}, {client.state or ''} {client.zip_code or ''}
+SSN Last 4: XXXX (client will add)
+
+BUREAU: {bureau}
+
+Generate a professional inquiry dispute letter demanding removal of unauthorized hard inquiries
+and proof of permissible purpose under FCRA §604.
+"""
+
+            try:
+                letter_content = self._call_ai(prompt)
+                letters[bureau] = letter_content
+            except Exception as e:
+                letters[bureau] = f"Error generating letter: {str(e)}"
+
+        return {
+            "success": True,
+            "client_id": client_id,
+            "client_name": f"{client.first_name} {client.last_name}",
+            "strategy": "inquiry",
+            "letters": letters,
+        }
+
+    # =========================================================================
+    # IDENTITY THEFT DISPUTE GENERATION
+    # =========================================================================
+
+    def generate_identity_theft_dispute(
+        self,
+        client_id: int,
+        item_ids: Optional[List[int]] = None,
+        bureaus: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Generate identity theft dispute letters with full documentation package.
+        """
+        from services.prompt_loader import get_prompt
+
+        context = self.get_client_context(client_id)
+        if "error" in context:
+            return context
+
+        client = context["client"]
+        dispute_items = context.get("dispute_items", [])
+
+        if item_ids:
+            dispute_items = [item for item in dispute_items if item.id in item_ids]
+
+        # Load identity theft prompt
+        try:
+            idtheft_prompt = get_prompt("idtheft")
+        except Exception:
+            idtheft_prompt = """
+You are writing an IDENTITY THEFT DISPUTE LETTER.
+
+Key points:
+- Declare accounts are result of identity theft
+- Reference FTC Identity Theft Affidavit
+- Reference police report
+- Cite FCRA §605B blocking requirements
+- Demand immediate blocking/deletion
+- Professional but firm tone
+
+Format the letter professionally with proper business letter structure.
+"""
+
+        if not bureaus:
+            bureaus = self.BUREAUS
+
+        # Build item list for the letters
+        item_details = (
+            "\n".join(
+                [
+                    f"- Creditor: {item.creditor_name or 'Unknown'}, Account: {item.account_number or 'N/A'}, "
+                    f"Balance: ${item.balance or 0}"
+                    for item in dispute_items
+                ]
+            )
+            if dispute_items
+            else "All fraudulent accounts on file"
+        )
+
+        letters = {}
+
+        for bureau in bureaus:
+            prompt = f"""{idtheft_prompt}
+
+CLIENT INFORMATION:
+Name: {client.first_name} {client.last_name}
+Address: {client.address or 'N/A'}, {client.city or ''}, {client.state or ''} {client.zip_code or ''}
+
+BUREAU: {bureau}
+
+FRAUDULENT ACCOUNTS:
+{item_details}
+
+Generate a comprehensive identity theft dispute letter citing FCRA §605B blocking requirements.
+Include placeholders for police report number and FTC complaint reference.
+"""
+
+            try:
+                letter_content = self._call_ai(prompt)
+                letters[bureau] = letter_content
+            except Exception as e:
+                letters[bureau] = f"Error generating letter: {str(e)}"
+
+        return {
+            "success": True,
+            "client_id": client_id,
+            "client_name": f"{client.first_name} {client.last_name}",
+            "strategy": "idtheft",
+            "letters": letters,
+        }
 
     # =========================================================================
     # ENVELOPE PACKET GENERATION FOR SENDCERTIFIEDMAIL

@@ -1,8 +1,12 @@
-{% extends "includes/dashboard_base.html" %}
-
-{% block title %}AI Dispute Writer{% endblock %}
-
-{% block head %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Dispute Writer - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
 <style>
     .writer-container {
         display: grid;
@@ -467,9 +471,9 @@
         }
     }
 </style>
-{% endblock %}
-
-{% block content %}
+</head>
+<body>
+    {% include 'includes/dashboard_sidebar.html' %}
 <div class="main-content" style="padding: 1.5rem;">
     <!-- Page Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -517,16 +521,42 @@
                 <span class="suggestion-text" id="suggestionText"></span>
             </div>
 
-            <!-- Round Selection -->
+            <!-- Strategy Selection -->
             <div class="section-title" style="margin-top: 1.5rem;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
                 </svg>
-                Select Round
+                Strategy
             </div>
 
-            <div class="round-selector" id="roundSelector">
+            <select class="form-select" id="strategySelect" onchange="selectStrategy(this.value)" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color, #e5e7eb); border-radius: 8px; font-size: 0.875rem; margin-bottom: 1rem; background: var(--bg-secondary, #f9fafb);">
+                <option value="round">Standard Dispute Rounds (R1-R4)</option>
+                <optgroup label="Special Strategies">
+                    <option value="goodwill">💌 Goodwill Letter</option>
+                    <option value="5dayknockout">⚡ 5-Day Knock-Out (Identity Theft)</option>
+                    <option value="idtheft">🛡️ Identity Theft Disputes</option>
+                    <option value="inquiry">🔍 Inquiry Disputes (Permissible Purpose)</option>
+                </optgroup>
+            </select>
+
+            <!-- Strategy Info Banner -->
+            <div id="strategyInfo" style="display: none; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.8rem; color: #1e40af;">
+                <strong id="strategyInfoTitle"></strong>
+                <p id="strategyInfoDesc" style="margin: 0.25rem 0 0 0;"></p>
+            </div>
+
+            <!-- Round Selection (shown only for standard rounds) -->
+            <div id="roundSection">
+                <div class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    Select Round
+                </div>
+
+                <div class="round-selector" id="roundSelector">
                 <div class="round-btn active" data-round="1" onclick="selectRound(1)">
                     <div class="round-number">R1</div>
                     <div class="round-name">Initial</div>
@@ -543,6 +573,7 @@
                     <div class="round-number">R4</div>
                     <div class="round-name">Pre-Lit</div>
                 </div>
+            </div>
             </div>
 
             <!-- Tone Selection -->
@@ -620,7 +651,13 @@
                         <button class="select-all-btn" onclick="toggleAllItems()">Select All</button>
                     </div>
                 </div>
-                <div id="itemsList" style="max-height: 200px; overflow-y: auto; margin-top: 0.5rem;"></div>
+                <!-- Search Items -->
+                <div class="items-search" style="margin-top: 0.5rem;">
+                    <input type="text" id="itemsSearch" placeholder="Search accounts by creditor, type, or status..."
+                           oninput="filterItems()"
+                           style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; font-size: 0.8rem;">
+                </div>
+                <div id="itemsList" style="max-height: 250px; overflow-y: auto; margin-top: 0.5rem;"></div>
             </div>
 
             <!-- Generated Letters -->
@@ -698,9 +735,47 @@
     let selectedClient = null;
     let selectedRound = 1;
     let selectedTone = 'professional';
+    let selectedStrategy = 'round';
     let disputeItems = [];
     let generatedLetters = {};
     let currentBureau = null;
+
+    // Strategy info
+    const STRATEGY_INFO = {
+        'goodwill': {
+            title: '💌 Goodwill Letter',
+            desc: 'Polite request for courtesy removal of accurate negative items. Best for first-time late payments or long-standing customers.'
+        },
+        '5dayknockout': {
+            title: '⚡ 5-Day Knock-Out',
+            desc: 'FCRA §605B identity theft block. Bureaus must block fraudulent accounts within 4 business days. Requires police report + FTC complaint.'
+        },
+        'idtheft': {
+            title: '🛡️ Identity Theft Disputes',
+            desc: 'Comprehensive identity theft dispute package with all supporting documentation.'
+        },
+        'inquiry': {
+            title: '🔍 Inquiry Disputes',
+            desc: 'Challenge unauthorized hard inquiries under FCRA §604 - permissible purpose violations.'
+        }
+    };
+
+    function selectStrategy(strategy) {
+        selectedStrategy = strategy;
+        const roundSection = document.getElementById('roundSection');
+        const strategyInfo = document.getElementById('strategyInfo');
+
+        if (strategy === 'round') {
+            roundSection.style.display = 'block';
+            strategyInfo.style.display = 'none';
+        } else {
+            roundSection.style.display = 'none';
+            strategyInfo.style.display = 'block';
+            document.getElementById('strategyInfoTitle').textContent = STRATEGY_INFO[strategy].title;
+            document.getElementById('strategyInfoDesc').textContent = STRATEGY_INFO[strategy].desc;
+        }
+        updateGenerateButton();
+    }
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -731,7 +806,8 @@
 
         container.innerHTML = clients.map(c => `
             <div class="client-item ${selectedClient?.id === c.id ? 'selected' : ''}"
-                 onclick="selectClient(${c.id}, '${c.name}', ${c.current_round})">
+                 data-client-id="${c.id}"
+                 onclick="selectClient(event, ${c.id}, '${c.name.replace(/'/g, "\\'")}', ${c.current_round})">
                 <div class="client-name">${c.name}</div>
                 <div class="client-info">Round ${c.current_round} | ${c.dispute_status || 'N/A'}</div>
             </div>
@@ -746,12 +822,22 @@
         renderClientList(filtered);
     }
 
-    async function selectClient(id, name, currentRound) {
+    async function selectClient(event, id, name, currentRound) {
         selectedClient = { id, name, currentRound };
 
         // Update UI
         document.querySelectorAll('.client-item').forEach(el => el.classList.remove('selected'));
-        event.currentTarget.classList.add('selected');
+        if (event && event.currentTarget) {
+            event.currentTarget.classList.add('selected');
+        } else {
+            // Fallback: find by data attribute
+            const el = document.querySelector(`[data-client-id="${id}"]`);
+            if (el) el.classList.add('selected');
+        }
+
+        // Clear items search when switching clients
+        const itemsSearch = document.getElementById('itemsSearch');
+        if (itemsSearch) itemsSearch.value = '';
 
         // Enable generate button
         document.getElementById('generateBtn').disabled = false;
@@ -781,9 +867,10 @@
         }
     }
 
-    function renderDisputeItems() {
+    function renderDisputeItems(itemsToRender = null) {
         const container = document.getElementById('itemsList');
         const panel = document.getElementById('itemsPanel');
+        const items = itemsToRender || disputeItems;
 
         if (!disputeItems || disputeItems.length === 0) {
             panel.style.display = 'none';
@@ -791,17 +878,61 @@
         }
 
         panel.style.display = 'block';
-        document.getElementById('itemsCount').textContent = `${disputeItems.length} items`;
 
-        container.innerHTML = disputeItems.map(item => `
-            <label class="item-checkbox">
+        // Show total and filtered count
+        if (itemsToRender && itemsToRender.length !== disputeItems.length) {
+            document.getElementById('itemsCount').textContent = `${itemsToRender.length} of ${disputeItems.length} items`;
+        } else {
+            document.getElementById('itemsCount').textContent = `${disputeItems.length} items`;
+        }
+
+        if (items.length === 0) {
+            container.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-secondary);">No items match your search</div>';
+            return;
+        }
+
+        container.innerHTML = items.map(item => {
+            const acctNum = item.account_number || item.account_id || '';
+            const acctDisplay = acctNum && acctNum !== 'N/A' ? `#${acctNum.slice(-4).padStart(4, 'x')}` : '';
+            const balance = item.balance ? `$${Number(item.balance).toLocaleString()}` : '';
+
+            return `
+            <label class="item-checkbox" data-creditor="${(item.creditor || '').toLowerCase()}" data-type="${(item.type || '').toLowerCase()}" data-status="${(item.status || '').toLowerCase()}">
                 <input type="checkbox" value="${item.id}" checked>
-                <div class="item-details">
-                    <div class="item-creditor">${item.creditor || 'Unknown Creditor'}</div>
-                    <div class="item-meta">${item.bureau} | ${item.type || 'N/A'} | ${item.status || 'N/A'}</div>
+                <div class="item-details" style="flex: 1;">
+                    <div class="item-creditor" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>${item.creditor || 'Unknown Creditor'} ${acctDisplay ? '<span style="color: var(--text-secondary); font-weight: normal; font-size: 0.8em;">' + acctDisplay + '</span>' : ''}</span>
+                        ${balance ? '<span style="color: var(--text-secondary); font-size: 0.85em;">' + balance + '</span>' : ''}
+                    </div>
+                    <div class="item-meta">${item.bureau || 'N/A'} | ${item.type || 'N/A'} | ${item.status || 'N/A'}</div>
                 </div>
             </label>
-        `).join('');
+        `}).join('');
+    }
+
+    function filterItems() {
+        const search = document.getElementById('itemsSearch').value.toLowerCase().trim();
+
+        if (!search) {
+            renderDisputeItems();
+            return;
+        }
+
+        const filtered = disputeItems.filter(item => {
+            const creditor = (item.creditor || '').toLowerCase();
+            const type = (item.type || '').toLowerCase();
+            const status = (item.status || '').toLowerCase();
+            const bureau = (item.bureau || '').toLowerCase();
+            const accountNum = (item.account_number || '').toLowerCase();
+
+            return creditor.includes(search) ||
+                   type.includes(search) ||
+                   status.includes(search) ||
+                   bureau.includes(search) ||
+                   accountNum.includes(search);
+        });
+
+        renderDisputeItems(filtered);
     }
 
     function toggleAllItems() {
@@ -842,7 +973,7 @@
 
     function getSelectedItems() {
         const checkboxes = document.querySelectorAll('#itemsList input[type="checkbox"]:checked');
-        return Array.from(checkboxes).map(cb => parseInt(cb.value));
+        return Array.from(checkboxes).map(cb => cb.value);
     }
 
     async function generateLetters() {
@@ -852,7 +983,7 @@
         }
 
         const bureaus = getSelectedBureaus();
-        if (bureaus.length === 0) {
+        if (bureaus.length === 0 && selectedStrategy !== 'goodwill') {
             alert('Please select at least one bureau');
             return;
         }
@@ -864,23 +995,36 @@
         document.getElementById('loadingOverlay').style.display = 'flex';
 
         try {
+            // Build request based on strategy
+            const requestBody = {
+                client_id: selectedClient.id,
+                selected_items: selectedItems.length > 0 ? selectedItems : null,
+                bureaus: bureaus,
+                custom_instructions: customInstructions || null,
+                tone: selectedTone,
+            };
+
+            // Add strategy-specific params
+            if (selectedStrategy === 'round') {
+                requestBody.round = selectedRound;
+            } else {
+                requestBody.strategy = selectedStrategy;
+            }
+
             const response = await fetch('/api/ai-dispute-writer/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    client_id: selectedClient.id,
-                    round: selectedRound,
-                    selected_items: selectedItems.length > 0 ? selectedItems : null,
-                    bureaus: bureaus,
-                    custom_instructions: customInstructions || null,
-                    tone: selectedTone,
-                }),
+                body: JSON.stringify(requestBody),
             });
 
             const data = await response.json();
 
             if (data.success && data.letters) {
                 generatedLetters = data.letters;
+                renderLetters();
+            } else if (data.success && data.documents) {
+                // Handle special strategies that return documents
+                generatedLetters = data.documents;
                 renderLetters();
             } else {
                 alert(data.error || 'Failed to generate letters');
@@ -1019,4 +1163,5 @@
         }
     }
 </script>
-{% endblock %}
+</body>
+</html>
