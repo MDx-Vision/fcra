@@ -1,9 +1,9 @@
 # FCRA Platform - Gaps Roadmap
 
 > **Created:** 2026-02-08
-> **Last Updated:** 2026-02-09
-> **Total Issues:** 21
-> **Completed:** 10/21
+> **Last Updated:** 2026-02-10
+> **Total Issues:** 24
+> **Completed:** 10/24
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Priority | Total | Open | In Progress | Completed |
 |----------|-------|------|-------------|-----------|
-| Critical | 4 | 3 | 0 | 1 |
-| High | 7 | 1 | 0 | 6 |
+| Critical | 5 | 4 | 0 | 1 |
+| High | 9 | 3 | 0 | 6 |
 | Medium | 6 | 3 | 0 | 3 |
 | Low | 4 | 4 | 0 | 0 |
 
@@ -710,6 +710,189 @@ Each service has different UI patterns for accessing historical reports - need p
 
 ---
 
+### ISSUE-022: Platform Gaps for Browser Automation
+- **Priority:** Critical
+- **Status:** Open
+- **Category:** Browser Automation Foundation
+- **Effort:** 4-6 hours
+- **Added:** 2026-02-10
+- **Blocks:** ISSUE-023, ISSUE-024
+
+**Description:**
+Before implementing browser-use automation for 5KO and Inquiry Disputes, the platform needs database fields to store client bureau credentials and automation tracking data.
+
+**Database Fields Required:**
+
+1. **Client Bureau Credentials** (add to Client model or new table):
+   - `tu_username` - TransUnion portal username
+   - `tu_password_encrypted` - TransUnion portal password (encrypted)
+   - `eq_username` - Equifax portal username
+   - `eq_password_encrypted` - Equifax portal password (encrypted)
+   - `exp_username` - Experian portal username (if applicable)
+   - `exp_password_encrypted` - Experian portal password (encrypted)
+
+2. **FTC/CFPB Tracking Fields** (add to Client model):
+   - `ftc_report_number` - FTC identity theft report number
+   - `ftc_filed_at` - When FTC report was filed
+   - `cfpb_tu_confirmation` - CFPB confirmation for TransUnion complaint
+   - `cfpb_eq_confirmation` - CFPB confirmation for Equifax complaint
+   - `cfpb_exp_confirmation` - CFPB confirmation for Experian complaint
+
+3. **Bureau Dispute Tracking** (add to DisputeItem or new table):
+   - `tu_dispute_id` - TransUnion dispute confirmation
+   - `eq_dispute_id` - Equifax dispute confirmation
+   - `exp_dispute_id` - Experian dispute confirmation
+   - `tu_dispute_status` - pending/investigating/resolved
+   - `eq_dispute_status` - pending/investigating/resolved
+   - `exp_dispute_status` - pending/investigating/resolved
+
+4. **Automation Run Tracking** (new table: `AutomationRun`):
+   - `id`, `client_id`, `automation_type` (5ko_ftc, 5ko_cfpb, 5ko_bureau, inquiry_ftc, inquiry_cfpb)
+   - `portal` (ftc, cfpb, transunion, equifax, experian)
+   - `status` (pending, running, completed, failed)
+   - `started_at`, `completed_at`
+   - `items_processed`, `items_succeeded`, `items_failed`
+   - `error_message`, `screenshot_path`
+   - `staff_id` - Who initiated
+
+**UI Changes Required:**
+1. Add bureau credential fields to Get Started form (`templates/get_started.html`)
+2. Add bureau credential fields to Portal Onboarding (`templates/portal/onboarding.html`)
+3. Add FTC/CFPB tracking display to 5-Day Knockout page
+
+**Acceptance Criteria:**
+- [ ] Database migrations for all new fields
+- [ ] Encrypted storage for bureau passwords
+- [ ] Get Started form collects bureau credentials
+- [ ] Portal Onboarding collects bureau credentials
+- [ ] AutomationRun table created
+- [ ] API endpoints for automation run CRUD
+- [ ] Unit tests for new models and encryption
+
+---
+
+### ISSUE-023: 5KO Browser Automation (FTC + CFPB + Bureau Portals)
+- **Priority:** High
+- **Status:** Open
+- **Category:** Browser Automation
+- **Effort:** 16-24 hours
+- **Added:** 2026-02-10
+- **Depends On:** ISSUE-022
+
+**Description:**
+Implement browser-use automation for the 5-Day Knockout process. Files one negative item per submission across FTC, CFPB, and Bureau portals.
+
+**Methodology:** One negative item per submission (not batch)
+
+**Portals & Flows:**
+
+1. **FTC (identitytheft.gov)** - 6 Steps:
+   - Step 1: Select "Someone used my info to open accounts"
+   - Step 2: Fill victim info (from client data)
+   - Step 3: Add fraudulent account details (one item)
+   - Step 4: Review and submit
+   - Step 5: Capture FTC report number
+   - Step 6: Download affidavit PDF
+
+2. **CFPB (consumerfinance.gov/complaint)** - 5 Steps:
+   - Step 1: Select product type (Credit Reporting)
+   - Step 2: Select issue (Incorrect information)
+   - Step 3: Fill company (bureau name) + narrative
+   - Step 4: Fill victim info
+   - Step 5: Submit and capture confirmation number
+
+3. **Bureau Portals:**
+   - **Equifax**: No limit, fully automatable, submit via dispute portal
+   - **TransUnion**: 1 active dispute at a time, wait for resolution
+   - **Experian**: 2/day limit + phone calls before AND after (hybrid - automated submission, manual call tracking)
+
+**browser-use Implementation:**
+- Uses `browser-use` library (github.com/browser-use/browser-use)
+- LLM-controlled browser automation
+- 2FA: Browser remembers device after initial logins
+- Human oversight required for all automation runs
+
+**Timeline Tracking:**
+Must update client timeline fields in chronological order:
+1. `fko_started_at` → 2. `fko_ftc_filed_at` → 3. `fko_cfpb_filed_at` → 4. `fko_letters_sent_at`
+
+**Files to Create:**
+- `services/browser_automation/base_automation.py` - Base class with browser-use setup
+- `services/browser_automation/ftc_automation.py` - FTC portal automation
+- `services/browser_automation/cfpb_automation.py` - CFPB portal automation
+- `services/browser_automation/bureau_automation.py` - Bureau portal automation
+- `services/browser_automation/5ko_orchestrator.py` - Orchestrates full 5KO flow
+
+**API Endpoints:**
+- `POST /api/automation/5ko/start` - Start 5KO automation for client
+- `POST /api/automation/5ko/ftc` - Run FTC step only
+- `POST /api/automation/5ko/cfpb` - Run CFPB step only
+- `POST /api/automation/5ko/bureau/<bureau>` - Run bureau step
+- `GET /api/automation/5ko/status/<client_id>` - Get automation status
+
+**Acceptance Criteria:**
+- [ ] FTC automation: Submit one item, capture report number
+- [ ] CFPB automation: Submit one item per bureau, capture confirmations
+- [ ] Equifax automation: Submit disputes via portal
+- [ ] TransUnion automation: Submit disputes (respecting 1-active limit)
+- [ ] Experian automation: Submit disputes (respecting 2/day limit)
+- [ ] Timeline fields updated in correct order
+- [ ] AutomationRun records created for each step
+- [ ] Error handling with screenshots on failure
+- [ ] Staff dashboard to monitor runs
+- [ ] Unit tests for orchestration logic
+
+---
+
+### ISSUE-024: Inquiry Dispute Browser Automation (FTC + CFPB Only)
+- **Priority:** High
+- **Status:** Open
+- **Category:** Browser Automation
+- **Effort:** 8-12 hours
+- **Added:** 2026-02-10
+- **Depends On:** ISSUE-022
+
+**Description:**
+Implement browser-use automation for Inquiry Disputes. This is a simpler flow than 5KO - only FTC and CFPB portals, NO bureau portal submissions.
+
+**Methodology:** One inquiry per submission
+
+**Use Case:** Dispute unauthorized hard inquiries appearing on credit reports.
+
+**Portals & Flows:**
+
+1. **FTC (identitytheft.gov)**:
+   - Same 6-step flow as 5KO but for inquiry disputes
+   - Select "Someone used my info" type
+   - Add inquiry details instead of account details
+
+2. **CFPB (consumerfinance.gov/complaint)**:
+   - Same 5-step flow as 5KO
+   - Product: Credit Reporting
+   - Issue: Improper use of report / Unauthorized inquiry
+
+**NO Bureau Portals** - Unlike 5KO, inquiry disputes do not require bureau portal submissions.
+
+**Files to Create:**
+- `services/browser_automation/inquiry_orchestrator.py` - Orchestrates inquiry dispute flow
+- Reuses FTC and CFPB automation from ISSUE-023
+
+**API Endpoints:**
+- `POST /api/automation/inquiry/start` - Start inquiry dispute automation
+- `POST /api/automation/inquiry/ftc` - Run FTC step only
+- `POST /api/automation/inquiry/cfpb` - Run CFPB step only
+- `GET /api/automation/inquiry/status/<client_id>` - Get automation status
+
+**Acceptance Criteria:**
+- [ ] Inquiry FTC automation: Submit one inquiry, capture report number
+- [ ] Inquiry CFPB automation: Submit one inquiry complaint, capture confirmation
+- [ ] NO bureau portal automation (confirm it's not triggered)
+- [ ] Separate tracking from 5KO disputes
+- [ ] AutomationRun records with `automation_type='inquiry_*'`
+- [ ] Unit tests for inquiry-specific flow
+
+---
+
 ## Issue Tracking Legend
 
 | Status | Description |
@@ -761,6 +944,9 @@ Each service has different UI patterns for accessing historical reports - need p
 
 | Date | Issue | Change |
 |------|-------|--------|
+| 2026-02-10 | ISSUE-024 | Added - Inquiry Dispute Browser Automation (FTC + CFPB Only) |
+| 2026-02-10 | ISSUE-023 | Added - 5KO Browser Automation (FTC + CFPB + Bureau Portals) |
+| 2026-02-10 | ISSUE-022 | Added - Platform Gaps for Browser Automation (Critical - blocks 023/024) |
 | 2026-02-09 | ISSUE-021 | Added - Historical Credit Report Comparison (Month-to-Month Tracking) |
 | 2026-02-08 | ISSUE-013 | Complete - RESPA QWR Tracking + 22 API endpoints + 49 tests |
 | 2026-02-08 | ISSUE-012 | Complete - Attorney Referral Handoff + 20 API endpoints + 39 tests |

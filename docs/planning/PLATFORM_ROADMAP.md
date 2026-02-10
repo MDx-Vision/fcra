@@ -453,9 +453,10 @@ The Brightpath Ascend FCRA Platform is the most comprehensive litigation automat
 
 ## CURRENT STATUS
 
-**Phases Completed:** 10 of 10
-**Platform Completion:** 100%
+**Phases Completed:** 10 of 11
+**Platform Completion:** 91%
 **Ready for Production:** Yes (SFTP credentials pending)
+**Next Phase:** Phase 11 - Browser Automation (Planning Complete)
 **Admin Credentials:** admin@brightpathascend.com / Admin123!
 
 **Immediate Next Steps:**
@@ -523,6 +524,101 @@ CREATE TABLE user_quick_links (id, user_id, slot_number, link_url, link_label);
 | Bulk Operations | 20% | **100%** ✅ |
 | Interactive Elements | 25% | **100%** ✅ |
 | **Overall BAG Parity** | **53%** | **100%** ✅ |
+
+---
+
+## PHASE 11: BROWSER AUTOMATION (5KO + INQUIRY DISPUTES) 🚧 PLANNED
+
+> **Added:** 2026-02-10
+> **Status:** Planning Complete - Implementation Pending
+> **Library:** browser-use (github.com/browser-use/browser-use)
+> **See:** GAPS_ROADMAP.md (ISSUE-022, ISSUE-023, ISSUE-024)
+
+### Overview
+Automate 5-Day Knockout (§605B) and Inquiry Dispute submissions using LLM-controlled browser automation. One negative item per submission across all portals.
+
+### Two Separate Flows
+
+#### Flow 1: 5KO / Negative Account Disputes (Full Flow)
+**Portals:** FTC + CFPB + Bureau Portals (Equifax, TransUnion, Experian)
+
+| Step | Portal | Action |
+|------|--------|--------|
+| 1 | FTC identitytheft.gov | File identity theft report (6 steps) |
+| 2 | CFPB consumerfinance.gov | File complaint per bureau (5 steps) |
+| 3 | Equifax Portal | Submit dispute (no limit) |
+| 4 | TransUnion Portal | Submit dispute (1 active at a time) |
+| 5 | Experian Portal | Submit dispute (2/day + phone calls) |
+
+#### Flow 2: Inquiry Disputes (Simpler Flow)
+**Portals:** FTC + CFPB only (NO bureau portals)
+
+| Step | Portal | Action |
+|------|--------|--------|
+| 1 | FTC identitytheft.gov | File identity theft report for inquiry |
+| 2 | CFPB consumerfinance.gov | File unauthorized inquiry complaint |
+
+### Phase 11A: Platform Gaps (ISSUE-022) - Critical Foundation
+- [ ] **Client Bureau Credentials** - TU/EQ/EXP login storage (encrypted)
+- [ ] **FTC Tracking Fields** - Report number, filed date
+- [ ] **CFPB Tracking Fields** - Confirmation numbers per bureau
+- [ ] **Bureau Dispute Tracking** - Dispute IDs and status per bureau
+- [ ] **AutomationRun Table** - Track automation sessions
+- [ ] **Get Started Form** - Collect bureau credentials
+- [ ] **Portal Onboarding** - Collect bureau credentials
+
+### Phase 11B: 5KO Browser Automation (ISSUE-023)
+- [ ] **FTC Automation** - Submit one item, capture report number
+- [ ] **CFPB Automation** - Submit one item per bureau
+- [ ] **Equifax Automation** - Submit disputes (unlimited)
+- [ ] **TransUnion Automation** - Submit disputes (1 active limit)
+- [ ] **Experian Automation** - Submit disputes (2/day + phone tracking)
+- [ ] **5KO Orchestrator** - Coordinate full flow with timeline tracking
+- [ ] **Staff Dashboard** - Monitor automation runs
+
+### Phase 11C: Inquiry Dispute Automation (ISSUE-024)
+- [ ] **Inquiry FTC Automation** - Submit inquiry dispute
+- [ ] **Inquiry CFPB Automation** - Submit inquiry complaint
+- [ ] **Inquiry Orchestrator** - Coordinate FTC + CFPB only
+- [ ] **Separate Tracking** - Distinguish from 5KO disputes
+
+### Bureau Portal Limits & Constraints
+
+| Bureau | Limit | Notes |
+|--------|-------|-------|
+| Equifax | Unlimited | Fully automatable |
+| TransUnion | 1 active dispute | Wait for resolution before next |
+| Experian | 2/day + phone | Hybrid: automated submission + manual call tracking |
+
+### Technical Implementation
+
+**Library:** `browser-use` (https://github.com/browser-use/browser-use)
+- LLM-controlled browser automation
+- 2FA: Browser remembers device after initial logins
+- Human oversight required for all automation runs
+
+**Files to Create:**
+```
+services/browser_automation/
+├── base_automation.py       # Base class with browser-use setup
+├── ftc_automation.py        # FTC portal automation
+├── cfpb_automation.py       # CFPB portal automation
+├── bureau_automation.py     # Bureau portal automation
+├── 5ko_orchestrator.py      # 5KO flow orchestration
+└── inquiry_orchestrator.py  # Inquiry flow orchestration
+```
+
+**API Endpoints:**
+- `POST /api/automation/5ko/start` - Start 5KO automation
+- `POST /api/automation/inquiry/start` - Start inquiry automation
+- `GET /api/automation/status/<client_id>` - Get automation status
+- `GET /api/automation/runs` - List all automation runs
+
+### Key Requirements
+1. **One item per submission** - Methodology, not batch processing
+2. **Chronological timeline** - Events must be in order
+3. **Human oversight** - Staff monitors all automation
+4. **Physical letters** - Still need to be generated (not sent immediately)
 
 ---
 
@@ -604,6 +700,6 @@ Based on the comprehensive "Credit Repair Warfare" legal guide, the following ha
 
 ---
 
-*Document Last Updated: December 31, 2025*
+*Document Last Updated: February 10, 2026*
 *Platform Version: Brightpath Ascend FCRA v2.0*
-*Latest Features: Client Portal Document Upload Enhancements - CRA Response bureau/round selection, multi-file ID/Proof uploads, Secondary Bureau Freeze Status tracking*
+*Latest Features: Phase 11 Browser Automation Planning - 5KO + Inquiry Dispute automation with browser-use library*

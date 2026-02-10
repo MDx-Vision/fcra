@@ -10120,6 +10120,12 @@ def client_portal_guide():
     return render_template("portal/client_guide.html")
 
 
+@app.route("/bureau-setup")
+def bureau_account_setup():
+    """Public page for clients to fill out bureau account credentials"""
+    return render_template("bureau_account_setup.html")
+
+
 @app.route("/portal/<token>")
 def client_portal(token):
     """Client-facing portal access via magic link - authenticate and redirect to new portal"""
