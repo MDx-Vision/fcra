@@ -52,3 +52,4 @@ tenacity>=8.2.0
 pytz
 pre-commit>=4.0.0
 pdfrw
+browser-use>=0.1.0

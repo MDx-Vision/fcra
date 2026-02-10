@@ -44740,6 +44740,522 @@ def api_automation_stats():
 
 
 # =============================================================================
+# BROWSER AUTOMATION EXECUTION ENDPOINTS (ISSUE-023)
+# =============================================================================
+
+
+@app.route("/api/automation/5ko/execute", methods=["POST"])
+@require_staff()
+def api_automation_5ko_execute():
+    """
+    Execute the 5-Day Knockout browser automation for a client.
+
+    This runs the full 5KO flow:
+    1. FTC Identity Theft Report
+    2. CFPB Complaints (one per bureau)
+    3. Bureau Portal Disputes (Equifax, TransUnion, Experian)
+
+    Request body:
+    {
+        "client_id": 123,
+        "account": {
+            "creditor_name": "Chase Bank",
+            "account_number": "****1234",
+            "account_type": "credit_card",
+            "date_opened": "2024-01-15",
+            "balance": 5000,
+            "bureaus": ["equifax", "transunion", "experian"]
+        },
+        "skip_ftc": false,
+        "skip_cfpb": false,
+        "skip_bureaus": false,
+        "bureaus_to_file": ["equifax", "transunion"],
+        "headless": false
+    }
+    """
+    import asyncio
+
+    try:
+        data = request.get_json() or {}
+
+        if not data.get("client_id"):
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+        if not data.get("account"):
+            return jsonify({"success": False, "error": "account is required"}), 400
+
+        client_id = data["client_id"]
+        account = data["account"]
+
+        # Verify client exists
+        with get_db() as db:
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                return jsonify({"success": False, "error": "Client not found"}), 404
+
+        # Import the orchestrator
+        from services.browser_automation import FiveKnockoutOrchestrator
+
+        # Create orchestrator
+        orchestrator = FiveKnockoutOrchestrator(
+            client_id=client_id,
+            staff_id=get_current_staff_id(),
+            headless=data.get("headless", False),
+        )
+
+        # Run the automation
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            status = loop.run_until_complete(
+                orchestrator.run_full_knockout(
+                    account=account,
+                    skip_ftc=data.get("skip_ftc", False),
+                    skip_cfpb=data.get("skip_cfpb", False),
+                    skip_bureaus=data.get("skip_bureaus", False),
+                    bureaus_to_file=data.get("bureaus_to_file"),
+                )
+            )
+        finally:
+            loop.close()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "5-Day Knockout automation completed",
+                "status": status.to_dict(),
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"5KO automation failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/5ko/ftc-only", methods=["POST"])
+@require_staff()
+def api_automation_5ko_ftc_only():
+    """
+    Execute only the FTC step of 5-Day Knockout.
+
+    Request body:
+    {
+        "client_id": 123,
+        "account": {...},
+        "headless": false
+    }
+    """
+    import asyncio
+
+    try:
+        data = request.get_json() or {}
+
+        if not data.get("client_id"):
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+        if not data.get("account"):
+            return jsonify({"success": False, "error": "account is required"}), 400
+
+        from services.browser_automation import FiveKnockoutOrchestrator
+
+        orchestrator = FiveKnockoutOrchestrator(
+            client_id=data["client_id"],
+            staff_id=get_current_staff_id(),
+            headless=data.get("headless", False),
+        )
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(orchestrator.run_ftc_only(data["account"]))
+        finally:
+            loop.close()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "FTC automation completed",
+                "result": result.to_dict(),
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"FTC automation failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/5ko/cfpb-only", methods=["POST"])
+@require_staff()
+def api_automation_5ko_cfpb_only():
+    """
+    Execute only the CFPB step of 5-Day Knockout for a single bureau.
+
+    Request body:
+    {
+        "client_id": 123,
+        "account": {...},
+        "bureau": "equifax",
+        "ftc_report_number": "123456789",
+        "headless": false
+    }
+    """
+    import asyncio
+
+    try:
+        data = request.get_json() or {}
+
+        if not data.get("client_id"):
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+        if not data.get("account"):
+            return jsonify({"success": False, "error": "account is required"}), 400
+        if not data.get("bureau"):
+            return jsonify({"success": False, "error": "bureau is required"}), 400
+
+        from services.browser_automation import FiveKnockoutOrchestrator
+
+        orchestrator = FiveKnockoutOrchestrator(
+            client_id=data["client_id"],
+            staff_id=get_current_staff_id(),
+            headless=data.get("headless", False),
+        )
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(
+                orchestrator.run_cfpb_only(
+                    account=data["account"],
+                    bureau=data["bureau"],
+                    ftc_report_number=data.get("ftc_report_number"),
+                )
+            )
+        finally:
+            loop.close()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"CFPB automation completed for {data['bureau']}",
+                "result": result.to_dict(),
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"CFPB automation failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/5ko/bureau-only", methods=["POST"])
+@require_staff()
+def api_automation_5ko_bureau_only():
+    """
+    Execute only the bureau portal step of 5-Day Knockout.
+
+    Request body:
+    {
+        "client_id": 123,
+        "account": {...},
+        "bureau": "equifax",
+        "ftc_report_number": "123456789",
+        "headless": false
+    }
+    """
+    import asyncio
+
+    try:
+        data = request.get_json() or {}
+
+        if not data.get("client_id"):
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+        if not data.get("account"):
+            return jsonify({"success": False, "error": "account is required"}), 400
+        if not data.get("bureau"):
+            return jsonify({"success": False, "error": "bureau is required"}), 400
+
+        from services.browser_automation import FiveKnockoutOrchestrator
+
+        orchestrator = FiveKnockoutOrchestrator(
+            client_id=data["client_id"],
+            staff_id=get_current_staff_id(),
+            headless=data.get("headless", False),
+        )
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(
+                orchestrator.run_bureau_only(
+                    account=data["account"],
+                    bureau=data["bureau"],
+                    ftc_report_number=data.get("ftc_report_number"),
+                )
+            )
+        finally:
+            loop.close()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Bureau automation completed for {data['bureau']}",
+                "result": result.to_dict(),
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Bureau automation failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/inquiry/execute", methods=["POST"])
+@require_staff()
+def api_automation_inquiry_execute():
+    """
+    Execute the Inquiry Dispute browser automation for a client.
+
+    This runs the inquiry dispute flow:
+    1. FTC Identity Theft Report
+    2. CFPB Complaints (one per bureau)
+
+    Simpler than 5KO - no bureau portal submissions needed.
+
+    Request body:
+    {
+        "client_id": 123,
+        "inquiry": {
+            "creditor_name": "Capital One",
+            "inquiry_date": "2024-01-15",
+            "bureaus": ["equifax", "transunion"]
+        },
+        "skip_ftc": false,
+        "skip_cfpb": false,
+        "bureaus_to_file": ["equifax"],
+        "headless": false
+    }
+    """
+    import asyncio
+
+    try:
+        data = request.get_json() or {}
+
+        if not data.get("client_id"):
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+        if not data.get("inquiry"):
+            return jsonify({"success": False, "error": "inquiry is required"}), 400
+
+        client_id = data["client_id"]
+        inquiry = data["inquiry"]
+
+        # Verify client exists
+        with get_db() as db:
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                return jsonify({"success": False, "error": "Client not found"}), 404
+
+        from services.browser_automation import InquiryDisputeOrchestrator
+
+        orchestrator = InquiryDisputeOrchestrator(
+            client_id=client_id,
+            staff_id=get_current_staff_id(),
+            headless=data.get("headless", False),
+        )
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            status = loop.run_until_complete(
+                orchestrator.run_inquiry_dispute(
+                    inquiry=inquiry,
+                    skip_ftc=data.get("skip_ftc", False),
+                    skip_cfpb=data.get("skip_cfpb", False),
+                    bureaus_to_file=data.get("bureaus_to_file"),
+                )
+            )
+        finally:
+            loop.close()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Inquiry dispute automation completed",
+                "status": status.to_dict(),
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Inquiry dispute automation failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/inquiry/batch", methods=["POST"])
+@require_staff()
+def api_automation_inquiry_batch():
+    """
+    Execute inquiry disputes for multiple inquiries.
+
+    Request body:
+    {
+        "client_id": 123,
+        "inquiries": [
+            {"creditor_name": "Capital One", "inquiry_date": "2024-01-15", "bureaus": ["equifax"]},
+            {"creditor_name": "Discover", "inquiry_date": "2024-01-10", "bureaus": ["transunion"]}
+        ],
+        "headless": false,
+        "delay_between_inquiries": 120
+    }
+    """
+    import asyncio
+
+    try:
+        data = request.get_json() or {}
+
+        if not data.get("client_id"):
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+        if not data.get("inquiries"):
+            return jsonify({"success": False, "error": "inquiries is required"}), 400
+
+        from services.browser_automation.inquiry_orchestrator import (
+            run_batch_inquiry_disputes,
+        )
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            results = loop.run_until_complete(
+                run_batch_inquiry_disputes(
+                    client_id=data["client_id"],
+                    inquiries=data["inquiries"],
+                    staff_id=get_current_staff_id(),
+                    headless=data.get("headless", False),
+                    delay_between_inquiries=data.get("delay_between_inquiries", 120),
+                )
+            )
+        finally:
+            loop.close()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Batch inquiry disputes completed ({len(results)} inquiries)",
+                "results": [r.to_dict() for r in results],
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Batch inquiry disputes failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/inquiry/ftc-only", methods=["POST"])
+@require_staff()
+def api_automation_inquiry_ftc_only():
+    """
+    Execute only the FTC step of inquiry dispute.
+
+    Request body:
+    {
+        "client_id": 123,
+        "inquiry": {...},
+        "headless": false
+    }
+    """
+    import asyncio
+
+    try:
+        data = request.get_json() or {}
+
+        if not data.get("client_id"):
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+        if not data.get("inquiry"):
+            return jsonify({"success": False, "error": "inquiry is required"}), 400
+
+        from services.browser_automation import InquiryDisputeOrchestrator
+
+        orchestrator = InquiryDisputeOrchestrator(
+            client_id=data["client_id"],
+            staff_id=get_current_staff_id(),
+            headless=data.get("headless", False),
+        )
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(orchestrator.run_ftc_only(data["inquiry"]))
+        finally:
+            loop.close()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "FTC inquiry automation completed",
+                "result": result.to_dict(),
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"FTC inquiry automation failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/automation/inquiry/cfpb-only", methods=["POST"])
+@require_staff()
+def api_automation_inquiry_cfpb_only():
+    """
+    Execute only the CFPB step of inquiry dispute for a single bureau.
+
+    Request body:
+    {
+        "client_id": 123,
+        "inquiry": {...},
+        "bureau": "equifax",
+        "ftc_report_number": "123456789",
+        "headless": false
+    }
+    """
+    import asyncio
+
+    try:
+        data = request.get_json() or {}
+
+        if not data.get("client_id"):
+            return jsonify({"success": False, "error": "client_id is required"}), 400
+        if not data.get("inquiry"):
+            return jsonify({"success": False, "error": "inquiry is required"}), 400
+        if not data.get("bureau"):
+            return jsonify({"success": False, "error": "bureau is required"}), 400
+
+        from services.browser_automation import InquiryDisputeOrchestrator
+
+        orchestrator = InquiryDisputeOrchestrator(
+            client_id=data["client_id"],
+            staff_id=get_current_staff_id(),
+            headless=data.get("headless", False),
+        )
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(
+                orchestrator.run_cfpb_only(
+                    inquiry=data["inquiry"],
+                    bureau=data["bureau"],
+                    ftc_report_number=data.get("ftc_report_number"),
+                )
+            )
+        finally:
+            loop.close()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"CFPB inquiry automation completed for {data['bureau']}",
+                "result": result.to_dict(),
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"CFPB inquiry automation failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# =============================================================================
 # INQUIRY DISPUTES ENDPOINTS
 # =============================================================================
 
